@@ -7,27 +7,34 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		44CB543F29B9CF5A00B48F34 /* PostalgicApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44CB543E29B9CF5A00B48F34 /* PostalgicApp.swift */; };
-		44CB544129B9CF5A00B48F34 /* Persistence.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44CB544029B9CF5A00B48F34 /* Persistence.swift */; };
-		44CB544429B9CF5A00B48F34 /* Postalgic.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 44CB544229B9CF5A00B48F34 /* Postalgic.xcdatamodeld */; };
-		44CB544629B9CF5A00B48F34 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44CB544529B9CF5A00B48F34 /* ContentView.swift */; };
-		44CB544829B9CF5C00B48F34 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 44CB544729B9CF5C00B48F34 /* Assets.xcassets */; };
-		44CB544C29B9CF5C00B48F34 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 44CB544B29B9CF5C00B48F34 /* Preview Assets.xcassets */; };
+		447433AD29CAC7E50062AFED /* PostalgicApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 447433AC29CAC7E50062AFED /* PostalgicApp.swift */; };
+		447433AF29CAC7E50062AFED /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 447433AE29CAC7E50062AFED /* ContentView.swift */; };
+		447433B129CAC7E50062AFED /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 447433B029CAC7E50062AFED /* Assets.xcassets */; };
+		447433B429CAC7E50062AFED /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 447433B329CAC7E50062AFED /* Preview Assets.xcassets */; };
+		447433B629CAC7E50062AFED /* Persistence.swift in Sources */ = {isa = PBXBuildFile; fileRef = 447433B529CAC7E50062AFED /* Persistence.swift */; };
+		447433B929CAC7E50062AFED /* Postalgic.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 447433B729CAC7E50062AFED /* Postalgic.xcdatamodeld */; };
+		447433D029CAD0BF0062AFED /* Post+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 447433CC29CAD0BF0062AFED /* Post+CoreDataClass.swift */; };
+		447433D129CAD0BF0062AFED /* Post+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 447433CD29CAD0BF0062AFED /* Post+CoreDataProperties.swift */; };
+		447433D229CAD0BF0062AFED /* PostBlock+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 447433CE29CAD0BF0062AFED /* PostBlock+CoreDataClass.swift */; };
+		447433D329CAD0BF0062AFED /* PostBlock+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 447433CF29CAD0BF0062AFED /* PostBlock+CoreDataProperties.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		44CB543B29B9CF5A00B48F34 /* Postalgic.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Postalgic.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		44CB543E29B9CF5A00B48F34 /* PostalgicApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostalgicApp.swift; sourceTree = "<group>"; };
-		44CB544029B9CF5A00B48F34 /* Persistence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Persistence.swift; sourceTree = "<group>"; };
-		44CB544329B9CF5A00B48F34 /* Postalgic.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = Postalgic.xcdatamodel; sourceTree = "<group>"; };
-		44CB544529B9CF5A00B48F34 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
-		44CB544729B9CF5C00B48F34 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		44CB544929B9CF5C00B48F34 /* Postalgic.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Postalgic.entitlements; sourceTree = "<group>"; };
-		44CB544B29B9CF5C00B48F34 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		447433A929CAC7E50062AFED /* Postalgic.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Postalgic.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		447433AC29CAC7E50062AFED /* PostalgicApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostalgicApp.swift; sourceTree = "<group>"; };
+		447433AE29CAC7E50062AFED /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		447433B029CAC7E50062AFED /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		447433B329CAC7E50062AFED /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		447433B529CAC7E50062AFED /* Persistence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Persistence.swift; sourceTree = "<group>"; };
+		447433B829CAC7E50062AFED /* Postalgic.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = Postalgic.xcdatamodel; sourceTree = "<group>"; };
+		447433CC29CAD0BF0062AFED /* Post+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Post+CoreDataClass.swift"; sourceTree = "<group>"; };
+		447433CD29CAD0BF0062AFED /* Post+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Post+CoreDataProperties.swift"; sourceTree = "<group>"; };
+		447433CE29CAD0BF0062AFED /* PostBlock+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "PostBlock+CoreDataClass.swift"; sourceTree = "<group>"; };
+		447433CF29CAD0BF0062AFED /* PostBlock+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "PostBlock+CoreDataProperties.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		44CB543829B9CF5A00B48F34 /* Frameworks */ = {
+		447433A629CAC7E50062AFED /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -37,54 +44,65 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		44CB543229B9CF5A00B48F34 = {
+		447433A029CAC7E50062AFED = {
 			isa = PBXGroup;
 			children = (
-				44CB543D29B9CF5A00B48F34 /* Postalgic */,
-				44CB543C29B9CF5A00B48F34 /* Products */,
+				447433AB29CAC7E50062AFED /* Postalgic */,
+				447433AA29CAC7E50062AFED /* Products */,
 			);
 			sourceTree = "<group>";
 		};
-		44CB543C29B9CF5A00B48F34 /* Products */ = {
+		447433AA29CAC7E50062AFED /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				44CB543B29B9CF5A00B48F34 /* Postalgic.app */,
+				447433A929CAC7E50062AFED /* Postalgic.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
 		};
-		44CB543D29B9CF5A00B48F34 /* Postalgic */ = {
+		447433AB29CAC7E50062AFED /* Postalgic */ = {
 			isa = PBXGroup;
 			children = (
-				44CB543E29B9CF5A00B48F34 /* PostalgicApp.swift */,
-				44CB544029B9CF5A00B48F34 /* Persistence.swift */,
-				44CB544529B9CF5A00B48F34 /* ContentView.swift */,
-				44CB544729B9CF5C00B48F34 /* Assets.xcassets */,
-				44CB544929B9CF5C00B48F34 /* Postalgic.entitlements */,
-				44CB544229B9CF5A00B48F34 /* Postalgic.xcdatamodeld */,
-				44CB544A29B9CF5C00B48F34 /* Preview Content */,
+				447433CB29CAD05D0062AFED /* Models */,
+				447433AC29CAC7E50062AFED /* PostalgicApp.swift */,
+				447433AE29CAC7E50062AFED /* ContentView.swift */,
+				447433B029CAC7E50062AFED /* Assets.xcassets */,
+				447433B529CAC7E50062AFED /* Persistence.swift */,
+				447433B729CAC7E50062AFED /* Postalgic.xcdatamodeld */,
+				447433B229CAC7E50062AFED /* Preview Content */,
 			);
 			path = Postalgic;
 			sourceTree = "<group>";
 		};
-		44CB544A29B9CF5C00B48F34 /* Preview Content */ = {
+		447433B229CAC7E50062AFED /* Preview Content */ = {
 			isa = PBXGroup;
 			children = (
-				44CB544B29B9CF5C00B48F34 /* Preview Assets.xcassets */,
+				447433B329CAC7E50062AFED /* Preview Assets.xcassets */,
 			);
 			path = "Preview Content";
+			sourceTree = "<group>";
+		};
+		447433CB29CAD05D0062AFED /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				447433CC29CAD0BF0062AFED /* Post+CoreDataClass.swift */,
+				447433CD29CAD0BF0062AFED /* Post+CoreDataProperties.swift */,
+				447433CE29CAD0BF0062AFED /* PostBlock+CoreDataClass.swift */,
+				447433CF29CAD0BF0062AFED /* PostBlock+CoreDataProperties.swift */,
+			);
+			path = Models;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		44CB543A29B9CF5A00B48F34 /* Postalgic */ = {
+		447433A829CAC7E50062AFED /* Postalgic */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 44CB544F29B9CF5C00B48F34 /* Build configuration list for PBXNativeTarget "Postalgic" */;
+			buildConfigurationList = 447433BC29CAC7E50062AFED /* Build configuration list for PBXNativeTarget "Postalgic" */;
 			buildPhases = (
-				44CB543729B9CF5A00B48F34 /* Sources */,
-				44CB543829B9CF5A00B48F34 /* Frameworks */,
-				44CB543929B9CF5A00B48F34 /* Resources */,
+				447433A529CAC7E50062AFED /* Sources */,
+				447433A629CAC7E50062AFED /* Frameworks */,
+				447433A729CAC7E50062AFED /* Resources */,
 			);
 			buildRules = (
 			);
@@ -92,25 +110,25 @@
 			);
 			name = Postalgic;
 			productName = Postalgic;
-			productReference = 44CB543B29B9CF5A00B48F34 /* Postalgic.app */;
+			productReference = 447433A929CAC7E50062AFED /* Postalgic.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
-		44CB543329B9CF5A00B48F34 /* Project object */ = {
+		447433A129CAC7E50062AFED /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 1420;
 				LastUpgradeCheck = 1420;
 				TargetAttributes = {
-					44CB543A29B9CF5A00B48F34 = {
+					447433A829CAC7E50062AFED = {
 						CreatedOnToolsVersion = 14.2;
 					};
 				};
 			};
-			buildConfigurationList = 44CB543629B9CF5A00B48F34 /* Build configuration list for PBXProject "Postalgic" */;
+			buildConfigurationList = 447433A429CAC7E50062AFED /* Build configuration list for PBXProject "Postalgic" */;
 			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -118,44 +136,48 @@
 				en,
 				Base,
 			);
-			mainGroup = 44CB543229B9CF5A00B48F34;
-			productRefGroup = 44CB543C29B9CF5A00B48F34 /* Products */;
+			mainGroup = 447433A029CAC7E50062AFED;
+			productRefGroup = 447433AA29CAC7E50062AFED /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				44CB543A29B9CF5A00B48F34 /* Postalgic */,
+				447433A829CAC7E50062AFED /* Postalgic */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		44CB543929B9CF5A00B48F34 /* Resources */ = {
+		447433A729CAC7E50062AFED /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				44CB544C29B9CF5C00B48F34 /* Preview Assets.xcassets in Resources */,
-				44CB544829B9CF5C00B48F34 /* Assets.xcassets in Resources */,
+				447433B429CAC7E50062AFED /* Preview Assets.xcassets in Resources */,
+				447433B129CAC7E50062AFED /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		44CB543729B9CF5A00B48F34 /* Sources */ = {
+		447433A529CAC7E50062AFED /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				44CB543F29B9CF5A00B48F34 /* PostalgicApp.swift in Sources */,
-				44CB544129B9CF5A00B48F34 /* Persistence.swift in Sources */,
-				44CB544629B9CF5A00B48F34 /* ContentView.swift in Sources */,
-				44CB544429B9CF5A00B48F34 /* Postalgic.xcdatamodeld in Sources */,
+				447433B929CAC7E50062AFED /* Postalgic.xcdatamodeld in Sources */,
+				447433B629CAC7E50062AFED /* Persistence.swift in Sources */,
+				447433D029CAD0BF0062AFED /* Post+CoreDataClass.swift in Sources */,
+				447433D229CAD0BF0062AFED /* PostBlock+CoreDataClass.swift in Sources */,
+				447433AF29CAC7E50062AFED /* ContentView.swift in Sources */,
+				447433D329CAD0BF0062AFED /* PostBlock+CoreDataProperties.swift in Sources */,
+				447433AD29CAC7E50062AFED /* PostalgicApp.swift in Sources */,
+				447433D129CAD0BF0062AFED /* Post+CoreDataProperties.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
-		44CB544D29B9CF5C00B48F34 /* Debug */ = {
+		447433BA29CAC7E50062AFED /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -205,15 +227,17 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.2;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
 			name = Debug;
 		};
-		44CB544E29B9CF5C00B48F34 /* Release */ = {
+		447433BB29CAC7E50062AFED /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -257,83 +281,68 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.2;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
 		};
-		44CB545029B9CF5C00B48F34 /* Debug */ = {
+		447433BD29CAC7E50062AFED /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = Postalgic/Postalgic.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"Postalgic/Preview Content\"";
 				DEVELOPMENT_TEAM = 2Y9M69QJKZ;
-				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
-				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
-				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
-				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphonesimulator*]" = YES;
-				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphoneos*]" = YES;
-				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphonesimulator*]" = YES;
-				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
-				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 16.2;
-				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
-				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
-				MACOSX_DEPLOYMENT_TARGET = 13.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = net.amiantos.Postalgic;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = auto;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
 		};
-		44CB545129B9CF5C00B48F34 /* Release */ = {
+		447433BE29CAC7E50062AFED /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = Postalgic/Postalgic.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"Postalgic/Preview Content\"";
 				DEVELOPMENT_TEAM = 2Y9M69QJKZ;
-				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
-				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
-				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
-				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphonesimulator*]" = YES;
-				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphoneos*]" = YES;
-				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphonesimulator*]" = YES;
-				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
-				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 16.2;
-				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
-				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
-				MACOSX_DEPLOYMENT_TARGET = 13.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = net.amiantos.Postalgic;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = auto;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -343,20 +352,20 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		44CB543629B9CF5A00B48F34 /* Build configuration list for PBXProject "Postalgic" */ = {
+		447433A429CAC7E50062AFED /* Build configuration list for PBXProject "Postalgic" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				44CB544D29B9CF5C00B48F34 /* Debug */,
-				44CB544E29B9CF5C00B48F34 /* Release */,
+				447433BA29CAC7E50062AFED /* Debug */,
+				447433BB29CAC7E50062AFED /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		44CB544F29B9CF5C00B48F34 /* Build configuration list for PBXNativeTarget "Postalgic" */ = {
+		447433BC29CAC7E50062AFED /* Build configuration list for PBXNativeTarget "Postalgic" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				44CB545029B9CF5C00B48F34 /* Debug */,
-				44CB545129B9CF5C00B48F34 /* Release */,
+				447433BD29CAC7E50062AFED /* Debug */,
+				447433BE29CAC7E50062AFED /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -364,17 +373,17 @@
 /* End XCConfigurationList section */
 
 /* Begin XCVersionGroup section */
-		44CB544229B9CF5A00B48F34 /* Postalgic.xcdatamodeld */ = {
+		447433B729CAC7E50062AFED /* Postalgic.xcdatamodeld */ = {
 			isa = XCVersionGroup;
 			children = (
-				44CB544329B9CF5A00B48F34 /* Postalgic.xcdatamodel */,
+				447433B829CAC7E50062AFED /* Postalgic.xcdatamodel */,
 			);
-			currentVersion = 44CB544329B9CF5A00B48F34 /* Postalgic.xcdatamodel */;
+			currentVersion = 447433B829CAC7E50062AFED /* Postalgic.xcdatamodel */;
 			path = Postalgic.xcdatamodeld;
 			sourceTree = "<group>";
 			versionGroupType = wrapper.xcdatamodel;
 		};
 /* End XCVersionGroup section */
 	};
-	rootObject = 44CB543329B9CF5A00B48F34 /* Project object */;
+	rootObject = 447433A129CAC7E50062AFED /* Project object */;
 }

@@ -2,7 +2,7 @@
 //  Persistence.swift
 //  Postalgic
 //
-//  Created by Brad Root on 3/9/23.
+//  Created by Brad Root on 3/21/23.
 //
 
 import CoreData
@@ -14,8 +14,15 @@ struct PersistenceController {
         let result = PersistenceController(inMemory: true)
         let viewContext = result.container.viewContext
         for _ in 0..<10 {
-            let newItem = Item(context: viewContext)
-            newItem.timestamp = Date()
+            let newPost = Post(context: viewContext)
+            newPost.timestamp = Date()
+            
+            for i in 0...Int.random(in: 0..<5) {
+                let newBlock = PostBlock(context: viewContext)
+                newBlock.content = "Block with random number: \(Int.random(in: 0..<10))"
+                newBlock.displayOrder = Int16(i)
+                newBlock.post = newPost
+            }
         }
         do {
             try viewContext.save()
@@ -28,10 +35,10 @@ struct PersistenceController {
         return result
     }()
 
-    let container: NSPersistentCloudKitContainer
+    let container: NSPersistentContainer
 
     init(inMemory: Bool = false) {
-        container = NSPersistentCloudKitContainer(name: "Postalgic")
+        container = NSPersistentContainer(name: "Postalgic")
         if inMemory {
             container.persistentStoreDescriptions.first!.url = URL(fileURLWithPath: "/dev/null")
         }
