@@ -1,37 +1,45 @@
 version: '3.7'
 
 services:
-  web:
-    build: .
-    env_file:
-      - docker.local.env
-    command: python manage.py runserver 0.0.0.0:8000
-    environment:
-      DEBUG: 1
-    volumes:
-      - .:/app
+  api:
+    image: api
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+      target: debug
     ports:
-      - 8000:8000
+      - 8000:5000
+    volumes:
+      - .:/source:cached
+    env_file: .env
     depends_on:
       - db
-      # - redis
-
-  # worker:
-  #   build: .
-  #   command: python manage.py rqworker default
-  #   environment:
-  #     DEBUG: 1
-  #   volumes:
-  #     - .:/app
-  #   depends_on:
-  #     - web
+  debugger:
+    image: debugger
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+      target: debugger
+    ports:
+      - 8000:5000
+      - 5678:5678
+    volumes:
+      - .:/source:cached
+    env_file: .env
+  test-runner:
+    image: test-runner
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+      target: test
+    env_file: .env
 
   db:
     image: postgres:latest
     environment:
       POSTGRES_PASSWORD: postgres
       POSTGRES_USER: postgres
-      POSTGRES_DB: djheroku
+      POSTGRES_DB: postalgic
     volumes:
       - pgdata:/var/lib/postgresql/data/
 
