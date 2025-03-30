@@ -6,3 +6,6 @@ down:
 
 test:
 	docker-compose up test-runner
+
+debugger:
+	docker-compose up debugger
