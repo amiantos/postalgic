@@ -1,5 +1,11 @@
 # Postalgic Backend
 
+## Build Dev Server & Dependencies
+
+```shell
+make build
+```
+
 ## Start Dev Server
 
 ```shell
