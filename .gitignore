@@ -90,3 +90,8 @@ fastlane/test_output
 iOSInjectionProject/
 
 **/.DS_Store
+
+docker.local.env
+/venv
+.env
+__pycache__
