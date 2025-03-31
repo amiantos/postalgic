@@ -1,5 +1,4 @@
-version: '3.7'
-
+name: postalgic
 services:
   api:
     image: api
@@ -33,7 +32,6 @@ services:
       dockerfile: ./Dockerfile
       target: test
     env_file: .env
-
   db:
     image: postgres:latest
     environment:

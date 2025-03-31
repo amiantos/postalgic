@@ -5,7 +5,7 @@ up:
 	docker compose up api
 
 down:
-	docker compose down
+	docker compose stop
 
 test:
 	docker compose up test-runner
