@@ -114,7 +114,12 @@ final class PostalgicUITests: XCTestCase {
         
         // Verify post details are displayed
         XCTAssertTrue(app.staticTexts["Test Post Title"].exists)
-        XCTAssertTrue(app.staticTexts["https://example.com/article"].exists)
+        
+        // Check for the link (Links are represented as buttons in accessibility hierarchy)
+        XCTAssertTrue(app.links["https://example.com/article"].exists || 
+                     app.buttons["https://example.com/article"].exists)
+        
+        // Verify content text exists
         XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label CONTAINS 'This is the content'")).firstMatch.exists)
     }
     
@@ -157,12 +162,16 @@ final class PostalgicUITests: XCTestCase {
         // First create a blog
         try testCreateAndViewBlog()
         
-        // Enter edit mode
         let app = self.app
-        app.buttons["Edit"].tap()
         
-        // Delete the blog
-        app.buttons["Delete"].firstMatch.tap()
+        // Find the cell containing the blog
+        let cell = app.cells.containing(.staticText, identifier: "Test Blog").element
+        
+        // Swipe left to reveal the delete button
+        cell.swipeLeft()
+        
+        // Tap the delete button that appears after swiping
+        app.buttons["Delete"].tap()
         
         // Verify the blog is removed
         XCTAssertEqual(app.cells.count, 0)
