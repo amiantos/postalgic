@@ -124,17 +124,53 @@ final class PostalgicUITests: XCTestCase {
     }
     
     func testGenerateSite() throws {
-        // First create a blog with a post
-        try testCreateAndViewPost()
+        // Create a blog and navigate to its detail view
+        try testCreateAndViewBlog()
         
-        // Navigate back to the blog detail view if needed
+        // Get a reference to the app
         let app = self.app
-        if !app.navigationBars["Test Blog"].exists {
-            app.buttons["Back"].tap()
-        }
         
-        // Tap the Publish button
-        app.buttons["Publish"].tap()
+        // Tap on the blog cell to enter the blog detail view
+        app.cells.element(boundBy: 0).tap()
+        
+        // Verify we're on the blog detail screen
+        XCTAssertTrue(app.navigationBars["Test Blog"].exists)
+        
+        // Create a post using UI interaction rather than calling another test
+        // Tap the Add Post button
+        app.buttons["Add Post"].tap()
+        
+        // Fill in the post details
+        let titleTextField = app.textFields["Title (optional)"]
+        titleTextField.tap()
+        titleTextField.typeText("Test Post Title")
+        
+        let linkTextField = app.textFields["Primary Link (optional)"]
+        linkTextField.tap()
+        linkTextField.typeText("https://example.com/article")
+        
+        // Add content
+        let contentTextEditor = app.textViews.firstMatch
+        contentTextEditor.tap()
+        contentTextEditor.typeText("This is the content of my test post.")
+        
+        // Save the post
+        app.buttons["Save"].tap()
+        
+        // Now we should be back on the blog detail view
+        XCTAssertTrue(app.navigationBars["Test Blog"].exists)
+        
+        // Tap the Publish button (which has a globe icon)
+        // Try finding by accessibility label first
+        if app.buttons["Publish"].exists {
+            app.buttons["Publish"].tap()
+        } else {
+            // Fall back to the toolbar position if needed
+            let buttons = app.navigationBars["Test Blog"].buttons
+            if buttons.count >= 2 {
+                buttons.element(boundBy: 1).tap() // The Publish button is typically the 2nd button in the toolbar
+            }
+        }
         
         // Verify the publish view is shown
         XCTAssertTrue(app.staticTexts["Publish Test Blog"].exists)
