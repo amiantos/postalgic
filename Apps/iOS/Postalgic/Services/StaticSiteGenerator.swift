@@ -43,11 +43,36 @@ class StaticSiteGenerator {
         // Generate CSS
         try generateCSS()
         
-        // Zip the site
-        let zipURL = tempDirectory.appendingPathComponent("\(siteDirectoryName).zip")
-        try zipSite(to: zipURL)
+        // If AWS is configured, publish to S3 and invalidate CloudFront
+        if blog.hasAwsConfigured {
+            try await publishToAWS()
+            return siteDirectory // Return the directory to indicate AWS was used
+        } else {
+            // Otherwise, zip the site for local sharing
+            let zipURL = tempDirectory.appendingPathComponent("\(siteDirectoryName).zip")
+            try zipSite(to: zipURL)
+            return zipURL
+        }
+    }
+    
+    private func publishToAWS() async throws {
+        guard let siteDirectory = siteDirectory else { throw SiteGeneratorError.noSiteDirectory }
+        guard let region = blog.awsRegion,
+              let bucket = blog.awsS3Bucket,
+              let distId = blog.awsCloudFrontDistId,
+              let identityPoolId = blog.awsIdentityPoolId else {
+            throw SiteGeneratorError.missingAWSCredentials
+        }
         
-        return zipURL
+        let publisher = AWSPublisher(
+            region: region,
+            bucket: bucket,
+            distributionId: distId,
+            identityPoolId: identityPoolId
+        )
+        
+        try await publisher.uploadDirectory(siteDirectory)
+        try await publisher.invalidateCache()
     }
     
     private func createSiteStructure() throws {
@@ -578,5 +603,8 @@ class StaticSiteGenerator {
     
     enum SiteGeneratorError: Error {
         case noSiteDirectory
+        case missingAWSCredentials
+        case awsUploadFailed(String)
+        case awsInvalidationFailed(String)
     }
 }
