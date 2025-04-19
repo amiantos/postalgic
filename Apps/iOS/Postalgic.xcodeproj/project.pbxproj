@@ -6,33 +6,63 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXContainerItemProxy section */
+		443674862DB3898600F67B00 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 4436746E2DB3898500F67B00 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 443674752DB3898500F67B00;
+			remoteInfo = Postalgic;
+		};
+		443674902DB3898600F67B00 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 4436746E2DB3898500F67B00 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 443674752DB3898500F67B00;
+			remoteInfo = Postalgic;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
-		449D2C142D9A5FB600EE1AF1 /* Postalgic.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Postalgic.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		443674762DB3898500F67B00 /* Postalgic.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Postalgic.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		443674852DB3898600F67B00 /* PostalgicTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PostalgicTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		4436748F2DB3898600F67B00 /* PostalgicUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PostalgicUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
-/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		449D2C292D9A5FB700EE1AF1 /* Exceptions for "Postalgic" folder in "Postalgic" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				Info.plist,
-			);
-			target = 449D2C132D9A5FB600EE1AF1 /* Postalgic */;
-		};
-/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
-
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		449D2C162D9A5FB600EE1AF1 /* Postalgic */ = {
+		443674782DB3898500F67B00 /* Postalgic */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				449D2C292D9A5FB700EE1AF1 /* Exceptions for "Postalgic" folder in "Postalgic" target */,
-			);
 			path = Postalgic;
+			sourceTree = "<group>";
+		};
+		443674882DB3898600F67B00 /* PostalgicTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = PostalgicTests;
+			sourceTree = "<group>";
+		};
+		443674922DB3898600F67B00 /* PostalgicUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = PostalgicUITests;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		449D2C112D9A5FB600EE1AF1 /* Frameworks */ = {
+		443674732DB3898500F67B00 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		443674822DB3898600F67B00 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4436748C2DB3898600F67B00 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -42,18 +72,22 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		449D2C0B2D9A5FB600EE1AF1 = {
+		4436746D2DB3898500F67B00 = {
 			isa = PBXGroup;
 			children = (
-				449D2C162D9A5FB600EE1AF1 /* Postalgic */,
-				449D2C152D9A5FB600EE1AF1 /* Products */,
+				443674782DB3898500F67B00 /* Postalgic */,
+				443674882DB3898600F67B00 /* PostalgicTests */,
+				443674922DB3898600F67B00 /* PostalgicUITests */,
+				443674772DB3898500F67B00 /* Products */,
 			);
 			sourceTree = "<group>";
 		};
-		449D2C152D9A5FB600EE1AF1 /* Products */ = {
+		443674772DB3898500F67B00 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				449D2C142D9A5FB600EE1AF1 /* Postalgic.app */,
+				443674762DB3898500F67B00 /* Postalgic.app */,
+				443674852DB3898600F67B00 /* PostalgicTests.xctest */,
+				4436748F2DB3898600F67B00 /* PostalgicUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -61,64 +95,134 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		449D2C132D9A5FB600EE1AF1 /* Postalgic */ = {
+		443674752DB3898500F67B00 /* Postalgic */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 449D2C2A2D9A5FB700EE1AF1 /* Build configuration list for PBXNativeTarget "Postalgic" */;
+			buildConfigurationList = 443674992DB3898600F67B00 /* Build configuration list for PBXNativeTarget "Postalgic" */;
 			buildPhases = (
-				449D2C102D9A5FB600EE1AF1 /* Sources */,
-				449D2C112D9A5FB600EE1AF1 /* Frameworks */,
-				449D2C122D9A5FB600EE1AF1 /* Resources */,
+				443674722DB3898500F67B00 /* Sources */,
+				443674732DB3898500F67B00 /* Frameworks */,
+				443674742DB3898500F67B00 /* Resources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				449D2C162D9A5FB600EE1AF1 /* Postalgic */,
+				443674782DB3898500F67B00 /* Postalgic */,
 			);
 			name = Postalgic;
 			packageProductDependencies = (
 			);
 			productName = Postalgic;
-			productReference = 449D2C142D9A5FB600EE1AF1 /* Postalgic.app */;
+			productReference = 443674762DB3898500F67B00 /* Postalgic.app */;
 			productType = "com.apple.product-type.application";
+		};
+		443674842DB3898600F67B00 /* PostalgicTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 4436749C2DB3898600F67B00 /* Build configuration list for PBXNativeTarget "PostalgicTests" */;
+			buildPhases = (
+				443674812DB3898600F67B00 /* Sources */,
+				443674822DB3898600F67B00 /* Frameworks */,
+				443674832DB3898600F67B00 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				443674872DB3898600F67B00 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				443674882DB3898600F67B00 /* PostalgicTests */,
+			);
+			name = PostalgicTests;
+			packageProductDependencies = (
+			);
+			productName = PostalgicTests;
+			productReference = 443674852DB3898600F67B00 /* PostalgicTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		4436748E2DB3898600F67B00 /* PostalgicUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 4436749F2DB3898600F67B00 /* Build configuration list for PBXNativeTarget "PostalgicUITests" */;
+			buildPhases = (
+				4436748B2DB3898600F67B00 /* Sources */,
+				4436748C2DB3898600F67B00 /* Frameworks */,
+				4436748D2DB3898600F67B00 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				443674912DB3898600F67B00 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				443674922DB3898600F67B00 /* PostalgicUITests */,
+			);
+			name = PostalgicUITests;
+			packageProductDependencies = (
+			);
+			productName = PostalgicUITests;
+			productReference = 4436748F2DB3898600F67B00 /* PostalgicUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
-		449D2C0C2D9A5FB600EE1AF1 /* Project object */ = {
+		4436746E2DB3898500F67B00 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 1620;
-				LastUpgradeCheck = 1620;
+				LastSwiftUpdateCheck = 1630;
+				LastUpgradeCheck = 1630;
 				TargetAttributes = {
-					449D2C132D9A5FB600EE1AF1 = {
-						CreatedOnToolsVersion = 16.2;
+					443674752DB3898500F67B00 = {
+						CreatedOnToolsVersion = 16.3;
+					};
+					443674842DB3898600F67B00 = {
+						CreatedOnToolsVersion = 16.3;
+						TestTargetID = 443674752DB3898500F67B00;
+					};
+					4436748E2DB3898600F67B00 = {
+						CreatedOnToolsVersion = 16.3;
+						TestTargetID = 443674752DB3898500F67B00;
 					};
 				};
 			};
-			buildConfigurationList = 449D2C0F2D9A5FB600EE1AF1 /* Build configuration list for PBXProject "Postalgic" */;
+			buildConfigurationList = 443674712DB3898500F67B00 /* Build configuration list for PBXProject "Postalgic" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
 				Base,
 			);
-			mainGroup = 449D2C0B2D9A5FB600EE1AF1;
+			mainGroup = 4436746D2DB3898500F67B00;
 			minimizedProjectReferenceProxies = 1;
 			preferredProjectObjectVersion = 77;
-			productRefGroup = 449D2C152D9A5FB600EE1AF1 /* Products */;
+			productRefGroup = 443674772DB3898500F67B00 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				449D2C132D9A5FB600EE1AF1 /* Postalgic */,
+				443674752DB3898500F67B00 /* Postalgic */,
+				443674842DB3898600F67B00 /* PostalgicTests */,
+				4436748E2DB3898600F67B00 /* PostalgicUITests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		449D2C122D9A5FB600EE1AF1 /* Resources */ = {
+		443674742DB3898500F67B00 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		443674832DB3898600F67B00 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4436748D2DB3898600F67B00 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -128,7 +232,21 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		449D2C102D9A5FB600EE1AF1 /* Sources */ = {
+		443674722DB3898500F67B00 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		443674812DB3898600F67B00 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4436748B2DB3898600F67B00 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -137,64 +255,21 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		443674872DB3898600F67B00 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 443674752DB3898500F67B00 /* Postalgic */;
+			targetProxy = 443674862DB3898600F67B00 /* PBXContainerItemProxy */;
+		};
+		443674912DB3898600F67B00 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 443674752DB3898500F67B00 /* Postalgic */;
+			targetProxy = 443674902DB3898600F67B00 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
-		449D2C2B2D9A5FB700EE1AF1 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 2Y9M69QJKZ;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = Postalgic/Info.plist;
-				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
-				INFOPLIST_KEY_UIMainStoryboardFile = Main;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = net.amiantos.Postalgic;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Debug;
-		};
-		449D2C2C2D9A5FB700EE1AF1 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 2Y9M69QJKZ;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = Postalgic/Info.plist;
-				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
-				INFOPLIST_KEY_UIMainStoryboardFile = Main;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = net.amiantos.Postalgic;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Release;
-		};
-		449D2C2D2D9A5FB700EE1AF1 /* Debug */ = {
+		443674972DB3898600F67B00 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -229,6 +304,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = 2Y9M69QJKZ;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -246,7 +322,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.4;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
@@ -257,7 +333,7 @@
 			};
 			name = Debug;
 		};
-		449D2C2E2D9A5FB700EE1AF1 /* Release */ = {
+		443674982DB3898600F67B00 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -292,6 +368,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = 2Y9M69QJKZ;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -303,7 +380,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.4;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
@@ -313,28 +390,174 @@
 			};
 			name = Release;
 		};
+		4436749A2DB3898600F67B00 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2Y9M69QJKZ;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = net.amiantos.Postalgic;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		4436749B2DB3898600F67B00 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2Y9M69QJKZ;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = net.amiantos.Postalgic;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		4436749D2DB3898600F67B00 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2Y9M69QJKZ;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.4;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = net.amiantos.PostalgicTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Postalgic.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Postalgic";
+			};
+			name = Debug;
+		};
+		4436749E2DB3898600F67B00 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2Y9M69QJKZ;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.4;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = net.amiantos.PostalgicTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Postalgic.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Postalgic";
+			};
+			name = Release;
+		};
+		443674A02DB3898600F67B00 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2Y9M69QJKZ;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = net.amiantos.PostalgicUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = Postalgic;
+			};
+			name = Debug;
+		};
+		443674A12DB3898600F67B00 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2Y9M69QJKZ;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = net.amiantos.PostalgicUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = Postalgic;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		449D2C0F2D9A5FB600EE1AF1 /* Build configuration list for PBXProject "Postalgic" */ = {
+		443674712DB3898500F67B00 /* Build configuration list for PBXProject "Postalgic" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				449D2C2D2D9A5FB700EE1AF1 /* Debug */,
-				449D2C2E2D9A5FB700EE1AF1 /* Release */,
+				443674972DB3898600F67B00 /* Debug */,
+				443674982DB3898600F67B00 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		449D2C2A2D9A5FB700EE1AF1 /* Build configuration list for PBXNativeTarget "Postalgic" */ = {
+		443674992DB3898600F67B00 /* Build configuration list for PBXNativeTarget "Postalgic" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				449D2C2B2D9A5FB700EE1AF1 /* Debug */,
-				449D2C2C2D9A5FB700EE1AF1 /* Release */,
+				4436749A2DB3898600F67B00 /* Debug */,
+				4436749B2DB3898600F67B00 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		4436749C2DB3898600F67B00 /* Build configuration list for PBXNativeTarget "PostalgicTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4436749D2DB3898600F67B00 /* Debug */,
+				4436749E2DB3898600F67B00 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		4436749F2DB3898600F67B00 /* Build configuration list for PBXNativeTarget "PostalgicUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				443674A02DB3898600F67B00 /* Debug */,
+				443674A12DB3898600F67B00 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
-	rootObject = 449D2C0C2D9A5FB600EE1AF1 /* Project object */;
+	rootObject = 4436746E2DB3898500F67B00 /* Project object */;
 }
