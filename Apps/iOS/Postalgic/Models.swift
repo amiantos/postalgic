@@ -39,4 +39,21 @@ final class Post {
         self.primaryLink = primaryLink
         self.createdAt = createdAt
     }
+    
+    var formattedDate: String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .long
+        formatter.timeStyle = .short
+        return formatter.string(from: createdAt)
+    }
+    
+    var urlPath: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy/MM/dd/HHmmss"
+        return formatter.string(from: createdAt)
+    }
+    
+    var displayTitle: String {
+        return title ?? String(content.prefix(50))
+    }
 }

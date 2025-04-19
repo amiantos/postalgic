@@ -27,6 +27,7 @@ struct PostalgicApp: App {
     var body: some Scene {
         WindowGroup {
             BlogsView()
+                .preferredColorScheme(.light)
         }
         .modelContainer(sharedModelContainer)
     }

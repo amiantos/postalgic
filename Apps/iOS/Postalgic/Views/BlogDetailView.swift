@@ -12,6 +12,7 @@ struct BlogDetailView: View {
     @Environment(\.modelContext) private var modelContext
     var blog: Blog
     @State private var showingPostForm = false
+    @State private var showingPublishView = false
     
     var body: some View {
         List {
@@ -43,6 +44,11 @@ struct BlogDetailView: View {
             ToolbarItem(placement: .navigationBarTrailing) {
                 EditButton()
             }
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button(action: { showingPublishView = true }) {
+                    Label("Publish", systemImage: "globe")
+                }
+            }
             ToolbarItem {
                 Button(action: { showingPostForm = true }) {
                     Label("Add Post", systemImage: "plus")
@@ -51,6 +57,9 @@ struct BlogDetailView: View {
         }
         .sheet(isPresented: $showingPostForm) {
             PostFormView(blog: blog)
+        }
+        .sheet(isPresented: $showingPublishView) {
+            PublishBlogView(blog: blog)
         }
     }
     
