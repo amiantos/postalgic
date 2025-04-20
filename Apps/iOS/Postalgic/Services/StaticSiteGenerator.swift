@@ -45,7 +45,7 @@ class StaticSiteGenerator {
         
         // If AWS is configured, publish to S3 and invalidate CloudFront
         if blog.hasAwsConfigured {
-            try await publishToAWS()
+            try publishToAWS()
             return siteDirectory // Return the directory to indicate AWS was used
         } else {
             // Otherwise, zip the site for local sharing
@@ -55,7 +55,7 @@ class StaticSiteGenerator {
         }
     }
     
-    private func publishToAWS() async throws {
+    private func publishToAWS() throws {
         guard let siteDirectory = siteDirectory else { throw SiteGeneratorError.noSiteDirectory }
         guard let region = blog.awsRegion,
               let bucket = blog.awsS3Bucket,
@@ -71,8 +71,8 @@ class StaticSiteGenerator {
             identityPoolId: identityPoolId
         )
         
-        try await publisher.uploadDirectory(siteDirectory)
-        try await publisher.invalidateCache()
+        try publisher.uploadDirectory(siteDirectory)
+        try publisher.invalidateCache()
     }
     
     private func createSiteStructure() throws {

@@ -16,24 +16,34 @@ class AWSPublisher {
     private let bucket: String
     private let distributionId: String
     private let identityPoolId: String
+    private let credentialsProvider: AWSCredentialsProvider
     
     init(region: String, bucket: String, distributionId: String, identityPoolId: String) {
         self.region = region
         self.bucket = bucket
         self.distributionId = distributionId
         self.identityPoolId = identityPoolId
+        
+        self.credentialsProvider = AWSCognitoCredentialsProvider(regionType: .USEast1, identityPoolId: self.identityPoolId)
+        
+        let configuration = AWSServiceConfiguration(
+            region: .USEast1,
+            credentialsProvider: credentialsProvider
+        )
+        AWSServiceManager.default().defaultServiceConfiguration = configuration
+    
     }
     
     func uploadDataToS3(data: Data, bucket: String, key: String, contentType: String) {
         let expression = AWSS3TransferUtilityUploadExpression()
         expression.progressBlock = { (task, progress) in
-            DispatchQueue.main.async {
+            DispatchQueue.main.async(qos:.background) {
                 print("Progress: \(progress.fractionCompleted)")
             }
         }
 
         let completionHandler: AWSS3TransferUtilityUploadCompletionHandlerBlock = { (task, error) in
-            DispatchQueue.main.async {
+            DispatchQueue.main.async(qos:.background) {
                 if let error = error {
                     print("Upload failed: \(error.localizedDescription)")
                 } else {
@@ -63,23 +73,8 @@ class AWSPublisher {
     
     /// Uploads the contents of a directory to an S3 bucket
     /// - Parameter directory: The local directory containing the site files
-    func uploadDirectory(_ directory: URL) async throws {
-        let credentialsProvider = AWSCognitoCredentialsProvider(regionType: .USEast1, identityPoolId: self.identityPoolId)
-        
-        let configuration = AWSServiceConfiguration(
-            region: .USEast1,
-            credentialsProvider: credentialsProvider
-        )
-        AWSServiceManager.default().defaultServiceConfiguration = configuration
-    
-        
-        
-        
-//        // If we get here, authentication was successful
-//        print("📤 AWSPublisher authenticated successfully")
-//        print("📤 Region: \(region)")
-//        print("📤 Bucket: \(bucket)")
-//        
+    func uploadDirectory(_ directory: URL) throws {
+
         // Use file enumeration to upload all files
         let fileManager = FileManager.default
         let enumerator = fileManager.enumerator(at: directory, includingPropertiesForKeys: [.isRegularFileKey], options: [.skipsHiddenFiles])
@@ -132,12 +127,57 @@ class AWSPublisher {
     }
     
     /// Creates a CloudFront cache invalidation for the distribution
-    func invalidateCache() async throws {
-        // If we get here, authentication was successful
+    func invalidateCache() throws {
         print("🔄 AWSPublisher authenticated successfully")
         print("🔄 Distribution ID: \(distributionId)")
-        print("🔄 Would create invalidation for path: /*")
+        
+        let url = URL(string: "https://cloudfront.amazonaws.com/2020-05-31/distribution/\(distributionId)/invalidation")!
+            
+        // 1. Use NSMutableURLRequest directly (not URLRequest)
+        var mutableRequest = NSMutableURLRequest(url: url)
+        mutableRequest.httpMethod = "POST"
+        mutableRequest.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        // 2. Set request body
+        let requestBody: [String: Any] = [
+            "InvalidationBatch": [
+                "Paths": ["Quantity": 1, "Items": ["/*"]],
+                "CallerReference": "unique-ref-\(Date().timeIntervalSince1970)"
+            ]
+        ]
+        mutableRequest.httpBody = try JSONSerialization.data(withJSONObject: requestBody)
+        
+        let signer = AWSSignatureV4Signer(
+            credentialsProvider: credentialsProvider,
+            endpoint: AWSEndpoint(
+                region: .USEast1,
+                serviceName: "cloudfront",
+                url: url
+            )
+        )
+        
+        signer.interceptRequest(mutableRequest).continueWith { task in
+            if let error = task.error {
+                print("⚠️ Signing failed: \(error)")
+                return nil
+            }
+            
+            guard let signedRequest = task.result as? URLRequest else {
+                print("⚠️ Signed request is nil")
+                return nil
+            }
+            
+            URLSession.shared.dataTask(with: signedRequest) { data, response, error in
+                if let error = error {
+                    print("⚠️ Request failed: \(error)")
+                } else if let data = data {
+                    print("✅ Response: \(String(data: data, encoding: .utf8) ?? "")")
+                }
+            }.resume()
+            return nil
+        }
     }
+
     
     /// Determines the appropriate content type for a file based on its extension
     private func contentType(forFileExtension fileExtension: String) -> String {
