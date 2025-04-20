@@ -15,7 +15,7 @@ struct BlogsView: View {
     @State private var blogToEdit: Blog?
     
     var body: some View {
-        NavigationSplitView {
+        NavigationStack {
             List {
                 ForEach(blogs.sorted(by: { $0.createdAt > $1.createdAt })) { blog in
                     NavigationLink {
@@ -57,8 +57,6 @@ struct BlogsView: View {
             .sheet(item: $blogToEdit) { blog in
                 EditBlogView(blog: blog)
             }
-        } detail: {
-            Text("Select a blog")
         }
     }
     
