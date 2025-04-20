@@ -37,8 +37,8 @@ struct BlogDetailView: View {
                         
                         if !post.tags.isEmpty {
                             HStack {
-                                ForEach(post.tags.prefix(3), id: \.self) { tag in
-                                    Text(tag)
+                                ForEach(post.tags.prefix(3)) { tag in
+                                    Text(tag.name)
                                         .font(.caption)
                                         .padding(.horizontal, 6)
                                         .padding(.vertical, 2)
@@ -108,5 +108,5 @@ struct BlogDetailView: View {
 
 #Preview {
     BlogDetailView(blog: Blog(name: "Test Blog", url: "https://example.com"))
-        .modelContainer(for: [Blog.self, Post.self], inMemory: true)
+        .modelContainer(for: [Blog.self, Post.self, Tag.self], inMemory: true)
 }

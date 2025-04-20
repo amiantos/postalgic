@@ -32,8 +32,8 @@ struct PostDetailView: View {
                 if !post.tags.isEmpty {
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack {
-                            ForEach(post.tags, id: \.self) { tag in
-                                Text(tag)
+                            ForEach(post.tags) { tag in
+                                Text(tag.name)
                                     .padding(.horizontal, 10)
                                     .padding(.vertical, 5)
                                     .background(Color.blue.opacity(0.2))
@@ -60,5 +60,5 @@ struct PostDetailView: View {
 
 #Preview {
     PostDetailView(post: Post(title: "Test Post", content: "This is a test post with **bold** and *italic* text."))
-        .modelContainer(for: [Post.self], inMemory: true)
+        .modelContainer(for: [Post.self, Tag.self], inMemory: true)
 }

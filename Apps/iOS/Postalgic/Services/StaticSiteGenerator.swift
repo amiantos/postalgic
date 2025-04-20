@@ -113,14 +113,14 @@ class StaticSiteGenerator {
         let indexPath = siteDirectory.appendingPathComponent("index.html")
         let sortedPosts = blog.posts.sorted { $0.createdAt > $1.createdAt }
         
-        // Get all unique tags
-        var allTags = Set<String>()
+        // Get all unique tags used by this blog's posts
+        var uniqueTags = Set<Tag>()
         for post in blog.posts {
             for tag in post.tags {
-                allTags.insert(tag)
+                uniqueTags.insert(tag)
             }
         }
-        let sortedTags = Array(allTags).sorted()
+        let sortedTags = Array(uniqueTags).sorted { $0.name < $1.name }
         
         // Create tag cloud
         var tagCloudHTML = ""
@@ -135,7 +135,7 @@ class StaticSiteGenerator {
                 let tagCount = blog.posts.filter { $0.tags.contains(tag) }.count
                 let tagSize = min(1.0 + Double(tagCount) * 0.2, 2.0) // Scale tag size based on frequency
                 tagCloudHTML += """
-                    <a href="/tags/\(tag.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? tag).html" class="tag-item" style="font-size: \(tagSize)em;">\(tag) <span class="tag-count">(\(tagCount))</span></a>
+                    <a href="/tags/\(tag.name.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? tag.name).html" class="tag-item" style="font-size: \(tagSize)em;">\(tag.name) <span class="tag-count">(\(tagCount))</span></a>
                 """
             }
             
@@ -155,7 +155,7 @@ class StaticSiteGenerator {
                 """
                 for tag in post.tags {
                     postTagsHTML += """
-                    <a href="/tags/\(tag.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? tag).html" class="tag">\(tag)</a> 
+                    <a href="/tags/\(tag.name.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? tag.name).html" class="tag">\(tag.name)</a> 
                     """
                 }
                 postTagsHTML += "</div>"
@@ -245,7 +245,7 @@ class StaticSiteGenerator {
                 """
                 for tag in post.tags {
                     tagsHTML += """
-                    <a href="/tags/\(tag.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? tag).html" class="tag">\(tag)</a> 
+                    <a href="/tags/\(tag.name.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? tag.name).html" class="tag">\(tag.name)</a> 
                     """
                 }
                 tagsHTML += "</div>"
@@ -460,14 +460,14 @@ class StaticSiteGenerator {
     private func generateTagPages() throws {
         guard let siteDirectory = siteDirectory else { throw SiteGeneratorError.noSiteDirectory }
         
-        // Get all unique tags
-        var allTags = Set<String>()
+        // Get all unique tags used by this blog's posts
+        var uniqueTags = Set<Tag>()
         for post in blog.posts {
             for tag in post.tags {
-                allTags.insert(tag)
+                uniqueTags.insert(tag)
             }
         }
-        let sortedTags = Array(allTags).sorted()
+        let sortedTags = Array(uniqueTags).sorted { $0.name < $1.name }
         
         // Create tag index page
         let tagsIndexPath = siteDirectory.appendingPathComponent("tags.html")
@@ -501,7 +501,7 @@ class StaticSiteGenerator {
         for tag in sortedTags {
             let tagCount = blog.posts.filter { $0.tags.contains(tag) }.count
             tagIndexContent += """
-                        <a href="/tags/\(tag.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? tag).html" class="tag-item">\(tag) <span class="tag-count">(\(tagCount))</span></a>
+                        <a href="/tags/\(tag.name.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? tag.name).html" class="tag-item">\(tag.name) <span class="tag-count">(\(tagCount))</span></a>
             """
         }
         
@@ -524,7 +524,7 @@ class StaticSiteGenerator {
         
         for tag in sortedTags {
             let tagPosts = blog.posts.filter { $0.tags.contains(tag) }.sorted { $0.createdAt > $1.createdAt }
-            let tagPath = tagsDirectory.appendingPathComponent("\(tag.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? tag).html")
+            let tagPath = tagsDirectory.appendingPathComponent("\(tag.name.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? tag.name).html")
             
             var postListHTML = ""
             for post in tagPosts {
@@ -534,9 +534,9 @@ class StaticSiteGenerator {
                     <div class="post-tags">
                         Tags: 
                     """
-                    for postTag in post.tags where postTag != tag {
+                    for postTag in post.tags where postTag.id != tag.id {
                         postTagsHTML += """
-                        <a href="/tags/\(postTag.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? postTag).html" class="tag">\(postTag)</a> 
+                        <a href="/tags/\(postTag.name.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? postTag.name).html" class="tag">\(postTag.name)</a> 
                         """
                     }
                     postTagsHTML += "</div>"
@@ -558,7 +558,7 @@ class StaticSiteGenerator {
             <head>
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>Tag: \(tag) - \(blog.name)</title>
+                <title>Tag: \(tag.name) - \(blog.name)</title>
                 <link rel="stylesheet" href="/css/style.css">
             </head>
             <body>
@@ -575,7 +575,7 @@ class StaticSiteGenerator {
                     </header>
                     
                     <main>
-                        <h1>Posts tagged with "\(tag)"</h1>
+                        <h1>Posts tagged with "\(tag.name)"</h1>
                         <p class="tag-description">\(tagPosts.count) \(tagPosts.count == 1 ? "post" : "posts") with this tag</p>
                         <div class="post-list">
                             \(postListHTML)

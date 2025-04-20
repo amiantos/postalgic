@@ -45,21 +45,35 @@ final class Blog {
 }
 
 @Model
+final class Tag {
+    var name: String
+    var createdAt: Date
+    
+    var posts: [Post] = []
+    
+    init(name: String, createdAt: Date = Date()) {
+        self.name = name
+        self.createdAt = createdAt
+    }
+}
+
+@Model
 final class Post {
     var title: String?
     var content: String
     var primaryLink: String?
     var createdAt: Date
-    var tags: [String] = []
     
     var blog: Blog?
     
-    init(title: String? = nil, content: String, primaryLink: String? = nil, createdAt: Date = Date(), tags: [String] = []) {
+    @Relationship(deleteRule: .nullify, inverse: \Tag.posts)
+    var tags: [Tag] = []
+    
+    init(title: String? = nil, content: String, primaryLink: String? = nil, createdAt: Date = Date()) {
         self.title = title
         self.content = content
         self.primaryLink = primaryLink
         self.createdAt = createdAt
-        self.tags = tags
     }
     
     var formattedDate: String {
@@ -79,7 +93,11 @@ final class Post {
         return title ?? String(content.prefix(50))
     }
     
+    var tagNames: [String] {
+        return tags.map { $0.name }
+    }
+    
     var formattedTags: String {
-        return tags.joined(separator: ", ")
+        return tagNames.joined(separator: ", ")
     }
 }
