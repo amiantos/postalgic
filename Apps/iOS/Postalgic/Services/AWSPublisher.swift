@@ -130,52 +130,6 @@ class AWSPublisher {
     func invalidateCache() throws {
         print("🔄 AWSPublisher authenticated successfully")
         print("🔄 Distribution ID: \(distributionId)")
-        
-        let url = URL(string: "https://cloudfront.amazonaws.com/2020-05-31/distribution/\(distributionId)/invalidation")!
-            
-        // 1. Use NSMutableURLRequest directly (not URLRequest)
-        var mutableRequest = NSMutableURLRequest(url: url)
-        mutableRequest.httpMethod = "POST"
-        mutableRequest.addValue("application/json", forHTTPHeaderField: "Content-Type")
-        
-        // 2. Set request body
-        let requestBody: [String: Any] = [
-            "InvalidationBatch": [
-                "Paths": ["Quantity": 1, "Items": ["/*"]],
-                "CallerReference": "unique-ref-\(Date().timeIntervalSince1970)"
-            ]
-        ]
-        mutableRequest.httpBody = try JSONSerialization.data(withJSONObject: requestBody)
-        
-        let signer = AWSSignatureV4Signer(
-            credentialsProvider: credentialsProvider,
-            endpoint: AWSEndpoint(
-                region: .USEast1,
-                serviceName: "cloudfront",
-                url: url
-            )
-        )
-        
-        signer.interceptRequest(mutableRequest).continueWith { task in
-            if let error = task.error {
-                print("⚠️ Signing failed: \(error)")
-                return nil
-            }
-            
-            guard let signedRequest = task.result as? URLRequest else {
-                print("⚠️ Signed request is nil")
-                return nil
-            }
-            
-            URLSession.shared.dataTask(with: signedRequest) { data, response, error in
-                if let error = error {
-                    print("⚠️ Request failed: \(error)")
-                } else if let data = data {
-                    print("✅ Response: \(String(data: data, encoding: .utf8) ?? "")")
-                }
-            }.resume()
-            return nil
-        }
     }
 
     
