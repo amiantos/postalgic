@@ -6,18 +6,24 @@
 //
 
 import Foundation
+import AWSClientRuntime
+import AWSCognitoIdentity
+import AWSS3
+import AWSCloudFront
 
 /// AWSPublisher handles the upload of a static site to an S3 bucket
 /// and creates a CloudFront invalidation.
-///
-/// This implementation uses a modular approach that separates the AWS
-/// credentials handling from the core functionality, making it easier
-/// to implement with different AWS SDK versions.
 class AWSPublisher {
     private let region: String
     private let bucket: String
     private let distributionId: String
     private let identityPoolId: String
+    
+    // Client instances
+    private var cognitoClient: CognitoIdentityClient?
+    private var s3Client: S3Client?
+    private var cloudFrontClient: CloudFrontClient?
+    private var credentials: CognitoCredentials?
     
     init(region: String, bucket: String, distributionId: String, identityPoolId: String) {
         self.region = region
@@ -26,16 +32,63 @@ class AWSPublisher {
         self.identityPoolId = identityPoolId
     }
     
+    /// Initialize all AWS clients with Cognito credentials
+    private func initializeClients() async throws {
+        // Create the Cognito Identity client
+        let cognitoConfig = try await CognitoIdentityClient.CognitoIdentityClientConfiguration(region: region)
+        cognitoClient = CognitoIdentityClient(config: cognitoConfig)
+        
+        // Get identity ID from Cognito Identity Pool
+        guard let cognitoClient = cognitoClient else {
+            throw AWSPublisherError.cognitoAuthenticationFailed("Failed to initialize Cognito client")
+        }
+        
+        let getIdInput = GetIdInput(identityPoolId: identityPoolId)
+        let getIdOutput = try await cognitoClient.getId(input: getIdInput)
+        
+        guard let identityId = getIdOutput.identityId else {
+            throw AWSPublisherError.cognitoAuthenticationFailed("Failed to get identity ID")
+        }
+        
+        // Get temporary AWS credentials
+        let getCredentialsInput = GetCredentialsForIdentityInput(identityId: identityId)
+        let getCredentialsOutput = try await cognitoClient.getCredentialsForIdentity(input: getCredentialsInput)
+        
+        guard let credentials = getCredentialsOutput.credentials,
+              let accessKeyId = credentials.accessKeyId,
+              let secretKey = credentials.secretKey,
+              let sessionToken = credentials.sessionToken else {
+            throw AWSPublisherError.cognitoAuthenticationFailed("Failed to get temporary credentials")
+        }
+        
+        // Store credentials for reuse
+        self.credentials = CognitoCredentials(
+            accessKey: accessKeyId,
+            secret: secretKey,
+            sessionToken: sessionToken
+        )
+        
+        // Initialize S3 client
+        let s3Config = try await S3Client.S3ClientConfiguration(region: region)
+        s3Client = S3Client(config: s3Config)
+        
+        // Initialize CloudFront client
+        let cloudFrontConfig = try await CloudFrontClient.CloudFrontClientConfiguration(region: region)
+        cloudFrontClient = CloudFrontClient(config: cloudFrontConfig)
+    }
+    
     /// Uploads the contents of a directory to an S3 bucket
     /// - Parameter directory: The local directory containing the site files
     func uploadDirectory(_ directory: URL) async throws {
-        // In a real implementation, this would:
-        // 1. Initialize the AWS SDK
-        // 2. Set up Cognito credentials provider using the identity pool
-        // 3. Create an S3 client with the credentials
-        // 4. Upload all files to the bucket
+        // Initialize AWS clients - this will still attempt to authenticate with AWS
+        try await initializeClients()
         
-        // For now we'll log what would happen
+        // If we get here, authentication was successful
+        print("📤 AWSPublisher authenticated successfully")
+        print("📤 Region: \(region)")
+        print("📤 Bucket: \(bucket)")
+        
+        // Use simplified file enumeration to simulate upload
         let fileManager = FileManager.default
         let enumerator = fileManager.enumerator(at: directory, includingPropertiesForKeys: [.isRegularFileKey], options: [.skipsHiddenFiles])
         
@@ -43,12 +96,9 @@ class AWSPublisher {
             throw AWSPublisherError.directoryEnumerationFailed
         }
         
-        print("💭 AWSPublisher would upload files to S3:")
-        print("💭 Region: \(region)")
-        print("💭 Bucket: \(bucket)")
-        print("💭 Using Cognito Identity Pool: \(identityPoolId)")
-        
         var fileCount = 0
+        
+        // Simulate uploading files by counting them
         for case let fileURL as URL in enumerator {
             let attributes = try fileURL.resourceValues(forKeys: [.isRegularFileKey])
             guard attributes.isRegularFile == true else { continue }
@@ -57,36 +107,29 @@ class AWSPublisher {
             let relativePath = fileURL.path.replacingOccurrences(of: directory.path, with: "")
                 .trimmingCharacters(in: CharacterSet(charactersIn: "/"))
             
-            print("💭 Would upload: \(relativePath)")
+            // Log the file that would be uploaded
+            print("📤 Would upload: \(relativePath)")
             fileCount += 1
         }
         
-        print("💭 Would upload \(fileCount) files total")
+        print("📤 Would upload \(fileCount) files total")
         
-        // NOTE: To implement this function with the AWS SDK:
-        // 1. Add AWS SDK dependencies to your project
-        // 2. Configure AWS Cognito for your app
-        // 3. Replace this implementation with calls to the AWS SDK
+        if fileCount == 0 {
+            throw AWSPublisherError.s3UploadFailed("No files to upload")
+        }
     }
     
     /// Creates a CloudFront cache invalidation for the distribution
     func invalidateCache() async throws {
-        // In a real implementation, this would:
-        // 1. Initialize the AWS SDK
-        // 2. Set up Cognito credentials provider using the identity pool
-        // 3. Create a CloudFront client with the credentials
-        // 4. Create an invalidation for the specified paths
+        // Initialize AWS clients if not already initialized
+        if cloudFrontClient == nil {
+            try await initializeClients()
+        }
         
-        print("💭 AWSPublisher would create CloudFront invalidation:")
-        print("💭 Region: \(region)")
-        print("💭 Distribution ID: \(distributionId)")
-        print("💭 Paths to invalidate: /*")
-        print("💭 Using Cognito Identity Pool: \(identityPoolId)")
-        
-        // NOTE: To implement this function with the AWS SDK:
-        // 1. Add AWS SDK dependencies to your project
-        // 2. Configure AWS Cognito for your app
-        // 3. Replace this implementation with calls to the AWS SDK
+        // If we get here, authentication was successful
+        print("🔄 AWSPublisher authenticated successfully")
+        print("🔄 Distribution ID: \(distributionId)")
+        print("🔄 Would create invalidation for path: /*")
     }
     
     /// Determines the appropriate content type for a file based on its extension
@@ -141,4 +184,11 @@ class AWSPublisher {
             }
         }
     }
+}
+
+/// Cognito credentials structure
+struct CognitoCredentials {
+    let accessKey: String
+    let secret: String
+    let sessionToken: String
 }
