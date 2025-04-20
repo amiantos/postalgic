@@ -50,14 +50,16 @@ final class Post {
     var content: String
     var primaryLink: String?
     var createdAt: Date
+    var tags: [String] = []
     
     var blog: Blog?
     
-    init(title: String? = nil, content: String, primaryLink: String? = nil, createdAt: Date = Date()) {
+    init(title: String? = nil, content: String, primaryLink: String? = nil, createdAt: Date = Date(), tags: [String] = []) {
         self.title = title
         self.content = content
         self.primaryLink = primaryLink
         self.createdAt = createdAt
+        self.tags = tags
     }
     
     var formattedDate: String {
@@ -75,5 +77,9 @@ final class Post {
     
     var displayTitle: String {
         return title ?? String(content.prefix(50))
+    }
+    
+    var formattedTags: String {
+        return tags.joined(separator: ", ")
     }
 }

@@ -40,6 +40,9 @@ class StaticSiteGenerator {
         // Generate archive pages
         try generateArchivePages()
         
+        // Generate tag pages
+        try generateTagPages()
+        
         // Generate error page
         try generateErrorPage()
         
@@ -94,6 +97,12 @@ class StaticSiteGenerator {
             try fileManager.createDirectory(at: cssDirectory, withIntermediateDirectories: true)
         }
         
+        // Create tags directory
+        let tagsDirectory = siteDirectory.appendingPathComponent("tags")
+        if !fileManager.fileExists(atPath: tagsDirectory.path) {
+            try fileManager.createDirectory(at: tagsDirectory, withIntermediateDirectories: true)
+        }
+        
         // We'll create the actual post directories in the generatePostPages method
         // to ensure all directories exist before writing to them
     }
@@ -104,12 +113,59 @@ class StaticSiteGenerator {
         let indexPath = siteDirectory.appendingPathComponent("index.html")
         let sortedPosts = blog.posts.sorted { $0.createdAt > $1.createdAt }
         
+        // Get all unique tags
+        var allTags = Set<String>()
+        for post in blog.posts {
+            for tag in post.tags {
+                allTags.insert(tag)
+            }
+        }
+        let sortedTags = Array(allTags).sorted()
+        
+        // Create tag cloud
+        var tagCloudHTML = ""
+        if !sortedTags.isEmpty {
+            tagCloudHTML = """
+            <div class="tag-cloud">
+                <h2>Tags</h2>
+                <div class="tag-list">
+            """
+            
+            for tag in sortedTags {
+                let tagCount = blog.posts.filter { $0.tags.contains(tag) }.count
+                let tagSize = min(1.0 + Double(tagCount) * 0.2, 2.0) // Scale tag size based on frequency
+                tagCloudHTML += """
+                    <a href="/tags/\(tag.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? tag).html" class="tag-item" style="font-size: \(tagSize)em;">\(tag) <span class="tag-count">(\(tagCount))</span></a>
+                """
+            }
+            
+            tagCloudHTML += """
+                </div>
+            </div>
+            """
+        }
+        
         var postListHTML = ""
         for post in sortedPosts.prefix(10) {
+            var postTagsHTML = ""
+            if !post.tags.isEmpty {
+                postTagsHTML = """
+                <div class="post-tags">
+                    Tags: 
+                """
+                for tag in post.tags {
+                    postTagsHTML += """
+                    <a href="/tags/\(tag.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? tag).html" class="tag">\(tag)</a> 
+                    """
+                }
+                postTagsHTML += "</div>"
+            }
+            
             postListHTML += """
             <div class="post-item">
                 <h2><a href="/\(post.urlPath)/index.html">\(post.displayTitle)</a></h2>
                 <div class="post-date">\(post.formattedDate)</div>
+                \(postTagsHTML)
                 <div class="post-summary">\(String(post.content.prefix(150)))...</div>
             </div>
             """
@@ -132,12 +188,16 @@ class StaticSiteGenerator {
                         <ul>
                             <li><a href="/">Home</a></li>
                             <li><a href="/archives.html">Archives</a></li>
+                            <li><a href="/tags.html">Tags</a></li>
                         </ul>
                     </nav>
                 </header>
                 
                 <main>
+                    \(tagCloudHTML)
+                    
                     <div class="post-list">
+                        <h2>Recent Posts</h2>
                         \(postListHTML)
                     </div>
                 </main>
@@ -177,6 +237,20 @@ class StaticSiteGenerator {
                 """
             }
             
+            var tagsHTML = ""
+            if !post.tags.isEmpty {
+                tagsHTML = """
+                <div class="post-tags">
+                    Tags: 
+                """
+                for tag in post.tags {
+                    tagsHTML += """
+                    <a href="/tags/\(tag.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? tag).html" class="tag">\(tag)</a> 
+                    """
+                }
+                tagsHTML += "</div>"
+            }
+            
             let postHTML = """
             <!DOCTYPE html>
             <html lang="en">
@@ -194,6 +268,7 @@ class StaticSiteGenerator {
                             <ul>
                                 <li><a href="/">Home</a></li>
                                 <li><a href="/archives.html">Archives</a></li>
+                                <li><a href="/tags.html">Tags</a></li>
                             </ul>
                         </nav>
                     </header>
@@ -203,6 +278,7 @@ class StaticSiteGenerator {
                             <h1 class="post-title">\(post.title ?? "")</h1>
                             <div class="post-date">\(post.formattedDate)</div>
                             \(primaryLinkHTML)
+                            \(tagsHTML)
                             <div class="post-content">
                                 \(formattedContent)
                             </div>
@@ -305,6 +381,7 @@ class StaticSiteGenerator {
                             <ul>
                                 <li><a href="/">Home</a></li>
                                 <li><a href="/archives.html">Archives</a></li>
+                                <li><a href="/tags.html">Tags</a></li>
                             </ul>
                         </nav>
                     </header>
@@ -359,6 +436,7 @@ class StaticSiteGenerator {
                         <ul>
                             <li><a href="/">Home</a></li>
                             <li><a href="/archives.html">Archives</a></li>
+                            <li><a href="/tags.html">Tags</a></li>
                         </ul>
                     </nav>
                 </header>
@@ -377,6 +455,143 @@ class StaticSiteGenerator {
         """
         
         try fullArchiveHTML.write(to: archivesPath, atomically: true, encoding: .utf8)
+    }
+    
+    private func generateTagPages() throws {
+        guard let siteDirectory = siteDirectory else { throw SiteGeneratorError.noSiteDirectory }
+        
+        // Get all unique tags
+        var allTags = Set<String>()
+        for post in blog.posts {
+            for tag in post.tags {
+                allTags.insert(tag)
+            }
+        }
+        let sortedTags = Array(allTags).sorted()
+        
+        // Create tag index page
+        let tagsIndexPath = siteDirectory.appendingPathComponent("tags.html")
+        var tagIndexContent = """
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Tags - \(blog.name)</title>
+            <link rel="stylesheet" href="/css/style.css">
+        </head>
+        <body>
+            <div class="container">
+                <header>
+                    <h1><a href="/">\(blog.name)</a></h1>
+                    <nav>
+                        <ul>
+                            <li><a href="/">Home</a></li>
+                            <li><a href="/archives.html">Archives</a></li>
+                            <li><a href="/tags.html">Tags</a></li>
+                        </ul>
+                    </nav>
+                </header>
+                
+                <main>
+                    <h1>All Tags</h1>
+                    <div class="tag-cloud large">
+        """
+        
+        for tag in sortedTags {
+            let tagCount = blog.posts.filter { $0.tags.contains(tag) }.count
+            tagIndexContent += """
+                        <a href="/tags/\(tag.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? tag).html" class="tag-item">\(tag) <span class="tag-count">(\(tagCount))</span></a>
+            """
+        }
+        
+        tagIndexContent += """
+                    </div>
+                </main>
+                
+                <footer>
+                    <p>&copy; \(Calendar.current.component(.year, from: Date())) \(blog.name). Generated with Postalgic.</p>
+                </footer>
+            </div>
+        </body>
+        </html>
+        """
+        
+        try tagIndexContent.write(to: tagsIndexPath, atomically: true, encoding: .utf8)
+        
+        // Create individual tag pages
+        let tagsDirectory = siteDirectory.appendingPathComponent("tags")
+        
+        for tag in sortedTags {
+            let tagPosts = blog.posts.filter { $0.tags.contains(tag) }.sorted { $0.createdAt > $1.createdAt }
+            let tagPath = tagsDirectory.appendingPathComponent("\(tag.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? tag).html")
+            
+            var postListHTML = ""
+            for post in tagPosts {
+                var postTagsHTML = ""
+                if post.tags.count > 1 {  // Don't show tags if there's only the current tag
+                    postTagsHTML = """
+                    <div class="post-tags">
+                        Tags: 
+                    """
+                    for postTag in post.tags where postTag != tag {
+                        postTagsHTML += """
+                        <a href="/tags/\(postTag.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? postTag).html" class="tag">\(postTag)</a> 
+                        """
+                    }
+                    postTagsHTML += "</div>"
+                }
+                
+                postListHTML += """
+                <div class="post-item">
+                    <h2><a href="/\(post.urlPath)/index.html">\(post.displayTitle)</a></h2>
+                    <div class="post-date">\(post.formattedDate)</div>
+                    \(postTagsHTML)
+                    <div class="post-summary">\(String(post.content.prefix(150)))...</div>
+                </div>
+                """
+            }
+            
+            let tagPageHTML = """
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Tag: \(tag) - \(blog.name)</title>
+                <link rel="stylesheet" href="/css/style.css">
+            </head>
+            <body>
+                <div class="container">
+                    <header>
+                        <h1><a href="/">\(blog.name)</a></h1>
+                        <nav>
+                            <ul>
+                                <li><a href="/">Home</a></li>
+                                <li><a href="/archives.html">Archives</a></li>
+                                <li><a href="/tags.html">Tags</a></li>
+                            </ul>
+                        </nav>
+                    </header>
+                    
+                    <main>
+                        <h1>Posts tagged with "\(tag)"</h1>
+                        <p class="tag-description">\(tagPosts.count) \(tagPosts.count == 1 ? "post" : "posts") with this tag</p>
+                        <div class="post-list">
+                            \(postListHTML)
+                        </div>
+                    </main>
+                    
+                    <footer>
+                        <p>&copy; \(Calendar.current.component(.year, from: Date())) \(blog.name). Generated with Postalgic.</p>
+                    </footer>
+                </div>
+            </body>
+            </html>
+            """
+            
+            try tagPageHTML.write(to: tagPath, atomically: true, encoding: .utf8)
+        }
     }
     
     private func generateCSS() throws {
@@ -458,6 +673,10 @@ class StaticSiteGenerator {
             margin-bottom: 40px;
         }
 
+        main h1, main h2 {
+            margin-bottom: 20px;
+        }
+
         /* Post list */
         .post-list {
             margin-bottom: 30px;
@@ -515,6 +734,64 @@ class StaticSiteGenerator {
             word-break: break-all;
         }
 
+        /* Tags */
+        .post-tags {
+            margin: 10px 0;
+            color: #666;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 2px 8px;
+            margin: 0 4px;
+            background-color: #e9f3ff;
+            color: #0066cc;
+            border-radius: 4px;
+            font-size: 0.85em;
+            text-decoration: none;
+        }
+
+        .tag:hover {
+            background-color: #d0e5ff;
+            text-decoration: none;
+        }
+
+        .tag-cloud {
+            margin: 20px 0 30px 0;
+            text-align: center;
+        }
+
+        .tag-cloud.large {
+            margin: 30px 0;
+            line-height: 2.5;
+        }
+
+        .tag-item {
+            display: inline-block;
+            padding: 4px 10px;
+            margin: 5px;
+            background-color: #e9f3ff;
+            color: #0066cc;
+            border-radius: 4px;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .tag-item:hover {
+            background-color: #d0e5ff;
+            transform: translateY(-2px);
+        }
+
+        .tag-count {
+            color: #666;
+            font-size: 0.85em;
+        }
+
+        .tag-description {
+            color: #666;
+            margin-bottom: 20px;
+        }
+
         /* Archives */
         .archive-month {
             margin-bottom: 40px;
@@ -570,6 +847,10 @@ class StaticSiteGenerator {
             
             .archive-month .post-date {
                 margin-bottom: 5px;
+            }
+            
+            .tag-cloud {
+                line-height: 2.2;
             }
         }
         """
@@ -651,6 +932,7 @@ class StaticSiteGenerator {
                         <ul>
                             <li><a href="/">Home</a></li>
                             <li><a href="/archives.html">Archives</a></li>
+                            <li><a href="/tags.html">Tags</a></li>
                         </ul>
                     </nav>
                 </header>

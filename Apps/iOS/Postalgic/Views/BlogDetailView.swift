@@ -22,7 +22,7 @@ struct BlogDetailView: View {
                 NavigationLink {
                     PostDetailView(post: post)
                 } label: {
-                    VStack(alignment: .leading) {
+                    VStack(alignment: .leading, spacing: 4) {
                         if let title = post.title {
                             Text(title)
                                 .font(.headline)
@@ -34,6 +34,24 @@ struct BlogDetailView: View {
                         Text(post.createdAt, format: .dateTime)
                             .font(.caption)
                             .foregroundStyle(.secondary)
+                        
+                        if !post.tags.isEmpty {
+                            HStack {
+                                ForEach(post.tags.prefix(3), id: \.self) { tag in
+                                    Text(tag)
+                                        .font(.caption)
+                                        .padding(.horizontal, 6)
+                                        .padding(.vertical, 2)
+                                        .background(Color.blue.opacity(0.1))
+                                        .cornerRadius(4)
+                                }
+                                if post.tags.count > 3 {
+                                    Text("+\(post.tags.count - 3)")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                        }
                     }
                     .padding(.vertical, 4)
                 }

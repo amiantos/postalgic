@@ -29,6 +29,20 @@ struct PostDetailView: View {
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                 
+                if !post.tags.isEmpty {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack {
+                            ForEach(post.tags, id: \.self) { tag in
+                                Text(tag)
+                                    .padding(.horizontal, 10)
+                                    .padding(.vertical, 5)
+                                    .background(Color.blue.opacity(0.2))
+                                    .cornerRadius(8)
+                            }
+                        }
+                    }
+                }
+                
                 Divider()
                 
                 Text(.init(post.content))
