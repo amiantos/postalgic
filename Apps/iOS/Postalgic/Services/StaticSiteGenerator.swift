@@ -13,82 +13,149 @@ class StaticSiteGenerator {
     private let blog: Blog
     private var siteDirectory: URL?
     private var cssFile: String = """
-    /* Add your custom CSS here */
+    /* Basic reset */
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
     body {
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         line-height: 1.6;
         color: #333;
-        max-width: 800px;
-        margin: 0 auto;
-        padding: 20px;
+        background-color: #f8f8f8;
+        padding: 0;
+        margin: 0;
     }
-    
+
     .container {
         max-width: 800px;
         margin: 0 auto;
         padding: 20px;
+        background-color: white;
+        min-height: 100vh;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     }
-    
+
+    /* Header and Navigation */
     header {
-        margin-bottom: 30px;
-        border-bottom: 1px solid #eee;
-        padding-bottom: 10px;
-    }
-    
-    header h1 {
-        margin: 0;
-    }
-    
-    header h1 a {
-        text-decoration: none;
-        color: #333;
-    }
-    
-    nav ul {
-        display: flex;
-        list-style: none;
-        padding: 0;
-        margin: 10px 0 0 0;
-    }
-    
-    nav ul li {
-        margin-right: 20px;
-    }
-    
-    nav ul li a {
-        text-decoration: none;
-        color: #0066cc;
-    }
-    
-    footer {
-        margin-top: 40px;
-        padding-top: 10px;
-        border-top: 1px solid #eee;
-        font-size: 0.9em;
-        color: #666;
-    }
-    
-    a {
-        color: #0066cc;
-    }
-    
-    .post-item {
         margin-bottom: 30px;
         border-bottom: 1px solid #eee;
         padding-bottom: 20px;
     }
-    
-    .post-date {
-        font-size: 0.9em;
+
+    header h1 {
+        font-size: 2em;
+        margin-bottom: 10px;
+    }
+
+    header h1 a {
+        text-decoration: none;
+        color: #333;
+    }
+
+    nav ul {
+        list-style: none;
+        display: flex;
+        flex-wrap: wrap;
+        padding: 0;
+        margin: 10px 0 0 0;
+    }
+
+    nav ul li {
+        margin-right: 20px;
+        margin-bottom: 5px;
+    }
+
+    nav ul li a {
+        text-decoration: none;
         color: #666;
+        font-weight: 500;
+    }
+
+    nav ul li a:hover {
+        color: #000;
+    }
+
+    /* Main content */
+    main {
+        margin-bottom: 40px;
     }
     
+    main h1, main h2 {
+        margin-bottom: 20px;
+    }
+
+    /* Post list */
+    .post-list {
+        margin-bottom: 30px;
+    }
+
+    .post-item {
+        margin-bottom: 30px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid #eee;
+    }
+
+    .post-item h2 {
+        margin-bottom: 5px;
+    }
+
+    .post-item h2 a {
+        text-decoration: none;
+        color: #333;
+    }
+
+    .post-date {
+        margin-bottom: 10px;
+        color: #666;
+        font-size: 0.9em;
+    }
+
     .post-summary {
         margin-top: 10px;
     }
-    
+
+    /* Post content */
+    .post-title {
+        margin-bottom: 10px;
+    }
+
     .post-content {
-        line-height: 1.7;
+        margin-top: 20px;
+        line-height: 1.8;
+    }
+    
+    .post-content p, .post-content ul, .post-content ol {
+        margin-bottom: 20px;
+    }
+    
+    .post-content h1, .post-content h2, .post-content h3 {
+        margin-top: 30px;
+        margin-bottom: 15px;
+    }
+    
+    .post-content a {
+        color: #0066cc;
+        text-decoration: none;
+    }
+    
+    .post-content a:hover {
+        text-decoration: underline;
+    }
+    
+    .primary-link {
+        margin: 15px 0;
+        padding: 10px;
+        background-color: #f5f5f5;
+        border-radius: 5px;
+    }
+    
+    .primary-link a {
+        color: #0066cc;
+        text-decoration: none;
+        word-break: break-all;
     }
     
     .post-meta {
@@ -102,7 +169,7 @@ class StaticSiteGenerator {
         font-size: 0.9em;
     }
     
-    /* Categories */
+    /* Categories styling - green theme */
     .post-category {
         margin: 10px 0;
         color: #666;
@@ -149,45 +216,82 @@ class StaticSiteGenerator {
         color: #666;
         font-weight: normal;
     }
-
+    
     .category-description {
         color: #666;
         margin-top: 5px;
     }
-
+    
     .category-meta {
         color: #666;
         margin-bottom: 20px;
         font-style: italic;
     }
-    
+
+    /* Tags and tag cloud styling - blue theme */
+    .post-tags {
+        margin: 10px 0;
+        color: #666;
+    }
+
     .tag {
         display: inline-block;
-        background-color: #f0f0f0;
         padding: 2px 8px;
-        margin-right: 5px;
-        border-radius: 3px;
-        color: #555;
+        margin: 0 4px;
+        background-color: #e9f3ff;
+        color: #0066cc;
+        border-radius: 4px;
+        font-size: 0.85em;
+        text-decoration: none;
+    }
+
+    .tag:hover {
+        background-color: #d0e5ff;
         text-decoration: none;
     }
     
-    .tag:hover {
-        background-color: #e0e0e0;
+    .tag-cloud {
+        margin: 20px 0 30px 0;
+        text-align: center;
+        line-height: 2.2;
     }
     
-    .tag-list, .category-list {
-        margin-top: 20px;
+    .tag-cloud.large {
+        margin: 30px 0;
+        line-height: 2.5;
     }
     
-    .tag-item, .category-item {
+    .tag-item {
+        display: inline-block;
+        padding: 4px 10px;
+        margin: 5px;
+        background-color: #e9f3ff;
+        color: #0066cc;
+        border-radius: 4px;
+        text-decoration: none;
+        transition: all 0.2s ease;
+    }
+    
+    .tag-item:hover {
+        background-color: #d0e5ff;
+        transform: translateY(-2px);
+    }
+    
+    .tag-count {
+        color: #666;
+        font-size: 0.85em;
+    }
+    
+    .tag-description {
+        color: #666;
         margin-bottom: 20px;
     }
     
-    .tag-count, .category-count {
-        font-size: 0.8em;
-        color: #666;
+    .tag-list {
+        margin-top: 20px;
     }
-    
+
+    /* Archive pages */
     .archive-year {
         margin-top: 30px;
         margin-bottom: 10px;
@@ -196,16 +300,131 @@ class StaticSiteGenerator {
     }
     
     .archive-month {
-        margin-top: 20px;
+        margin-bottom: 40px;
+    }
+    
+    .archive-month h2 {
+        margin-bottom: 15px;
+        padding-bottom: 5px;
+        border-bottom: 1px solid #eee;
+    }
+    
+    .archive-month ul {
+        list-style: none;
+    }
+    
+    .archive-month li {
         margin-bottom: 10px;
-        font-size: 1.2em;
-        font-weight: bold;
+        display: flex;
+        flex-wrap: wrap;
+    }
+    
+    .archive-month .post-date {
+        min-width: 170px;
+        margin-right: 10px;
     }
     
     .archive-date {
         display: inline-block;
         width: 120px;
         color: #666;
+    }
+    
+    .archive-month a {
+        text-decoration: none;
+        color: #333;
+    }
+    
+    .archive-month a:hover {
+        text-decoration: underline;
+    }
+    
+    /* Error page styling */
+    .error-container {
+        text-align: center;
+        padding: 50px 0;
+    }
+    
+    .error-code {
+        font-size: 6rem;
+        font-weight: bold;
+        margin-bottom: 10px;
+        color: #d9534f;
+    }
+    
+    .error-message {
+        font-size: 2rem;
+        margin-bottom: 30px;
+    }
+    
+    .back-button {
+        display: inline-block;
+        padding: 10px 20px;
+        background-color: #0275d8;
+        color: white;
+        text-decoration: none;
+        border-radius: 5px;
+        font-weight: bold;
+        transition: background-color 0.3s;
+    }
+    
+    .back-button:hover {
+        background-color: #025aa5;
+    }
+
+    /* Footer */
+    footer {
+        margin-top: 40px;
+        padding-top: 20px;
+        border-top: 1px solid #eee;
+        font-size: 0.9em;
+        color: #666;
+    }
+    
+    /* Responsive design with media queries */
+    @media (max-width: 768px) {
+        .container {
+            padding: 15px;
+        }
+        
+        header h1 {
+            font-size: 1.8em;
+        }
+        
+        nav ul {
+            flex-direction: row;
+            flex-wrap: wrap;
+        }
+        
+        nav ul li {
+            margin-bottom: 5px;
+        }
+        
+        .archive-month li {
+            flex-direction: column;
+        }
+        
+        .archive-month .post-date {
+            margin-bottom: 5px;
+        }
+        
+        .tag-cloud {
+            line-height: 2.2;
+        }
+        
+        .post-title {
+            font-size: 1.8em;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .container {
+            padding: 10px;
+        }
+        
+        header h1 {
+            font-size: 1.6em;
+        }
     }
     """
     
