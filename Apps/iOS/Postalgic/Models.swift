@@ -18,7 +18,8 @@ final class Blog {
     var awsRegion: String?
     var awsS3Bucket: String?
     var awsCloudFrontDistId: String?
-    var awsIdentityPoolId: String?
+    var awsAccessKeyId: String?
+    var awsSecretAccessKey: String?
     
     @Relationship(deleteRule: .cascade, inverse: \Post.blog)
     var posts: [Post] = []
@@ -36,8 +37,10 @@ final class Blog {
                !awsS3Bucket!.isEmpty && 
                awsCloudFrontDistId != nil && 
                !awsCloudFrontDistId!.isEmpty && 
-               awsIdentityPoolId != nil && 
-               !awsIdentityPoolId!.isEmpty
+               awsAccessKeyId != nil && 
+               !awsAccessKeyId!.isEmpty && 
+               awsSecretAccessKey != nil && 
+               !awsSecretAccessKey!.isEmpty
     }
 }
 

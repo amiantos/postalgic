@@ -15,17 +15,19 @@ class AWSPublisher {
     private let region: String
     private let bucket: String
     private let distributionId: String
-    private let identityPoolId: String
+    private let accessKeyId: String
+    private let secretAccessKey: String
     private let credentialsProvider: AWSCredentialsProvider
     private let configuration: AWSServiceConfiguration
     
-    init(region: String, bucket: String, distributionId: String, identityPoolId: String) {
+    init(region: String, bucket: String, distributionId: String, accessKeyId: String, secretAccessKey: String) {
         self.region = region
         self.bucket = bucket
         self.distributionId = distributionId
-        self.identityPoolId = identityPoolId
+        self.accessKeyId = accessKeyId
+        self.secretAccessKey = secretAccessKey
         
-        self.credentialsProvider = AWSStaticCredentialsProvider(accessKey: "", secretKey: "")
+        self.credentialsProvider = AWSStaticCredentialsProvider(accessKey: accessKeyId, secretKey: secretAccessKey)
         
         self.configuration = AWSServiceConfiguration(
             region: .USEast1,
@@ -250,7 +252,7 @@ class AWSPublisher {
         case directoryEnumerationFailed
         case s3UploadFailed(String)
         case cloudFrontInvalidationFailed(String)
-        case cognitoAuthenticationFailed(String)
+        case authenticationFailed(String)
         
         var localizedDescription: String {
             switch self {
@@ -260,16 +262,9 @@ class AWSPublisher {
                 return "S3 upload failed: \(message)"
             case .cloudFrontInvalidationFailed(let message):
                 return "CloudFront invalidation failed: \(message)"
-            case .cognitoAuthenticationFailed(let message):
-                return "Failed to get Cognito credentials: \(message)"
+            case .authenticationFailed(let message):
+                return "AWS authentication failed: \(message)"
             }
         }
     }
-}
-
-/// Cognito credentials structure
-struct CognitoCredentials {
-    let accessKey: String
-    let secret: String
-    let sessionToken: String
 }

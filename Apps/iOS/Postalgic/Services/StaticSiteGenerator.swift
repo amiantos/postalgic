@@ -60,7 +60,8 @@ class StaticSiteGenerator {
         guard let region = blog.awsRegion,
               let bucket = blog.awsS3Bucket,
               let distId = blog.awsCloudFrontDistId,
-              let identityPoolId = blog.awsIdentityPoolId else {
+              let accessKeyId = blog.awsAccessKeyId,
+              let secretAccessKey = blog.awsSecretAccessKey else {
             throw SiteGeneratorError.missingAWSCredentials
         }
         
@@ -68,7 +69,8 @@ class StaticSiteGenerator {
             region: region,
             bucket: bucket,
             distributionId: distId,
-            identityPoolId: identityPoolId
+            accessKeyId: accessKeyId,
+            secretAccessKey: secretAccessKey
         )
         
         try publisher.uploadDirectory(siteDirectory)

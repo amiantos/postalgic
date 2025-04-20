@@ -95,3 +95,4 @@ docker.local.env
 /venv
 .env
 __pycache__
+**/CLAUDE.local.md

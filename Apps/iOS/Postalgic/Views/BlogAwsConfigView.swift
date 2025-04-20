@@ -67,17 +67,24 @@ struct BlogAwsConfigView: View {
                 }
                 
                 Section(
-                    header: Text("AWS Cognito Identity Pool"), 
-                    footer: Text("The Identity Pool provides secure, temporary AWS credentials with limited permissions to access your S3 bucket and CloudFront distribution.")
+                    header: Text("AWS Credentials"), 
+                    footer: Text("Your AWS access keys provide secure access to your S3 bucket and CloudFront distribution. Keep these secure and never share them publicly.")
                 ) {
-                    TextField("Cognito Identity Pool ID", text: Binding(
-                        get: { blog.awsIdentityPoolId ?? "" },
-                        set: { blog.awsIdentityPoolId = $0.isEmpty ? nil : $0 }
+                    TextField("AWS Access Key ID", text: Binding(
+                        get: { blog.awsAccessKeyId ?? "" },
+                        set: { blog.awsAccessKeyId = $0.isEmpty ? nil : $0 }
                     ))
                     .autocapitalization(.none)
                     .disableAutocorrection(true)
                     
-                    Link("How to create an Identity Pool", destination: URL(string: "https://docs.aws.amazon.com/cognito/latest/developerguide/tutorial-create-identity-pool.html")!)
+                    SecureField("AWS Secret Access Key", text: Binding(
+                        get: { blog.awsSecretAccessKey ?? "" },
+                        set: { blog.awsSecretAccessKey = $0.isEmpty ? nil : $0 }
+                    ))
+                    .autocapitalization(.none)
+                    .disableAutocorrection(true)
+                    
+                    Link("How to create AWS access keys", destination: URL(string: "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html")!)
                 }
                 
                 Section(footer: Text("You can remove AWS configuration at any time.")) {
@@ -86,7 +93,8 @@ struct BlogAwsConfigView: View {
                         blog.awsRegion = nil
                         blog.awsS3Bucket = nil
                         blog.awsCloudFrontDistId = nil
-                        blog.awsIdentityPoolId = nil
+                        blog.awsAccessKeyId = nil
+                        blog.awsSecretAccessKey = nil
                     }) {
                         Text("Clear AWS Configuration")
                             .foregroundColor(.red)
@@ -99,9 +107,9 @@ struct BlogAwsConfigView: View {
                         
                         Text("2. Create a CloudFront distribution pointing to your S3 bucket")
                         
-                        Text("3. Create a Cognito Identity Pool with unauthenticated access")
+                        Text("3. Create an IAM user with programmatic access")
                         
-                        Text("4. Add IAM permissions to the Identity Pool's unauthenticated role that allow:")
+                        Text("4. Add IAM permissions to the user that allow:")
                             .padding(.bottom, 5)
                         
                         Text("• s3:PutObject for your bucket")
@@ -109,6 +117,8 @@ struct BlogAwsConfigView: View {
                         
                         Text("• cloudfront:CreateInvalidation for your distribution")
                             .padding(.leading)
+                        
+                        Text("5. Generate access keys for the IAM user and enter them above")
                     }
                     .font(.callout)
                 }

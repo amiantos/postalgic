@@ -28,7 +28,7 @@ struct PublishBlogView: View {
                 .fontWeight(.bold)
             
             if blog.hasAwsConfigured {
-                Text("Publishing will generate a static website from all your blog posts and securely upload it to your AWS S3 bucket using temporary credentials from Cognito. A CloudFront invalidation will be created to ensure your content is served fresh.")
+                Text("Publishing will generate a static website from all your blog posts and securely upload it to your AWS S3 bucket using your AWS access keys. A CloudFront invalidation will be created to ensure your content is served fresh.")
                     .multilineTextAlignment(.center)
                     .padding(.horizontal)
             } else {
@@ -48,10 +48,10 @@ struct PublishBlogView: View {
                             .font(.headline)
                         
                         if blog.hasAwsConfigured {
-                            Text("Using Cognito for secure deployment")
+                            Text("Using AWS access keys for secure deployment")
                                 .font(.caption)
                         } else {
-                            Text("Set up secure AWS deployment with Cognito")
+                            Text("Set up secure AWS deployment with AWS credentials")
                                 .font(.caption)
                         }
                     }
@@ -168,7 +168,7 @@ struct PublishBlogView: View {
             Button("OK", role: .cancel) {}
         } message: {
             if blog.hasAwsConfigured {
-                Text("Your site has been successfully published to AWS using secure temporary credentials from Cognito. The CloudFront invalidation has been created.")
+                Text("Your site has been successfully published to AWS using your access keys. The CloudFront invalidation has been created.")
             } else {
                 Text("Your site has been successfully generated. You can now share the ZIP file.")
             }
