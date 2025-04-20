@@ -1,7 +1,7 @@
 {
   "images" : [
     {
-      "filename" : "Postalgic Icon-7.png",
+      "filename" : "Postalgic Icon-10.png",
       "idiom" : "universal",
       "platform" : "ios",
       "size" : "1024x1024"
@@ -13,6 +13,7 @@
           "value" : "dark"
         }
       ],
+      "filename" : "Postalgic Icon-15.png",
       "idiom" : "universal",
       "platform" : "ios",
       "size" : "1024x1024"
@@ -24,6 +25,7 @@
           "value" : "tinted"
         }
       ],
+      "filename" : "Postalgic Icon-14.png",
       "idiom" : "universal",
       "platform" : "ios",
       "size" : "1024x1024"
