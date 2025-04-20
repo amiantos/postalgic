@@ -17,6 +17,7 @@ class AWSPublisher {
     private let distributionId: String
     private let identityPoolId: String
     private let credentialsProvider: AWSCredentialsProvider
+    private let configuration: AWSServiceConfiguration
     
     init(region: String, bucket: String, distributionId: String, identityPoolId: String) {
         self.region = region
@@ -24,9 +25,9 @@ class AWSPublisher {
         self.distributionId = distributionId
         self.identityPoolId = identityPoolId
         
-        self.credentialsProvider = AWSCognitoCredentialsProvider(regionType: .USEast1, identityPoolId: self.identityPoolId)
+        self.credentialsProvider = AWSStaticCredentialsProvider(accessKey: "", secretKey: "")
         
-        let configuration = AWSServiceConfiguration(
+        self.configuration = AWSServiceConfiguration(
             region: .USEast1,
             credentialsProvider: credentialsProvider
         )
@@ -130,6 +131,85 @@ class AWSPublisher {
     func invalidateCache() throws {
         print("🔄 AWSPublisher authenticated successfully")
         print("🔄 Distribution ID: \(distributionId)")
+        
+        // Create the invalidation JSON payload
+        let timestamp = ISO8601DateFormatter().string(from: Date())
+        let callerReference = "postalgic-\(timestamp)"
+        
+        // Create the request
+        let cloudFrontHost = "cloudfront.amazonaws.com"
+        let endpoint = URL(string: "https://\(cloudFrontHost)/2020-05-31/distribution/\(distributionId)/invalidation")!
+        var request = NSMutableURLRequest(url: endpoint)
+        request.httpMethod = "POST"
+        request.setValue("application/x-amz-json-1.0", forHTTPHeaderField: "Content-Type")
+        request.httpBody = """
+                             <InvalidationBatch xmlns="http://cloudfront.amazonaws.com/doc/2020-05-31/">
+                                <CallerReference>"\(callerReference)"</CallerReference>
+                                <Paths>
+                                   <Items>
+                                      <Path>/*</Path>
+                                   </Items>
+                                   <Quantity>1</Quantity>
+                                </Paths>
+                             </InvalidationBatch>
+        """.data(using: .utf8)
+        
+        // Sign the request using AWSSignatureV4Signer
+        let thing = AWSEndpoint(region: .USEast1, serviceName: "cloudfront", url: endpoint)!
+        let signer = AWSSignatureV4Signer(credentialsProvider: self.credentialsProvider, endpoint: thing)
+        let baseInterceptor = AWSNetworkingRequestInterceptor(userAgent: self.configuration.userAgent)
+        baseInterceptor?.interceptRequest(request)
+        signer.interceptRequest(request)
+        
+        // Create a task to send the request
+        let semaphore = DispatchSemaphore(value: 0)
+        var invalidationError: Error?
+        var invalidationId: String?
+        
+        let task = URLSession.shared.dataTask(with: request as URLRequest) { data, response, error in
+            defer { semaphore.signal() }
+            
+            if let error = error {
+                invalidationError = AWSPublisherError.cloudFrontInvalidationFailed(error.localizedDescription)
+                return
+            }
+            
+            guard let httpResponse = response as? HTTPURLResponse else {
+                invalidationError = AWSPublisherError.cloudFrontInvalidationFailed("Invalid response")
+                return
+            }
+            
+            if httpResponse.statusCode == 201 || httpResponse.statusCode == 200 {
+                // Successfully created invalidation
+                if let data = data, let jsonString = String(data: data, encoding: .utf8) {
+                    print("🔄 CloudFront invalidation successful: \(jsonString)")
+                    // Try to extract the invalidation ID if needed
+                    if let jsonData = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                       let invalidation = jsonData["Invalidation"] as? [String: Any],
+                       let id = invalidation["Id"] as? String {
+                        invalidationId = id
+                    }
+                }
+            } else {
+                // Handle error
+                if let data = data, let errorString = String(data: data, encoding: .utf8) {
+                    print("HTTP \(httpResponse.statusCode): \(errorString)")
+                    invalidationError = AWSPublisherError.cloudFrontInvalidationFailed("HTTP \(httpResponse.statusCode): \(errorString)")
+                } else {
+                    print("HTTP \(httpResponse.statusCode)")
+                    invalidationError = AWSPublisherError.cloudFrontInvalidationFailed("HTTP \(httpResponse.statusCode)")
+                }
+            }
+        }
+        
+        task.resume()
+//        _ = semaphore.wait(timeout: .distantFuture)
+        
+        if let error = invalidationError {
+            throw error
+        }
+        
+        print("🔄 CloudFront invalidation created: ID \(invalidationId ?? "unknown")")
     }
 
     
