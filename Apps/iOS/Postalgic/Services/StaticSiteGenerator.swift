@@ -6,98 +6,350 @@
 //
 
 import Foundation
-import SwiftData
 import ZIPFoundation
 
+/// StaticSiteGenerator handles the generation of a static site from a Blog model
 class StaticSiteGenerator {
     private let blog: Blog
-    private let fileManager = FileManager.default
     private var siteDirectory: URL?
+    private var cssFile: String = """
+    /* Base styles */
+    :root {
+        --primary-color: #4a5568;
+        --accent-color: #3182ce;
+        --background-color: #ffffff;
+        --text-color: #2d3748;
+        --light-gray: #edf2f7;
+        --medium-gray: #a0aec0;
+        --dark-gray: #4a5568;
+        --tag-bg: #ebf8ff;
+        --tag-color: #2b6cb0;
+        --category-bg: #f0fff4;
+        --category-color: #2f855a;
+    }
     
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+    }
+    
+    body {
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        line-height: 1.6;
+        color: var(--text-color);
+        background-color: var(--background-color);
+    }
+    
+    a {
+        color: var(--accent-color);
+        text-decoration: none;
+    }
+    
+    a:hover {
+        text-decoration: underline;
+    }
+    
+    /* Container */
+    .container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    
+    @media (min-width: 769px) {
+        body {
+            background-color: #f7fafc;
+        }
+        
+        .container {
+            margin-top: 30px;
+            margin-bottom: 30px;
+            background-color: var(--background-color);
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
+        }
+    }
+    
+    /* Header */
+    header {
+        margin-bottom: 30px;
+        border-bottom: 1px solid var(--light-gray);
+        padding-bottom: 20px;
+    }
+    
+    header h1 {
+        margin-bottom: 15px;
+    }
+    
+    header h1 a {
+        color: var(--primary-color);
+        text-decoration: none;
+    }
+    
+    nav ul {
+        display: flex;
+        list-style: none;
+        gap: 20px;
+    }
+    
+    nav a {
+        font-weight: 500;
+    }
+    
+    /* Main */
+    main {
+        margin-bottom: 30px;
+    }
+    
+    /* Posts */
+    .post-list {
+        display: flex;
+        flex-direction: column;
+        gap: 30px;
+    }
+    
+    .post-item {
+        border-bottom: 1px solid var(--light-gray);
+        padding-bottom: 20px;
+    }
+    
+    .post-item h2 {
+        margin-bottom: 5px;
+    }
+    
+    .post-date {
+        color: var(--medium-gray);
+        font-size: 0.9rem;
+        margin-bottom: 10px;
+    }
+    
+    .post-tags, .post-category {
+        margin: 10px 0;
+        font-size: 0.9rem;
+    }
+    
+    .post-summary {
+        margin-top: 10px;
+    }
+    
+    /* Tags */
+    .tag {
+        display: inline-block;
+        background-color: var(--tag-bg);
+        color: var(--tag-color);
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        margin-right: 5px;
+    }
+    
+    .tag:hover {
+        background-color: var(--tag-color);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .tag-list, .category-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 20px;
+        margin-top: 20px;
+    }
+    
+    .tag-item, .category-item {
+        background-color: var(--light-gray);
+        padding: 15px;
+        border-radius: 4px;
+    }
+    
+    .tag-count, .category-count {
+        font-size: 0.8rem;
+        color: var(--medium-gray);
+        font-weight: normal;
+    }
+    
+    .tag-meta, .category-meta {
+        color: var(--medium-gray);
+        font-style: italic;
+        margin-bottom: 20px;
+    }
+    
+    /* Categories */
+    .post-category a {
+        color: var(--category-color);
+        background-color: var(--category-bg);
+        padding: 3px 8px;
+        border-radius: 4px;
+    }
+    
+    .post-category a:hover {
+        background-color: var(--category-color);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .category-description {
+        margin-top: 10px;
+        font-size: 0.9rem;
+    }
+    
+    /* Article */
+    article {
+        margin-bottom: 40px;
+    }
+    
+    article h1 {
+        margin-bottom: 15px;
+    }
+    
+    .post-meta {
+        margin-bottom: 20px;
+    }
+    
+    .post-content {
+        line-height: 1.8;
+    }
+    
+    .post-content p, .post-content ul, .post-content ol {
+        margin-bottom: 1.2em;
+    }
+    
+    /* Archives */
+    .archive-year {
+        font-size: 1.5rem;
+        font-weight: bold;
+        margin: 30px 0 10px;
+        color: var(--dark-gray);
+    }
+    
+    .archive-month {
+        font-size: 1.2rem;
+        margin: 20px 0 10px;
+        color: var(--dark-gray);
+    }
+    
+    .archive-date {
+        color: var(--medium-gray);
+        display: inline-block;
+        width: 100px;
+    }
+    
+    /* Footer */
+    footer {
+        border-top: 1px solid var(--light-gray);
+        padding-top: 20px;
+        color: var(--medium-gray);
+        font-size: 0.9rem;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .container {
+            padding: 15px;
+        }
+        
+        nav ul {
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .tag-list, .category-list {
+            grid-template-columns: 1fr;
+        }
+    }
+    """
+    
+    /// Initializes a StaticSiteGenerator with a Blog model
+    /// - Parameter blog: The Blog to generate a site for
     init(blog: Blog) {
         self.blog = blog
     }
     
-    func generateSite() async throws -> URL {
-        // Create temporary directory for site
-        let tempDirectory = fileManager.temporaryDirectory
-        let siteDirectoryName = "\(blog.name.filter { $0.isLetter || $0.isNumber })-\(Date().timeIntervalSince1970)"
-        let siteDirectory = tempDirectory.appendingPathComponent(siteDirectoryName)
+    /// Enum representing errors that can occur during site generation
+    enum SiteGeneratorError: Error, LocalizedError {
+        case noSiteDirectory
+        case zipCreationFailed
+        case awsPublishingFailed(String)
         
+        var errorDescription: String? {
+            switch self {
+            case .noSiteDirectory:
+                return "Failed to create site directory"
+            case .zipCreationFailed:
+                return "Failed to create ZIP file of the site"
+            case .awsPublishingFailed(let message):
+                return "AWS publishing failed: \(message)"
+            }
+        }
+    }
+    
+    /// Generates a static site for the blog
+    /// - Returns: URL to the generated ZIP file if not publishing to AWS
+    /// - Throws: SiteGeneratorError
+    func generateSite() async throws -> URL? {
+        // Create a temporary directory for the site
+        let tempDirectory = FileManager.default.temporaryDirectory
+        let siteDirectory = tempDirectory.appendingPathComponent(UUID().uuidString)
+        
+        try FileManager.default.createDirectory(at: siteDirectory, withIntermediateDirectories: true)
         self.siteDirectory = siteDirectory
         
-        try fileManager.createDirectory(at: siteDirectory, withIntermediateDirectories: true)
+        print("📝 Generating site in \(siteDirectory.path)")
         
-        // Create site structure
-        try createSiteStructure()
-        
-        // Generate index page
-        try generateIndexPage()
-        
-        // Generate post pages
-        try generatePostPages()
-        
-        // Generate archive pages
-        try generateArchivePages()
-        
-        // Generate error page
-        try generateErrorPage()
-        
-        // Generate CSS
-        try generateCSS()
-        
-        // If AWS is configured, publish to S3 and invalidate CloudFront
-        if blog.hasAwsConfigured {
-            try publishToAWS()
-            return siteDirectory // Return the directory to indicate AWS was used
-        } else {
-            // Otherwise, zip the site for local sharing
-            let zipURL = tempDirectory.appendingPathComponent("\(siteDirectoryName).zip")
-            try zipSite(to: zipURL)
-            return zipURL
-        }
-    }
-    
-    private func publishToAWS() throws {
-        guard let siteDirectory = siteDirectory else { throw SiteGeneratorError.noSiteDirectory }
-        guard let region = blog.awsRegion,
-              let bucket = blog.awsS3Bucket,
-              let distId = blog.awsCloudFrontDistId,
-              let accessKeyId = blog.awsAccessKeyId,
-              let secretAccessKey = blog.awsSecretAccessKey else {
-            throw SiteGeneratorError.missingAWSCredentials
-        }
-        
-        let publisher = AWSPublisher(
-            region: region,
-            bucket: bucket,
-            distributionId: distId,
-            accessKeyId: accessKeyId,
-            secretAccessKey: secretAccessKey
-        )
-        
-        try publisher.uploadDirectory(siteDirectory)
-        try publisher.invalidateCache()
-    }
-    
-    private func createSiteStructure() throws {
-        guard let siteDirectory = siteDirectory else { throw SiteGeneratorError.noSiteDirectory }
-        
-        // Create main site directory if it doesn't exist
-        if !fileManager.fileExists(atPath: siteDirectory.path) {
-            try fileManager.createDirectory(at: siteDirectory, withIntermediateDirectories: true)
-        }
-        
-        // Create CSS directory
+        // Create CSS directory and file
         let cssDirectory = siteDirectory.appendingPathComponent("css")
-        if !fileManager.fileExists(atPath: cssDirectory.path) {
-            try fileManager.createDirectory(at: cssDirectory, withIntermediateDirectories: true)
-        }
+        try FileManager.default.createDirectory(at: cssDirectory, withIntermediateDirectories: true)
+        try self.cssFile.write(to: cssDirectory.appendingPathComponent("style.css"), atomically: true, encoding: .utf8)
         
-        // We'll create the actual post directories in the generatePostPages method
-        // to ensure all directories exist before writing to them
+        // Generate site content
+        try generateIndexPage()
+        try generatePostPages()
+        try generateArchivesPage()
+        try generateTagPages()
+        try generateCategoryPages()
+        
+        // If AWS is configured, publish to AWS
+        if blog.hasAwsConfigured {
+            print("🚀 Publishing to AWS S3...")
+            do {
+                let publisher = AWSPublisher(
+                    region: blog.awsRegion!,
+                    bucket: blog.awsS3Bucket!,
+                    distributionId: blog.awsCloudFrontDistId!,
+                    accessKeyId: blog.awsAccessKeyId!,
+                    secretAccessKey: blog.awsSecretAccessKey!
+                )
+                try publisher.uploadDirectory(siteDirectory)
+                
+                // Try to invalidate CloudFront cache
+                try publisher.invalidateCache()
+                
+                return nil // No ZIP to return when publishing to AWS
+            } catch {
+                throw SiteGeneratorError.awsPublishingFailed(error.localizedDescription)
+            }
+        } else {
+            // Create ZIP archive
+            let zipURL = tempDirectory.appendingPathComponent("\(blog.name.replacingOccurrences(of: " ", with: "-"))-site.zip")
+            
+            // Remove existing ZIP if it exists
+            if FileManager.default.fileExists(atPath: zipURL.path) {
+                try FileManager.default.removeItem(at: zipURL)
+            }
+            
+            do {
+                try FileManager.default.zipItem(at: siteDirectory, to: zipURL, shouldKeepParent: false)
+                print("📦 Site ZIP created at \(zipURL.path)")
+                return zipURL
+            } catch {
+                print("❌ Failed to create ZIP: \(error.localizedDescription)")
+                throw SiteGeneratorError.zipCreationFailed
+            }
+        }
     }
     
+    /// Generates the index page (home page) of the site
     private func generateIndexPage() throws {
         guard let siteDirectory = siteDirectory else { throw SiteGeneratorError.noSiteDirectory }
         
@@ -105,17 +357,43 @@ class StaticSiteGenerator {
         let sortedPosts = blog.posts.sorted { $0.createdAt > $1.createdAt }
         
         var postListHTML = ""
-        for post in sortedPosts.prefix(10) {
+        for post in sortedPosts {
+            var postTagsHTML = ""
+            var postCategoryHTML = ""
+            
+            if !post.tags.isEmpty {
+                postTagsHTML = """
+                <div class="post-tags">
+                    Tags: 
+                """
+                for tag in post.tags {
+                    postTagsHTML += """
+                    <a href="/tags/\(tag.name.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? tag.name)/" class="tag">\(tag.name)</a> 
+                    """
+                }
+                postTagsHTML += "</div>"
+            }
+            
+            if let category = post.category {
+                postCategoryHTML = """
+                <div class="post-category">
+                    Category: <a href="/categories/\(category.name.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? category.name)/">\(category.name)</a>
+                </div>
+                """
+            }
+            
             postListHTML += """
             <div class="post-item">
                 <h2><a href="/\(post.urlPath)/index.html">\(post.displayTitle)</a></h2>
                 <div class="post-date">\(post.formattedDate)</div>
+                \(postCategoryHTML)
+                \(postTagsHTML)
                 <div class="post-summary">\(String(post.content.prefix(150)))...</div>
             </div>
             """
         }
         
-        let indexHTML = """
+        let indexContent = """
         <!DOCTYPE html>
         <html lang="en">
         <head>
@@ -131,7 +409,9 @@ class StaticSiteGenerator {
                     <nav>
                         <ul>
                             <li><a href="/">Home</a></li>
-                            <li><a href="/archives.html">Archives</a></li>
+                            <li><a href="/archives/">Archives</a></li>
+                            <li><a href="/tags/">Tags</a></li>
+                            <li><a href="/categories/">Categories</a></li>
                         </ul>
                     </nav>
                 </header>
@@ -150,34 +430,44 @@ class StaticSiteGenerator {
         </html>
         """
         
-        try indexHTML.write(to: indexPath, atomically: true, encoding: .utf8)
+        try indexContent.write(to: indexPath, atomically: true, encoding: .utf8)
     }
     
+    /// Generates individual pages for each post
     private func generatePostPages() throws {
         guard let siteDirectory = siteDirectory else { throw SiteGeneratorError.noSiteDirectory }
         
-        let sortedPosts = blog.posts.sorted { $0.createdAt > $1.createdAt }
-        
-        for post in sortedPosts {
+        for post in blog.posts {
             let postDirectory = siteDirectory.appendingPathComponent(post.urlPath)
-            
-            // Make sure the post directory exists
-            try fileManager.createDirectory(at: postDirectory, withIntermediateDirectories: true)
+            try FileManager.default.createDirectory(at: postDirectory, withIntermediateDirectories: true)
             
             let postPath = postDirectory.appendingPathComponent("index.html")
             
-            let formattedContent = formatMarkdown(post.content)
+            var postTagsHTML = ""
+            var postCategoryHTML = ""
             
-            var primaryLinkHTML = ""
-            if let primaryLink = post.primaryLink {
-                primaryLinkHTML = """
-                <div class="primary-link">
-                    <a href="\(primaryLink)" target="_blank">Link: \(primaryLink)</a>
+            if !post.tags.isEmpty {
+                postTagsHTML = """
+                <div class="post-tags">
+                    Tags: 
+                """
+                for tag in post.tags {
+                    postTagsHTML += """
+                    <a href="/tags/\(tag.name.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? tag.name)/" class="tag">\(tag.name)</a> 
+                    """
+                }
+                postTagsHTML += "</div>"
+            }
+            
+            if let category = post.category {
+                postCategoryHTML = """
+                <div class="post-category">
+                    Category: <a href="/categories/\(category.name.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? category.name)/">\(category.name)</a>
                 </div>
                 """
             }
             
-            let postHTML = """
+            let postContent = """
             <!DOCTYPE html>
             <html lang="en">
             <head>
@@ -193,18 +483,23 @@ class StaticSiteGenerator {
                         <nav>
                             <ul>
                                 <li><a href="/">Home</a></li>
-                                <li><a href="/archives.html">Archives</a></li>
+                                <li><a href="/archives/">Archives</a></li>
+                                <li><a href="/tags/">Tags</a></li>
+                                <li><a href="/categories/">Categories</a></li>
                             </ul>
                         </nav>
                     </header>
                     
                     <main>
-                        <article class="post">
-                            <h1 class="post-title">\(post.title ?? "")</h1>
-                            <div class="post-date">\(post.formattedDate)</div>
-                            \(primaryLinkHTML)
+                        <article>
+                            <h1>\(post.displayTitle)</h1>
+                            <div class="post-meta">
+                                <div class="post-date">\(post.formattedDate)</div>
+                                \(postCategoryHTML)
+                                \(postTagsHTML)
+                            </div>
                             <div class="post-content">
-                                \(formattedContent)
+                                \(post.content)
                             </div>
                         </article>
                     </main>
@@ -217,132 +512,42 @@ class StaticSiteGenerator {
             </html>
             """
             
-            try postHTML.write(to: postPath, atomically: true, encoding: .utf8)
+            try postContent.write(to: postPath, atomically: true, encoding: .utf8)
         }
     }
     
-    private func generateArchivePages() throws {
+    /// Generates an archives page organizing posts by year and month
+    private func generateArchivesPage() throws {
         guard let siteDirectory = siteDirectory else { throw SiteGeneratorError.noSiteDirectory }
         
-        let archivesPath = siteDirectory.appendingPathComponent("archives.html")
+        // Create archives directory
+        let archivesDirectory = siteDirectory.appendingPathComponent("archives")
+        try FileManager.default.createDirectory(at: archivesDirectory, withIntermediateDirectories: true)
+        
+        let archivesPath = archivesDirectory.appendingPathComponent("index.html")
         let sortedPosts = blog.posts.sorted { $0.createdAt > $1.createdAt }
         
+        let calendar = Calendar.current
+        var yearMonthPosts: [Int: [Int: [Post]]] = [:]
+        
         // Group posts by year and month
-        var postsByYearMonth: [String: [Post]] = [:]
-        
         for post in sortedPosts {
-            let dateFormatter = DateFormatter()
-            dateFormatter.dateFormat = "yyyy-MM"
-            let yearMonth = dateFormatter.string(from: post.createdAt)
+            let year = calendar.component(.year, from: post.createdAt)
+            let month = calendar.component(.month, from: post.createdAt)
             
-            if postsByYearMonth[yearMonth] == nil {
-                postsByYearMonth[yearMonth] = []
+            if yearMonthPosts[year] == nil {
+                yearMonthPosts[year] = [:]
             }
             
-            postsByYearMonth[yearMonth]?.append(post)
+            if yearMonthPosts[year]?[month] == nil {
+                yearMonthPosts[year]?[month] = []
+            }
+            
+            yearMonthPosts[year]?[month]?.append(post)
         }
         
-        // Sort year-months in descending order
-        let sortedYearMonths = postsByYearMonth.keys.sorted(by: >)
-        
-        var archiveHTML = ""
-        for yearMonth in sortedYearMonths {
-            let components = yearMonth.components(separatedBy: "-")
-            let year = components[0]
-            let month = components[1]
-            
-            let dateFormatter = DateFormatter()
-            dateFormatter.dateFormat = "MMMM yyyy"
-            let date = dateFormatter.date(from: "\(month) \(year)") ?? Date()
-            let monthYear = dateFormatter.string(from: date)
-            
-            archiveHTML += """
-            <div class="archive-month">
-                <h2>\(monthYear)</h2>
-                <ul>
-            """
-            
-            guard let posts = postsByYearMonth[yearMonth] else { continue }
-            
-            for post in posts {
-                archiveHTML += """
-                    <li>
-                        <span class="post-date">\(post.formattedDate)</span>
-                        <a href="/\(post.urlPath)/index.html">\(post.displayTitle)</a>
-                    </li>
-                """
-            }
-            
-            archiveHTML += """
-                </ul>
-            </div>
-            """
-            
-            // Create individual month archive pages
-            let yearPath = siteDirectory.appendingPathComponent(year)
-            
-            // Ensure the year directory exists
-            if !fileManager.fileExists(atPath: yearPath.path) {
-                try fileManager.createDirectory(at: yearPath, withIntermediateDirectories: true)
-            }
-            
-            let monthArchivePath = yearPath.appendingPathComponent("\(month).html")
-            
-            let monthArchiveHTML = """
-            <!DOCTYPE html>
-            <html lang="en">
-            <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>Archive: \(monthYear) - \(blog.name)</title>
-                <link rel="stylesheet" href="/css/style.css">
-            </head>
-            <body>
-                <div class="container">
-                    <header>
-                        <h1><a href="/">\(blog.name)</a></h1>
-                        <nav>
-                            <ul>
-                                <li><a href="/">Home</a></li>
-                                <li><a href="/archives.html">Archives</a></li>
-                            </ul>
-                        </nav>
-                    </header>
-                    
-                    <main>
-                        <h1>Archive: \(monthYear)</h1>
-                        <div class="archive-month">
-                            <ul>
-            """
-            
-            var monthPageContent = monthArchiveHTML
-            
-            for post in posts {
-                monthPageContent += """
-                                <li>
-                                    <span class="post-date">\(post.formattedDate)</span>
-                                    <a href="/\(post.urlPath)/index.html">\(post.displayTitle)</a>
-                                </li>
-                """
-            }
-            
-            monthPageContent += """
-                            </ul>
-                        </div>
-                    </main>
-                    
-                    <footer>
-                        <p>&copy; \(Calendar.current.component(.year, from: Date())) \(blog.name). Generated with Postalgic.</p>
-                    </footer>
-                </div>
-            </body>
-            </html>
-            """
-            
-            try monthPageContent.write(to: monthArchivePath, atomically: true, encoding: .utf8)
-        }
-        
-        let fullArchiveHTML = """
+        // Generate HTML for archives
+        var archiveContent = """
         <!DOCTYPE html>
         <html lang="en">
         <head>
@@ -358,14 +563,53 @@ class StaticSiteGenerator {
                     <nav>
                         <ul>
                             <li><a href="/">Home</a></li>
-                            <li><a href="/archives.html">Archives</a></li>
+                            <li><a href="/archives/">Archives</a></li>
+                            <li><a href="/tags/">Tags</a></li>
+                            <li><a href="/categories/">Categories</a></li>
                         </ul>
                     </nav>
                 </header>
                 
                 <main>
                     <h1>Archives</h1>
-                    \(archiveHTML)
+        """
+        
+        let years = yearMonthPosts.keys.sorted(by: >)
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "MMMM"
+        
+        for year in years {
+            archiveContent += """
+                    <div class="archive-year">\(year)</div>
+            """
+            
+            let months = yearMonthPosts[year]?.keys.sorted(by: >) ?? []
+            
+            for month in months {
+                let monthName = dateFormatter.monthSymbols[month - 1]
+                
+                archiveContent += """
+                        <div class="archive-month">\(monthName)</div>
+                        <ul>
+                """
+                
+                for post in yearMonthPosts[year]?[month] ?? [] {
+                    let day = calendar.component(.day, from: post.createdAt)
+                    archiveContent += """
+                            <li>
+                                <span class="archive-date">\(String(format: "%02d", day)) \(monthName)</span>
+                                <a href="/\(post.urlPath)/index.html">\(post.displayTitle)</a>
+                            </li>
+                    """
+                }
+                
+                archiveContent += """
+                        </ul>
+                """
+            }
+        }
+        
+        archiveContent += """
                 </main>
                 
                 <footer>
@@ -376,272 +620,30 @@ class StaticSiteGenerator {
         </html>
         """
         
-        try fullArchiveHTML.write(to: archivesPath, atomically: true, encoding: .utf8)
+        try archiveContent.write(to: archivesPath, atomically: true, encoding: .utf8)
     }
     
-    private func generateCSS() throws {
+    /// Generates tag pages for all tags used in posts
+    private func generateTagPages() throws {
         guard let siteDirectory = siteDirectory else { throw SiteGeneratorError.noSiteDirectory }
         
-        let cssDirectory = siteDirectory.appendingPathComponent("css")
+        // Use the blog's tags directly
+        let sortedTags = blog.tags.sorted { $0.name < $1.name }
         
-        // Ensure the CSS directory exists
-        if !fileManager.fileExists(atPath: cssDirectory.path) {
-            try fileManager.createDirectory(at: cssDirectory, withIntermediateDirectories: true)
-        }
+        // Always create tags directory
+        let tagsDirectory = siteDirectory.appendingPathComponent("tags")
+        try FileManager.default.createDirectory(at: tagsDirectory, withIntermediateDirectories: true)
         
-        let cssPath = cssDirectory.appendingPathComponent("style.css")
-        
-        let css = """
-        /* Basic reset */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            background-color: #f8f8f8;
-            padding: 0;
-            margin: 0;
-        }
-
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: white;
-            min-height: 100vh;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-
-        /* Header */
-        header {
-            margin-bottom: 30px;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 20px;
-        }
-
-        header h1 {
-            font-size: 2em;
-            margin-bottom: 10px;
-        }
-
-        header h1 a {
-            text-decoration: none;
-            color: #333;
-        }
-
-        nav ul {
-            list-style: none;
-            display: flex;
-        }
-
-        nav ul li {
-            margin-right: 20px;
-        }
-
-        nav ul li a {
-            text-decoration: none;
-            color: #666;
-            font-weight: 500;
-        }
-
-        nav ul li a:hover {
-            color: #000;
-        }
-
-        /* Main content */
-        main {
-            margin-bottom: 40px;
-        }
-
-        /* Post list */
-        .post-list {
-            margin-bottom: 30px;
-        }
-
-        .post-item {
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid #eee;
-        }
-
-        .post-item h2 {
-            margin-bottom: 5px;
-        }
-
-        .post-item h2 a {
-            text-decoration: none;
-            color: #333;
-        }
-
-        .post-date {
-            margin-bottom: 10px;
-            color: #666;
-            font-size: 0.9em;
-        }
-
-        .post-summary {
-            margin-top: 10px;
-        }
-
-        /* Post */
-        .post-title {
-            margin-bottom: 10px;
-        }
-
-        .post-content {
-            margin-top: 20px;
-            line-height: 1.8;
-        }
-
-        .post-content p, .post-content ul, .post-content ol {
-            margin-bottom: 20px;
-        }
-
-        .primary-link {
-            margin: 15px 0;
-            padding: 10px;
-            background-color: #f5f5f5;
-            border-radius: 5px;
-        }
-
-        .primary-link a {
-            color: #0066cc;
-            text-decoration: none;
-            word-break: break-all;
-        }
-
-        /* Archives */
-        .archive-month {
-            margin-bottom: 40px;
-        }
-
-        .archive-month h2 {
-            margin-bottom: 15px;
-            padding-bottom: 5px;
-            border-bottom: 1px solid #eee;
-        }
-
-        .archive-month ul {
-            list-style: none;
-        }
-
-        .archive-month li {
-            margin-bottom: 10px;
-            display: flex;
-            flex-wrap: wrap;
-        }
-
-        .archive-month .post-date {
-            min-width: 170px;
-            margin-right: 10px;
-        }
-
-        .archive-month a {
-            text-decoration: none;
-            color: #333;
-        }
-
-        .archive-month a:hover {
-            text-decoration: underline;
-        }
-
-        /* Footer */
-        footer {
-            padding-top: 20px;
-            border-top: 1px solid #eee;
-            color: #666;
-            font-size: 0.9em;
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .container {
-                padding: 15px;
-            }
-            
-            .archive-month li {
-                flex-direction: column;
-            }
-            
-            .archive-month .post-date {
-                margin-bottom: 5px;
-            }
-        }
-        """
-        
-        try css.write(to: cssPath, atomically: true, encoding: .utf8)
-    }
-    
-    private func formatMarkdown(_ content: String) -> String {
-        // This is a very simple Markdown formatter
-        // You would want to use a proper Markdown library in a real app
-        var html = content
-        
-        // Replace line breaks with <br>
-        html = html.replacingOccurrences(of: "\n", with: "<br>")
-        
-        // Bold
-        let boldRegex = try! NSRegularExpression(pattern: "\\*\\*(.*?)\\*\\*", options: [])
-        html = boldRegex.stringByReplacingMatches(in: html, options: [], range: NSRange(location: 0, length: html.utf16.count), withTemplate: "<strong>$1</strong>")
-        
-        // Italic
-        let italicRegex = try! NSRegularExpression(pattern: "\\*(.*?)\\*", options: [])
-        html = italicRegex.stringByReplacingMatches(in: html, options: [], range: NSRange(location: 0, length: html.utf16.count), withTemplate: "<em>$1</em>")
-        
-        // Links (simple format: [text](url))
-        let linkRegex = try! NSRegularExpression(pattern: "\\[(.*?)\\]\\((.*?)\\)", options: [])
-        html = linkRegex.stringByReplacingMatches(in: html, options: [], range: NSRange(location: 0, length: html.utf16.count), withTemplate: "<a href=\"$2\">$1</a>")
-        
-        return html
-    }
-    
-    private func generateErrorPage() throws {
-        guard let siteDirectory = siteDirectory else { throw SiteGeneratorError.noSiteDirectory }
-        
-        let errorPath = siteDirectory.appendingPathComponent("error.html")
-        
-        let errorHTML = """
+        // Create tag index page
+        let tagsIndexPath = tagsDirectory.appendingPathComponent("index.html")
+        var tagIndexContent = """
         <!DOCTYPE html>
         <html lang="en">
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>404 - Page Not Found - \(blog.name)</title>
+            <title>Tags - \(blog.name)</title>
             <link rel="stylesheet" href="/css/style.css">
-            <style>
-                .error-container {
-                    text-align: center;
-                    padding: 50px 0;
-                }
-                .error-code {
-                    font-size: 6rem;
-                    font-weight: bold;
-                    margin-bottom: 10px;
-                    color: #d9534f;
-                }
-                .error-message {
-                    font-size: 2rem;
-                    margin-bottom: 30px;
-                }
-                .back-button {
-                    display: inline-block;
-                    padding: 10px 20px;
-                    background-color: #0275d8;
-                    color: white;
-                    text-decoration: none;
-                    border-radius: 5px;
-                    font-weight: bold;
-                    transition: background-color 0.3s;
-                }
-                .back-button:hover {
-                    background-color: #025aa5;
-                }
-            </style>
         </head>
         <body>
             <div class="container">
@@ -650,20 +652,28 @@ class StaticSiteGenerator {
                     <nav>
                         <ul>
                             <li><a href="/">Home</a></li>
-                            <li><a href="/archives.html">Archives</a></li>
+                            <li><a href="/archives/">Archives</a></li>
+                            <li><a href="/tags/">Tags</a></li>
+                            <li><a href="/categories/">Categories</a></li>
                         </ul>
                     </nav>
                 </header>
                 
                 <main>
-                    <div class="error-container">
-                        <div class="error-code">404</div>
-                        <div class="error-message">Page Not Found</div>
-                        <p>Sorry, but the page you were trying to view does not exist.</p>
-                        <p>It might have been removed, renamed, or did not exist in the first place.</p>
-                        <p style="margin-top: 30px;">
-                            <a href="/" class="back-button">Go Back to Homepage</a>
-                        </p>
+                    <h1>All Tags</h1>
+                    <div class="tag-list">
+        """
+        
+        for tag in sortedTags {
+            let tagPostCount = blog.posts.filter { $0.tags.contains(tag) }.count
+            tagIndexContent += """
+                        <div class="tag-item">
+                            <h2><a href="/tags/\(tag.name.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? tag.name)/">\(tag.name)</a> <span class="tag-count">(\(tagPostCount))</span></h2>
+                        </div>
+            """
+        }
+        
+        tagIndexContent += """
                     </div>
                 </main>
                 
@@ -675,19 +685,255 @@ class StaticSiteGenerator {
         </html>
         """
         
-        try errorHTML.write(to: errorPath, atomically: true, encoding: .utf8)
+        try tagIndexContent.write(to: tagsIndexPath, atomically: true, encoding: .utf8)
+        
+        // Create individual tag pages
+        for tag in sortedTags {
+            let tagPosts = blog.posts.filter { $0.tags.contains(tag) }.sorted { $0.createdAt > $1.createdAt }
+            let tagNameEncoded = tag.name.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? tag.name
+            let tagDirectory = tagsDirectory.appendingPathComponent(tagNameEncoded)
+            try FileManager.default.createDirectory(at: tagDirectory, withIntermediateDirectories: true)
+            let tagPath = tagDirectory.appendingPathComponent("index.html")
+            
+            var postListHTML = ""
+            for post in tagPosts {
+                var postTagsHTML = ""
+                var postCategoryHTML = ""
+                
+                if !post.tags.isEmpty {
+                    postTagsHTML = """
+                    <div class="post-tags">
+                        Tags: 
+                    """
+                    for postTag in post.tags {
+                        postTagsHTML += """
+                        <a href="/tags/\(postTag.name.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? postTag.name).html" class="tag">\(postTag.name)</a> 
+                        """
+                    }
+                    postTagsHTML += "</div>"
+                }
+                
+                if let category = post.category {
+                    postCategoryHTML = """
+                    <div class="post-category">
+                        Category: <a href="/categories/\(category.name.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? category.name)/">\(category.name)</a>
+                    </div>
+                    """
+                }
+                
+                postListHTML += """
+                <div class="post-item">
+                    <h2><a href="/\(post.urlPath)/index.html">\(post.displayTitle)</a></h2>
+                    <div class="post-date">\(post.formattedDate)</div>
+                    \(postCategoryHTML)
+                    \(postTagsHTML)
+                    <div class="post-summary">\(String(post.content.prefix(150)))...</div>
+                </div>
+                """
+            }
+            
+            let tagPageContent = """
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Tag: \(tag.name) - \(blog.name)</title>
+                <link rel="stylesheet" href="/css/style.css">
+            </head>
+            <body>
+                <div class="container">
+                    <header>
+                        <h1><a href="/">\(blog.name)</a></h1>
+                        <nav>
+                            <ul>
+                                <li><a href="/">Home</a></li>
+                                <li><a href="/archives/">Archives</a></li>
+                                <li><a href="/tags/">Tags</a></li>
+                                <li><a href="/categories/">Categories</a></li>
+                            </ul>
+                        </nav>
+                    </header>
+                    
+                    <main>
+                        <h1>Posts tagged with "\(tag.name)"</h1>
+                        <p class="tag-meta">\(tagPosts.count) \(tagPosts.count == 1 ? "post" : "posts") with this tag</p>
+                        <div class="post-list">
+                            \(postListHTML)
+                        </div>
+                    </main>
+                    
+                    <footer>
+                        <p>&copy; \(Calendar.current.component(.year, from: Date())) \(blog.name). Generated with Postalgic.</p>
+                    </footer>
+                </div>
+            </body>
+            </html>
+            """
+            
+            try tagPageContent.write(to: tagPath, atomically: true, encoding: .utf8)
+        }
     }
     
-    private func zipSite(to zipURL: URL) throws {
+    /// Generates category pages for all categories used in posts
+    private func generateCategoryPages() throws {
         guard let siteDirectory = siteDirectory else { throw SiteGeneratorError.noSiteDirectory }
         
-        try fileManager.zipItem(at: siteDirectory, to: zipURL)
-    }
-    
-    enum SiteGeneratorError: Error {
-        case noSiteDirectory
-        case missingAWSCredentials
-        case awsUploadFailed(String)
-        case awsInvalidationFailed(String)
+        // Use the blog's categories directly
+        let sortedCategories = blog.categories.sorted { $0.name < $1.name }
+        
+        // Always create categories directory
+        let categoriesDirectory = siteDirectory.appendingPathComponent("categories")
+        try FileManager.default.createDirectory(at: categoriesDirectory, withIntermediateDirectories: true)
+        
+        // Create category index page
+        let categoriesIndexPath = categoriesDirectory.appendingPathComponent("index.html")
+        var categoryIndexContent = """
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Categories - \(blog.name)</title>
+            <link rel="stylesheet" href="/css/style.css">
+        </head>
+        <body>
+            <div class="container">
+                <header>
+                    <h1><a href="/">\(blog.name)</a></h1>
+                    <nav>
+                        <ul>
+                            <li><a href="/">Home</a></li>
+                            <li><a href="/archives/">Archives</a></li>
+                            <li><a href="/tags/">Tags</a></li>
+                            <li><a href="/categories/">Categories</a></li>
+                        </ul>
+                    </nav>
+                </header>
+                
+                <main>
+                    <h1>All Categories</h1>
+                    <div class="category-list">
+        """
+        
+        for category in sortedCategories {
+            let categoryPostCount = blog.posts.filter { $0.category?.id == category.id }.count
+            categoryIndexContent += """
+                        <div class="category-item">
+                            <h2><a href="/categories/\(category.name.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? category.name)/">\(category.name)</a> <span class="category-count">(\(categoryPostCount))</span></h2>
+                            
+            """
+            
+            if let description = category.categoryDescription, !description.isEmpty {
+                categoryIndexContent += """
+                            <p class="category-description">\(description)</p>
+                """
+            }
+            
+            categoryIndexContent += """
+                        </div>
+            """
+        }
+        
+        categoryIndexContent += """
+                    </div>
+                </main>
+                
+                <footer>
+                    <p>&copy; \(Calendar.current.component(.year, from: Date())) \(blog.name). Generated with Postalgic.</p>
+                </footer>
+            </div>
+        </body>
+        </html>
+        """
+        
+        try categoryIndexContent.write(to: categoriesIndexPath, atomically: true, encoding: .utf8)
+        
+        // Create individual category pages
+        // Note: Categories directory already created above
+        
+        for category in sortedCategories {
+            let categoryPosts = blog.posts.filter { $0.category?.id == category.id }.sorted { $0.createdAt > $1.createdAt }
+            let categoryNameEncoded = category.name.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? category.name
+            let categoryDirectory = categoriesDirectory.appendingPathComponent(categoryNameEncoded)
+            try FileManager.default.createDirectory(at: categoryDirectory, withIntermediateDirectories: true)
+            let categoryPath = categoryDirectory.appendingPathComponent("index.html")
+            
+            var postListHTML = ""
+            for post in categoryPosts {
+                var postTagsHTML = ""
+                if !post.tags.isEmpty {
+                    postTagsHTML = """
+                    <div class="post-tags">
+                        Tags: 
+                    """
+                    for tag in post.tags {
+                        postTagsHTML += """
+                        <a href="/tags/\(tag.name.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? tag.name)/" class="tag">\(tag.name)</a> 
+                        """
+                    }
+                    postTagsHTML += "</div>"
+                }
+                
+                postListHTML += """
+                <div class="post-item">
+                    <h2><a href="/\(post.urlPath)/index.html">\(post.displayTitle)</a></h2>
+                    <div class="post-date">\(post.formattedDate)</div>
+                    \(postTagsHTML)
+                    <div class="post-summary">\(String(post.content.prefix(150)))...</div>
+                </div>
+                """
+            }
+            
+            let categoryPageHTML = """
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Category: \(category.name) - \(blog.name)</title>
+                <link rel="stylesheet" href="/css/style.css">
+            </head>
+            <body>
+                <div class="container">
+                    <header>
+                        <h1><a href="/">\(blog.name)</a></h1>
+                        <nav>
+                            <ul>
+                                <li><a href="/">Home</a></li>
+                                <li><a href="/archives/">Archives</a></li>
+                                <li><a href="/tags/">Tags</a></li>
+                                <li><a href="/categories/">Categories</a></li>
+                            </ul>
+                        </nav>
+                    </header>
+                    
+                    <main>
+                        <h1>Posts in category "\(category.name)"</h1>
+            """
+            
+            if let description = category.categoryDescription, !description.isEmpty {
+                categoryPageHTML + """
+                        <p class="category-description">\(description)</p>
+                """
+            }
+            
+            let categoryPageContent = categoryPageHTML + """
+                        <p class="category-meta">\(categoryPosts.count) \(categoryPosts.count == 1 ? "post" : "posts") in this category</p>
+                        <div class="post-list">
+                            \(postListHTML)
+                        </div>
+                    </main>
+                    
+                    <footer>
+                        <p>&copy; \(Calendar.current.component(.year, from: Date())) \(blog.name). Generated with Postalgic.</p>
+                    </footer>
+                </div>
+            </body>
+            </html>
+            """
+            
+            try categoryPageContent.write(to: categoryPath, atomically: true, encoding: .utf8)
+        }
     }
 }

@@ -14,6 +14,7 @@ struct BlogDetailView: View {
     @State private var showingPostForm = false
     @State private var showingPublishView = false
     @State private var showingEditBlogView = false
+    @State private var showingCategoryManagement = false
     
     var body: some View {
         List {
@@ -22,7 +23,7 @@ struct BlogDetailView: View {
                 NavigationLink {
                     PostDetailView(post: post)
                 } label: {
-                    VStack(alignment: .leading) {
+                    VStack(alignment: .leading, spacing: 4) {
                         if let title = post.title {
                             Text(title)
                                 .font(.headline)
@@ -31,9 +32,40 @@ struct BlogDetailView: View {
                                 .font(.headline)
                                 .lineLimit(1)
                         }
-                        Text(post.createdAt, format: .dateTime)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                        HStack {
+                            Text(post.createdAt, format: .dateTime)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            
+                            if let category = post.category {
+                                Spacer()
+                                Text(category.name)
+                                    .font(.caption)
+                                    .foregroundStyle(.white)
+                                    .padding(.horizontal, 6)
+                                    .padding(.vertical, 2)
+                                    .background(Color.green)
+                                    .cornerRadius(4)
+                            }
+                        }
+                        
+                        if !post.tags.isEmpty {
+                            HStack {
+                                ForEach(post.tags.prefix(3)) { tag in
+                                    Text(tag.name)
+                                        .font(.caption)
+                                        .padding(.horizontal, 6)
+                                        .padding(.vertical, 2)
+                                        .background(Color.blue.opacity(0.1))
+                                        .cornerRadius(4)
+                                }
+                                if post.tags.count > 3 {
+                                    Text("+\(post.tags.count - 3)")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                        }
                     }
                     .padding(.vertical, 4)
                 }
@@ -52,6 +84,12 @@ struct BlogDetailView: View {
                     }
                     Button(action: { showingPublishView = true }) {
                         Label("Publish", systemImage: "globe")
+                    }
+                    Divider()
+                    Button(action: { 
+                        showingCategoryManagement = true 
+                    }) {
+                        Label("Manage Categories", systemImage: "folder")
                     }
                 } label: {
                     Image(systemName: "ellipsis.circle")
@@ -72,6 +110,9 @@ struct BlogDetailView: View {
         .sheet(isPresented: $showingEditBlogView) {
             EditBlogView(blog: blog)
         }
+        .sheet(isPresented: $showingCategoryManagement) {
+            CategoryManagementView(blog: blog)
+        }
     }
     
     private func deletePosts(offsets: IndexSet) {
@@ -90,5 +131,5 @@ struct BlogDetailView: View {
 
 #Preview {
     BlogDetailView(blog: Blog(name: "Test Blog", url: "https://example.com"))
-        .modelContainer(for: [Blog.self, Post.self], inMemory: true)
+        .modelContainer(for: [Blog.self, Post.self, Tag.self, Category.self], inMemory: true)
 }

@@ -24,6 +24,12 @@ final class Blog {
     @Relationship(deleteRule: .cascade, inverse: \Post.blog)
     var posts: [Post] = []
     
+    @Relationship(deleteRule: .cascade, inverse: \Category.blog)
+    var categories: [Category] = []
+    
+    @Relationship(deleteRule: .cascade, inverse: \Tag.blog)
+    var tags: [Tag] = []
+    
     init(name: String, url: String, createdAt: Date = Date()) {
         self.name = name
         self.url = url
@@ -45,6 +51,36 @@ final class Blog {
 }
 
 @Model
+final class Category {
+    var name: String
+    var categoryDescription: String?
+    var createdAt: Date
+    
+    var blog: Blog?
+    var posts: [Post] = []
+    
+    init(name: String, categoryDescription: String? = nil, createdAt: Date = Date()) {
+        self.name = name.capitalized
+        self.categoryDescription = categoryDescription
+        self.createdAt = createdAt
+    }
+}
+
+@Model
+final class Tag {
+    var name: String
+    var createdAt: Date
+    
+    var blog: Blog?
+    var posts: [Post] = []
+    
+    init(name: String, createdAt: Date = Date()) {
+        self.name = name.lowercased()
+        self.createdAt = createdAt
+    }
+}
+
+@Model
 final class Post {
     var title: String?
     var content: String
@@ -52,6 +88,12 @@ final class Post {
     var createdAt: Date
     
     var blog: Blog?
+    
+    @Relationship(deleteRule: .nullify, inverse: \Category.posts)
+    var category: Category?
+    
+    @Relationship(deleteRule: .nullify, inverse: \Tag.posts)
+    var tags: [Tag] = []
     
     init(title: String? = nil, content: String, primaryLink: String? = nil, createdAt: Date = Date()) {
         self.title = title
@@ -75,5 +117,13 @@ final class Post {
     
     var displayTitle: String {
         return title ?? String(content.prefix(50))
+    }
+    
+    var tagNames: [String] {
+        return tags.map { $0.name }
+    }
+    
+    var formattedTags: String {
+        return tagNames.joined(separator: ", ")
     }
 }

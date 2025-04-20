@@ -71,5 +71,5 @@ struct BlogsView: View {
 
 #Preview {
     BlogsView()
-        .modelContainer(for: [Blog.self, Post.self], inMemory: true)
+        .modelContainer(for: [Blog.self, Post.self, Tag.self, Category.self], inMemory: true)
 }
