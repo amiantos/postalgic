@@ -9,4 +9,12 @@ Postalgic is a blogging platform for your pocket. Simply put, it's meant to be 1
 - [ ] Upload your static website to a variety of static site hosting services
   - [x] AWS S3 with CloudFront
   - [ ] Any FTP Server
+  - [ ] Postalgic Pro Hosting
   - [ ] Others?
+
+# Credits
+- Postalgic is created by [Brad Root](https://github.com/amiantos)
+
+# License
+- The app and backend code are licensed under the terms of the [Mozilla Public License 2.0](https://www.mozilla.org/en-US/MPL/2.0/)
+- Postalgic name and branding is &copy; 2025 Brad Root
