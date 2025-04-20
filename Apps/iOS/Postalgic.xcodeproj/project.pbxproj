@@ -13,6 +13,7 @@
 		448E85442DB46EC100772502 /* AWSCognitoIdentity in Frameworks */ = {isa = PBXBuildFile; productRef = 448E85432DB46EC100772502 /* AWSCognitoIdentity */; };
 		448E85462DB46EC100772502 /* AWSCognitoIdentityProvider in Frameworks */ = {isa = PBXBuildFile; productRef = 448E85452DB46EC100772502 /* AWSCognitoIdentityProvider */; };
 		448E85482DB46EC100772502 /* AWSCognitoSync in Frameworks */ = {isa = PBXBuildFile; productRef = 448E85472DB46EC100772502 /* AWSCognitoSync */; };
+		448E854A2DB4708B00772502 /* AWSClientRuntime in Frameworks */ = {isa = PBXBuildFile; productRef = 448E85492DB4708B00772502 /* AWSClientRuntime */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -66,6 +67,7 @@
 				448E85442DB46EC100772502 /* AWSCognitoIdentity in Frameworks */,
 				448E85462DB46EC100772502 /* AWSCognitoIdentityProvider in Frameworks */,
 				448E851D2DB3984200772502 /* ZIPFoundation in Frameworks */,
+				448E854A2DB4708B00772502 /* AWSClientRuntime in Frameworks */,
 				448E85482DB46EC100772502 /* AWSCognitoSync in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -133,6 +135,7 @@
 				448E85432DB46EC100772502 /* AWSCognitoIdentity */,
 				448E85452DB46EC100772502 /* AWSCognitoIdentityProvider */,
 				448E85472DB46EC100772502 /* AWSCognitoSync */,
+				448E85492DB4708B00772502 /* AWSClientRuntime */,
 			);
 			productName = Postalgic;
 			productReference = 443674762DB3898500F67B00 /* Postalgic.app */;
@@ -633,6 +636,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 448E853A2DB4613900772502 /* XCRemoteSwiftPackageReference "aws-sdk-swift" */;
 			productName = AWSCognitoSync;
+		};
+		448E85492DB4708B00772502 /* AWSClientRuntime */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 448E853A2DB4613900772502 /* XCRemoteSwiftPackageReference "aws-sdk-swift" */;
+			productName = AWSClientRuntime;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
