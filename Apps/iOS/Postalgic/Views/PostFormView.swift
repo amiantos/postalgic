@@ -28,10 +28,11 @@ struct PostFormView: View {
     
     private var filteredTags: [Tag] {
         if tagInput.isEmpty {
-            return allTags.sorted { $0.name < $1.name }
+            return allTags.sorted { $0.name.lowercased() < $1.name.lowercased() }
         } else {
-            return allTags.filter { $0.name.localizedCaseInsensitiveContains(tagInput) }
-                .sorted { $0.name < $1.name }
+            let lowercasedInput = tagInput.lowercased()
+            return allTags.filter { $0.name.lowercased().contains(lowercasedInput) }
+                .sorted { $0.name.lowercased() < $1.name.lowercased() }
         }
     }
     
@@ -55,7 +56,12 @@ struct PostFormView: View {
                             .onSubmit {
                                 addTag()
                             }
-                            .onChange(of: tagInput) {
+                            .onChange(of: tagInput) { _, newValue in
+                                // Keep the input lowercase while typing
+                                let lowercased = newValue.lowercased()
+                                if lowercased != newValue {
+                                    tagInput = lowercased
+                                }
                                 showingSuggestions = true
                             }
                         
@@ -132,15 +138,15 @@ struct PostFormView: View {
     }
     
     private func addTag() {
-        let trimmed = tagInput.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmed = tagInput.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         if !trimmed.isEmpty {
-            // Check if tag already exists
-            if let existingTag = allTags.first(where: { $0.name.localizedCaseInsensitiveCompare(trimmed) == .orderedSame }) {
+            // Check if tag already exists (case insensitive)
+            if let existingTag = allTags.first(where: { $0.name.lowercased() == trimmed }) {
                 if !selectedTags.contains(where: { $0.id == existingTag.id }) {
                     selectedTags.append(existingTag)
                 }
             } else {
-                // Create new tag
+                // Create new tag (always lowercase)
                 let newTag = Tag(name: trimmed)
                 modelContext.insert(newTag)
                 selectedTags.append(newTag)
