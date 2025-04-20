@@ -1,4 +1,4 @@
-# Postalgic
+![Postalgic](/postalgic-logo.png?raw=true)
 
 Postalgic is a blogging platform for your pocket. Simply put, it's meant to be 1999's Blogger in app form, fully decentralized. In the parlance of our times, it's an all-in-one static site generator.
 
