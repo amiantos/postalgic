@@ -409,9 +409,9 @@ class StaticSiteGenerator {
                     <nav>
                         <ul>
                             <li><a href="/">Home</a></li>
-                            <li><a href="/archives.html">Archives</a></li>
-                            <li><a href="/tags.html">Tags</a></li>
-                            <li><a href="/categories.html">Categories</a></li>
+                            <li><a href="/archives/">Archives</a></li>
+                            <li><a href="/tags/">Tags</a></li>
+                            <li><a href="/categories/">Categories</a></li>
                         </ul>
                     </nav>
                 </header>
@@ -483,9 +483,9 @@ class StaticSiteGenerator {
                         <nav>
                             <ul>
                                 <li><a href="/">Home</a></li>
-                                <li><a href="/archives.html">Archives</a></li>
-                                <li><a href="/tags.html">Tags</a></li>
-                                <li><a href="/categories.html">Categories</a></li>
+                                <li><a href="/archives/">Archives</a></li>
+                                <li><a href="/tags/">Tags</a></li>
+                                <li><a href="/categories/">Categories</a></li>
                             </ul>
                         </nav>
                     </header>
@@ -520,7 +520,11 @@ class StaticSiteGenerator {
     private func generateArchivesPage() throws {
         guard let siteDirectory = siteDirectory else { throw SiteGeneratorError.noSiteDirectory }
         
-        let archivesPath = siteDirectory.appendingPathComponent("archives.html")
+        // Create archives directory
+        let archivesDirectory = siteDirectory.appendingPathComponent("archives")
+        try FileManager.default.createDirectory(at: archivesDirectory, withIntermediateDirectories: true)
+        
+        let archivesPath = archivesDirectory.appendingPathComponent("index.html")
         let sortedPosts = blog.posts.sorted { $0.createdAt > $1.createdAt }
         
         let calendar = Calendar.current
@@ -559,9 +563,9 @@ class StaticSiteGenerator {
                     <nav>
                         <ul>
                             <li><a href="/">Home</a></li>
-                            <li><a href="/archives.html">Archives</a></li>
-                            <li><a href="/tags.html">Tags</a></li>
-                            <li><a href="/categories.html">Categories</a></li>
+                            <li><a href="/archives/">Archives</a></li>
+                            <li><a href="/tags/">Tags</a></li>
+                            <li><a href="/categories/">Categories</a></li>
                         </ul>
                     </nav>
                 </header>
@@ -623,26 +627,15 @@ class StaticSiteGenerator {
     private func generateTagPages() throws {
         guard let siteDirectory = siteDirectory else { throw SiteGeneratorError.noSiteDirectory }
         
-        // Get all unique tags used by this blog's posts
-        var uniqueTags = Set<Tag>()
-        for post in blog.posts {
-            for tag in post.tags {
-                uniqueTags.insert(tag)
-            }
-        }
-        let sortedTags = Array(uniqueTags).sorted { $0.name < $1.name }
+        // Use the blog's tags directly
+        let sortedTags = blog.tags.sorted { $0.name < $1.name }
         
-        // If no tags, nothing to do
-        if sortedTags.isEmpty {
-            return
-        }
-        
-        // Create tags directory
+        // Always create tags directory
         let tagsDirectory = siteDirectory.appendingPathComponent("tags")
         try FileManager.default.createDirectory(at: tagsDirectory, withIntermediateDirectories: true)
         
         // Create tag index page
-        let tagsIndexPath = siteDirectory.appendingPathComponent("tags.html")
+        let tagsIndexPath = tagsDirectory.appendingPathComponent("index.html")
         var tagIndexContent = """
         <!DOCTYPE html>
         <html lang="en">
@@ -659,9 +652,9 @@ class StaticSiteGenerator {
                     <nav>
                         <ul>
                             <li><a href="/">Home</a></li>
-                            <li><a href="/archives.html">Archives</a></li>
-                            <li><a href="/tags.html">Tags</a></li>
-                            <li><a href="/categories.html">Categories</a></li>
+                            <li><a href="/archives/">Archives</a></li>
+                            <li><a href="/tags/">Tags</a></li>
+                            <li><a href="/categories/">Categories</a></li>
                         </ul>
                     </nav>
                 </header>
@@ -752,9 +745,9 @@ class StaticSiteGenerator {
                         <nav>
                             <ul>
                                 <li><a href="/">Home</a></li>
-                                <li><a href="/archives.html">Archives</a></li>
-                                <li><a href="/tags.html">Tags</a></li>
-                                <li><a href="/categories.html">Categories</a></li>
+                                <li><a href="/archives/">Archives</a></li>
+                                <li><a href="/tags/">Tags</a></li>
+                                <li><a href="/categories/">Categories</a></li>
                             </ul>
                         </nav>
                     </header>
@@ -783,22 +776,15 @@ class StaticSiteGenerator {
     private func generateCategoryPages() throws {
         guard let siteDirectory = siteDirectory else { throw SiteGeneratorError.noSiteDirectory }
         
-        // Get all unique categories used by this blog's posts
-        var uniqueCategories = Set<Category>()
-        for post in blog.posts {
-            if let category = post.category {
-                uniqueCategories.insert(category)
-            }
-        }
-        let sortedCategories = Array(uniqueCategories).sorted { $0.name < $1.name }
+        // Use the blog's categories directly
+        let sortedCategories = blog.categories.sorted { $0.name < $1.name }
         
-        // If no categories, nothing to do
-        if sortedCategories.isEmpty {
-            return
-        }
+        // Always create categories directory
+        let categoriesDirectory = siteDirectory.appendingPathComponent("categories")
+        try FileManager.default.createDirectory(at: categoriesDirectory, withIntermediateDirectories: true)
         
         // Create category index page
-        let categoriesIndexPath = siteDirectory.appendingPathComponent("categories.html")
+        let categoriesIndexPath = categoriesDirectory.appendingPathComponent("index.html")
         var categoryIndexContent = """
         <!DOCTYPE html>
         <html lang="en">
@@ -815,9 +801,9 @@ class StaticSiteGenerator {
                     <nav>
                         <ul>
                             <li><a href="/">Home</a></li>
-                            <li><a href="/archives.html">Archives</a></li>
-                            <li><a href="/tags.html">Tags</a></li>
-                            <li><a href="/categories.html">Categories</a></li>
+                            <li><a href="/archives/">Archives</a></li>
+                            <li><a href="/tags/">Tags</a></li>
+                            <li><a href="/categories/">Categories</a></li>
                         </ul>
                     </nav>
                 </header>
@@ -861,8 +847,7 @@ class StaticSiteGenerator {
         try categoryIndexContent.write(to: categoriesIndexPath, atomically: true, encoding: .utf8)
         
         // Create individual category pages
-        let categoriesDirectory = siteDirectory.appendingPathComponent("categories")
-        try FileManager.default.createDirectory(at: categoriesDirectory, withIntermediateDirectories: true)
+        // Note: Categories directory already created above
         
         for category in sortedCategories {
             let categoryPosts = blog.posts.filter { $0.category?.id == category.id }.sorted { $0.createdAt > $1.createdAt }
@@ -910,9 +895,9 @@ class StaticSiteGenerator {
                         <nav>
                             <ul>
                                 <li><a href="/">Home</a></li>
-                                <li><a href="/archives.html">Archives</a></li>
-                                <li><a href="/tags.html">Tags</a></li>
-                                <li><a href="/categories.html">Categories</a></li>
+                                <li><a href="/archives/">Archives</a></li>
+                                <li><a href="/tags/">Tags</a></li>
+                                <li><a href="/categories/">Categories</a></li>
                             </ul>
                         </nav>
                     </header>

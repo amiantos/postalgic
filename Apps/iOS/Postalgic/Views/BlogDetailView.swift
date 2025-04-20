@@ -111,7 +111,7 @@ struct BlogDetailView: View {
             EditBlogView(blog: blog)
         }
         .sheet(isPresented: $showingCategoryManagement) {
-            CategoryManagementView()
+            CategoryManagementView(blog: blog)
         }
     }
     

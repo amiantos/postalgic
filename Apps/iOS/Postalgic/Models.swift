@@ -24,6 +24,12 @@ final class Blog {
     @Relationship(deleteRule: .cascade, inverse: \Post.blog)
     var posts: [Post] = []
     
+    @Relationship(deleteRule: .cascade, inverse: \Category.blog)
+    var categories: [Category] = []
+    
+    @Relationship(deleteRule: .cascade, inverse: \Tag.blog)
+    var tags: [Tag] = []
+    
     init(name: String, url: String, createdAt: Date = Date()) {
         self.name = name
         self.url = url
@@ -50,6 +56,7 @@ final class Category {
     var categoryDescription: String?
     var createdAt: Date
     
+    var blog: Blog?
     var posts: [Post] = []
     
     init(name: String, categoryDescription: String? = nil, createdAt: Date = Date()) {
@@ -64,10 +71,11 @@ final class Tag {
     var name: String
     var createdAt: Date
     
+    var blog: Blog?
     var posts: [Post] = []
     
     init(name: String, createdAt: Date = Date()) {
-        self.name = name
+        self.name = name.lowercased()
         self.createdAt = createdAt
     }
 }

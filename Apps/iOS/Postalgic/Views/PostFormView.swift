@@ -16,6 +16,14 @@ struct PostFormView: View {
     
     var blog: Blog
     
+    private var blogTags: [Tag] {
+        return allTags.filter { $0.blog?.id == blog.id }
+    }
+    
+    private var blogCategories: [Category] {
+        return allCategories.filter { $0.blog?.id == blog.id }
+    }
+    
     @State private var title = ""
     @State private var content = ""
     @State private var primaryLink = ""
@@ -26,15 +34,15 @@ struct PostFormView: View {
     @State private var showingSuggestions = false
     
     private var existingTagNames: [String] {
-        return allTags.map { $0.name }
+        return blogTags.map { $0.name }
     }
     
     private var filteredTags: [Tag] {
         if tagInput.isEmpty {
-            return allTags.sorted { $0.name.lowercased() < $1.name.lowercased() }
+            return blogTags.sorted { $0.name.lowercased() < $1.name.lowercased() }
         } else {
             let lowercasedInput = tagInput.lowercased()
-            return allTags.filter { $0.name.lowercased().contains(lowercasedInput) }
+            return blogTags.filter { $0.name.lowercased().contains(lowercasedInput) }
                 .sorted { $0.name.lowercased() < $1.name.lowercased() }
         }
     }
@@ -50,10 +58,10 @@ struct PostFormView: View {
                         Picker("Category", selection: $selectedCategory) {
                             Text("None").tag(Category?.none)
                             
-                            if !allCategories.isEmpty {
+                            if !blogCategories.isEmpty {
                                 Divider()
                                 
-                                ForEach(allCategories.sorted { $0.name < $1.name }) { category in
+                                ForEach(blogCategories.sorted { $0.name < $1.name }) { category in
                                     Text(category.name).tag(Optional(category))
                                 }
                             }
@@ -159,7 +167,7 @@ struct PostFormView: View {
                 }
             }
             .sheet(isPresented: $showingCategoryManagement) {
-                CategoryManagementView()
+                CategoryManagementView(blog: blog)
             }
         }
     }
@@ -167,8 +175,8 @@ struct PostFormView: View {
     private func addTag() {
         let trimmed = tagInput.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         if !trimmed.isEmpty {
-            // Check if tag already exists (case insensitive)
-            if let existingTag = allTags.first(where: { $0.name.lowercased() == trimmed }) {
+            // Check if tag already exists for this blog (case insensitive)
+            if let existingTag = blogTags.first(where: { $0.name.lowercased() == trimmed }) {
                 if !selectedTags.contains(where: { $0.id == existingTag.id }) {
                     selectedTags.append(existingTag)
                 }
@@ -176,6 +184,8 @@ struct PostFormView: View {
                 // Create new tag (always lowercase)
                 let newTag = Tag(name: trimmed)
                 modelContext.insert(newTag)
+                newTag.blog = blog
+                blog.tags.append(newTag)
                 selectedTags.append(newTag)
             }
             tagInput = ""

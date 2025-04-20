@@ -11,7 +11,14 @@ import SwiftData
 struct CategoryManagementView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
-    @Query private var categories: [Category]
+    
+    var blog: Blog
+    
+    @Query private var allCategories: [Category]
+    
+    private var categories: [Category] {
+        return allCategories.filter { $0.blog?.id == blog.id }
+    }
     
     @State private var showingAddCategory = false
     @State private var selectedCategory: Category?
@@ -49,13 +56,13 @@ struct CategoryManagementView: View {
                 }
             }
             .sheet(isPresented: $showingAddCategory) {
-                CategoryFormView(mode: .add)
+                CategoryFormView(mode: .add, blog: blog)
             }
             .sheet(isPresented: $isEditing, onDismiss: {
                 selectedCategory = nil
             }) {
                 if let category = selectedCategory {
-                    CategoryFormView(mode: .edit(category))
+                    CategoryFormView(mode: .edit(category), blog: blog)
                 }
             }
         }
@@ -105,6 +112,7 @@ struct CategoryFormView: View {
     }
     
     let mode: Mode
+    let blog: Blog
     
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
@@ -170,15 +178,28 @@ struct CategoryFormView: View {
                 categoryDescription: description.isEmpty ? nil : description
             )
             modelContext.insert(newCategory)
+            newCategory.blog = blog
+            blog.categories.append(newCategory)
             
         case .edit(let category):
             category.name = name.capitalized
             category.categoryDescription = description.isEmpty ? nil : description
+            
+            // Ensure category is associated with blog
+            if category.blog == nil {
+                category.blog = blog
+                blog.categories.append(category)
+            }
         }
     }
 }
 
 #Preview {
-    CategoryManagementView()
-        .modelContainer(for: [Category.self, Post.self], inMemory: true)
+//    let container = ModelContainer(for: Blog.self, Category.self, Post.self, inMemory: true)
+//    let context = ModelContext(container)
+//    let blog = Blog(name: "Test Blog", url: "https://example.com")
+//    context.insert(blog)
+//    
+//    CategoryManagementView(blog: blog)
+//        .modelContainer(container)
 }
