@@ -8,12 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		448E851D2DB3984200772502 /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = 448E851C2DB3984200772502 /* ZIPFoundation */; };
-		448E853C2DB4613900772502 /* AWSCloudFront in Frameworks */ = {isa = PBXBuildFile; productRef = 448E853B2DB4613900772502 /* AWSCloudFront */; };
-		448E853E2DB4613900772502 /* AWSS3 in Frameworks */ = {isa = PBXBuildFile; productRef = 448E853D2DB4613900772502 /* AWSS3 */; };
-		448E85442DB46EC100772502 /* AWSCognitoIdentity in Frameworks */ = {isa = PBXBuildFile; productRef = 448E85432DB46EC100772502 /* AWSCognitoIdentity */; };
-		448E85462DB46EC100772502 /* AWSCognitoIdentityProvider in Frameworks */ = {isa = PBXBuildFile; productRef = 448E85452DB46EC100772502 /* AWSCognitoIdentityProvider */; };
-		448E85482DB46EC100772502 /* AWSCognitoSync in Frameworks */ = {isa = PBXBuildFile; productRef = 448E85472DB46EC100772502 /* AWSCognitoSync */; };
-		448E854A2DB4708B00772502 /* AWSClientRuntime in Frameworks */ = {isa = PBXBuildFile; productRef = 448E85492DB4708B00772502 /* AWSClientRuntime */; };
+		449CAF852DB47E2900558395 /* AWSCore in Frameworks */ = {isa = PBXBuildFile; productRef = 449CAF842DB47E2900558395 /* AWSCore */; };
+		449CAF872DB47E2900558395 /* AWSS3 in Frameworks */ = {isa = PBXBuildFile; productRef = 449CAF862DB47E2900558395 /* AWSS3 */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -62,13 +58,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				448E853E2DB4613900772502 /* AWSS3 in Frameworks */,
-				448E853C2DB4613900772502 /* AWSCloudFront in Frameworks */,
-				448E85442DB46EC100772502 /* AWSCognitoIdentity in Frameworks */,
-				448E85462DB46EC100772502 /* AWSCognitoIdentityProvider in Frameworks */,
+				449CAF872DB47E2900558395 /* AWSS3 in Frameworks */,
 				448E851D2DB3984200772502 /* ZIPFoundation in Frameworks */,
-				448E854A2DB4708B00772502 /* AWSClientRuntime in Frameworks */,
-				448E85482DB46EC100772502 /* AWSCognitoSync in Frameworks */,
+				449CAF852DB47E2900558395 /* AWSCore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -130,12 +122,8 @@
 			name = Postalgic;
 			packageProductDependencies = (
 				448E851C2DB3984200772502 /* ZIPFoundation */,
-				448E853B2DB4613900772502 /* AWSCloudFront */,
-				448E853D2DB4613900772502 /* AWSS3 */,
-				448E85432DB46EC100772502 /* AWSCognitoIdentity */,
-				448E85452DB46EC100772502 /* AWSCognitoIdentityProvider */,
-				448E85472DB46EC100772502 /* AWSCognitoSync */,
-				448E85492DB4708B00772502 /* AWSClientRuntime */,
+				449CAF842DB47E2900558395 /* AWSCore */,
+				449CAF862DB47E2900558395 /* AWSS3 */,
 			);
 			productName = Postalgic;
 			productReference = 443674762DB3898500F67B00 /* Postalgic.app */;
@@ -221,7 +209,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				448E851B2DB3984200772502 /* XCRemoteSwiftPackageReference "ZIPFoundation" */,
-				448E853A2DB4613900772502 /* XCRemoteSwiftPackageReference "aws-sdk-swift" */,
+				449CAF832DB47E2900558395 /* XCRemoteSwiftPackageReference "aws-sdk-ios-spm" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 443674772DB3898500F67B00 /* Products */;
@@ -596,12 +584,12 @@
 				minimumVersion = 0.9.19;
 			};
 		};
-		448E853A2DB4613900772502 /* XCRemoteSwiftPackageReference "aws-sdk-swift" */ = {
+		449CAF832DB47E2900558395 /* XCRemoteSwiftPackageReference "aws-sdk-ios-spm" */ = {
 			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/aws-amplify/aws-sdk-swift";
+			repositoryURL = "https://github.com/aws-amplify/aws-sdk-ios-spm.git";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 1.2.62;
+				minimumVersion = 2.40.1;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
@@ -612,35 +600,15 @@
 			package = 448E851B2DB3984200772502 /* XCRemoteSwiftPackageReference "ZIPFoundation" */;
 			productName = ZIPFoundation;
 		};
-		448E853B2DB4613900772502 /* AWSCloudFront */ = {
+		449CAF842DB47E2900558395 /* AWSCore */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 448E853A2DB4613900772502 /* XCRemoteSwiftPackageReference "aws-sdk-swift" */;
-			productName = AWSCloudFront;
+			package = 449CAF832DB47E2900558395 /* XCRemoteSwiftPackageReference "aws-sdk-ios-spm" */;
+			productName = AWSCore;
 		};
-		448E853D2DB4613900772502 /* AWSS3 */ = {
+		449CAF862DB47E2900558395 /* AWSS3 */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 448E853A2DB4613900772502 /* XCRemoteSwiftPackageReference "aws-sdk-swift" */;
+			package = 449CAF832DB47E2900558395 /* XCRemoteSwiftPackageReference "aws-sdk-ios-spm" */;
 			productName = AWSS3;
-		};
-		448E85432DB46EC100772502 /* AWSCognitoIdentity */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 448E853A2DB4613900772502 /* XCRemoteSwiftPackageReference "aws-sdk-swift" */;
-			productName = AWSCognitoIdentity;
-		};
-		448E85452DB46EC100772502 /* AWSCognitoIdentityProvider */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 448E853A2DB4613900772502 /* XCRemoteSwiftPackageReference "aws-sdk-swift" */;
-			productName = AWSCognitoIdentityProvider;
-		};
-		448E85472DB46EC100772502 /* AWSCognitoSync */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 448E853A2DB4613900772502 /* XCRemoteSwiftPackageReference "aws-sdk-swift" */;
-			productName = AWSCognitoSync;
-		};
-		448E85492DB4708B00772502 /* AWSClientRuntime */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 448E853A2DB4613900772502 /* XCRemoteSwiftPackageReference "aws-sdk-swift" */;
-			productName = AWSClientRuntime;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

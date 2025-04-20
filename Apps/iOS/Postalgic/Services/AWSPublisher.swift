@@ -6,10 +6,8 @@
 //
 
 import Foundation
-import AWSClientRuntime
-import AWSCognitoIdentity
 import AWSS3
-import AWSCloudFront
+import AWSCore
 
 /// AWSPublisher handles the upload of a static site to an S3 bucket
 /// and creates a CloudFront invalidation.
@@ -19,12 +17,6 @@ class AWSPublisher {
     private let distributionId: String
     private let identityPoolId: String
     
-    // Client instances
-    private var cognitoClient: CognitoIdentityClient?
-    private var s3Client: S3Client?
-    private var cloudFrontClient: CloudFrontClient?
-    private var credentials: CognitoCredentials?
-    
     init(region: String, bucket: String, distributionId: String, identityPoolId: String) {
         self.region = region
         self.bucket = bucket
@@ -32,63 +24,63 @@ class AWSPublisher {
         self.identityPoolId = identityPoolId
     }
     
-    /// Initialize all AWS clients with Cognito credentials
-    private func initializeClients() async throws {
-        // Create the Cognito Identity client
-        let cognitoConfig = try await CognitoIdentityClient.CognitoIdentityClientConfiguration(region: region)
-        cognitoClient = CognitoIdentityClient(config: cognitoConfig)
-        
-        // Get identity ID from Cognito Identity Pool
-        guard let cognitoClient = cognitoClient else {
-            throw AWSPublisherError.cognitoAuthenticationFailed("Failed to initialize Cognito client")
+    func uploadDataToS3(data: Data, bucket: String, key: String, contentType: String) {
+        let expression = AWSS3TransferUtilityUploadExpression()
+        expression.progressBlock = { (task, progress) in
+            DispatchQueue.main.async {
+                print("Progress: \(progress.fractionCompleted)")
+            }
         }
-        
-        let getIdInput = GetIdInput(identityPoolId: identityPoolId)
-        let getIdOutput = try await cognitoClient.getId(input: getIdInput)
-        
-        guard let identityId = getIdOutput.identityId else {
-            throw AWSPublisherError.cognitoAuthenticationFailed("Failed to get identity ID")
+
+        let completionHandler: AWSS3TransferUtilityUploadCompletionHandlerBlock = { (task, error) in
+            DispatchQueue.main.async {
+                if let error = error {
+                    print("Upload failed: \(error.localizedDescription)")
+                } else {
+                    print("Upload succeeded!")
+                }
+            }
         }
-        
-        // Get temporary AWS credentials
-        let getCredentialsInput = GetCredentialsForIdentityInput(identityId: identityId)
-        let getCredentialsOutput = try await cognitoClient.getCredentialsForIdentity(input: getCredentialsInput)
-        
-        guard let credentials = getCredentialsOutput.credentials,
-              let accessKeyId = credentials.accessKeyId,
-              let secretKey = credentials.secretKey,
-              let sessionToken = credentials.sessionToken else {
-            throw AWSPublisherError.cognitoAuthenticationFailed("Failed to get temporary credentials")
+
+        let transferUtility = AWSS3TransferUtility.default()
+        transferUtility.uploadData(
+            data,
+            bucket: bucket,
+            key: key,
+            contentType: contentType,
+            expression: expression,
+            completionHandler: completionHandler
+        ).continueWith { (task) -> AnyObject? in
+            if let error = task.error {
+                print("Error: \(error.localizedDescription)")
+            }
+            if let _ = task.result {
+                print("Upload started...")
+            }
+            return nil
         }
-        
-        // Store credentials for reuse
-        self.credentials = CognitoCredentials(
-            accessKey: accessKeyId,
-            secret: secretKey,
-            sessionToken: sessionToken
-        )
-        
-        // Initialize S3 client
-        let s3Config = try await S3Client.S3ClientConfiguration(region: region)
-        s3Client = S3Client(config: s3Config)
-        
-        // Initialize CloudFront client
-        let cloudFrontConfig = try await CloudFrontClient.CloudFrontClientConfiguration(region: region)
-        cloudFrontClient = CloudFrontClient(config: cloudFrontConfig)
     }
     
     /// Uploads the contents of a directory to an S3 bucket
     /// - Parameter directory: The local directory containing the site files
     func uploadDirectory(_ directory: URL) async throws {
-        // Initialize AWS clients - this will still attempt to authenticate with AWS
-        try await initializeClients()
+        let credentialsProvider = AWSCognitoCredentialsProvider(regionType: .USEast1, identityPoolId: self.identityPoolId)
         
-        // If we get here, authentication was successful
-        print("📤 AWSPublisher authenticated successfully")
-        print("📤 Region: \(region)")
-        print("📤 Bucket: \(bucket)")
+        let configuration = AWSServiceConfiguration(
+            region: .USEast1,
+            credentialsProvider: credentialsProvider
+        )
+        AWSServiceManager.default().defaultServiceConfiguration = configuration
+    
         
-        // Use simplified file enumeration to simulate upload
+        
+        
+//        // If we get here, authentication was successful
+//        print("📤 AWSPublisher authenticated successfully")
+//        print("📤 Region: \(region)")
+//        print("📤 Bucket: \(bucket)")
+//        
+        // Use file enumeration to upload all files
         let fileManager = FileManager.default
         let enumerator = fileManager.enumerator(at: directory, includingPropertiesForKeys: [.isRegularFileKey], options: [.skipsHiddenFiles])
         
@@ -97,35 +89,50 @@ class AWSPublisher {
         }
         
         var fileCount = 0
+        var uploadErrors: [String] = []
         
-        // Simulate uploading files by counting them
+        // Upload each file to S3
         for case let fileURL as URL in enumerator {
             let attributes = try fileURL.resourceValues(forKeys: [.isRegularFileKey])
             guard attributes.isRegularFile == true else { continue }
             
-            // Determine the relative path from the base directory
+            // Determine the relative path from the base directory to use as S3 key
             let relativePath = fileURL.path.replacingOccurrences(of: directory.path, with: "")
                 .trimmingCharacters(in: CharacterSet(charactersIn: "/"))
             
-            // Log the file that would be uploaded
-            print("📤 Would upload: \(relativePath)")
-            fileCount += 1
+            // Get file content type based on extension
+            let fileExtension = fileURL.pathExtension
+            let contentType = contentType(forFileExtension: fileExtension)
+            
+            do {
+                // Read file data
+                let fileData = try Data(contentsOf: fileURL)
+                
+                print("📤 Uploading: \(relativePath)")
+                uploadDataToS3(data: fileData, bucket: self.bucket, key: relativePath, contentType: contentType)
+                print("📤 Uploaded: \(relativePath)")
+                fileCount += 1
+                
+            } catch {
+                print("ERROR: ", dump(error, name: "Putting an object."))
+                print("❌ Error uploading \(relativePath): \(error.localizedDescription)")
+                uploadErrors.append("\(relativePath): \(error.localizedDescription)")
+            }
         }
         
-        print("📤 Would upload \(fileCount) files total")
+        print("📤 Uploaded \(fileCount) files total")
         
         if fileCount == 0 {
-            throw AWSPublisherError.s3UploadFailed("No files to upload")
+            throw AWSPublisherError.s3UploadFailed("No files were uploaded")
+        }
+        
+        if !uploadErrors.isEmpty {
+            throw AWSPublisherError.s3UploadFailed("Failed to upload some files: \(uploadErrors.joined(separator: ", "))")
         }
     }
     
     /// Creates a CloudFront cache invalidation for the distribution
     func invalidateCache() async throws {
-        // Initialize AWS clients if not already initialized
-        if cloudFrontClient == nil {
-            try await initializeClients()
-        }
-        
         // If we get here, authentication was successful
         print("🔄 AWSPublisher authenticated successfully")
         print("🔄 Distribution ID: \(distributionId)")
