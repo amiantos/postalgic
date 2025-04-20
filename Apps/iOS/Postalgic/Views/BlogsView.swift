@@ -12,9 +12,10 @@ struct BlogsView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var blogs: [Blog]
     @State private var showingBlogForm = false
+    @State private var blogToEdit: Blog?
     
     var body: some View {
-        NavigationSplitView {
+        NavigationStack {
             List {
                 ForEach(blogs.sorted(by: { $0.createdAt > $1.createdAt })) { blog in
                     NavigationLink {
@@ -27,6 +28,14 @@ struct BlogsView: View {
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)
                         }
+                    }
+                    .swipeActions(edge: .trailing) {
+                        Button {
+                            blogToEdit = blog
+                        } label: {
+                            Label("Edit", systemImage: "pencil")
+                        }
+                        .tint(.blue)
                     }
                 }
                 .onDelete(perform: deleteBlogs)
@@ -45,8 +54,9 @@ struct BlogsView: View {
             .sheet(isPresented: $showingBlogForm) {
                 BlogFormView()
             }
-        } detail: {
-            Text("Select a blog")
+            .sheet(item: $blogToEdit) { blog in
+                EditBlogView(blog: blog)
+            }
         }
     }
     

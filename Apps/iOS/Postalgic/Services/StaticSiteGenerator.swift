@@ -40,14 +40,44 @@ class StaticSiteGenerator {
         // Generate archive pages
         try generateArchivePages()
         
+        // Generate error page
+        try generateErrorPage()
+        
         // Generate CSS
         try generateCSS()
         
-        // Zip the site
-        let zipURL = tempDirectory.appendingPathComponent("\(siteDirectoryName).zip")
-        try zipSite(to: zipURL)
+        // If AWS is configured, publish to S3 and invalidate CloudFront
+        if blog.hasAwsConfigured {
+            try publishToAWS()
+            return siteDirectory // Return the directory to indicate AWS was used
+        } else {
+            // Otherwise, zip the site for local sharing
+            let zipURL = tempDirectory.appendingPathComponent("\(siteDirectoryName).zip")
+            try zipSite(to: zipURL)
+            return zipURL
+        }
+    }
+    
+    private func publishToAWS() throws {
+        guard let siteDirectory = siteDirectory else { throw SiteGeneratorError.noSiteDirectory }
+        guard let region = blog.awsRegion,
+              let bucket = blog.awsS3Bucket,
+              let distId = blog.awsCloudFrontDistId,
+              let accessKeyId = blog.awsAccessKeyId,
+              let secretAccessKey = blog.awsSecretAccessKey else {
+            throw SiteGeneratorError.missingAWSCredentials
+        }
         
-        return zipURL
+        let publisher = AWSPublisher(
+            region: region,
+            bucket: bucket,
+            distributionId: distId,
+            accessKeyId: accessKeyId,
+            secretAccessKey: secretAccessKey
+        )
+        
+        try publisher.uploadDirectory(siteDirectory)
+        try publisher.invalidateCache()
     }
     
     private func createSiteStructure() throws {
@@ -570,6 +600,84 @@ class StaticSiteGenerator {
         return html
     }
     
+    private func generateErrorPage() throws {
+        guard let siteDirectory = siteDirectory else { throw SiteGeneratorError.noSiteDirectory }
+        
+        let errorPath = siteDirectory.appendingPathComponent("error.html")
+        
+        let errorHTML = """
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>404 - Page Not Found - \(blog.name)</title>
+            <link rel="stylesheet" href="/css/style.css">
+            <style>
+                .error-container {
+                    text-align: center;
+                    padding: 50px 0;
+                }
+                .error-code {
+                    font-size: 6rem;
+                    font-weight: bold;
+                    margin-bottom: 10px;
+                    color: #d9534f;
+                }
+                .error-message {
+                    font-size: 2rem;
+                    margin-bottom: 30px;
+                }
+                .back-button {
+                    display: inline-block;
+                    padding: 10px 20px;
+                    background-color: #0275d8;
+                    color: white;
+                    text-decoration: none;
+                    border-radius: 5px;
+                    font-weight: bold;
+                    transition: background-color 0.3s;
+                }
+                .back-button:hover {
+                    background-color: #025aa5;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <header>
+                    <h1><a href="/">\(blog.name)</a></h1>
+                    <nav>
+                        <ul>
+                            <li><a href="/">Home</a></li>
+                            <li><a href="/archives.html">Archives</a></li>
+                        </ul>
+                    </nav>
+                </header>
+                
+                <main>
+                    <div class="error-container">
+                        <div class="error-code">404</div>
+                        <div class="error-message">Page Not Found</div>
+                        <p>Sorry, but the page you were trying to view does not exist.</p>
+                        <p>It might have been removed, renamed, or did not exist in the first place.</p>
+                        <p style="margin-top: 30px;">
+                            <a href="/" class="back-button">Go Back to Homepage</a>
+                        </p>
+                    </div>
+                </main>
+                
+                <footer>
+                    <p>&copy; \(Calendar.current.component(.year, from: Date())) \(blog.name). Generated with Postalgic.</p>
+                </footer>
+            </div>
+        </body>
+        </html>
+        """
+        
+        try errorHTML.write(to: errorPath, atomically: true, encoding: .utf8)
+    }
+    
     private func zipSite(to zipURL: URL) throws {
         guard let siteDirectory = siteDirectory else { throw SiteGeneratorError.noSiteDirectory }
         
@@ -578,5 +686,8 @@ class StaticSiteGenerator {
     
     enum SiteGeneratorError: Error {
         case noSiteDirectory
+        case missingAWSCredentials
+        case awsUploadFailed(String)
+        case awsInvalidationFailed(String)
     }
 }

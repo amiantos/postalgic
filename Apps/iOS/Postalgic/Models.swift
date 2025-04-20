@@ -14,6 +14,13 @@ final class Blog {
     var url: String
     var createdAt: Date
     
+    // AWS Configuration
+    var awsRegion: String?
+    var awsS3Bucket: String?
+    var awsCloudFrontDistId: String?
+    var awsAccessKeyId: String?
+    var awsSecretAccessKey: String?
+    
     @Relationship(deleteRule: .cascade, inverse: \Post.blog)
     var posts: [Post] = []
     
@@ -21,6 +28,19 @@ final class Blog {
         self.name = name
         self.url = url
         self.createdAt = createdAt
+    }
+    
+    var hasAwsConfigured: Bool {
+        return awsRegion != nil && 
+               !awsRegion!.isEmpty && 
+               awsS3Bucket != nil && 
+               !awsS3Bucket!.isEmpty && 
+               awsCloudFrontDistId != nil && 
+               !awsCloudFrontDistId!.isEmpty && 
+               awsAccessKeyId != nil && 
+               !awsAccessKeyId!.isEmpty && 
+               awsSecretAccessKey != nil && 
+               !awsSecretAccessKey!.isEmpty
     }
 }
 
