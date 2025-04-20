@@ -14,7 +14,8 @@ struct PostalgicApp: App {
         let schema = Schema([
             Blog.self,
             Post.self,
-            Tag.self
+            Tag.self,
+            Category.self
         ])
         
         // Check if we're running UI tests and need to reset data
@@ -34,6 +35,7 @@ struct PostalgicApp: App {
                 try container.mainContext.delete(model: Blog.self)
                 try container.mainContext.delete(model: Post.self)
                 try container.mainContext.delete(model: Tag.self)
+                try container.mainContext.delete(model: Category.self)
             }
             
             return container

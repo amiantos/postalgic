@@ -12,6 +12,7 @@ struct PostFormView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @Query private var allTags: [Tag]
+    @Query private var allCategories: [Category]
     
     var blog: Blog
     
@@ -20,6 +21,8 @@ struct PostFormView: View {
     @State private var primaryLink = ""
     @State private var tagInput = ""
     @State private var selectedTags: [Tag] = []
+    @State private var selectedCategory: Category?
+    @State private var showingCategoryManagement = false
     @State private var showingSuggestions = false
     
     private var existingTagNames: [String] {
@@ -42,6 +45,27 @@ struct PostFormView: View {
                 Section("Post Details") {
                     TextField("Title (optional)", text: $title)
                     TextField("Primary Link (optional)", text: $primaryLink)
+                    
+                    HStack {
+                        Picker("Category", selection: $selectedCategory) {
+                            Text("None").tag(Category?.none)
+                            
+                            if !allCategories.isEmpty {
+                                Divider()
+                                
+                                ForEach(allCategories.sorted { $0.name < $1.name }) { category in
+                                    Text(category.name).tag(Optional(category))
+                                }
+                            }
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        
+                        Button(action: {
+                            showingCategoryManagement = true
+                        }) {
+                            Image(systemName: "gear")
+                        }
+                    }
                 }
                 
                 Section("Content") {
@@ -134,6 +158,9 @@ struct PostFormView: View {
                     .disabled(content.isEmpty)
                 }
             }
+            .sheet(isPresented: $showingCategoryManagement) {
+                CategoryManagementView()
+            }
         }
     }
     
@@ -162,6 +189,12 @@ struct PostFormView: View {
             primaryLink: primaryLink.isEmpty ? nil : primaryLink
         )
         
+        // Add category to post if selected
+        if let category = selectedCategory {
+            newPost.category = category
+            category.posts.append(newPost)
+        }
+        
         // Add tags to post
         for tag in selectedTags {
             newPost.tags.append(tag)
@@ -175,5 +208,5 @@ struct PostFormView: View {
 
 #Preview {
     PostFormView(blog: Blog(name: "Test Blog", url: "https://example.com"))
-        .modelContainer(for: [Blog.self, Post.self, Tag.self], inMemory: true)
+        .modelContainer(for: [Blog.self, Post.self, Tag.self, Category.self], inMemory: true)
 }

@@ -45,6 +45,21 @@ final class Blog {
 }
 
 @Model
+final class Category {
+    var name: String
+    var categoryDescription: String?
+    var createdAt: Date
+    
+    var posts: [Post] = []
+    
+    init(name: String, categoryDescription: String? = nil, createdAt: Date = Date()) {
+        self.name = name.capitalized
+        self.categoryDescription = categoryDescription
+        self.createdAt = createdAt
+    }
+}
+
+@Model
 final class Tag {
     var name: String
     var createdAt: Date
@@ -65,6 +80,9 @@ final class Post {
     var createdAt: Date
     
     var blog: Blog?
+    
+    @Relationship(deleteRule: .nullify, inverse: \Category.posts)
+    var category: Category?
     
     @Relationship(deleteRule: .nullify, inverse: \Tag.posts)
     var tags: [Tag] = []

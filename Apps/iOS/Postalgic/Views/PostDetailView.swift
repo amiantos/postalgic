@@ -25,9 +25,22 @@ struct PostDetailView: View {
                         .font(.headline)
                 }
                 
-                Text(post.createdAt, format: .dateTime)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                HStack {
+                    Text(post.createdAt, format: .dateTime)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    
+                    if let category = post.category {
+                        Spacer()
+                        Text(category.name)
+                            .font(.subheadline)
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 5)
+                            .background(Color.green)
+                            .cornerRadius(8)
+                    }
+                }
                 
                 if !post.tags.isEmpty {
                     ScrollView(.horizontal, showsIndicators: false) {
@@ -60,5 +73,5 @@ struct PostDetailView: View {
 
 #Preview {
     PostDetailView(post: Post(title: "Test Post", content: "This is a test post with **bold** and *italic* text."))
-        .modelContainer(for: [Post.self, Tag.self], inMemory: true)
+        .modelContainer(for: [Post.self, Tag.self, Category.self], inMemory: true)
 }
