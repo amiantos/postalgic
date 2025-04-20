@@ -368,7 +368,7 @@ class StaticSiteGenerator {
                 """
                 for tag in post.tags {
                     postTagsHTML += """
-                    <a href="/tags/\(tag.name.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? tag.name)/" class="tag">\(tag.name)</a> 
+                    <a href="/tags/\(tag.name.lowercased().addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? tag.name.lowercased())/" class="tag">\(tag.name)</a> 
                     """
                 }
                 postTagsHTML += "</div>"
@@ -377,7 +377,7 @@ class StaticSiteGenerator {
             if let category = post.category {
                 postCategoryHTML = """
                 <div class="post-category">
-                    Category: <a href="/categories/\(category.name.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? category.name)/">\(category.name)</a>
+                    Category: <a href="/categories/\(category.name.lowercased().addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? category.name.lowercased())/">\(category.name)</a>
                 </div>
                 """
             }
@@ -453,7 +453,7 @@ class StaticSiteGenerator {
                 """
                 for tag in post.tags {
                     postTagsHTML += """
-                    <a href="/tags/\(tag.name.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? tag.name)/" class="tag">\(tag.name)</a> 
+                    <a href="/tags/\(tag.name.lowercased().addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? tag.name.lowercased())/" class="tag">\(tag.name)</a> 
                     """
                 }
                 postTagsHTML += "</div>"
@@ -462,7 +462,7 @@ class StaticSiteGenerator {
             if let category = post.category {
                 postCategoryHTML = """
                 <div class="post-category">
-                    Category: <a href="/categories/\(category.name.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? category.name)/">\(category.name)</a>
+                    Category: <a href="/categories/\(category.name.lowercased().addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? category.name.lowercased())/">\(category.name)</a>
                 </div>
                 """
             }
@@ -668,7 +668,7 @@ class StaticSiteGenerator {
             let tagPostCount = blog.posts.filter { $0.tags.contains(tag) }.count
             tagIndexContent += """
                         <div class="tag-item">
-                            <h2><a href="/tags/\(tag.name.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? tag.name)/">\(tag.name)</a> <span class="tag-count">(\(tagPostCount))</span></h2>
+                            <h2><a href="/tags/\(tag.name.lowercased().addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? tag.name.lowercased())/">\(tag.name)</a> <span class="tag-count">(\(tagPostCount))</span></h2>
                         </div>
             """
         }
@@ -690,7 +690,7 @@ class StaticSiteGenerator {
         // Create individual tag pages
         for tag in sortedTags {
             let tagPosts = blog.posts.filter { $0.tags.contains(tag) }.sorted { $0.createdAt > $1.createdAt }
-            let tagNameEncoded = tag.name.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? tag.name
+            let tagNameEncoded = (tag.name.lowercased()).addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? tag.name.lowercased()
             let tagDirectory = tagsDirectory.appendingPathComponent(tagNameEncoded)
             try FileManager.default.createDirectory(at: tagDirectory, withIntermediateDirectories: true)
             let tagPath = tagDirectory.appendingPathComponent("index.html")
@@ -707,7 +707,7 @@ class StaticSiteGenerator {
                     """
                     for postTag in post.tags {
                         postTagsHTML += """
-                        <a href="/tags/\(postTag.name.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? postTag.name).html" class="tag">\(postTag.name)</a> 
+                        <a href="/tags/\(postTag.name.lowercased().addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? postTag.name.lowercased())/" class="tag">\(postTag.name)</a> 
                         """
                     }
                     postTagsHTML += "</div>"
@@ -716,7 +716,7 @@ class StaticSiteGenerator {
                 if let category = post.category {
                     postCategoryHTML = """
                     <div class="post-category">
-                        Category: <a href="/categories/\(category.name.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? category.name)/">\(category.name)</a>
+                        Category: <a href="/categories/\(category.name.lowercased().addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? category.name.lowercased())/">\(category.name)</a>
                     </div>
                     """
                 }
@@ -820,7 +820,7 @@ class StaticSiteGenerator {
             let categoryPostCount = blog.posts.filter { $0.category?.id == category.id }.count
             categoryIndexContent += """
                         <div class="category-item">
-                            <h2><a href="/categories/\(category.name.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? category.name)/">\(category.name)</a> <span class="category-count">(\(categoryPostCount))</span></h2>
+                            <h2><a href="/categories/\(category.name.lowercased().addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? category.name.lowercased())/">\(category.name)</a> <span class="category-count">(\(categoryPostCount))</span></h2>
                             
             """
             
@@ -854,7 +854,7 @@ class StaticSiteGenerator {
         
         for category in sortedCategories {
             let categoryPosts = blog.posts.filter { $0.category?.id == category.id }.sorted { $0.createdAt > $1.createdAt }
-            let categoryNameEncoded = category.name.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? category.name
+            let categoryNameEncoded = (category.name.lowercased()).addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? category.name.lowercased()
             let categoryDirectory = categoriesDirectory.appendingPathComponent(categoryNameEncoded)
             try FileManager.default.createDirectory(at: categoryDirectory, withIntermediateDirectories: true)
             let categoryPath = categoryDirectory.appendingPathComponent("index.html")
