@@ -13,6 +13,7 @@ struct BlogDetailView: View {
     var blog: Blog
     @State private var showingPostForm = false
     @State private var showingPublishView = false
+    @State private var showingEditBlogView = false
     
     var body: some View {
         List {
@@ -45,8 +46,15 @@ struct BlogDetailView: View {
                 EditButton()
             }
             ToolbarItem(placement: .navigationBarTrailing) {
-                Button(action: { showingPublishView = true }) {
-                    Label("Publish", systemImage: "globe")
+                Menu {
+                    Button(action: { showingEditBlogView = true }) {
+                        Label("Edit Blog", systemImage: "pencil")
+                    }
+                    Button(action: { showingPublishView = true }) {
+                        Label("Publish", systemImage: "globe")
+                    }
+                } label: {
+                    Image(systemName: "ellipsis.circle")
                 }
             }
             ToolbarItem {
@@ -60,6 +68,9 @@ struct BlogDetailView: View {
         }
         .sheet(isPresented: $showingPublishView) {
             PublishBlogView(blog: blog)
+        }
+        .sheet(isPresented: $showingEditBlogView) {
+            EditBlogView(blog: blog)
         }
     }
     

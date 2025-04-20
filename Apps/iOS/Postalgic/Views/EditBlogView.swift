@@ -1,5 +1,5 @@
 //
-//  BlogFormView.swift
+//  EditBlogView.swift
 //  Postalgic
 //
 //  Created by Brad Root on 4/19/25.
@@ -8,12 +8,18 @@
 import SwiftUI
 import SwiftData
 
-struct BlogFormView: View {
-    @Environment(\.modelContext) private var modelContext
+struct EditBlogView: View {
     @Environment(\.dismiss) private var dismiss
+    @Bindable var blog: Blog
     
-    @State private var name = ""
-    @State private var url = ""
+    @State private var name: String
+    @State private var url: String
+    
+    init(blog: Blog) {
+        self.blog = blog
+        _name = State(initialValue: blog.name)
+        _url = State(initialValue: blog.url)
+    }
     
     var body: some View {
         NavigationStack {
@@ -27,7 +33,7 @@ struct BlogFormView: View {
                         .textContentType(.URL)
                 }
             }
-            .navigationTitle("New Blog")
+            .navigationTitle("Edit Blog")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
@@ -36,7 +42,7 @@ struct BlogFormView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
-                        addBlog()
+                        updateBlog()
                         dismiss()
                     }
                     .disabled(name.isEmpty || url.isEmpty)
@@ -45,13 +51,13 @@ struct BlogFormView: View {
         }
     }
     
-    private func addBlog() {
-        let newBlog = Blog(name: name, url: url)
-        modelContext.insert(newBlog)
+    private func updateBlog() {
+        blog.name = name
+        blog.url = url
     }
 }
 
 #Preview {
-    BlogFormView()
+    EditBlogView(blog: Blog(name: "Test Blog", url: "https://example.com"))
         .modelContainer(for: [Blog.self], inMemory: true)
 }

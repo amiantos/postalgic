@@ -12,6 +12,7 @@ struct BlogsView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var blogs: [Blog]
     @State private var showingBlogForm = false
+    @State private var blogToEdit: Blog?
     
     var body: some View {
         NavigationSplitView {
@@ -27,6 +28,14 @@ struct BlogsView: View {
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)
                         }
+                    }
+                    .swipeActions(edge: .trailing) {
+                        Button {
+                            blogToEdit = blog
+                        } label: {
+                            Label("Edit", systemImage: "pencil")
+                        }
+                        .tint(.blue)
                     }
                 }
                 .onDelete(perform: deleteBlogs)
@@ -44,6 +53,9 @@ struct BlogsView: View {
             .navigationTitle("Blogs")
             .sheet(isPresented: $showingBlogForm) {
                 BlogFormView()
+            }
+            .sheet(item: $blogToEdit) { blog in
+                EditBlogView(blog: blog)
             }
         } detail: {
             Text("Select a blog")
