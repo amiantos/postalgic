@@ -73,7 +73,7 @@ struct PublishBlogView: View {
             
             if let successMessage = publishSuccessMessage {
                 Text(successMessage)
-                    .foregroundColor(.green)
+                    .foregroundColor(Color("PGreen"))
                     .multilineTextAlignment(.center)
                     .padding()
             }

@@ -37,7 +37,7 @@ struct PostDetailView: View {
                             .foregroundStyle(.white)
                             .padding(.horizontal, 10)
                             .padding(.vertical, 5)
-                            .background(Color.green)
+                            .background(Color("PGreen"))
                             .cornerRadius(8)
                     }
                 }
@@ -49,7 +49,7 @@ struct PostDetailView: View {
                                 Text(tag.name)
                                     .padding(.horizontal, 10)
                                     .padding(.vertical, 5)
-                                    .background(Color.blue.opacity(0.2))
+                                    .background(Color("PBlue"))
                                     .cornerRadius(8)
                             }
                         }

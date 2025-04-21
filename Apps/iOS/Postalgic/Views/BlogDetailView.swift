@@ -44,7 +44,7 @@ struct BlogDetailView: View {
                                     .foregroundStyle(.white)
                                     .padding(.horizontal, 6)
                                     .padding(.vertical, 2)
-                                    .background(Color.green)
+                                    .background(Color("PGreen"))
                                     .cornerRadius(4)
                             }
                         }
@@ -56,7 +56,7 @@ struct BlogDetailView: View {
                                         .font(.caption)
                                         .padding(.horizontal, 6)
                                         .padding(.vertical, 2)
-                                        .background(Color.blue.opacity(0.1))
+                                        .background(Color("PBlue"))
                                         .cornerRadius(4)
                                 }
                                 if post.tags.count > 3 {

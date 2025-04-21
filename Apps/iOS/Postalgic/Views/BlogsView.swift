@@ -50,7 +50,7 @@ struct BlogsView: View {
                     }
                 }
             }
-            .navigationTitle("Blogs")
+            .navigationTitle("Your Blogs")
             .sheet(isPresented: $showingBlogForm) {
                 BlogFormView()
             }
