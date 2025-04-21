@@ -12,6 +12,10 @@ Postalgic is a blogging platform for your pocket. Simply put, it's meant to be 1
   - [ ] Postalgic Pro Hosting
   - [ ] Others?
 
+## Sample Sites
+- https://micro.amiantos.net
+- https://test.postalgic.app
+
 # Credits
 - Postalgic is created by [Brad Root](https://github.com/amiantos)
 
