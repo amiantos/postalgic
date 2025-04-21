@@ -1,5 +1,5 @@
 {
-  "originHash" : "99dadc7f609e098f714db2f18d023883053cc980705cad1ace18c7fe24514975",
+  "originHash" : "efd4a2b90dfae47fb367e098c09628537a03ea7f93ed19435bdad84df34f49a4",
   "pins" : [
     {
       "identity" : "aws-sdk-ios-spm",
@@ -8,6 +8,15 @@
       "state" : {
         "revision" : "512a43ed2770957d40618ad415a9826e6dd99ea9",
         "version" : "2.40.1"
+      }
+    },
+    {
+      "identity" : "ink",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/JohnSundell/Ink",
+      "state" : {
+        "revision" : "bcc9f219900a62c4210e6db726035d7f03ae757b",
+        "version" : "0.6.0"
       }
     },
     {

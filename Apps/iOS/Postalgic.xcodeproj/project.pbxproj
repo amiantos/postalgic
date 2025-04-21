@@ -10,6 +10,7 @@
 		448E851D2DB3984200772502 /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = 448E851C2DB3984200772502 /* ZIPFoundation */; };
 		449CAF852DB47E2900558395 /* AWSCore in Frameworks */ = {isa = PBXBuildFile; productRef = 449CAF842DB47E2900558395 /* AWSCore */; };
 		449CAF872DB47E2900558395 /* AWSS3 in Frameworks */ = {isa = PBXBuildFile; productRef = 449CAF862DB47E2900558395 /* AWSS3 */; };
+		44C363C32DB632430057567C /* Ink in Frameworks */ = {isa = PBXBuildFile; productRef = 44C363C22DB632430057567C /* Ink */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -59,6 +60,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				449CAF872DB47E2900558395 /* AWSS3 in Frameworks */,
+				44C363C32DB632430057567C /* Ink in Frameworks */,
 				448E851D2DB3984200772502 /* ZIPFoundation in Frameworks */,
 				449CAF852DB47E2900558395 /* AWSCore in Frameworks */,
 			);
@@ -124,6 +126,7 @@
 				448E851C2DB3984200772502 /* ZIPFoundation */,
 				449CAF842DB47E2900558395 /* AWSCore */,
 				449CAF862DB47E2900558395 /* AWSS3 */,
+				44C363C22DB632430057567C /* Ink */,
 			);
 			productName = Postalgic;
 			productReference = 443674762DB3898500F67B00 /* Postalgic.app */;
@@ -210,6 +213,7 @@
 			packageReferences = (
 				448E851B2DB3984200772502 /* XCRemoteSwiftPackageReference "ZIPFoundation" */,
 				449CAF832DB47E2900558395 /* XCRemoteSwiftPackageReference "aws-sdk-ios-spm" */,
+				44C363C12DB632430057567C /* XCRemoteSwiftPackageReference "Ink" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 443674772DB3898500F67B00 /* Products */;
@@ -592,6 +596,14 @@
 				minimumVersion = 2.40.1;
 			};
 		};
+		44C363C12DB632430057567C /* XCRemoteSwiftPackageReference "Ink" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/JohnSundell/Ink";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.6.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -609,6 +621,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 449CAF832DB47E2900558395 /* XCRemoteSwiftPackageReference "aws-sdk-ios-spm" */;
 			productName = AWSS3;
+		};
+		44C363C22DB632430057567C /* Ink */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 44C363C12DB632430057567C /* XCRemoteSwiftPackageReference "Ink" */;
+			productName = Ink;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

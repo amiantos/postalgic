@@ -7,6 +7,7 @@
 
 import Foundation
 import ZIPFoundation
+import Ink
 
 extension String {
     /// Formats a string for use in a URL path, replacing spaces with hyphens and ensuring URL safety
@@ -397,7 +398,7 @@ class StaticSiteGenerator {
                 <div class="post-date">\(post.formattedDate)</div>
                 \(postCategoryHTML)
                 \(postTagsHTML)
-                <div class="post-summary">\(String(post.content.prefix(150)))...</div>
+                <div class="post-summary">\(MarkdownParser().html(from: post.content))</div>
             </div>
             """
         }
@@ -508,7 +509,7 @@ class StaticSiteGenerator {
                                 \(postTagsHTML)
                             </div>
                             <div class="post-content">
-                                \(post.content)
+                                \(MarkdownParser().html(from: post.content))
                             </div>
                         </article>
                     </main>
@@ -736,7 +737,7 @@ class StaticSiteGenerator {
                     <div class="post-date">\(post.formattedDate)</div>
                     \(postCategoryHTML)
                     \(postTagsHTML)
-                    <div class="post-summary">\(String(post.content.prefix(150)))...</div>
+                    <div class="post-summary">\(MarkdownParser().html(from: post.content))</div>
                 </div>
                 """
             }
@@ -889,7 +890,7 @@ class StaticSiteGenerator {
                     <h2><a href="/\(post.urlPath)/index.html">\(post.displayTitle)</a></h2>
                     <div class="post-date">\(post.formattedDate)</div>
                     \(postTagsHTML)
-                    <div class="post-summary">\(String(post.content.prefix(150)))...</div>
+                    <div class="post-summary">\(MarkdownParser().html(from: post.content))</div>
                 </div>
                 """
             }
