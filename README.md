@@ -2,7 +2,7 @@
 
 Postalgic is a blogging platform for your pocket. Simply put, it's 1999's Blogger in app form, fully decentralized. In the parlance of our times, it's an all-in-one blog-oriented content management system and static site generator & publisher.
 
-### Postalgic is not a social network.
+## Postalgic is not a social network.
 
 Online social networks have proven themselves incapable of nuturing meaningful human relationships.
 
@@ -11,7 +11,7 @@ Online social networks have proven themselves incapable of nuturing meaningful h
 - If you want to "private message" another Postalgic author, send them an email (if they've provided one).
 - If you want to "like" a blog post you enjoyed, share it with your friends and family.
 
-## <img src="/postalgic-icon.png?raw=true" alt="Postalgic App Icon" width="24" height="24">&nbsp;&nbsp;Postalgic for iOS (in Apps/iOS)
+# <img src="/postalgic-icon.png?raw=true" alt="Postalgic App Icon" width="26" height="26">&nbsp;&nbsp;Postalgic for iOS (in Apps/iOS)
 
 - [x] Create, manage, and update blogs in the palm of your hand
 - [x] Generate static HTML / CSS websites automatically
@@ -21,7 +21,7 @@ Online social networks have proven themselves incapable of nuturing meaningful h
   - [ ] Postalgic Pro
   - [ ] Others?
 
-## Sample Sites
+# Sample Sites
 - https://micro.amiantos.net
 - https://test.postalgic.app
 
