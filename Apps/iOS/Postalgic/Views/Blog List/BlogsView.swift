@@ -34,9 +34,7 @@ struct BlogsView: View {
                             blogToEdit = blog
                         } label: {
                             Label("Edit", systemImage: "pencil")
-                        }
-                        .tint(.blue)
-                    }
+                        }                    }
                 }
                 .onDelete(perform: deleteBlogs)
             }

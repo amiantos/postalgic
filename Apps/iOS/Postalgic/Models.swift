@@ -87,6 +87,8 @@ final class Post {
     var primaryLink: String?
     var createdAt: Date
     
+    var isDraft: Bool = false
+    
     var blog: Blog?
     
     @Relationship(deleteRule: .nullify, inverse: \Category.posts)
@@ -95,11 +97,12 @@ final class Post {
     @Relationship(deleteRule: .nullify, inverse: \Tag.posts)
     var tags: [Tag] = []
     
-    init(title: String? = nil, content: String, primaryLink: String? = nil, createdAt: Date = Date()) {
+    init(title: String? = nil, content: String, primaryLink: String? = nil, createdAt: Date = Date(), isDraft: Bool = false) {
         self.title = title
         self.content = content
         self.primaryLink = primaryLink
         self.createdAt = createdAt
+        self.isDraft = isDraft
     }
     
     var formattedDate: String {

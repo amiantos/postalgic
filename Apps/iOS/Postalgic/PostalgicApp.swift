@@ -22,6 +22,7 @@ struct PostalgicApp: App {
         let isUITesting = ProcessInfo.processInfo.arguments.contains("-UITesting")
         let shouldResetData = ProcessInfo.processInfo.arguments.contains("-DataReset")
         
+        // Configure migration options to safely handle schema changes
         let modelConfiguration = ModelConfiguration(
             schema: schema,
             isStoredInMemoryOnly: isUITesting

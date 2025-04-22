@@ -300,7 +300,8 @@ class StaticSiteGenerator {
         guard let siteDirectory = siteDirectory else { throw SiteGeneratorError.noSiteDirectory }
         
         let rssPath = siteDirectory.appendingPathComponent("rss.xml")
-        let sortedPosts = blog.posts.sorted { $0.createdAt > $1.createdAt }
+        let publishedPosts = blog.posts.filter { !$0.isDraft }
+        let sortedPosts = publishedPosts.sorted { $0.createdAt > $1.createdAt }
         let limitedPosts = Array(sortedPosts.prefix(20)) // Get only the 20 most recent posts
         
         let dateFormatter = ISO8601DateFormatter()
@@ -415,7 +416,8 @@ class StaticSiteGenerator {
         guard let siteDirectory = siteDirectory else { throw SiteGeneratorError.noSiteDirectory }
         
         let indexPath = siteDirectory.appendingPathComponent("index.html")
-        let sortedPosts = blog.posts.sorted { $0.createdAt > $1.createdAt }
+        let publishedPosts = blog.posts.filter { !$0.isDraft }
+        let sortedPosts = publishedPosts.sorted { $0.createdAt > $1.createdAt }
         
         var postListHTML = ""
         for post in sortedPosts {
@@ -499,7 +501,8 @@ class StaticSiteGenerator {
     private func generatePostPages() throws {
         guard let siteDirectory = siteDirectory else { throw SiteGeneratorError.noSiteDirectory }
         
-        for post in blog.posts {
+        let publishedPosts = blog.posts.filter { !$0.isDraft }
+        for post in publishedPosts {
             let postDirectory = siteDirectory.appendingPathComponent(post.urlPath)
             try FileManager.default.createDirectory(at: postDirectory, withIntermediateDirectories: true)
             
@@ -587,7 +590,8 @@ class StaticSiteGenerator {
         try FileManager.default.createDirectory(at: archivesDirectory, withIntermediateDirectories: true)
         
         let archivesPath = archivesDirectory.appendingPathComponent("index.html")
-        let sortedPosts = blog.posts.sorted { $0.createdAt > $1.createdAt }
+        let publishedPosts = blog.posts.filter { !$0.isDraft }
+        let sortedPosts = publishedPosts.sorted { $0.createdAt > $1.createdAt }
         
         let calendar = Calendar.current
         var yearMonthPosts: [Int: [Int: [Post]]] = [:]
@@ -689,8 +693,10 @@ class StaticSiteGenerator {
     private func generateTagPages() throws {
         guard let siteDirectory = siteDirectory else { throw SiteGeneratorError.noSiteDirectory }
         
-        // Use the blog's tags directly
-        let sortedTags = blog.tags.sorted { $0.name < $1.name }
+        // Get tags that have published posts
+        let publishedPosts = blog.posts.filter { !$0.isDraft }
+        let tagsWithPublishedPosts = Set(publishedPosts.flatMap { $0.tags })
+        let sortedTags = Array(tagsWithPublishedPosts).sorted { $0.name < $1.name }
         
         // Always create tags directory
         let tagsDirectory = siteDirectory.appendingPathComponent("tags")
@@ -751,7 +757,7 @@ class StaticSiteGenerator {
         
         // Create individual tag pages
         for tag in sortedTags {
-            let tagPosts = blog.posts.filter { $0.tags.contains(tag) }.sorted { $0.createdAt > $1.createdAt }
+            let tagPosts = publishedPosts.filter { $0.tags.contains(tag) }.sorted { $0.createdAt > $1.createdAt }
             let tagNameEncoded = tag.name.urlPathFormatted()
             let tagDirectory = tagsDirectory.appendingPathComponent(tagNameEncoded)
             try FileManager.default.createDirectory(at: tagDirectory, withIntermediateDirectories: true)
@@ -841,8 +847,10 @@ class StaticSiteGenerator {
     private func generateCategoryPages() throws {
         guard let siteDirectory = siteDirectory else { throw SiteGeneratorError.noSiteDirectory }
         
-        // Use the blog's categories directly
-        let sortedCategories = blog.categories.sorted { $0.name < $1.name }
+        // Get categories that have published posts
+        let publishedPosts = blog.posts.filter { !$0.isDraft }
+        let categoriesWithPublishedPosts = Set(publishedPosts.compactMap { $0.category })
+        let sortedCategories = Array(categoriesWithPublishedPosts).sorted { $0.name < $1.name }
         
         // Always create categories directory
         let categoriesDirectory = siteDirectory.appendingPathComponent("categories")
@@ -915,7 +923,7 @@ class StaticSiteGenerator {
         // Note: Categories directory already created above
         
         for category in sortedCategories {
-            let categoryPosts = blog.posts.filter { $0.category?.id == category.id }.sorted { $0.createdAt > $1.createdAt }
+            let categoryPosts = publishedPosts.filter { $0.category?.id == category.id }.sorted { $0.createdAt > $1.createdAt }
             let categoryNameEncoded = category.name.urlPathFormatted()
             let categoryDirectory = categoriesDirectory.appendingPathComponent(categoryNameEncoded)
             try FileManager.default.createDirectory(at: categoryDirectory, withIntermediateDirectories: true)

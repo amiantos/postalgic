@@ -1,35 +1,42 @@
 //
-//  PostFormView.swift
+//  PostEditView.swift
 //  Postalgic
 //
-//  Created by Brad Root on 4/19/25.
+//  Created by Brad Root on 4/21/25.
 //
 
 import SwiftUI
 import SwiftData
 
-struct PostFormView: View {
+struct PostEditView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @Query private var allTags: [Tag]
     @Query private var allCategories: [Category]
     
-    var blog: Blog
+    var post: Post
+    
+    private var blog: Blog? {
+        return post.blog
+    }
     
     private var blogTags: [Tag] {
-        return allTags.filter { $0.blog?.id == blog.id }
+        guard let blogId = blog?.id else { return [] }
+        return allTags.filter { $0.blog?.id == blogId }
     }
     
     private var blogCategories: [Category] {
-        return allCategories.filter { $0.blog?.id == blog.id }
+        guard let blogId = blog?.id else { return [] }
+        return allCategories.filter { $0.blog?.id == blogId }
     }
     
-    @State private var title = ""
-    @State private var content = ""
-    @State private var primaryLink = ""
+    @State private var title: String
+    @State private var content: String
+    @State private var primaryLink: String
     @State private var tagInput = ""
     @State private var selectedTags: [Tag] = []
     @State private var selectedCategory: Category?
+    @State private var isDraft: Bool
     @State private var showingCategoryManagement = false
     @State private var showingSuggestions = false
     
@@ -47,12 +54,23 @@ struct PostFormView: View {
         }
     }
     
+    init(post: Post) {
+        self.post = post
+        _title = State(initialValue: post.title ?? "")
+        _content = State(initialValue: post.content)
+        _primaryLink = State(initialValue: post.primaryLink ?? "")
+        _isDraft = State(initialValue: post.isDraft)
+        _selectedTags = State(initialValue: post.tags)
+        _selectedCategory = State(initialValue: post.category)
+    }
+    
     var body: some View {
         NavigationStack {
             Form {
                 Section("Post Details") {
                     TextField("Title (optional)", text: $title)
                     TextField("Primary Link (optional)", text: $primaryLink)
+                    Toggle("Save as Draft", isOn: $isDraft)
                     
                     HStack {
                         Picker("Category", selection: $selectedCategory) {
@@ -151,7 +169,7 @@ struct PostFormView: View {
                     }
                 }
             }
-            .navigationTitle("New Post")
+            .navigationTitle("Edit Post")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
@@ -160,21 +178,23 @@ struct PostFormView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
-                        addPost()
+                        updatePost()
                         dismiss()
                     }
                     .disabled(content.isEmpty)
                 }
             }
             .sheet(isPresented: $showingCategoryManagement) {
-                CategoryManagementView(blog: blog)
+                if let blog = blog {
+                    CategoryManagementView(blog: blog)
+                }
             }
         }
     }
     
     private func addTag() {
         let trimmed = tagInput.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-        if !trimmed.isEmpty {
+        if !trimmed.isEmpty, let blog = blog {
             // Check if tag already exists for this blog (case insensitive)
             if let existingTag = blogTags.first(where: { $0.name.lowercased() == trimmed }) {
                 if !selectedTags.contains(where: { $0.id == existingTag.id }) {
@@ -192,31 +212,49 @@ struct PostFormView: View {
         }
     }
     
-    private func addPost() {
-        let newPost = Post(
-            title: title.isEmpty ? nil : title,
-            content: content,
-            primaryLink: primaryLink.isEmpty ? nil : primaryLink
-        )
+    private func updatePost() {
+        // Update post properties
+        post.title = title.isEmpty ? nil : title
+        post.content = content
+        post.primaryLink = primaryLink.isEmpty ? nil : primaryLink
+        post.isDraft = isDraft
         
-        // Add category to post if selected
-        if let category = selectedCategory {
-            newPost.category = category
-            category.posts.append(newPost)
+        // Handle category changes
+        if post.category != selectedCategory {
+            // Remove post from previous category
+            if let oldCategory = post.category {
+                if let index = oldCategory.posts.firstIndex(where: { $0.id == post.id }) {
+                    oldCategory.posts.remove(at: index)
+                }
+            }
+            
+            // Add post to new category
+            post.category = selectedCategory
+            if let newCategory = selectedCategory {
+                newCategory.posts.append(post)
+            }
         }
         
-        // Add tags to post
+        // Handle tag changes
+        // First, remove all existing tag relationships
+        for tag in post.tags {
+            if let index = tag.posts.firstIndex(where: { $0.id == post.id }) {
+                tag.posts.remove(at: index)
+            }
+        }
+        
+        // Clear post's tags array
+        post.tags.removeAll()
+        
+        // Now add all selected tags
         for tag in selectedTags {
-            newPost.tags.append(tag)
-            tag.posts.append(newPost)
+            post.tags.append(tag)
+            tag.posts.append(post)
         }
-        
-        modelContext.insert(newPost)
-        blog.posts.append(newPost)
     }
 }
 
 #Preview {
-    PostFormView(blog: Blog(name: "Test Blog", url: "https://example.com"))
-        .modelContainer(for: [Blog.self, Post.self, Tag.self, Category.self], inMemory: true)
+    PostEditView(post: Post(title: "Test Post", content: "This is a test post with **bold** and *italic* text."))
+        .modelContainer(for: [Post.self, Tag.self, Category.self, Blog.self], inMemory: true)
 }
