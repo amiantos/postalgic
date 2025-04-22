@@ -16,63 +16,118 @@ struct BlogDetailView: View {
     @State private var showingEditBlogView = false
     @State private var showingCategoryManagement = false
     
+    enum PostFilter: String, CaseIterable, Identifiable {
+        case all = "All"
+        case published = "Published"
+        case drafts = "Drafts"
+        
+        var id: String { self.rawValue }
+    }
+    
+    @State private var selectedFilter: PostFilter = .all
+    
     var body: some View {
-        List {
-            let sortedPosts = blog.posts.sorted { $0.createdAt > $1.createdAt }
-            ForEach(sortedPosts) { post in
-                NavigationLink {
-                    PostDetailView(post: post)
-                } label: {
-                    VStack(alignment: .leading, spacing: 4) {
-                        if let title = post.title {
-                            Text(title)
-                                .font(.headline)
-                        } else {
-                            Text(post.content.prefix(50))
-                                .font(.headline)
-                                .lineLimit(1)
-                        }
-                        HStack {
-                            Text(post.createdAt, format: .dateTime)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                            
-                            if let category = post.category {
-                                Spacer()
-                                Text(category.name)
-                                    .font(.caption)
-                                    .foregroundStyle(.white)
-                                    .padding(.horizontal, 6)
-                                    .padding(.vertical, 2)
-                                    .background(Color("PGreen"))
-                                    .cornerRadius(4)
-                            }
-                        }
-                        
-                        if !post.tags.isEmpty {
-                            HStack {
-                                ForEach(post.tags.prefix(3)) { tag in
-                                    Text(tag.name)
-                                        .font(.caption)
-                                        .padding(.horizontal, 6)
-                                        .padding(.vertical, 2)
-                                        .background(Color("PBlue"))
-                                        .cornerRadius(4)
-                                }
-                                if post.tags.count > 3 {
-                                    Text("+\(post.tags.count - 3)")
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                }
-                            }
-                        }
-                    }
-                    .padding(.vertical, 4)
+        VStack(spacing: 0) {
+            Picker("Filter", selection: $selectedFilter) {
+                ForEach(PostFilter.allCases) { filter in
+                    Text(filter.rawValue).tag(filter)
                 }
             }
-            .onDelete(perform: deletePosts)
+            .pickerStyle(.segmented)
+            .padding(.horizontal)
+            .padding(.top)
+            
+            List {
+                let filteredPosts = blog.posts
+                    .filter { post in
+                        switch selectedFilter {
+                        case .all: return true
+                        case .published: return !post.isDraft
+                        case .drafts: return post.isDraft
+                        }
+                    }
+                    .sorted { $0.createdAt > $1.createdAt }
+                
+                ForEach(filteredPosts) { post in
+                    NavigationLink {
+                        PostDetailView(post: post)
+                    } label: {
+                        VStack(alignment: .leading, spacing: 4) {
+                            HStack {
+                                if let title = post.title {
+                                    Text(title)
+                                        .font(.headline)
+                                } else {
+                                    Text(post.content.prefix(50))
+                                        .font(.headline)
+                                        .lineLimit(1)
+                                }
+                                
+                                if post.isDraft {
+                                    Spacer()
+                                    Text("DRAFT")
+                                        .font(.caption)
+                                        .foregroundStyle(.white)
+                                        .padding(.horizontal, 6)
+                                        .padding(.vertical, 2)
+                                        .background(Color("PPink"))
+                                        .cornerRadius(4)
+                                }
+                            }
+                            
+                            HStack {
+                                Text(post.createdAt, format: .dateTime)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                
+                                if let category = post.category {
+                                    Spacer()
+                                    Text(category.name)
+                                        .font(.caption)
+                                        .foregroundStyle(.white)
+                                        .padding(.horizontal, 6)
+                                        .padding(.vertical, 2)
+                                        .background(Color("PGreen"))
+                                        .cornerRadius(4)
+                                }
+                            }
+                            
+                            if !post.tags.isEmpty {
+                                HStack {
+                                    ForEach(post.tags.prefix(3)) { tag in
+                                        Text(tag.name)
+                                            .font(.caption)
+                                            .padding(.horizontal, 6)
+                                            .padding(.vertical, 2)
+                                            .background(Color("PBlue"))
+                                            .cornerRadius(4)
+                                    }
+                                    if post.tags.count > 3 {
+                                        Text("+\(post.tags.count - 3)")
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                    }
+                                }
+                            }
+                        }
+                        .padding(.vertical, 4)
+                    }
+                }
+                .onDelete(perform: deletePosts)
+            }
         }
         .navigationTitle(blog.name)
+        .toolbarTitleMenu {
+            Button("All Posts (\(blog.posts.count))") {
+                selectedFilter = .all
+            }
+            Button("Published (\(blog.posts.filter { !$0.isDraft }.count))") {
+                selectedFilter = .published
+            }
+            Button("Drafts (\(blog.posts.filter { $0.isDraft }.count))") {
+                selectedFilter = .drafts
+            }
+        }
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 EditButton()
@@ -117,9 +172,18 @@ struct BlogDetailView: View {
     
     private func deletePosts(offsets: IndexSet) {
         withAnimation {
-            let sortedPosts = blog.posts.sorted { $0.createdAt > $1.createdAt }
+            let filteredPosts = blog.posts
+                .filter { post in
+                    switch selectedFilter {
+                    case .all: return true
+                    case .published: return !post.isDraft
+                    case .drafts: return post.isDraft
+                    }
+                }
+                .sorted { $0.createdAt > $1.createdAt }
+            
             for index in offsets {
-                let postToDelete = sortedPosts[index]
+                let postToDelete = filteredPosts[index]
                 if let postIndex = blog.posts.firstIndex(where: { $0.id == postToDelete.id }) {
                     blog.posts.remove(at: postIndex)
                 }

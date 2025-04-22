@@ -30,6 +30,7 @@ struct PostFormView: View {
     @State private var tagInput = ""
     @State private var selectedTags: [Tag] = []
     @State private var selectedCategory: Category?
+    @State private var isDraft = false
     @State private var showingCategoryManagement = false
     @State private var showingSuggestions = false
     
@@ -53,6 +54,8 @@ struct PostFormView: View {
                 Section("Post Details") {
                     TextField("Title (optional)", text: $title)
                     TextField("Primary Link (optional)", text: $primaryLink)
+                    Toggle("Save as Draft", isOn: $isDraft)
+                        .tint(Color("PPink"))
                     
                     HStack {
                         Picker("Category", selection: $selectedCategory) {
@@ -151,7 +154,7 @@ struct PostFormView: View {
                     }
                 }
             }
-            .navigationTitle("New Post")
+            .navigationTitle("Create New Post")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
@@ -196,7 +199,8 @@ struct PostFormView: View {
         let newPost = Post(
             title: title.isEmpty ? nil : title,
             content: content,
-            primaryLink: primaryLink.isEmpty ? nil : primaryLink
+            primaryLink: primaryLink.isEmpty ? nil : primaryLink,
+            isDraft: isDraft
         )
         
         // Add category to post if selected
