@@ -294,6 +294,56 @@ class StaticSiteGenerator {
         }
     }
     
+    /// Generates an RSS feed for the blog posts
+    /// - Throws: SiteGeneratorError
+    private func generateRSSFeed() throws {
+        guard let siteDirectory = siteDirectory else { throw SiteGeneratorError.noSiteDirectory }
+        
+        let rssPath = siteDirectory.appendingPathComponent("rss.xml")
+        let sortedPosts = blog.posts.sorted { $0.createdAt > $1.createdAt }
+        let limitedPosts = Array(sortedPosts.prefix(20)) // Get only the 20 most recent posts
+        
+        let dateFormatter = ISO8601DateFormatter()
+        
+        var rssContent = """
+        <?xml version="1.0" encoding="UTF-8" ?>
+        <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+        <channel>
+            <title>\(blog.name)</title>
+            <link>\(blog.url)</link>
+            <description>Recent posts from \(blog.name)</description>
+            <language>en-us</language>
+            <lastBuildDate>\(dateFormatter.string(from: Date()))</lastBuildDate>
+            <atom:link href="\(blog.url)/rss.xml" rel="self" type="application/rss+xml" />
+        """
+        
+        for post in limitedPosts {
+            let postTitle = post.displayTitle
+            let postDate = dateFormatter.string(from: post.createdAt)
+            let postLink = "\(blog.url)/\(post.urlPath)/"
+            let postContentHTML = MarkdownParser().html(from: post.content)
+            
+            rssContent += """
+            
+            <item>
+                <title>\(postTitle)</title>
+                <link>\(postLink)</link>
+                <guid>\(postLink)</guid>
+                <pubDate>\(postDate)</pubDate>
+                <description><![CDATA[\(postContentHTML)]]></description>
+            </item>
+            """
+        }
+        
+        rssContent += """
+        
+        </channel>
+        </rss>
+        """
+        
+        try rssContent.write(to: rssPath, atomically: true, encoding: .utf8)
+    }
+    
     /// Generates a static site for the blog
     /// - Returns: URL to the generated ZIP file if not publishing to AWS
     /// - Throws: SiteGeneratorError
@@ -318,6 +368,7 @@ class StaticSiteGenerator {
         try generateArchivesPage()
         try generateTagPages()
         try generateCategoryPages()
+        try generateRSSFeed()
         
         // If AWS is configured, publish to AWS
         if blog.hasAwsConfigured {
@@ -411,6 +462,7 @@ class StaticSiteGenerator {
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>\(blog.name)</title>
             <link rel="stylesheet" href="/css/style.css">
+            <link rel="alternate" type="application/rss+xml" title="\(blog.name) RSS Feed" href="/rss.xml" />
         </head>
         <body>
             <div class="container">
