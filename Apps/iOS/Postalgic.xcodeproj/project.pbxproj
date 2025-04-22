@@ -150,11 +150,11 @@
 		44C3641F2DB768DB0057567C /* Postalgic */ = {
 			isa = PBXGroup;
 			children = (
-				44C364102DB768DB0057567C /* Services */,
-				44C3641B2DB768DB0057567C /* Views */,
 				44C3641C2DB768DB0057567C /* Assets.xcassets */,
 				44C3641D2DB768DB0057567C /* Models.swift */,
 				44C3641E2DB768DB0057567C /* PostalgicApp.swift */,
+				44C364102DB768DB0057567C /* Services */,
+				44C3641B2DB768DB0057567C /* Views */,
 			);
 			path = Postalgic;
 			sourceTree = "<group>";
