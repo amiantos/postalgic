@@ -22,6 +22,9 @@ extension String {
 class StaticSiteGenerator {
     private let blog: Blog
     private var siteDirectory: URL?
+    
+    // MARK: - Templates and CSS
+    
     private var cssFile: String = """
     /* Base styles */
     :root {
@@ -132,6 +135,17 @@ class StaticSiteGenerator {
         color: var(--medium-gray);
         font-size: 0.9rem;
         margin-bottom: 10px;
+    }
+    
+    .post-date a {
+        color: var(--medium-gray);
+        text-decoration: none;
+        border-bottom: 1px dotted var(--medium-gray);
+    }
+    
+    .post-date a:hover {
+        color: var(--accent-color);
+        border-bottom-color: var(--accent-color);
     }
     
     .post-tags, .post-category {
@@ -276,6 +290,167 @@ class StaticSiteGenerator {
         self.blog = blog
     }
     
+    // MARK: - HTML Template Components
+    
+    /// Returns the HTML header for a page
+    private func htmlHeader(pageTitle: String, customHead: String = "") -> String {
+        return """
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>\(pageTitle)</title>
+            <link rel="stylesheet" href="/css/style.css">
+            \(customHead)
+        </head>
+        <body>
+            <div class="container">
+                <header>
+                    <h1><a href="/">\(blog.name)</a></h1>
+                    <nav>
+                        <ul>
+                            <li><a href="/">Home</a></li>
+                            <li><a href="/archives/">Archives</a></li>
+                            <li><a href="/tags/">Tags</a></li>
+                            <li><a href="/categories/">Categories</a></li>
+                        </ul>
+                    </nav>
+                </header>
+                
+                <main>
+        """
+    }
+    
+    /// Returns the HTML footer for a page
+    private func htmlFooter() -> String {
+        return """
+                </main>
+                
+                <footer>
+                    <p>&copy; \(Calendar.current.component(.year, from: Date())) \(blog.name). Generated with <a href="https://postalgic.app">Postalgic</a>.</p>
+                </footer>
+            </div>
+        </body>
+        </html>
+        """
+    }
+    
+    /// Wraps content in a complete HTML page
+    private func completePage(title: String, content: String, customHead: String = "") -> String {
+        return htmlHeader(pageTitle: title, customHead: customHead) + content + htmlFooter()
+    }
+    
+    // MARK: - Post Rendering Helpers
+    
+    /// Renders HTML for post tags
+    private func renderPostTags(_ post: Post) -> String {
+        guard !post.tags.isEmpty else { return "" }
+        
+        var tagsHTML = """
+        <div class="post-tags">
+            Tags: 
+        """
+        
+        for tag in post.tags {
+            tagsHTML += """
+            <a href="/tags/\(tag.name.urlPathFormatted())/" class="tag">\(tag.name)</a> 
+            """
+        }
+        
+        tagsHTML += "</div>"
+        return tagsHTML
+    }
+    
+    /// Renders HTML for post category
+    private func renderPostCategory(_ post: Post) -> String {
+        guard let category = post.category else { return "" }
+        
+        return """
+        <div class="post-category">
+            Category: <a href="/categories/\(category.name.urlPathFormatted())/">\(category.name)</a>
+        </div>
+        """
+    }
+    
+    /// Renders a post item for list views
+    private func renderPostListItem(_ post: Post) -> String {
+        let tagsHTML = renderPostTags(post)
+        let categoryHTML = renderPostCategory(post)
+        let hasTitle = post.title?.isEmpty == false
+        
+        // Title HTML with conditional rendering
+        let titleHTML = hasTitle ? """
+            <h2><a href="/\(post.urlPath)/index.html">\(post.displayTitle)</a></h2>
+        """ : ""
+        
+        // Date now links to the post
+        let dateHTML = """
+        <div class="post-date"><a href="/\(post.urlPath)/index.html">\(post.formattedDate)</a></div>
+        """
+        
+        return """
+        <div class="post-item">
+            \(titleHTML)
+            \(dateHTML)
+            <div class="post-summary">\(MarkdownParser().html(from: post.content))</div>
+            \(categoryHTML)
+            \(tagsHTML)
+        </div>
+        """
+    }
+    
+    /// Renders a full post with header, footer, and content
+    private func renderFullPost(_ post: Post) -> String {
+        let tagsHTML = renderPostTags(post)
+        let categoryHTML = renderPostCategory(post)
+        let hasTitle = post.title?.isEmpty == false
+        
+        // Title HTML with conditional rendering
+        let titleHTML = hasTitle ? """
+            <h1>\(post.displayTitle)</h1>
+        """ : ""
+        
+        // Date now links to the post
+        let dateHTML = """
+        <div class="post-date"><a href="/\(post.urlPath)/index.html">\(post.formattedDate)</a></div>
+        """
+        
+        let content = """
+        <article>
+            \(titleHTML)
+            <div class="post-meta">
+                \(dateHTML)
+            </div>
+            <div class="post-content">
+                \(MarkdownParser().html(from: post.content))
+            </div>
+            <div class="post-meta">
+                \(categoryHTML)
+                \(tagsHTML)
+            </div>
+        </article>
+        """
+        
+        let pageTitle = hasTitle ? "\(post.displayTitle) - \(blog.name)" : "\(post.formattedDate) - \(blog.name)"
+        
+        return completePage(
+            title: pageTitle,
+            content: content
+        )
+    }
+    
+    // MARK: - Site Generation Helpers
+    
+    /// Filter and sort posts to get only published posts in descending date order
+    private func publishedPostsSorted() -> [Post] {
+        return blog.posts
+            .filter { !$0.isDraft }
+            .sorted { $0.createdAt > $1.createdAt }
+    }
+    
+    // MARK: - Error Handling
+    
     /// Enum representing errors that can occur during site generation
     enum SiteGeneratorError: Error, LocalizedError {
         case noSiteDirectory
@@ -294,56 +469,7 @@ class StaticSiteGenerator {
         }
     }
     
-    /// Generates an RSS feed for the blog posts
-    /// - Throws: SiteGeneratorError
-    private func generateRSSFeed() throws {
-        guard let siteDirectory = siteDirectory else { throw SiteGeneratorError.noSiteDirectory }
-        
-        let rssPath = siteDirectory.appendingPathComponent("rss.xml")
-        let publishedPosts = blog.posts.filter { !$0.isDraft }
-        let sortedPosts = publishedPosts.sorted { $0.createdAt > $1.createdAt }
-        let limitedPosts = Array(sortedPosts.prefix(20)) // Get only the 20 most recent posts
-        
-        let dateFormatter = ISO8601DateFormatter()
-        
-        var rssContent = """
-        <?xml version="1.0" encoding="UTF-8" ?>
-        <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
-        <channel>
-            <title>\(blog.name)</title>
-            <link>\(blog.url)</link>
-            <description>Recent posts from \(blog.name)</description>
-            <language>en-us</language>
-            <lastBuildDate>\(dateFormatter.string(from: Date()))</lastBuildDate>
-            <atom:link href="\(blog.url)/rss.xml" rel="self" type="application/rss+xml" />
-        """
-        
-        for post in limitedPosts {
-            let postTitle = post.displayTitle
-            let postDate = dateFormatter.string(from: post.createdAt)
-            let postLink = "\(blog.url)/\(post.urlPath)/"
-            let postContentHTML = MarkdownParser().html(from: post.content)
-            
-            rssContent += """
-            
-            <item>
-                <title>\(postTitle)</title>
-                <link>\(postLink)</link>
-                <guid>\(postLink)</guid>
-                <pubDate>\(postDate)</pubDate>
-                <description><![CDATA[\(postContentHTML)]]></description>
-            </item>
-            """
-        }
-        
-        rssContent += """
-        
-        </channel>
-        </rss>
-        """
-        
-        try rssContent.write(to: rssPath, atomically: true, encoding: .utf8)
-    }
+    // MARK: - Main Generation Methods
     
     /// Generates a static site for the blog
     /// - Returns: URL to the generated ZIP file if not publishing to AWS
@@ -411,90 +537,81 @@ class StaticSiteGenerator {
         }
     }
     
+    /// Generates an RSS feed for the blog posts
+    /// - Throws: SiteGeneratorError
+    private func generateRSSFeed() throws {
+        guard let siteDirectory = siteDirectory else { throw SiteGeneratorError.noSiteDirectory }
+        
+        let rssPath = siteDirectory.appendingPathComponent("rss.xml")
+        let sortedPosts = publishedPostsSorted()
+        let limitedPosts = Array(sortedPosts.prefix(20)) // Get only the 20 most recent posts
+        
+        let dateFormatter = ISO8601DateFormatter()
+        
+        var rssContent = """
+        <?xml version="1.0" encoding="UTF-8" ?>
+        <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+        <channel>
+            <title>\(blog.name)</title>
+            <link>\(blog.url)</link>
+            <description>Recent posts from \(blog.name)</description>
+            <language>en-us</language>
+            <lastBuildDate>\(dateFormatter.string(from: Date()))</lastBuildDate>
+            <atom:link href="\(blog.url)/rss.xml" rel="self" type="application/rss+xml" />
+        """
+        
+        for post in limitedPosts {
+            let postTitle = post.displayTitle
+            let postDate = dateFormatter.string(from: post.createdAt)
+            let postLink = "\(blog.url)/\(post.urlPath)/"
+            let postContentHTML = MarkdownParser().html(from: post.content)
+            
+            rssContent += """
+            
+            <item>
+                <title>\(postTitle)</title>
+                <link>\(postLink)</link>
+                <guid>\(postLink)</guid>
+                <pubDate>\(postDate)</pubDate>
+                <description><![CDATA[\(postContentHTML)]]></description>
+            </item>
+            """
+        }
+        
+        rssContent += """
+        
+        </channel>
+        </rss>
+        """
+        
+        try rssContent.write(to: rssPath, atomically: true, encoding: .utf8)
+    }
+    
     /// Generates the index page (home page) of the site
     private func generateIndexPage() throws {
         guard let siteDirectory = siteDirectory else { throw SiteGeneratorError.noSiteDirectory }
         
         let indexPath = siteDirectory.appendingPathComponent("index.html")
-        let publishedPosts = blog.posts.filter { !$0.isDraft }
-        let sortedPosts = publishedPosts.sorted { $0.createdAt > $1.createdAt }
+        let sortedPosts = publishedPostsSorted()
         
         var postListHTML = ""
         for post in sortedPosts {
-            var postTagsHTML = ""
-            var postCategoryHTML = ""
-            
-            if !post.tags.isEmpty {
-                postTagsHTML = """
-                <div class="post-tags">
-                    Tags: 
-                """
-                for tag in post.tags {
-                    postTagsHTML += """
-                    <a href="/tags/\(tag.name.urlPathFormatted())/" class="tag">\(tag.name)</a> 
-                    """
-                }
-                postTagsHTML += "</div>"
-            }
-            
-            if let category = post.category {
-                postCategoryHTML = """
-                <div class="post-category">
-                    Category: <a href="/categories/\(category.name.urlPathFormatted())/">\(category.name)</a>
-                </div>
-                """
-            }
-            
-            postListHTML += """
-            <div class="post-item">
-                <h2><a href="/\(post.urlPath)/index.html">\(post.displayTitle)</a></h2>
-                <div class="post-date">\(post.formattedDate)</div>
-                \(postCategoryHTML)
-                \(postTagsHTML)
-                <div class="post-summary">\(MarkdownParser().html(from: post.content))</div>
-            </div>
-            """
+            postListHTML += renderPostListItem(post)
         }
         
-        let indexContent = """
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>\(blog.name)</title>
-            <link rel="stylesheet" href="/css/style.css">
-            <link rel="alternate" type="application/rss+xml" title="\(blog.name) RSS Feed" href="/rss.xml" />
-        </head>
-        <body>
-            <div class="container">
-                <header>
-                    <h1><a href="/">\(blog.name)</a></h1>
-                    <nav>
-                        <ul>
-                            <li><a href="/">Home</a></li>
-                            <li><a href="/archives/">Archives</a></li>
-                            <li><a href="/tags/">Tags</a></li>
-                            <li><a href="/categories/">Categories</a></li>
-                        </ul>
-                    </nav>
-                </header>
-                
-                <main>
-                    <div class="post-list">
-                        \(postListHTML)
-                    </div>
-                </main>
-                
-                <footer>
-                    <p>&copy; \(Calendar.current.component(.year, from: Date())) \(blog.name). Generated with <a href="https://postalgic.app">Postalgic</a>.</p>
-                </footer>
-            </div>
-        </body>
-        </html>
+        let content = """
+        <div class="post-list">
+            \(postListHTML)
+        </div>
         """
         
-        try indexContent.write(to: indexPath, atomically: true, encoding: .utf8)
+        let pageContent = completePage(
+            title: blog.name,
+            content: content,
+            customHead: "<link rel=\"alternate\" type=\"application/rss+xml\" title=\"\(blog.name) RSS Feed\" href=\"/rss.xml\" />"
+        )
+        
+        try pageContent.write(to: indexPath, atomically: true, encoding: .utf8)
     }
     
     /// Generates individual pages for each post
@@ -507,75 +624,7 @@ class StaticSiteGenerator {
             try FileManager.default.createDirectory(at: postDirectory, withIntermediateDirectories: true)
             
             let postPath = postDirectory.appendingPathComponent("index.html")
-            
-            var postTagsHTML = ""
-            var postCategoryHTML = ""
-            
-            if !post.tags.isEmpty {
-                postTagsHTML = """
-                <div class="post-tags">
-                    Tags: 
-                """
-                for tag in post.tags {
-                    postTagsHTML += """
-                    <a href="/tags/\(tag.name.urlPathFormatted())/" class="tag">\(tag.name)</a> 
-                    """
-                }
-                postTagsHTML += "</div>"
-            }
-            
-            if let category = post.category {
-                postCategoryHTML = """
-                <div class="post-category">
-                    Category: <a href="/categories/\(category.name.urlPathFormatted())/">\(category.name)</a>
-                </div>
-                """
-            }
-            
-            let postContent = """
-            <!DOCTYPE html>
-            <html lang="en">
-            <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>\(post.displayTitle) - \(blog.name)</title>
-                <link rel="stylesheet" href="/css/style.css">
-            </head>
-            <body>
-                <div class="container">
-                    <header>
-                        <h1><a href="/">\(blog.name)</a></h1>
-                        <nav>
-                            <ul>
-                                <li><a href="/">Home</a></li>
-                                <li><a href="/archives/">Archives</a></li>
-                                <li><a href="/tags/">Tags</a></li>
-                                <li><a href="/categories/">Categories</a></li>
-                            </ul>
-                        </nav>
-                    </header>
-                    
-                    <main>
-                        <article>
-                            <h1>\(post.displayTitle)</h1>
-                            <div class="post-meta">
-                                <div class="post-date">\(post.formattedDate)</div>
-                                \(postCategoryHTML)
-                                \(postTagsHTML)
-                            </div>
-                            <div class="post-content">
-                                \(MarkdownParser().html(from: post.content))
-                            </div>
-                        </article>
-                    </main>
-                    
-                    <footer>
-                        <p>&copy; \(Calendar.current.component(.year, from: Date())) \(blog.name). Generated with <a href="https://postalgic.app">Postalgic</a>.</p>
-                    </footer>
-                </div>
-            </body>
-            </html>
-            """
+            let postContent = renderFullPost(post)
             
             try postContent.write(to: postPath, atomically: true, encoding: .utf8)
         }
@@ -590,8 +639,7 @@ class StaticSiteGenerator {
         try FileManager.default.createDirectory(at: archivesDirectory, withIntermediateDirectories: true)
         
         let archivesPath = archivesDirectory.appendingPathComponent("index.html")
-        let publishedPosts = blog.posts.filter { !$0.isDraft }
-        let sortedPosts = publishedPosts.sorted { $0.createdAt > $1.createdAt }
+        let sortedPosts = publishedPostsSorted()
         
         let calendar = Calendar.current
         var yearMonthPosts: [Int: [Int: [Post]]] = [:]
@@ -613,32 +661,7 @@ class StaticSiteGenerator {
         }
         
         // Generate HTML for archives
-        var archiveContent = """
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Archives - \(blog.name)</title>
-            <link rel="stylesheet" href="/css/style.css">
-        </head>
-        <body>
-            <div class="container">
-                <header>
-                    <h1><a href="/">\(blog.name)</a></h1>
-                    <nav>
-                        <ul>
-                            <li><a href="/">Home</a></li>
-                            <li><a href="/archives/">Archives</a></li>
-                            <li><a href="/tags/">Tags</a></li>
-                            <li><a href="/categories/">Categories</a></li>
-                        </ul>
-                    </nav>
-                </header>
-                
-                <main>
-                    <h1>Archives</h1>
-        """
+        var archiveContent = "<h1>Archives</h1>"
         
         let years = yearMonthPosts.keys.sorted(by: >)
         let dateFormatter = DateFormatter()
@@ -646,7 +669,7 @@ class StaticSiteGenerator {
         
         for year in years {
             archiveContent += """
-                    <div class="archive-year">\(year)</div>
+            <div class="archive-year">\(year)</div>
             """
             
             let months = yearMonthPosts[year]?.keys.sorted(by: >) ?? []
@@ -655,38 +678,36 @@ class StaticSiteGenerator {
                 let monthName = dateFormatter.monthSymbols[month - 1]
                 
                 archiveContent += """
-                        <div class="archive-month">\(monthName)</div>
-                        <ul>
+                <div class="archive-month">\(monthName)</div>
+                <ul>
                 """
                 
                 for post in yearMonthPosts[year]?[month] ?? [] {
                     let day = calendar.component(.day, from: post.createdAt)
+                    let hasTitle = post.title?.isEmpty == false
+                    let postLink = "/\(post.urlPath)/index.html"
+                    let displayText = hasTitle ? post.displayTitle : post.formattedDate
+                    
                     archiveContent += """
-                            <li>
-                                <span class="archive-date">\(String(format: "%02d", day)) \(monthName)</span>
-                                <a href="/\(post.urlPath)/index.html">\(post.displayTitle)</a>
-                            </li>
+                    <li>
+                        <span class="archive-date">\(String(format: "%02d", day)) \(monthName)</span>
+                        <a href="\(postLink)">\(displayText)</a>
+                    </li>
                     """
                 }
                 
                 archiveContent += """
-                        </ul>
+                </ul>
                 """
             }
         }
         
-        archiveContent += """
-                </main>
-                
-                <footer>
-                    <p>&copy; \(Calendar.current.component(.year, from: Date())) \(blog.name). Generated with <a href="https://postalgic.app">Postalgic</a>.</p>
-                </footer>
-            </div>
-        </body>
-        </html>
-        """
+        let pageContent = completePage(
+            title: "Archives - \(blog.name)",
+            content: archiveContent
+        )
         
-        try archiveContent.write(to: archivesPath, atomically: true, encoding: .utf8)
+        try pageContent.write(to: archivesPath, atomically: true, encoding: .utf8)
     }
     
     /// Generates tag pages for all tags used in posts
@@ -704,56 +725,28 @@ class StaticSiteGenerator {
         
         // Create tag index page
         let tagsIndexPath = tagsDirectory.appendingPathComponent("index.html")
-        var tagIndexContent = """
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Tags - \(blog.name)</title>
-            <link rel="stylesheet" href="/css/style.css">
-        </head>
-        <body>
-            <div class="container">
-                <header>
-                    <h1><a href="/">\(blog.name)</a></h1>
-                    <nav>
-                        <ul>
-                            <li><a href="/">Home</a></li>
-                            <li><a href="/archives/">Archives</a></li>
-                            <li><a href="/tags/">Tags</a></li>
-                            <li><a href="/categories/">Categories</a></li>
-                        </ul>
-                    </nav>
-                </header>
-                
-                <main>
-                    <h1>All Tags</h1>
-                    <div class="tag-list">
+        var tagListContent = """
+        <h1>All Tags</h1>
+        <div class="tag-list">
         """
         
         for tag in sortedTags {
             let tagPostCount = blog.posts.filter { $0.tags.contains(tag) }.count
-            tagIndexContent += """
-                        <div class="tag-item">
-                            <h2><a href="/tags/\(tag.name.urlPathFormatted())/">\(tag.name)</a> <span class="tag-count">(\(tagPostCount))</span></h2>
-                        </div>
+            tagListContent += """
+            <div class="tag-item">
+                <h2><a href="/tags/\(tag.name.urlPathFormatted())/">\(tag.name)</a> <span class="tag-count">(\(tagPostCount))</span></h2>
+            </div>
             """
         }
         
-        tagIndexContent += """
-                    </div>
-                </main>
-                
-                <footer>
-                    <p>&copy; \(Calendar.current.component(.year, from: Date())) \(blog.name). Generated with <a href="https://postalgic.app">Postalgic</a>.</p>
-                </footer>
-            </div>
-        </body>
-        </html>
-        """
+        tagListContent += "</div>"
         
-        try tagIndexContent.write(to: tagsIndexPath, atomically: true, encoding: .utf8)
+        let tagIndexPage = completePage(
+            title: "Tags - \(blog.name)",
+            content: tagListContent
+        )
+        
+        try tagIndexPage.write(to: tagsIndexPath, atomically: true, encoding: .utf8)
         
         // Create individual tag pages
         for tag in sortedTags {
@@ -765,79 +758,21 @@ class StaticSiteGenerator {
             
             var postListHTML = ""
             for post in tagPosts {
-                var postTagsHTML = ""
-                var postCategoryHTML = ""
-                
-                if !post.tags.isEmpty {
-                    postTagsHTML = """
-                    <div class="post-tags">
-                        Tags: 
-                    """
-                    for postTag in post.tags {
-                        postTagsHTML += """
-                        <a href="/tags/\(postTag.name.urlPathFormatted())/" class="tag">\(postTag.name)</a> 
-                        """
-                    }
-                    postTagsHTML += "</div>"
-                }
-                
-                if let category = post.category {
-                    postCategoryHTML = """
-                    <div class="post-category">
-                        Category: <a href="/categories/\(category.name.urlPathFormatted())/">\(category.name)</a>
-                    </div>
-                    """
-                }
-                
-                postListHTML += """
-                <div class="post-item">
-                    <h2><a href="/\(post.urlPath)/index.html">\(post.displayTitle)</a></h2>
-                    <div class="post-date">\(post.formattedDate)</div>
-                    \(postCategoryHTML)
-                    \(postTagsHTML)
-                    <div class="post-summary">\(MarkdownParser().html(from: post.content))</div>
-                </div>
-                """
+                postListHTML += renderPostListItem(post)
             }
             
-            let tagPageContent = """
-            <!DOCTYPE html>
-            <html lang="en">
-            <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>Tag: \(tag.name) - \(blog.name)</title>
-                <link rel="stylesheet" href="/css/style.css">
-            </head>
-            <body>
-                <div class="container">
-                    <header>
-                        <h1><a href="/">\(blog.name)</a></h1>
-                        <nav>
-                            <ul>
-                                <li><a href="/">Home</a></li>
-                                <li><a href="/archives/">Archives</a></li>
-                                <li><a href="/tags/">Tags</a></li>
-                                <li><a href="/categories/">Categories</a></li>
-                            </ul>
-                        </nav>
-                    </header>
-                    
-                    <main>
-                        <h1>Posts tagged with "\(tag.name)"</h1>
-                        <p class="tag-meta">\(tagPosts.count) \(tagPosts.count == 1 ? "post" : "posts") with this tag</p>
-                        <div class="post-list">
-                            \(postListHTML)
-                        </div>
-                    </main>
-                    
-                    <footer>
-                        <p>&copy; \(Calendar.current.component(.year, from: Date())) \(blog.name). Generated with <a href="https://postalgic.app">Postalgic</a>.</p>
-                    </footer>
-                </div>
-            </body>
-            </html>
+            let tagContent = """
+            <h1>Posts tagged with "\(tag.name)"</h1>
+            <p class="tag-meta">\(tagPosts.count) \(tagPosts.count == 1 ? "post" : "posts") with this tag</p>
+            <div class="post-list">
+                \(postListHTML)
+            </div>
             """
+            
+            let tagPageContent = completePage(
+                title: "Tag: \(tag.name) - \(blog.name)",
+                content: tagContent
+            )
             
             try tagPageContent.write(to: tagPath, atomically: true, encoding: .utf8)
         }
@@ -858,70 +793,39 @@ class StaticSiteGenerator {
         
         // Create category index page
         let categoriesIndexPath = categoriesDirectory.appendingPathComponent("index.html")
-        var categoryIndexContent = """
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Categories - \(blog.name)</title>
-            <link rel="stylesheet" href="/css/style.css">
-        </head>
-        <body>
-            <div class="container">
-                <header>
-                    <h1><a href="/">\(blog.name)</a></h1>
-                    <nav>
-                        <ul>
-                            <li><a href="/">Home</a></li>
-                            <li><a href="/archives/">Archives</a></li>
-                            <li><a href="/tags/">Tags</a></li>
-                            <li><a href="/categories/">Categories</a></li>
-                        </ul>
-                    </nav>
-                </header>
-                
-                <main>
-                    <h1>All Categories</h1>
-                    <div class="category-list">
+        var categoryListContent = """
+        <h1>All Categories</h1>
+        <div class="category-list">
         """
         
         for category in sortedCategories {
             let categoryPostCount = blog.posts.filter { $0.category?.id == category.id }.count
-            categoryIndexContent += """
-                        <div class="category-item">
-                            <h2><a href="/categories/\(category.name.urlPathFormatted())/">\(category.name)</a> <span class="category-count">(\(categoryPostCount))</span></h2>
-                            
+            categoryListContent += """
+            <div class="category-item">
+                <h2><a href="/categories/\(category.name.urlPathFormatted())/">\(category.name)</a> <span class="category-count">(\(categoryPostCount))</span></h2>
             """
             
             if let description = category.categoryDescription, !description.isEmpty {
-                categoryIndexContent += """
-                            <p class="category-description">\(description)</p>
+                categoryListContent += """
+                <p class="category-description">\(description)</p>
                 """
             }
             
-            categoryIndexContent += """
-                        </div>
+            categoryListContent += """
+            </div>
             """
         }
         
-        categoryIndexContent += """
-                    </div>
-                </main>
-                
-                <footer>
-                    <p>&copy; \(Calendar.current.component(.year, from: Date())) \(blog.name). Generated with <a href="https://postalgic.app">Postalgic</a>.</p>
-                </footer>
-            </div>
-        </body>
-        </html>
-        """
+        categoryListContent += "</div>"
         
-        try categoryIndexContent.write(to: categoriesIndexPath, atomically: true, encoding: .utf8)
+        let categoryIndexPage = completePage(
+            title: "Categories - \(blog.name)",
+            content: categoryListContent
+        )
+        
+        try categoryIndexPage.write(to: categoriesIndexPath, atomically: true, encoding: .utf8)
         
         // Create individual category pages
-        // Note: Categories directory already created above
-        
         for category in sortedCategories {
             let categoryPosts = publishedPosts.filter { $0.category?.id == category.id }.sorted { $0.createdAt > $1.createdAt }
             let categoryNameEncoded = category.name.urlPathFormatted()
@@ -931,77 +835,30 @@ class StaticSiteGenerator {
             
             var postListHTML = ""
             for post in categoryPosts {
-                var postTagsHTML = ""
-                if !post.tags.isEmpty {
-                    postTagsHTML = """
-                    <div class="post-tags">
-                        Tags: 
-                    """
-                    for tag in post.tags {
-                        postTagsHTML += """
-                        <a href="/tags/\(tag.name.urlPathFormatted())/" class="tag">\(tag.name)</a> 
-                        """
-                    }
-                    postTagsHTML += "</div>"
-                }
-                
-                postListHTML += """
-                <div class="post-item">
-                    <h2><a href="/\(post.urlPath)/index.html">\(post.displayTitle)</a></h2>
-                    <div class="post-date">\(post.formattedDate)</div>
-                    \(postTagsHTML)
-                    <div class="post-summary">\(MarkdownParser().html(from: post.content))</div>
-                </div>
-                """
+                postListHTML += renderPostListItem(post)
             }
             
-            let categoryPageHTML = """
-            <!DOCTYPE html>
-            <html lang="en">
-            <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>Category: \(category.name) - \(blog.name)</title>
-                <link rel="stylesheet" href="/css/style.css">
-            </head>
-            <body>
-                <div class="container">
-                    <header>
-                        <h1><a href="/">\(blog.name)</a></h1>
-                        <nav>
-                            <ul>
-                                <li><a href="/">Home</a></li>
-                                <li><a href="/archives/">Archives</a></li>
-                                <li><a href="/tags/">Tags</a></li>
-                                <li><a href="/categories/">Categories</a></li>
-                            </ul>
-                        </nav>
-                    </header>
-                    
-                    <main>
-                        <h1>Posts in category "\(category.name)"</h1>
+            var categoryContent = """
+            <h1>Posts in category "\(category.name)"</h1>
             """
             
             if let description = category.categoryDescription, !description.isEmpty {
-                categoryPageHTML + """
-                        <p class="category-description">\(description)</p>
+                categoryContent += """
+                <p class="category-description">\(description)</p>
                 """
             }
             
-            let categoryPageContent = categoryPageHTML + """
-                        <p class="category-meta">\(categoryPosts.count) \(categoryPosts.count == 1 ? "post" : "posts") in this category</p>
-                        <div class="post-list">
-                            \(postListHTML)
-                        </div>
-                    </main>
-                    
-                    <footer>
-                        <p>&copy; \(Calendar.current.component(.year, from: Date())) \(blog.name). Generated with <a href="https://postalgic.app">Postalgic</a>.</p>
-                    </footer>
-                </div>
-            </body>
-            </html>
+            categoryContent += """
+            <p class="category-meta">\(categoryPosts.count) \(categoryPosts.count == 1 ? "post" : "posts") in this category</p>
+            <div class="post-list">
+                \(postListHTML)
+            </div>
             """
+            
+            let categoryPageContent = completePage(
+                title: "Category: \(category.name) - \(blog.name)",
+                content: categoryContent
+            )
             
             try categoryPageContent.write(to: categoryPath, atomically: true, encoding: .utf8)
         }
