@@ -1,6 +1,15 @@
 ![Postalgic](/postalgic-logo.png?raw=true)
 
-Postalgic is a blogging platform for your pocket. Simply put, it's meant to be 1999's Blogger in app form, fully decentralized. In the parlance of our times, it's an all-in-one static site generator.
+Postalgic is a blogging platform for your pocket. Simply put, it's 1999's Blogger in app form, fully decentralized. In the parlance of our times, it's an all-in-one blog-oriented content management system and static site generator & publisher.
+
+**Postalgic is not a social network.**
+
+Online social networks have proven themselves incapable of nuturing meaningful human relationships.
+
+- If you want to "follow" another Postalgic blog, you should subscribe to it in your RSS feed reader.
+- If you want to "comment" on someone else's writing, start your own Postalgic blog and write a post about it.
+- If you want to "private message" another Postalgic author, send them an email (if they've provided one).
+- If you want to "like" a blog post you enjoyed, share it with your friends and family.
 
 ## <img src="/postalgic-icon.png?raw=true" alt="Postalgic App Icon" width="24" height="24">&nbsp;&nbsp;Postalgic for iOS (in Apps/iOS)
 
@@ -9,7 +18,7 @@ Postalgic is a blogging platform for your pocket. Simply put, it's meant to be 1
 - [ ] Upload your static website to a variety of static site hosting services
   - [x] AWS S3 with CloudFront
   - [ ] Any FTP Server
-  - [ ] Postalgic Pro Hosting
+  - [ ] Postalgic Pro
   - [ ] Others?
 
 ## Sample Sites
