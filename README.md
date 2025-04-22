@@ -8,7 +8,7 @@ Online social networks have proven themselves incapable of nuturing meaningful h
 
 - If you want to "follow" another Postalgic blog, you should subscribe to it in your RSS feed reader.
 - If you want to "comment" on someone else's writing, start your own Postalgic blog and write a post about it.
-- If you want to "private message" another Postalgic author, send them an email (if they've provided one).
+- If you want to "dm" or "friend" another Postalgic author, send them an email (if they've provided one).
 - If you want to "like" a blog post you enjoyed, share it with your friends and family.
 
 # <img src="/postalgic-icon.png?raw=true" alt="Postalgic App Icon" width="26" height="26">&nbsp;&nbsp;Postalgic for iOS (in Apps/iOS)
