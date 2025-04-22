@@ -25,10 +25,7 @@ struct PostalgicApp: App {
         // Configure migration options to safely handle schema changes
         let modelConfiguration = ModelConfiguration(
             schema: schema,
-            isStoredInMemoryOnly: isUITesting,
-            // This allows properties with default values to be migrated 
-            // gracefully when a new version of the app is installed
-            migrationOptions: .allowDestructiveMigration
+            isStoredInMemoryOnly: isUITesting
         )
 
         do {

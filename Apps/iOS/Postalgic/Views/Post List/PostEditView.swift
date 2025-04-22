@@ -71,7 +71,6 @@ struct PostEditView: View {
                     TextField("Title (optional)", text: $title)
                     TextField("Primary Link (optional)", text: $primaryLink)
                     Toggle("Save as Draft", isOn: $isDraft)
-                        .tint(Color("PPink"))
                     
                     HStack {
                         Picker("Category", selection: $selectedCategory) {
