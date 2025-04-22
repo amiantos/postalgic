@@ -86,6 +86,9 @@ final class Post {
     var content: String
     var primaryLink: String?
     var createdAt: Date
+    
+    // Mark isDraft with @Attribute and provide a default value for migration
+    @Attribute(.default(false))
     var isDraft: Bool
     
     var blog: Blog?
