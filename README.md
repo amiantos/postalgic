@@ -2,7 +2,7 @@
 
 Postalgic is a blogging platform for your pocket. Simply put, it's 1999's Blogger in app form, fully decentralized. In the parlance of our times, it's an all-in-one blog-oriented content management system and static site generator & publisher.
 
-**Postalgic is not a social network.**
+### Postalgic is not a social network.
 
 Online social networks have proven themselves incapable of nuturing meaningful human relationships.
 
