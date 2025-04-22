@@ -5,8 +5,8 @@
 //  Created by Brad Root on 4/19/25.
 //
 
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 struct BlogDetailView: View {
     @Environment(\.modelContext) private var modelContext
@@ -15,17 +15,17 @@ struct BlogDetailView: View {
     @State private var showingPublishView = false
     @State private var showingEditBlogView = false
     @State private var showingCategoryManagement = false
-    
+
     enum PostFilter: String, CaseIterable, Identifiable {
         case all = "All"
         case published = "Published"
         case drafts = "Drafts"
-        
+
         var id: String { self.rawValue }
     }
-    
+
     @State private var selectedFilter: PostFilter = .all
-    
+
     var body: some View {
         VStack(spacing: 0) {
             Picker("Filter", selection: $selectedFilter) {
@@ -36,7 +36,7 @@ struct BlogDetailView: View {
             .pickerStyle(.segmented)
             .padding(.horizontal)
             .padding(.top)
-            
+
             List {
                 let filteredPosts = blog.posts
                     .filter { post in
@@ -47,7 +47,7 @@ struct BlogDetailView: View {
                         }
                     }
                     .sorted { $0.createdAt > $1.createdAt }
-                
+
                 ForEach(filteredPosts) { post in
                     NavigationLink {
                         PostDetailView(post: post)
@@ -62,7 +62,7 @@ struct BlogDetailView: View {
                                         .font(.headline)
                                         .lineLimit(1)
                                 }
-                                
+
                                 if post.isDraft {
                                     Spacer()
                                     Text("DRAFT")
@@ -74,12 +74,12 @@ struct BlogDetailView: View {
                                         .cornerRadius(4)
                                 }
                             }
-                            
+
                             HStack {
                                 Text(post.createdAt, format: .dateTime)
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
-                                
+
                                 if let category = post.category {
                                     Spacer()
                                     Text(category.name)
@@ -91,7 +91,7 @@ struct BlogDetailView: View {
                                         .cornerRadius(4)
                                 }
                             }
-                            
+
                             if !post.tags.isEmpty {
                                 HStack {
                                     ForEach(post.tags.prefix(3)) { tag in
@@ -141,8 +141,8 @@ struct BlogDetailView: View {
                         Label("Publish", systemImage: "globe")
                     }
                     Divider()
-                    Button(action: { 
-                        showingCategoryManagement = true 
+                    Button(action: {
+                        showingCategoryManagement = true
                     }) {
                         Label("Manage Categories", systemImage: "folder")
                     }
@@ -169,7 +169,7 @@ struct BlogDetailView: View {
             CategoryManagementView(blog: blog)
         }
     }
-    
+
     private func deletePosts(offsets: IndexSet) {
         withAnimation {
             let filteredPosts = blog.posts
@@ -181,10 +181,12 @@ struct BlogDetailView: View {
                     }
                 }
                 .sorted { $0.createdAt > $1.createdAt }
-            
+
             for index in offsets {
                 let postToDelete = filteredPosts[index]
-                if let postIndex = blog.posts.firstIndex(where: { $0.id == postToDelete.id }) {
+                if let postIndex = blog.posts.firstIndex(where: {
+                    $0.id == postToDelete.id
+                }) {
                     blog.posts.remove(at: postIndex)
                 }
                 modelContext.delete(postToDelete)
@@ -195,5 +197,8 @@ struct BlogDetailView: View {
 
 #Preview {
     BlogDetailView(blog: Blog(name: "Test Blog", url: "https://example.com"))
-        .modelContainer(for: [Blog.self, Post.self, Tag.self, Category.self], inMemory: true)
+        .modelContainer(
+            for: [Blog.self, Post.self, Tag.self, Category.self],
+            inMemory: true
+        )
 }

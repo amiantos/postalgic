@@ -5,25 +5,25 @@
 //  Created by Brad Root on 4/19/25.
 //
 
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 struct CategoryManagementView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
-    
+
     var blog: Blog
-    
+
     @Query private var allCategories: [Category]
-    
+
     private var categories: [Category] {
         return allCategories.filter { $0.blog?.id == blog.id }
     }
-    
+
     @State private var showingAddCategory = false
     @State private var selectedCategory: Category?
     @State private var isEditing = false
-    
+
     var body: some View {
         NavigationStack {
             List {
@@ -58,26 +58,29 @@ struct CategoryManagementView: View {
             .sheet(isPresented: $showingAddCategory) {
                 CategoryFormView(mode: .add, blog: blog)
             }
-            .sheet(isPresented: $isEditing, onDismiss: {
-                selectedCategory = nil
-            }) {
+            .sheet(
+                isPresented: $isEditing,
+                onDismiss: {
+                    selectedCategory = nil
+                }
+            ) {
                 if let category = selectedCategory {
                     CategoryFormView(mode: .edit(category), blog: blog)
                 }
             }
         }
     }
-    
+
     private func deleteCategories(at offsets: IndexSet) {
         let sortedCategories = categories.sorted { $0.name < $1.name }
         for index in offsets {
             let categoryToDelete = sortedCategories[index]
-            
+
             // Nullify category for any post that uses it
             for post in categoryToDelete.posts {
                 post.category = nil
             }
-            
+
             modelContext.delete(categoryToDelete)
         }
     }
@@ -85,21 +88,25 @@ struct CategoryManagementView: View {
 
 struct CategoryRowView: View {
     let category: Category
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(category.name)
                 .font(.headline)
-            
-            if let categoryDescription = category.categoryDescription, !categoryDescription.isEmpty {
+
+            if let categoryDescription = category.categoryDescription,
+                !categoryDescription.isEmpty
+            {
                 Text(categoryDescription)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
-            
-            Text("\(category.posts.count) \(category.posts.count == 1 ? "post" : "posts")")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+
+            Text(
+                "\(category.posts.count) \(category.posts.count == 1 ? "post" : "posts")"
+            )
+            .font(.caption)
+            .foregroundStyle(.secondary)
         }
         .padding(.vertical, 4)
     }
@@ -110,16 +117,16 @@ struct CategoryFormView: View {
         case add
         case edit(Category)
     }
-    
+
     let mode: Mode
     let blog: Blog
-    
+
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
-    
+
     @State private var name = ""
     @State private var description = ""
-    
+
     var title: String {
         switch mode {
         case .add:
@@ -128,7 +135,7 @@ struct CategoryFormView: View {
             return "Edit Category"
         }
     }
-    
+
     var body: some View {
         NavigationStack {
             Form {
@@ -141,7 +148,7 @@ struct CategoryFormView: View {
                                 name = capitalized
                             }
                         }
-                    
+
                     TextField("Description (optional)", text: $description)
                 }
             }
@@ -152,7 +159,7 @@ struct CategoryFormView: View {
                         dismiss()
                     }
                 }
-                
+
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Save") {
                         saveCategory()
@@ -169,7 +176,7 @@ struct CategoryFormView: View {
             }
         }
     }
-    
+
     private func saveCategory() {
         switch mode {
         case .add:
@@ -180,11 +187,12 @@ struct CategoryFormView: View {
             modelContext.insert(newCategory)
             newCategory.blog = blog
             blog.categories.append(newCategory)
-            
+
         case .edit(let category):
             category.name = name.capitalized
-            category.categoryDescription = description.isEmpty ? nil : description
-            
+            category.categoryDescription =
+                description.isEmpty ? nil : description
+
             // Ensure category is associated with blog
             if category.blog == nil {
                 category.blog = blog
@@ -195,11 +203,11 @@ struct CategoryFormView: View {
 }
 
 #Preview {
-//    let container = ModelContainer(for: Blog.self, Category.self, Post.self, inMemory: true)
-//    let context = ModelContext(container)
-//    let blog = Blog(name: "Test Blog", url: "https://example.com")
-//    context.insert(blog)
-//    
-//    CategoryManagementView(blog: blog)
-//        .modelContainer(container)
+    //    let container = ModelContainer(for: Blog.self, Category.self, Post.self, inMemory: true)
+    //    let context = ModelContext(container)
+    //    let blog = Blog(name: "Test Blog", url: "https://example.com")
+    //    context.insert(blog)
+    //
+    //    CategoryManagementView(blog: blog)
+    //        .modelContainer(container)
 }

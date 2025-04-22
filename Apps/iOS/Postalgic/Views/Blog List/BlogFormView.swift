@@ -5,16 +5,16 @@
 //  Created by Brad Root on 4/19/25.
 //
 
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 struct BlogFormView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
-    
+
     @State private var name = ""
     @State private var url = ""
-    
+
     var body: some View {
         NavigationStack {
             Form {
@@ -44,7 +44,7 @@ struct BlogFormView: View {
             }
         }
     }
-    
+
     private func addBlog() {
         let newBlog = Blog(name: name, url: url)
         modelContext.insert(newBlog)

@@ -5,22 +5,22 @@
 //  Created by Brad Root on 4/19/25.
 //
 
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 struct EditBlogView: View {
     @Environment(\.dismiss) private var dismiss
     @Bindable var blog: Blog
-    
+
     @State private var name: String
     @State private var url: String
-    
+
     init(blog: Blog) {
         self.blog = blog
         _name = State(initialValue: blog.name)
         _url = State(initialValue: blog.url)
     }
-    
+
     var body: some View {
         NavigationStack {
             Form {
@@ -50,7 +50,7 @@ struct EditBlogView: View {
             }
         }
     }
-    
+
     private func updateBlog() {
         blog.name = name
         blog.url = url

@@ -25,7 +25,7 @@ final class PostalgicUITestsLaunchTests: XCTestCase {
 
         // Verify we're on the Blogs screen
         XCTAssertTrue(app.navigationBars["Blogs"].exists)
-        
+
         // Take a screenshot of the launch screen
         let attachment = XCTAttachment(screenshot: app.screenshot())
         attachment.name = "Launch Screen"

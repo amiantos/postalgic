@@ -5,19 +5,20 @@
 //  Created by Brad Root on 4/19/25.
 //
 
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 struct BlogsView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var blogs: [Blog]
     @State private var showingBlogForm = false
     @State private var blogToEdit: Blog?
-    
+
     var body: some View {
         NavigationStack {
             List {
-                ForEach(blogs.sorted(by: { $0.createdAt > $1.createdAt })) { blog in
+                ForEach(blogs.sorted(by: { $0.createdAt > $1.createdAt })) {
+                    blog in
                     NavigationLink {
                         BlogDetailView(blog: blog)
                     } label: {
@@ -34,7 +35,8 @@ struct BlogsView: View {
                             blogToEdit = blog
                         } label: {
                             Label("Edit", systemImage: "pencil")
-                        }                    }
+                        }
+                    }
                 }
                 .onDelete(perform: deleteBlogs)
             }
@@ -57,7 +59,7 @@ struct BlogsView: View {
             }
         }
     }
-    
+
     private func deleteBlogs(offsets: IndexSet) {
         withAnimation {
             for index in offsets {
@@ -69,5 +71,8 @@ struct BlogsView: View {
 
 #Preview {
     BlogsView()
-        .modelContainer(for: [Blog.self, Post.self, Tag.self, Category.self], inMemory: true)
+        .modelContainer(
+            for: [Blog.self, Post.self, Tag.self, Category.self],
+            inMemory: true
+        )
 }
