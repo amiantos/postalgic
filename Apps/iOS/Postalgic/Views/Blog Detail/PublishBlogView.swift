@@ -58,7 +58,7 @@ struct PublishBlogView: View {
                 }
                 .padding()
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(blog.hasAwsConfigured ? Color.green.opacity(0.2) : Color.secondary.opacity(0.1))
+                .background(blog.hasAwsConfigured ? Color("PGreen") : Color.secondary.opacity(0.1))
                 .foregroundColor(.primary)
                 .cornerRadius(10)
             }
@@ -98,8 +98,8 @@ struct PublishBlogView: View {
                             }
                             .padding()
                             .frame(maxWidth: .infinity)
-                            .background(Color.blue)
-                            .foregroundColor(.white)
+                            .background(Color("PBlue"))
+                            .foregroundColor(.primary)
                             .cornerRadius(10)
                         }
                         .padding(.horizontal)
@@ -117,8 +117,8 @@ struct PublishBlogView: View {
                                 }
                                 .padding()
                                 .frame(maxWidth: .infinity)
-                                .background(Color.green.opacity(0.8))
-                                .foregroundColor(.white)
+                                .background(Color("PGreen"))
+                                .foregroundColor(.primary)
                                 .cornerRadius(10)
                             }
                             .padding(.horizontal)
@@ -134,8 +134,8 @@ struct PublishBlogView: View {
                             Label("Share ZIP File", systemImage: "square.and.arrow.up")
                                 .padding()
                                 .frame(maxWidth: .infinity)
-                                .background(Color.blue)
-                                .foregroundColor(.white)
+                                .background(Color("PBlue"))
+                                .foregroundColor(.primary)
                                 .cornerRadius(10)
                         }
                         .padding(.horizontal)
@@ -146,8 +146,8 @@ struct PublishBlogView: View {
                             Label("Generate Site ZIP", systemImage: "globe")
                                 .padding()
                                 .frame(maxWidth: .infinity)
-                                .background(Color.blue)
-                                .foregroundColor(.white)
+                                .background(Color("PBlue"))
+                                .foregroundColor(.primary)
                                 .cornerRadius(10)
                         }
                         .padding(.horizontal)
