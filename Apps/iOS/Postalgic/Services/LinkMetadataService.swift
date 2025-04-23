@@ -69,6 +69,24 @@ class LinkMetadataService {
         }
     }
     
+    /// Fetches YouTube video title using LinkPresentation
+    /// - Parameter urlString: The YouTube video URL
+    /// - Returns: The video title, if available
+    static func fetchYouTubeTitle(for urlString: String) async -> String? {
+        guard let url = URL(string: urlString) else {
+            return nil
+        }
+        
+        do {
+            let metadataProvider = LPMetadataProvider()
+            let metadata = try await metadataProvider.startFetchingMetadata(for: url)
+            return metadata.title
+        } catch {
+            print("Error fetching YouTube title: \(error.localizedDescription)")
+            return nil
+        }
+    }
+    
     private static func extractDescription(from metadata: LPLinkMetadata) -> String? {
         // LinkPresentation doesn't directly expose a description property,
         // so we'll use the URL's host as a simple description

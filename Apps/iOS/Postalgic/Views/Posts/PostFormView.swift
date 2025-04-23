@@ -298,9 +298,15 @@ struct PostFormView: View {
             }
             .sheet(isPresented: $showingEmbedForm) {
                 if isEditing, let post = post {
-                    EmbedFormView(post: post)
+                    EmbedFormView(post: post) { embedTitle in
+                        // Update the post title with the embed title
+                        title = embedTitle
+                    }
                 } else if let post = newPost {
-                    EmbedFormView(post: post)
+                    EmbedFormView(post: post) { embedTitle in
+                        // Update the post title with the embed title
+                        title = embedTitle
+                    }
                 }
             }
         }

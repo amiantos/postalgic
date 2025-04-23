@@ -8,11 +8,18 @@
 import SwiftData
 import SwiftUI
 
+// Define a struct to pass back to parent view
+struct EmbedTitleUpdate {
+    let title: String
+}
+
 struct EmbedFormView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     
     var post: Post // Direct reference to the post
+    var onTitleUpdate: ((String) -> Void)? // Callback for updating post title
+    
     @State private var url: String = ""
     @State private var embedType: EmbedType = .youtube
     @State private var position: EmbedPosition = .below
@@ -20,9 +27,11 @@ struct EmbedFormView: View {
     @State private var isLoading = false
     @State private var errorMessage: String?
     @State private var linkMetadata: (title: String?, description: String?, imageUrl: String?, imageData: Data?) = (nil, nil, nil, nil)
+    @State private var youtubeTitle: String? = nil
     
-    init(post: Post) {
+    init(post: Post, onTitleUpdate: ((String) -> Void)? = nil) {
         self.post = post
+        self.onTitleUpdate = onTitleUpdate
         
         if let embed = post.embed {
             // Initialize with existing embed values for editing
@@ -74,6 +83,21 @@ struct EmbedFormView: View {
                             }
                             .disabled(isLoading)
                         }
+                    } else if embedType == .youtube && !url.isEmpty {
+                        // Show fetch title button for YouTube embeds
+                        Button("Fetch YouTube Title") {
+                            Task {
+                                isLoading = true
+                                errorMessage = nil
+                                youtubeTitle = await LinkMetadataService.fetchYouTubeTitle(for: url)
+                                isLoading = false
+                                
+                                if youtubeTitle == nil {
+                                    errorMessage = "Could not fetch YouTube title"
+                                }
+                            }
+                        }
+                        .disabled(isLoading)
                     }
                     
                     if isLoading {
@@ -88,6 +112,49 @@ struct EmbedFormView: View {
                     if let error = errorMessage {
                         Text(error)
                             .foregroundColor(.red)
+                    }
+                }
+                
+                // Show YouTube title if available
+                if embedType == .youtube && youtubeTitle != nil {
+                    Section(header: Text("YouTube Title")) {
+                        Text(youtubeTitle ?? "")
+                            .font(.headline)
+                    }
+                }
+                
+                // Button to set embed title as post title
+                Section(header: Text("Post Title")) {
+                    let currentEmbedTitle: String? = {
+                        if embedType == .youtube {
+                            return youtubeTitle ?? (isEditing ? post.embed?.title : nil)
+                        } else if embedType == .link {
+                            if linkMetadata.title != nil {
+                                return linkMetadata.title
+                            } else if isEditing, let embed = post.embed {
+                                return embed.title
+                            }
+                        }
+                        return nil
+                    }()
+                    
+                    if let title = currentEmbedTitle, !title.isEmpty {
+                        Button("Set as Post Title") {
+                            // Call the callback to update the title in the parent view
+                            onTitleUpdate?(title)
+                            if isEditing {
+                                updateEmbed()
+                            } else {
+                                addEmbed()
+                            }
+                            dismiss()
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .frame(maxWidth: .infinity)
+                    } else {
+                        Text("No embed title available")
+                            .foregroundColor(.secondary)
+                            .italic()
                     }
                 }
                 
@@ -216,7 +283,7 @@ struct EmbedFormView: View {
             url: url,
             type: embedType,
             position: position,
-            title: linkMetadata.title,
+            title: embedType == .youtube ? youtubeTitle : linkMetadata.title,
             embedDescription: linkMetadata.description,
             imageUrl: linkMetadata.imageUrl,
             imageData: linkMetadata.imageData
@@ -255,7 +322,8 @@ struct EmbedFormView: View {
             let newEmbed = Embed(
                 url: url,
                 type: embedType,
-                position: position
+                position: position,
+                title: embedType == .youtube ? youtubeTitle : nil
             )
             
             modelContext.insert(newEmbed)
@@ -274,6 +342,11 @@ struct EmbedFormView: View {
             existingEmbed.url = url
             existingEmbed.position = position.rawValue
             
+            // Update YouTube title if we have one
+            if embedType == .youtube && youtubeTitle != nil && existingEmbed.title != youtubeTitle {
+                existingEmbed.title = youtubeTitle
+            }
+            
             // If URL changed for a Link type, update metadata if we have new metadata
             if isUrlChange && embedType == .link && linkMetadata != (nil, nil, nil, nil) {
                 existingEmbed.title = linkMetadata.title
@@ -288,6 +361,8 @@ struct EmbedFormView: View {
 #Preview {
     let post = Post(title: "Test Post", content: "Test content")
     
-    return EmbedFormView(post: post)
-        .modelContainer(for: [Post.self, Embed.self], inMemory: true)
+    return EmbedFormView(post: post) { title in
+        print("Update post title to: \(title)")
+    }
+    .modelContainer(for: [Post.self, Embed.self], inMemory: true)
 }
