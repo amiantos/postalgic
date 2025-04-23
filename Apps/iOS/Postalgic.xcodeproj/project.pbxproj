@@ -132,6 +132,17 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		443F0B312DB8DFDB00034EF1 /* Posts */ = {
+			isa = PBXGroup;
+			children = (
+				44C364172DB768DB0057567C /* PostDetailView.swift */,
+				44C364192DB768DB0057567C /* PostFormView.swift */,
+				443F0B2B2DB8D47500034EF1 /* EmbedFormView.swift */,
+				443F0B2C2DB8D47500034EF1 /* EmbedView.swift */,
+			);
+			path = Posts;
+			sourceTree = "<group>";
+		};
 		44C364102DB768DB0057567C /* Services */ = {
 			isa = PBXGroup;
 			children = (
@@ -147,7 +158,7 @@
 			children = (
 				44C3642F2DB768F90057567C /* Blog List */,
 				44C364302DB769260057567C /* Blog Detail */,
-				44C364312DB7694A0057567C /* Post List */,
+				443F0B312DB8DFDB00034EF1 /* Posts */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -177,23 +188,12 @@
 		44C364302DB769260057567C /* Blog Detail */ = {
 			isa = PBXGroup;
 			children = (
+				44C364122DB768DB0057567C /* BlogDetailView.swift */,
 				44C364112DB768DB0057567C /* BlogAwsConfigView.swift */,
 				44C364152DB768DB0057567C /* CategoryManagementView.swift */,
 				44C3641A2DB768DB0057567C /* PublishBlogView.swift */,
 			);
 			path = "Blog Detail";
-			sourceTree = "<group>";
-		};
-		44C364312DB7694A0057567C /* Post List */ = {
-			isa = PBXGroup;
-			children = (
-				44C364122DB768DB0057567C /* BlogDetailView.swift */,
-				44C364172DB768DB0057567C /* PostDetailView.swift */,
-				44C364192DB768DB0057567C /* PostFormView.swift */,
-				443F0B2B2DB8D47500034EF1 /* EmbedFormView.swift */,
-				443F0B2C2DB8D47500034EF1 /* EmbedView.swift */,
-			);
-			path = "Post List";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
