@@ -90,22 +90,55 @@ struct PostFormView: View {
                 }
                 
                 Section("Embed") {
-                    if newPost?.embed != nil {
-                        HStack {
-                            Text("Embed Added")
-                                .foregroundColor(.secondary)
+                    if let post = newPost, let embed = post.embed {
+                        VStack(alignment: .leading, spacing: 12) {
+                            // Embed info row
+                            HStack {
+                                Text("Type:").bold()
+                                Text(embed.embedType.rawValue)
+                                    .foregroundColor(.secondary)
+                            }
                             
-                            Spacer()
+                            HStack {
+                                Text("Position:").bold()
+                                Text(embed.embedPosition.rawValue)
+                                    .foregroundColor(.secondary)
+                            }
+                            
+                            HStack {
+                                Text("URL:").bold()
+                                Text(embed.url)
+                                    .foregroundColor(.secondary)
+                                    .lineLimit(1)
+                            }
+                            
+                            // Buttons in separate rows for clarity
+                            Button(action: {
+                                showingEmbedForm = true
+                            }) {
+                                HStack {
+                                    Image(systemName: "pencil")
+                                    Text("Edit Embed")
+                                }
+                                .frame(maxWidth: .infinity)
+                            }
+                            .buttonStyle(.bordered)
+                            .tint(.blue)
                             
                             Button(action: {
-                                if let post = newPost, let embed = post.embed {
+                                if let embed = post.embed {
                                     modelContext.delete(embed)
                                     post.embed = nil
                                 }
                             }) {
-                                Image(systemName: "trash")
-                                    .foregroundColor(.red)
+                                HStack {
+                                    Image(systemName: "trash")
+                                    Text("Remove Embed")
+                                }
+                                .frame(maxWidth: .infinity)
                             }
+                            .buttonStyle(.bordered)
+                            .tint(.red)
                         }
                     } else {
                         Button(action: {
@@ -121,7 +154,10 @@ struct PostFormView: View {
                             showingEmbedForm = true
                         }) {
                             Label("Add Embed", systemImage: "plus")
+                                .frame(maxWidth: .infinity)
                         }
+                        .buttonStyle(.bordered)
+                        .tint(.blue)
                     }
                 }
 
@@ -223,7 +259,7 @@ struct PostFormView: View {
             }
             .sheet(isPresented: $showingEmbedForm) {
                 if let post = newPost {
-                    EmbedFormView(post: .constant(post))
+                    EmbedFormView(post: post)
                 }
             }
         }
