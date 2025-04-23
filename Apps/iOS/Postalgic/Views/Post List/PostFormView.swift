@@ -26,13 +26,14 @@ struct PostFormView: View {
 
     @State private var title = ""
     @State private var content = ""
-    @State private var primaryLink = ""
     @State private var tagInput = ""
     @State private var selectedTags: [Tag] = []
     @State private var selectedCategory: Category?
     @State private var isDraft = false
     @State private var showingCategoryManagement = false
     @State private var showingSuggestions = false
+    @State private var showingEmbedForm = false
+    @State private var newPost: Post? = nil
 
     private var existingTagNames: [String] {
         return blogTags.map { $0.name }
@@ -57,7 +58,6 @@ struct PostFormView: View {
             Form {
                 Section("Post Details") {
                     TextField("Title (optional)", text: $title)
-                    TextField("Primary Link (optional)", text: $primaryLink)
                     Toggle("Save as Draft", isOn: $isDraft)
 
                     HStack {
@@ -87,6 +87,42 @@ struct PostFormView: View {
                 Section("Content") {
                     TextEditor(text: $content)
                         .frame(minHeight: 200)
+                }
+                
+                Section("Embed") {
+                    if newPost?.embed != nil {
+                        HStack {
+                            Text("Embed Added")
+                                .foregroundColor(.secondary)
+                            
+                            Spacer()
+                            
+                            Button(action: {
+                                if let post = newPost, let embed = post.embed {
+                                    modelContext.delete(embed)
+                                    post.embed = nil
+                                }
+                            }) {
+                                Image(systemName: "trash")
+                                    .foregroundColor(.red)
+                            }
+                        }
+                    } else {
+                        Button(action: {
+                            // Create a temporary post if needed
+                            if newPost == nil {
+                                newPost = Post(
+                                    title: title.isEmpty ? nil : title,
+                                    content: content,
+                                    isDraft: isDraft
+                                )
+                                modelContext.insert(newPost!)
+                            }
+                            showingEmbedForm = true
+                        }) {
+                            Label("Add Embed", systemImage: "plus")
+                        }
+                    }
                 }
 
                 Section("Tags") {
@@ -185,6 +221,11 @@ struct PostFormView: View {
             .sheet(isPresented: $showingCategoryManagement) {
                 CategoryManagementView(blog: blog)
             }
+            .sheet(isPresented: $showingEmbedForm) {
+                if let post = newPost {
+                    EmbedFormView(post: .constant(post))
+                }
+            }
         }
     }
 
@@ -212,27 +253,38 @@ struct PostFormView: View {
     }
 
     private func addPost() {
-        let newPost = Post(
-            title: title.isEmpty ? nil : title,
-            content: content,
-            primaryLink: primaryLink.isEmpty ? nil : primaryLink,
-            isDraft: isDraft
-        )
+        var postToSave: Post
+        
+        if let existingPost = newPost {
+            // Update the temporary post
+            existingPost.title = title.isEmpty ? nil : title
+            existingPost.content = content
+            existingPost.isDraft = isDraft
+            postToSave = existingPost
+        } else {
+            // Create a new post
+            postToSave = Post(
+                title: title.isEmpty ? nil : title,
+                content: content,
+                isDraft: isDraft
+            )
+            modelContext.insert(postToSave)
+        }
 
         // Add category to post if selected
         if let category = selectedCategory {
-            newPost.category = category
-            category.posts.append(newPost)
+            postToSave.category = category
+            category.posts.append(postToSave)
         }
 
         // Add tags to post
         for tag in selectedTags {
-            newPost.tags.append(tag)
-            tag.posts.append(newPost)
+            postToSave.tags.append(tag)
+            tag.posts.append(postToSave)
         }
 
-        modelContext.insert(newPost)
-        blog.posts.append(newPost)
+        // Add to blog
+        blog.posts.append(postToSave)
     }
 }
 

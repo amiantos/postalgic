@@ -187,16 +187,16 @@ class AWSPublisher {
             forHTTPHeaderField: "Content-Type"
         )
         request.httpBody = """
-                                 <InvalidationBatch xmlns="http://cloudfront.amazonaws.com/doc/2020-05-31/">
-                                    <CallerReference>"\(callerReference)"</CallerReference>
-                                    <Paths>
-                                       <Items>
-                                          <Path>/*</Path>
-                                       </Items>
-                                       <Quantity>1</Quantity>
-                                    </Paths>
-                                 </InvalidationBatch>
-            """.data(using: .utf8)
+            <InvalidationBatch xmlns="http://cloudfront.amazonaws.com/doc/2020-05-31/">
+                <CallerReference>"\(callerReference)"</CallerReference>
+                <Paths>
+                    <Items>
+                        <Path>/*</Path>
+                    </Items>
+                    <Quantity>1</Quantity>
+                </Paths>
+            </InvalidationBatch>
+        """.data(using: .utf8)
 
         // Sign the request using AWSSignatureV4Signer
         let thing = AWSEndpoint(

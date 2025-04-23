@@ -32,13 +32,13 @@ struct PostEditView: View {
 
     @State private var title: String
     @State private var content: String
-    @State private var primaryLink: String
     @State private var tagInput = ""
     @State private var selectedTags: [Tag] = []
     @State private var selectedCategory: Category?
     @State private var isDraft: Bool
     @State private var showingCategoryManagement = false
     @State private var showingSuggestions = false
+    @State private var showingEmbedForm = false
 
     private var existingTagNames: [String] {
         return blogTags.map { $0.name }
@@ -62,7 +62,6 @@ struct PostEditView: View {
         self.post = post
         _title = State(initialValue: post.title ?? "")
         _content = State(initialValue: post.content)
-        _primaryLink = State(initialValue: post.primaryLink ?? "")
         _isDraft = State(initialValue: post.isDraft)
         _selectedTags = State(initialValue: post.tags)
         _selectedCategory = State(initialValue: post.category)
@@ -73,7 +72,6 @@ struct PostEditView: View {
             Form {
                 Section("Post Details") {
                     TextField("Title (optional)", text: $title)
-                    TextField("Primary Link (optional)", text: $primaryLink)
                     Toggle("Save as Draft", isOn: $isDraft)
 
                     HStack {
@@ -103,6 +101,33 @@ struct PostEditView: View {
                 Section("Content") {
                     TextEditor(text: $content)
                         .frame(minHeight: 200)
+                }
+                
+                Section("Embed") {
+                    if post.embed != nil {
+                        HStack {
+                            Text("Embed Added")
+                                .foregroundColor(.secondary)
+                            
+                            Spacer()
+                            
+                            Button(action: {
+                                if let embed = post.embed {
+                                    modelContext.delete(embed)
+                                    post.embed = nil
+                                }
+                            }) {
+                                Image(systemName: "trash")
+                                    .foregroundColor(.red)
+                            }
+                        }
+                    } else {
+                        Button(action: {
+                            showingEmbedForm = true
+                        }) {
+                            Label("Add Embed", systemImage: "plus")
+                        }
+                    }
                 }
 
                 Section("Tags") {
@@ -203,6 +228,9 @@ struct PostEditView: View {
                     CategoryManagementView(blog: blog)
                 }
             }
+            .sheet(isPresented: $showingEmbedForm) {
+                EmbedFormView(post: .constant(post))
+            }
         }
     }
 
@@ -233,7 +261,6 @@ struct PostEditView: View {
         // Update post properties
         post.title = title.isEmpty ? nil : title
         post.content = content
-        post.primaryLink = primaryLink.isEmpty ? nil : primaryLink
         post.isDraft = isDraft
 
         // Handle category changes
