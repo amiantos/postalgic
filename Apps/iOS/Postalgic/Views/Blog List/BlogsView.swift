@@ -55,7 +55,7 @@ struct BlogsView: View {
                 BlogFormView()
             }
             .sheet(item: $blogToEdit) { blog in
-                EditBlogView(blog: blog)
+                BlogFormView(blog: blog)
             }
         }
     }
