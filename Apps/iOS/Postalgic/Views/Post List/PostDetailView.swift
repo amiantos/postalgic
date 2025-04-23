@@ -98,7 +98,7 @@ struct PostDetailView: View {
             }
         }
         .sheet(isPresented: $showingEditSheet) {
-            PostEditView(post: post)
+            PostFormView(post: post)
         }
     }
 }
