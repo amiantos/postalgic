@@ -163,7 +163,7 @@ struct BlogDetailView: View {
             PublishBlogView(blog: blog)
         }
         .sheet(isPresented: $showingEditBlogView) {
-            EditBlogView(blog: blog)
+            BlogFormView(blog: blog)
         }
         .sheet(isPresented: $showingCategoryManagement) {
             CategoryManagementView(blog: blog)

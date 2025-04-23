@@ -79,11 +79,129 @@ final class Tag {
     }
 }
 
+enum EmbedType: String, Codable {
+    case youtube = "YouTube"
+    case link = "Link"
+}
+
+enum EmbedPosition: String, Codable {
+    case above = "Above"
+    case below = "Below"
+}
+
+@Model
+final class Embed {
+    var url: String
+    var type: String // EmbedType.rawValue
+    var position: String // EmbedPosition.rawValue
+    var createdAt: Date
+    
+    // These properties are for Link type embeds
+    var title: String?
+    var embedDescription: String?
+    var imageUrl: String? // Remote URL for the image
+    var imageData: Data? // Actual image data stored in the database
+    
+    var post: Post?
+    
+    init(
+        url: String,
+        type: EmbedType,
+        position: EmbedPosition,
+        title: String? = nil,
+        embedDescription: String? = nil,
+        imageUrl: String? = nil,
+        imageData: Data? = nil,
+        createdAt: Date = Date()
+    ) {
+        self.url = url
+        self.type = type.rawValue
+        self.position = position.rawValue
+        self.title = title
+        self.embedDescription = embedDescription
+        self.imageUrl = imageUrl
+        self.imageData = imageData
+        self.createdAt = createdAt
+    }
+    
+    var embedType: EmbedType {
+        return EmbedType(rawValue: type) ?? .link
+    }
+    
+    var embedPosition: EmbedPosition {
+        return EmbedPosition(rawValue: position) ?? .below
+    }
+    
+    // Generate HTML for the embed based on type
+    func generateHtml() -> String {
+        switch embedType {
+        case .youtube:
+            // Extract YouTube video ID from URL
+            if let videoId = extractYouTubeId(from: url) {
+                return """
+                <div class="embed youtube-embed">
+                    <iframe width="560" height="315" src="https://www.youtube.com/embed/\(videoId)" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                </div>
+                """
+            } else {
+                return "<!-- Invalid YouTube URL: \(url) -->"
+            }
+        case .link:
+            var html = "<div class=\"embed link-embed\">"
+            html += "<a href=\"\(url)\" target=\"_blank\" rel=\"noopener noreferrer\">"
+            
+            if let title = title {
+                html += "<div class=\"link-title\">\(title)</div>"
+            }
+            
+            if let _ = imageData {
+                // When we have image data, we'll create a unique filename for the image
+                // based on a hash of the URL to ensure stability across generations
+                let imageFilename = "embed-\(url.hash).jpg"
+                let imagePath = "/images/embeds/\(imageFilename)"
+                html += "<div class=\"link-image\"><img src=\"\(imagePath)\" alt=\"\(title ?? "Link preview")\" /></div>"
+            } else if let imageUrl = imageUrl {
+                // Fallback to direct URL if we don't have image data stored
+                html += "<div class=\"link-image\"><img src=\"\(imageUrl)\" alt=\"\(title ?? "Link preview")\" /></div>"
+            }
+            
+            if let description = embedDescription {
+                html += "<div class=\"link-description\">\(description)</div>"
+            }
+            
+            html += "<div class=\"link-url\">\(url)</div>"
+            html += "</a></div>"
+            
+            return html
+        }
+    }
+    
+    private func extractYouTubeId(from url: String) -> String? {
+        let patterns = [
+            // youtu.be URLs
+            "youtu\\.be\\/([a-zA-Z0-9_-]{11})",
+            // youtube.com/watch?v= URLs
+            "youtube\\.com\\/watch\\?v=([a-zA-Z0-9_-]{11})",
+            // youtube.com/embed/ URLs
+            "youtube\\.com\\/embed\\/([a-zA-Z0-9_-]{11})"
+        ]
+        
+        for pattern in patterns {
+            if let regex = try? NSRegularExpression(pattern: pattern),
+               let match = regex.firstMatch(in: url, range: NSRange(url.startIndex..., in: url)),
+               let range = Range(match.range(at: 1), in: url) {
+                return String(url[range])
+            }
+        }
+        
+        return nil
+    }
+}
+
 @Model
 final class Post {
     var title: String?
     var content: String
-    var primaryLink: String?
     var createdAt: Date
 
     var isDraft: Bool = false
@@ -95,17 +213,18 @@ final class Post {
 
     @Relationship(deleteRule: .nullify, inverse: \Tag.posts)
     var tags: [Tag] = []
+    
+    @Relationship(deleteRule: .cascade)
+    var embed: Embed?
 
     init(
         title: String? = nil,
         content: String,
-        primaryLink: String? = nil,
         createdAt: Date = Date(),
         isDraft: Bool = false
     ) {
         self.title = title
         self.content = content
-        self.primaryLink = primaryLink
         self.createdAt = createdAt
         self.isDraft = isDraft
     }

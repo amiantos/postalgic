@@ -21,7 +21,6 @@ struct PostalgicTests {
             title: "First Post",
             content:
                 "This is the first post with some **bold** and *italic* text.",
-            primaryLink: "https://example.com/linked-article",
             createdAt: Date().addingTimeInterval(-86400)  // Yesterday
         )
 

@@ -35,16 +35,6 @@ struct PostDetailView: View {
                     }
                 }
 
-                if let primaryLink = post.primaryLink {
-                    Link(
-                        primaryLink,
-                        destination: URL(string: primaryLink) ?? URL(
-                            string: "https://example.com"
-                        )!
-                    )
-                    .font(.headline)
-                }
-
                 HStack {
                     Text(post.createdAt, format: .dateTime)
                         .font(.subheadline)
@@ -77,10 +67,22 @@ struct PostDetailView: View {
                 }
 
                 Divider()
+                
+                // Display embed above content if present
+                if let embed = post.embed, embed.embedPosition == .above {
+                    EmbedView(embed: embed)
+                        .padding(.bottom, 16)
+                }
 
                 Text(.init(post.content))
                     .textSelection(.enabled)
                     .font(.body)
+                
+                // Display embed below content if present
+                if let embed = post.embed, embed.embedPosition == .below {
+                    EmbedView(embed: embed)
+                        .padding(.top, 16)
+                }
 
                 Spacer()
             }
@@ -96,7 +98,7 @@ struct PostDetailView: View {
             }
         }
         .sheet(isPresented: $showingEditSheet) {
-            PostEditView(post: post)
+            PostFormView(post: post)
         }
     }
 }

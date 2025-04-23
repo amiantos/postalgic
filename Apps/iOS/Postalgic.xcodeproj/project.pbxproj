@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		443F0B2D2DB8D47500034EF1 /* EmbedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 443F0B2C2DB8D47500034EF1 /* EmbedView.swift */; };
+		443F0B2E2DB8D47500034EF1 /* EmbedFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 443F0B2B2DB8D47500034EF1 /* EmbedFormView.swift */; };
+		443F0B302DB8D48B00034EF1 /* LinkMetadataService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 443F0B2F2DB8D48B00034EF1 /* LinkMetadataService.swift */; };
 		448E851D2DB3984200772502 /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = 448E851C2DB3984200772502 /* ZIPFoundation */; };
 		449CAF852DB47E2900558395 /* AWSCore in Frameworks */ = {isa = PBXBuildFile; productRef = 449CAF842DB47E2900558395 /* AWSCore */; };
 		449CAF872DB47E2900558395 /* AWSS3 in Frameworks */ = {isa = PBXBuildFile; productRef = 449CAF862DB47E2900558395 /* AWSS3 */; };
@@ -18,9 +21,7 @@
 		44C364242DB768DB0057567C /* BlogFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44C364132DB768DB0057567C /* BlogFormView.swift */; };
 		44C364252DB768DB0057567C /* BlogsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44C364142DB768DB0057567C /* BlogsView.swift */; };
 		44C364262DB768DB0057567C /* CategoryManagementView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44C364152DB768DB0057567C /* CategoryManagementView.swift */; };
-		44C364272DB768DB0057567C /* EditBlogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44C364162DB768DB0057567C /* EditBlogView.swift */; };
 		44C364282DB768DB0057567C /* PostDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44C364172DB768DB0057567C /* PostDetailView.swift */; };
-		44C364292DB768DB0057567C /* PostEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44C364182DB768DB0057567C /* PostEditView.swift */; };
 		44C3642A2DB768DB0057567C /* PostFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44C364192DB768DB0057567C /* PostFormView.swift */; };
 		44C3642B2DB768DB0057567C /* PublishBlogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44C3641A2DB768DB0057567C /* PublishBlogView.swift */; };
 		44C3642C2DB768DB0057567C /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44C3641D2DB768DB0057567C /* Models.swift */; };
@@ -49,6 +50,9 @@
 		443674762DB3898500F67B00 /* Postalgic.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Postalgic.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		443674852DB3898600F67B00 /* PostalgicTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PostalgicTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		4436748F2DB3898600F67B00 /* PostalgicUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PostalgicUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		443F0B2B2DB8D47500034EF1 /* EmbedFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmbedFormView.swift; sourceTree = "<group>"; };
+		443F0B2C2DB8D47500034EF1 /* EmbedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmbedView.swift; sourceTree = "<group>"; };
+		443F0B2F2DB8D48B00034EF1 /* LinkMetadataService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LinkMetadataService.swift; sourceTree = "<group>"; };
 		44C3640E2DB768DB0057567C /* AWSPublisher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AWSPublisher.swift; sourceTree = "<group>"; };
 		44C3640F2DB768DB0057567C /* StaticSiteGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StaticSiteGenerator.swift; sourceTree = "<group>"; };
 		44C364112DB768DB0057567C /* BlogAwsConfigView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlogAwsConfigView.swift; sourceTree = "<group>"; };
@@ -56,9 +60,7 @@
 		44C364132DB768DB0057567C /* BlogFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlogFormView.swift; sourceTree = "<group>"; };
 		44C364142DB768DB0057567C /* BlogsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlogsView.swift; sourceTree = "<group>"; };
 		44C364152DB768DB0057567C /* CategoryManagementView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CategoryManagementView.swift; sourceTree = "<group>"; };
-		44C364162DB768DB0057567C /* EditBlogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditBlogView.swift; sourceTree = "<group>"; };
 		44C364172DB768DB0057567C /* PostDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostDetailView.swift; sourceTree = "<group>"; };
-		44C364182DB768DB0057567C /* PostEditView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostEditView.swift; sourceTree = "<group>"; };
 		44C364192DB768DB0057567C /* PostFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostFormView.swift; sourceTree = "<group>"; };
 		44C3641A2DB768DB0057567C /* PublishBlogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PublishBlogView.swift; sourceTree = "<group>"; };
 		44C3641C2DB768DB0057567C /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -128,10 +130,22 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		443F0B312DB8DFDB00034EF1 /* Posts */ = {
+			isa = PBXGroup;
+			children = (
+				44C364172DB768DB0057567C /* PostDetailView.swift */,
+				44C364192DB768DB0057567C /* PostFormView.swift */,
+				443F0B2B2DB8D47500034EF1 /* EmbedFormView.swift */,
+				443F0B2C2DB8D47500034EF1 /* EmbedView.swift */,
+			);
+			path = Posts;
+			sourceTree = "<group>";
+		};
 		44C364102DB768DB0057567C /* Services */ = {
 			isa = PBXGroup;
 			children = (
 				44C3640E2DB768DB0057567C /* AWSPublisher.swift */,
+				443F0B2F2DB8D48B00034EF1 /* LinkMetadataService.swift */,
 				44C3640F2DB768DB0057567C /* StaticSiteGenerator.swift */,
 			);
 			path = Services;
@@ -142,7 +156,7 @@
 			children = (
 				44C3642F2DB768F90057567C /* Blog List */,
 				44C364302DB769260057567C /* Blog Detail */,
-				44C364312DB7694A0057567C /* Post List */,
+				443F0B312DB8DFDB00034EF1 /* Posts */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -164,7 +178,6 @@
 			children = (
 				44C364142DB768DB0057567C /* BlogsView.swift */,
 				44C364132DB768DB0057567C /* BlogFormView.swift */,
-				44C364162DB768DB0057567C /* EditBlogView.swift */,
 			);
 			path = "Blog List";
 			sourceTree = "<group>";
@@ -172,22 +185,12 @@
 		44C364302DB769260057567C /* Blog Detail */ = {
 			isa = PBXGroup;
 			children = (
+				44C364122DB768DB0057567C /* BlogDetailView.swift */,
 				44C364112DB768DB0057567C /* BlogAwsConfigView.swift */,
 				44C364152DB768DB0057567C /* CategoryManagementView.swift */,
 				44C3641A2DB768DB0057567C /* PublishBlogView.swift */,
 			);
 			path = "Blog Detail";
-			sourceTree = "<group>";
-		};
-		44C364312DB7694A0057567C /* Post List */ = {
-			isa = PBXGroup;
-			children = (
-				44C364122DB768DB0057567C /* BlogDetailView.swift */,
-				44C364172DB768DB0057567C /* PostDetailView.swift */,
-				44C364182DB768DB0057567C /* PostEditView.swift */,
-				44C364192DB768DB0057567C /* PostFormView.swift */,
-			);
-			path = "Post List";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -341,6 +344,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				443F0B2D2DB8D47500034EF1 /* EmbedView.swift in Sources */,
+				443F0B2E2DB8D47500034EF1 /* EmbedFormView.swift in Sources */,
 				44C364202DB768DB0057567C /* AWSPublisher.swift in Sources */,
 				44C364212DB768DB0057567C /* StaticSiteGenerator.swift in Sources */,
 				44C364222DB768DB0057567C /* BlogAwsConfigView.swift in Sources */,
@@ -348,13 +353,12 @@
 				44C364242DB768DB0057567C /* BlogFormView.swift in Sources */,
 				44C364252DB768DB0057567C /* BlogsView.swift in Sources */,
 				44C364262DB768DB0057567C /* CategoryManagementView.swift in Sources */,
-				44C364272DB768DB0057567C /* EditBlogView.swift in Sources */,
 				44C364282DB768DB0057567C /* PostDetailView.swift in Sources */,
-				44C364292DB768DB0057567C /* PostEditView.swift in Sources */,
 				44C3642A2DB768DB0057567C /* PostFormView.swift in Sources */,
 				44C3642B2DB768DB0057567C /* PublishBlogView.swift in Sources */,
 				44C3642C2DB768DB0057567C /* Models.swift in Sources */,
 				44C3642D2DB768DB0057567C /* PostalgicApp.swift in Sources */,
+				443F0B302DB8D48B00034EF1 /* LinkMetadataService.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

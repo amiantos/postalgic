@@ -157,6 +157,11 @@ class StaticSiteGenerator {
         .post-summary {
             margin-top: 10px;
         }
+        
+        .post-summary p, .post-content p {
+            margin-top:1.2em;
+            margin-bottom:1.2em;
+        }
 
         /* Tags */
         .tag {
@@ -268,6 +273,87 @@ class StaticSiteGenerator {
             font-size: 0.9rem;
         }
 
+        /* Embeds */
+        .embed {
+            margin: 1.5em 0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .youtube-embed {
+            position: relative;
+            padding-bottom: 56.25%; /* 16:9 ratio */
+            height: 0;
+            overflow: hidden;
+        }
+        
+        .youtube-embed iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: 0;
+        }
+        
+        .link-embed {
+            border: 1px solid var(--light-gray);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .link-embed a {
+            display: grid;
+            grid-template-areas: 
+                "image title"
+                "image description"
+                "image url";
+            grid-template-columns: 150px 1fr;
+            grid-template-rows: auto 1fr auto;
+            padding: 0;
+            color: var(--text-color);
+            text-decoration: none;
+        }
+        
+        .link-embed a:hover {
+            background-color: var(--light-gray);
+            text-decoration: none;
+        }
+        
+        .link-title {
+            grid-area: title;
+            font-weight: bold;
+            padding: 10px 10px 5px 10px;
+        }
+        
+        .link-description {
+            grid-area: description;
+            font-size: 0.9em;
+            padding: 0 10px;
+            color: var(--dark-gray);
+        }
+        
+        .link-url {
+            grid-area: url;
+            font-size: 0.8em;
+            color: var(--medium-gray);
+            padding: 5px 10px 10px 10px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .link-image {
+            grid-area: image;
+            height: 100%;
+        }
+        
+        .link-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
         /* Responsive */
         @media (max-width: 768px) {
             .container {
@@ -281,6 +367,20 @@ class StaticSiteGenerator {
             
             .tag-list, .category-list {
                 grid-template-columns: 1fr;
+            }
+            
+            .link-embed a {
+                grid-template-areas: 
+                    "image"
+                    "title"
+                    "description"
+                    "url";
+                grid-template-columns: 1fr;
+                grid-template-rows: auto auto auto auto;
+            }
+            
+            .link-image {
+                height: 200px;
             }
         }
         """
@@ -398,12 +498,27 @@ class StaticSiteGenerator {
         let dateHTML = """
             <div class="post-date"><a href="/\(post.urlPath)/index.html">\(post.formattedDate)</a></div>
             """
+        
+        // Generate post content with embeds
+        let postContent = MarkdownParser().html(from: post.content)
+        var finalContent = ""
+        
+        // Handle embeds based on position
+        if let embed = post.embed, embed.embedPosition == .above {
+            finalContent += embed.generateHtml() + "\n"
+        }
+        
+        finalContent += postContent
+        
+        if let embed = post.embed, embed.embedPosition == .below {
+            finalContent += "\n" + embed.generateHtml()
+        }
 
         return """
             <div class="post-item">
                 \(titleHTML)
                 \(dateHTML)
-                <div class="post-summary">\(MarkdownParser().html(from: post.content))</div>
+                <div class="post-summary">\(finalContent)</div>
                 \(categoryHTML)
                 \(tagsHTML)
             </div>
@@ -427,6 +542,21 @@ class StaticSiteGenerator {
         let dateHTML = """
             <div class="post-date"><a href="/\(post.urlPath)/index.html">\(post.formattedDate)</a></div>
             """
+        
+        // Generate post content with embeds
+        let postContent = MarkdownParser().html(from: post.content)
+        var finalContent = ""
+        
+        // Handle embeds based on position
+        if let embed = post.embed, embed.embedPosition == .above {
+            finalContent += embed.generateHtml() + "\n"
+        }
+        
+        finalContent += postContent
+        
+        if let embed = post.embed, embed.embedPosition == .below {
+            finalContent += "\n" + embed.generateHtml()
+        }
 
         let content = """
             <article>
@@ -435,7 +565,7 @@ class StaticSiteGenerator {
                     \(dateHTML)
                 </div>
                 <div class="post-content">
-                    \(MarkdownParser().html(from: post.content))
+                    \(finalContent)
                 </div>
                 <div class="post-meta">
                     \(categoryHTML)
@@ -464,6 +594,24 @@ class StaticSiteGenerator {
             .sorted { $0.createdAt > $1.createdAt }
     }
 
+    // MARK: - Embed Helper
+    
+    /// Saves all embed images to the site directory
+    private func saveEmbedImages(to directory: URL) {
+        let publishedPosts = blog.posts.filter { !$0.isDraft }
+        
+        for post in publishedPosts {
+            if let embed = post.embed, embed.embedType == .link, let imageData = embed.imageData {
+                // Create a predictable filename based on URL hash
+                let imageFilename = "embed-\(embed.url.hash).jpg"
+                let imagePath = directory.appendingPathComponent(imageFilename)
+                
+                // Save the image data
+                try? imageData.write(to: imagePath)
+            }
+        }
+    }
+    
     // MARK: - Error Handling
 
     /// Enum representing errors that can occur during site generation
@@ -515,6 +663,16 @@ class StaticSiteGenerator {
             atomically: true,
             encoding: .utf8
         )
+        
+        // Create images/embeds directory for embed images
+        let embedImagesDirectory = siteDirectory.appendingPathComponent("images/embeds")
+        try FileManager.default.createDirectory(
+            at: embedImagesDirectory,
+            withIntermediateDirectories: true
+        )
+        
+        // Extract and save all embed images
+        saveEmbedImages(to: embedImagesDirectory)
 
         // Generate site content
         try generateIndexPage()
@@ -601,7 +759,21 @@ class StaticSiteGenerator {
             let postTitle = post.displayTitle
             let postDate = dateFormatter.string(from: post.createdAt)
             let postLink = "\(blog.url)/\(post.urlPath)/"
-            let postContentHTML = MarkdownParser().html(from: post.content)
+            
+            // Generate post content with embeds for RSS
+            let postContent = MarkdownParser().html(from: post.content)
+            var finalContent = ""
+            
+            // Handle embeds based on position
+            if let embed = post.embed, embed.embedPosition == .above {
+                finalContent += embed.generateHtml() + "\n"
+            }
+            
+            finalContent += postContent
+            
+            if let embed = post.embed, embed.embedPosition == .below {
+                finalContent += "\n" + embed.generateHtml()
+            }
 
             rssContent += """
 
@@ -610,7 +782,7 @@ class StaticSiteGenerator {
                     <link>\(postLink)</link>
                     <guid>\(postLink)</guid>
                     <pubDate>\(postDate)</pubDate>
-                    <description><![CDATA[\(postContentHTML)]]></description>
+                    <description><![CDATA[\(finalContent)]]></description>
                 </item>
                 """
         }
