@@ -826,9 +826,6 @@ class StaticSiteGenerator {
                 """
             }
         }
-        
-        rssContent += "
-            """
 
         for post in limitedPosts {
             let postTitle = post.displayTitle
