@@ -28,6 +28,21 @@ class StaticSiteGenerator {
 
     private var cssFile: String = """
         /* Base styles */
+        
+        /* Add styles for tagline and author info */
+        header .tagline {
+            color: var(--medium-gray);
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            font-style: italic;
+        }
+        
+        .post-author {
+            color: var(--medium-gray);
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+        
         :root {
             --primary-color: #4a5568;
             --accent-color: #3182ce;
@@ -404,13 +419,16 @@ class StaticSiteGenerator {
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
                 <title>\(pageTitle)</title>
+                <meta name="description" content="Posts from \(blog.name)">
                 <link rel="stylesheet" href="/css/style.css">
+                <link rel="alternate" type="application/rss+xml" title="\(blog.name) RSS Feed" href="/rss.xml">
                 \(customHead)
             </head>
             <body>
                 <div class="container">
                     <header>
                         <h1><a href="/">\(blog.name)</a></h1>
+                        \(blog.tagline != nil ? "<p class=\"tagline\">\(blog.tagline!)</p>" : "")
                         <nav>
                             <ul>
                                 <li><a href="/">Home</a></li>
@@ -427,11 +445,20 @@ class StaticSiteGenerator {
 
     /// Returns the HTML footer for a page
     private func htmlFooter() -> String {
+        var authorText = ""
+        if let authorName = blog.authorName {
+            if let authorUrl = blog.authorUrl, !authorUrl.isEmpty {
+                authorText = " by <a href=\"\(authorUrl)\">\(authorName)</a>"
+            } else {
+                authorText = " by \(authorName)"
+            }
+        }
+        
         return """
                     </main>
                     
                     <footer>
-                        <p>&copy; \(Calendar.current.component(.year, from: Date())) \(blog.name). Generated with <a href="https://postalgic.app">Postalgic</a>.</p>
+                        <p>&copy; \(Calendar.current.component(.year, from: Date())) \(blog.name)\(authorText). Generated with <a href="https://postalgic.app">Postalgic</a>.</p>
                     </footer>
                 </div>
             </body>
@@ -495,9 +522,22 @@ class StaticSiteGenerator {
             """ : ""
 
         // Date now links to the post
-        let dateHTML = """
+        var dateHTML = """
             <div class="post-date"><a href="/\(post.urlPath)/index.html">\(post.formattedDate)</a></div>
             """
+            
+        // Add author if available
+        if let authorName = blog.authorName {
+            if let authorUrl = blog.authorUrl, !authorUrl.isEmpty {
+                dateHTML += """
+                <div class="post-author">by <a href="\(authorUrl)">\(authorName)</a></div>
+                """
+            } else {
+                dateHTML += """
+                <div class="post-author">by \(authorName)</div>
+                """
+            }
+        }
         
         // Generate post content with embeds
         let postContent = MarkdownParser().html(from: post.content)
@@ -539,9 +579,22 @@ class StaticSiteGenerator {
             """ : ""
 
         // Date now links to the post
-        let dateHTML = """
+        var dateHTML = """
             <div class="post-date"><a href="/\(post.urlPath)/index.html">\(post.formattedDate)</a></div>
             """
+            
+        // Add author if available
+        if let authorName = blog.authorName {
+            if let authorUrl = blog.authorUrl, !authorUrl.isEmpty {
+                dateHTML += """
+                <div class="post-author">by <a href="\(authorUrl)">\(authorName)</a></div>
+                """
+            } else {
+                dateHTML += """
+                <div class="post-author">by \(authorName)</div>
+                """
+            }
+        }
         
         // Generate post content with embeds
         let postContent = MarkdownParser().html(from: post.content)
@@ -681,6 +734,10 @@ class StaticSiteGenerator {
         try generateTagPages()
         try generateCategoryPages()
         try generateRSSFeed()
+        
+        // Generate robots.txt and sitemap.xml
+        try generateRobotsTxt()
+        try generateSitemap()
 
         // If AWS is configured, publish to AWS
         if blog.hasAwsConfigured {
@@ -749,11 +806,26 @@ class StaticSiteGenerator {
             <channel>
                 <title>\(blog.name)</title>
                 <link>\(blog.url)</link>
-                <description>Recent posts from \(blog.name)</description>
+                <description>\(blog.tagline ?? "Recent posts from \(blog.name)")</description>
                 <language>en-us</language>
                 <lastBuildDate>\(dateFormatter.string(from: Date()))</lastBuildDate>
                 <atom:link href="\(blog.url)/rss.xml" rel="self" type="application/rss+xml" />
-            """
+        """
+        
+        // Add author element if author name is available
+        if let authorName = blog.authorName {
+            if let authorUrl = blog.authorUrl, !authorUrl.isEmpty {
+                rssContent += """
+                <managingEditor>\(authorName) (\(authorUrl))</managingEditor>
+                <webMaster>\(authorName) (\(authorUrl))</webMaster>
+                """
+            } else {
+                rssContent += """
+                <managingEditor>\(authorName)</managingEditor>
+                <webMaster>\(authorName)</webMaster>
+                """
+            }
+        }
 
         for post in limitedPosts {
             let postTitle = post.displayTitle
@@ -782,6 +854,18 @@ class StaticSiteGenerator {
                     <link>\(postLink)</link>
                     <guid>\(postLink)</guid>
                     <pubDate>\(postDate)</pubDate>
+        """
+            
+            // Add author to individual posts if available
+            if let authorName = blog.authorName {
+                if let authorUrl = blog.authorUrl, !authorUrl.isEmpty {
+                    rssContent += "<author>\(authorName) (\(authorUrl))</author>\n                "
+                } else {
+                    rssContent += "<author>\(authorName)</author>\n                "
+                }
+            }
+            
+            rssContent += """
                     <description><![CDATA[\(finalContent)]]></description>
                 </item>
                 """
@@ -816,11 +900,12 @@ class StaticSiteGenerator {
             </div>
             """
 
+        let customHead = "<link rel=\"sitemap\" type=\"application/xml\" title=\"Sitemap\" href=\"/sitemap.xml\" />"
+
         let pageContent = completePage(
             title: blog.name,
             content: content,
-            customHead:
-                "<link rel=\"alternate\" type=\"application/rss+xml\" title=\"\(blog.name) RSS Feed\" href=\"/rss.xml\" />"
+            customHead: customHead
         )
 
         try pageContent.write(to: indexPath, atomically: true, encoding: .utf8)
@@ -1154,5 +1239,133 @@ class StaticSiteGenerator {
                 encoding: .utf8
             )
         }
+    }
+    
+    /// Generates a robots.txt file for the site
+    private func generateRobotsTxt() throws {
+        guard let siteDirectory = siteDirectory else {
+            throw SiteGeneratorError.noSiteDirectory
+        }
+        
+        let robotsPath = siteDirectory.appendingPathComponent("robots.txt")
+        
+        // Use default permissive content
+        let content = """
+        User-agent: *
+        Allow: /
+        
+        Sitemap: \(blog.url)/sitemap.xml
+        """
+        
+        try content.write(to: robotsPath, atomically: true, encoding: .utf8)
+    }
+    
+    /// Generates a sitemap.xml file for the site
+    private func generateSitemap() throws {
+        guard let siteDirectory = siteDirectory else {
+            throw SiteGeneratorError.noSiteDirectory
+        }
+        
+        let sitemapPath = siteDirectory.appendingPathComponent("sitemap.xml")
+        let sortedPosts = publishedPostsSorted()
+        
+        let dateFormatter = ISO8601DateFormatter()
+        dateFormatter.formatOptions = [.withFullDate]
+        
+        var sitemapContent = """
+        <?xml version="1.0" encoding="UTF-8"?>
+        <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+        """
+        
+        // Add home page
+        sitemapContent += """
+            <url>
+                <loc>\(blog.url)/</loc>
+                <lastmod>\(dateFormatter.string(from: Date()))</lastmod>
+                <changefreq>weekly</changefreq>
+                <priority>1.0</priority>
+            </url>
+        """
+        
+        // Add archive page
+        sitemapContent += """
+            <url>
+                <loc>\(blog.url)/archives/</loc>
+                <lastmod>\(dateFormatter.string(from: Date()))</lastmod>
+                <changefreq>weekly</changefreq>
+                <priority>0.8</priority>
+            </url>
+        """
+        
+        // Add tags page
+        sitemapContent += """
+            <url>
+                <loc>\(blog.url)/tags/</loc>
+                <lastmod>\(dateFormatter.string(from: Date()))</lastmod>
+                <changefreq>weekly</changefreq>
+                <priority>0.7</priority>
+            </url>
+        """
+        
+        // Add categories page
+        sitemapContent += """
+            <url>
+                <loc>\(blog.url)/categories/</loc>
+                <lastmod>\(dateFormatter.string(from: Date()))</lastmod>
+                <changefreq>weekly</changefreq>
+                <priority>0.7</priority>
+            </url>
+        """
+        
+        // Add individual posts
+        for post in sortedPosts {
+            let postLink = "\(blog.url)/\(post.urlPath)/"
+            let lastmod = dateFormatter.string(from: post.createdAt)
+            
+            sitemapContent += """
+            <url>
+                <loc>\(postLink)</loc>
+                <lastmod>\(lastmod)</lastmod>
+                <changefreq>monthly</changefreq>
+                <priority>0.6</priority>
+            </url>
+            """
+        }
+        
+        // Add individual tag pages
+        for tag in blog.tags {
+            let tagLink = "\(blog.url)/tags/\(tag.name.urlPathFormatted())/"
+            let lastmod = dateFormatter.string(from: Date())
+            
+            sitemapContent += """
+            <url>
+                <loc>\(tagLink)</loc>
+                <lastmod>\(lastmod)</lastmod>
+                <changefreq>monthly</changefreq>
+                <priority>0.5</priority>
+            </url>
+            """
+        }
+        
+        // Add individual category pages
+        for category in blog.categories {
+            let categoryLink = "\(blog.url)/categories/\(category.name.urlPathFormatted())/"
+            let lastmod = dateFormatter.string(from: Date())
+            
+            sitemapContent += """
+            <url>
+                <loc>\(categoryLink)</loc>
+                <lastmod>\(lastmod)</lastmod>
+                <changefreq>monthly</changefreq>
+                <priority>0.5</priority>
+            </url>
+            """
+        }
+        
+        sitemapContent += """
+        </urlset>
+        """
+        
+        try sitemapContent.write(to: sitemapPath, atomically: true, encoding: .utf8)
     }
 }

@@ -130,10 +130,10 @@ struct BlogDetailView: View {
         }
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
-                EditButton()
-            }
-            ToolbarItem(placement: .navigationBarTrailing) {
                 Menu {
+                    Button(action: { showingPostForm = true }) {
+                        Label("Add Post", systemImage: "plus")
+                    }
                     Button(action: { showingEditBlogView = true }) {
                         Label("Edit Blog", systemImage: "pencil")
                     }
@@ -148,11 +148,6 @@ struct BlogDetailView: View {
                     }
                 } label: {
                     Image(systemName: "ellipsis.circle")
-                }
-            }
-            ToolbarItem {
-                Button(action: { showingPostForm = true }) {
-                    Label("Add Post", systemImage: "plus")
                 }
             }
         }
