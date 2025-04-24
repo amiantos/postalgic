@@ -684,14 +684,9 @@ class StaticSiteGenerator {
         try generateCategoryPages()
         try generateRSSFeed()
         
-        // Generate robots.txt and sitemap.xml if enabled
-        if blog.generateRobotsTxt {
-            try generateRobotsTxt()
-        }
-        
-        if blog.generateSitemap {
-            try generateSitemap()
-        }
+        // Generate robots.txt and sitemap.xml
+        try generateRobotsTxt()
+        try generateSitemap()
 
         // If AWS is configured, publish to AWS
         if blog.hasAwsConfigured {
@@ -827,8 +822,7 @@ class StaticSiteGenerator {
             </div>
             """
 
-        let customHead = blog.generateSitemap ? 
-            "<link rel=\"sitemap\" type=\"application/xml\" title=\"Sitemap\" href=\"/sitemap.xml\" />" : ""
+        let customHead = "<link rel=\"sitemap\" type=\"application/xml\" title=\"Sitemap\" href=\"/sitemap.xml\" />"
 
         let pageContent = completePage(
             title: blog.name,
@@ -1177,18 +1171,13 @@ class StaticSiteGenerator {
         
         let robotsPath = siteDirectory.appendingPathComponent("robots.txt")
         
-        // Use custom content if provided, otherwise use default
-        let content: String
-        if let customContent = blog.robotsTxtContent, !customContent.isEmpty {
-            content = customContent
-        } else {
-            content = """
-            User-agent: *
-            Allow: /
-            
-            Sitemap: \(blog.url)/sitemap.xml
-            """
-        }
+        // Use default permissive content
+        let content = """
+        User-agent: *
+        Allow: /
+        
+        Sitemap: \(blog.url)/sitemap.xml
+        """
         
         try content.write(to: robotsPath, atomically: true, encoding: .utf8)
     }
@@ -1215,8 +1204,8 @@ class StaticSiteGenerator {
             <url>
                 <loc>\(blog.url)/</loc>
                 <lastmod>\(dateFormatter.string(from: Date()))</lastmod>
-                <changefreq>\(blog.sitemapChangeFreq)</changefreq>
-                <priority>\(blog.sitemapPriority)</priority>
+                <changefreq>weekly</changefreq>
+                <priority>1.0</priority>
             </url>
         """
         
@@ -1225,7 +1214,7 @@ class StaticSiteGenerator {
             <url>
                 <loc>\(blog.url)/archives/</loc>
                 <lastmod>\(dateFormatter.string(from: Date()))</lastmod>
-                <changefreq>\(blog.sitemapChangeFreq)</changefreq>
+                <changefreq>weekly</changefreq>
                 <priority>0.8</priority>
             </url>
         """
@@ -1235,7 +1224,7 @@ class StaticSiteGenerator {
             <url>
                 <loc>\(blog.url)/tags/</loc>
                 <lastmod>\(dateFormatter.string(from: Date()))</lastmod>
-                <changefreq>\(blog.sitemapChangeFreq)</changefreq>
+                <changefreq>weekly</changefreq>
                 <priority>0.7</priority>
             </url>
         """
@@ -1245,7 +1234,7 @@ class StaticSiteGenerator {
             <url>
                 <loc>\(blog.url)/categories/</loc>
                 <lastmod>\(dateFormatter.string(from: Date()))</lastmod>
-                <changefreq>\(blog.sitemapChangeFreq)</changefreq>
+                <changefreq>weekly</changefreq>
                 <priority>0.7</priority>
             </url>
         """
@@ -1259,7 +1248,7 @@ class StaticSiteGenerator {
             <url>
                 <loc>\(postLink)</loc>
                 <lastmod>\(lastmod)</lastmod>
-                <changefreq>\(blog.sitemapChangeFreq)</changefreq>
+                <changefreq>weekly</changefreq>
                 <priority>0.6</priority>
             </url>
             """
@@ -1274,7 +1263,7 @@ class StaticSiteGenerator {
             <url>
                 <loc>\(tagLink)</loc>
                 <lastmod>\(lastmod)</lastmod>
-                <changefreq>\(blog.sitemapChangeFreq)</changefreq>
+                <changefreq>weekly</changefreq>
                 <priority>0.5</priority>
             </url>
             """
@@ -1289,7 +1278,7 @@ class StaticSiteGenerator {
             <url>
                 <loc>\(categoryLink)</loc>
                 <lastmod>\(lastmod)</lastmod>
-                <changefreq>\(blog.sitemapChangeFreq)</changefreq>
+                <changefreq>weekly</changefreq>
                 <priority>0.5</priority>
             </url>
             """
