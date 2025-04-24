@@ -1248,7 +1248,7 @@ class StaticSiteGenerator {
             <url>
                 <loc>\(postLink)</loc>
                 <lastmod>\(lastmod)</lastmod>
-                <changefreq>weekly</changefreq>
+                <changefreq>monthly</changefreq>
                 <priority>0.6</priority>
             </url>
             """
@@ -1263,7 +1263,7 @@ class StaticSiteGenerator {
             <url>
                 <loc>\(tagLink)</loc>
                 <lastmod>\(lastmod)</lastmod>
-                <changefreq>weekly</changefreq>
+                <changefreq>monthly</changefreq>
                 <priority>0.5</priority>
             </url>
             """
@@ -1278,7 +1278,7 @@ class StaticSiteGenerator {
             <url>
                 <loc>\(categoryLink)</loc>
                 <lastmod>\(lastmod)</lastmod>
-                <changefreq>weekly</changefreq>
+                <changefreq>monthly</changefreq>
                 <priority>0.5</priority>
             </url>
             """
