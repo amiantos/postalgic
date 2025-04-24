@@ -417,23 +417,16 @@ struct PostFormView: View {
 }
 
 #Preview("New Post") {
-    let modelContainer = PreviewData.previewContainer
-    
-    return NavigationStack {
-        // Fetch the first blog from the container to ensure it's properly in the context
-        PostFormView(blog: try! modelContainer.mainContext.fetch(FetchDescriptor<Blog>()).first!)
+    NavigationStack {
+        PostFormView(blog: try! PreviewData.previewBlog)
     }
-    .modelContainer(modelContainer)
+    .modelContainer(PreviewData.previewContainer)
 }
 
 #Preview("Edit Post") {
-    let modelContainer = PreviewData.previewContainer
-    let blog = try! modelContainer.mainContext.fetch(FetchDescriptor<Blog>()).first!
-    
-    return NavigationStack {
-        // Use the first post from the blog that's in the context
-        PostFormView(post: blog.posts.first!)
+    NavigationStack {
+        PostFormView(post: try! PreviewData.previewPost())
     }
-    .modelContainer(modelContainer)
+    .modelContainer(PreviewData.previewContainer)
 }
 

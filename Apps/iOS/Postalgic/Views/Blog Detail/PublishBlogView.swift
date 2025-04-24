@@ -256,7 +256,7 @@ struct ShareSheet: UIViewControllerRepresentable {
 
 #Preview("AWS Configured") {
     NavigationStack {
-        PublishBlogView(blog: PreviewData.blogWithContent())
+        PublishBlogView(blog: try! PreviewData.previewBlog)
     }
     .modelContainer(PreviewData.previewContainer)
 }

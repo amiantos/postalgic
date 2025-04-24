@@ -174,65 +174,113 @@ struct PreviewData {
             // Add sample data to container
             let context = container.mainContext
             
-            // Create a blog with categories for our previews
+            // Create a blog with the same content as blogWithContent()
             let blog = Blog(
-                name: "Preview Blog", 
-                url: "https://example.com",
-                authorName: "John Doe"
+                name: "Tech Chronicles",
+                url: "https://techchronicles.example.com",
+                authorName: "Sarah Johnson",
+                authorUrl: "https://sarahjohnson.example.com",
+                tagline: "Exploring the digital frontier"
             )
+            
+            // Insert the blog into the context
             context.insert(blog)
             
-            // Add 3 categories with proper relationships
-            let categoryNames = ["Technology", "Programming", "Design"]
-            let categories = categoryNames.map { name -> Category in
-                let category = Category(name: name, categoryDescription: "Description for \(name.lowercased())")
+            // Add AWS configuration
+            blog.awsRegion = "us-west-2"
+            blog.awsS3Bucket = "techchronicles-blog"
+            blog.awsCloudFrontDistId = "E1A2B3C4D5E6F7"
+            blog.awsAccessKeyId = "AKIAEXAMPLE"
+            blog.awsSecretAccessKey = "examplekey123456789"
+            
+            // Add categories
+            let categories = [
+                Category(name: "Technology", categoryDescription: "Latest tech news and reviews"),
+                Category(name: "Programming", categoryDescription: "Coding tutorials and tips"),
+                Category(name: "Design", categoryDescription: "UI/UX design principles")
+            ]
+            
+            // Insert categories and set up relationships
+            for category in categories {
                 context.insert(category)
-                
-                // Set up bi-directional relationship
                 category.blog = blog
                 blog.categories.append(category)
-                
-                return category
             }
             
             // Add tags
-            let tagNames = ["swift", "ios", "swiftui"]
+            let tagNames = ["swift", "ios", "swiftui", "development", "mobile"]
             let tags = tagNames.map { name -> Tag in
                 let tag = Tag(name: name)
                 context.insert(tag)
-                
-                // Set up bi-directional relationship
                 tag.blog = blog
                 blog.tags.append(tag)
-                
                 return tag
             }
             
-            // Add a few posts with categories and tags
-            for i in 1...3 {
-                let post = Post(
-                    title: "Post \(i)", 
-                    content: "Content for post \(i)"
+            // Add posts
+            let postData = [
+                (
+                    "Getting Started with SwiftUI",
+                    "SwiftUI is Apple's modern UI framework that enables developers to design and develop user interfaces with a declarative Swift syntax. This post explores the basics of SwiftUI and how to get started with it.\n\nHere are some key concepts:\n\n- **Views**: The basic building blocks\n- **State and Binding**: For managing UI state\n- **Modifiers**: For customizing views\n\nStay tuned for more SwiftUI content!"
+                ),
+                (
+                    "Working with SwiftData",
+                    "SwiftData is Apple's powerful persistence framework introduced at WWDC 2023. It simplifies data persistence with a declarative API that works seamlessly with SwiftUI.\n\nIn this post, we'll explore:\n\n1. Setting up your data model\n2. Performing CRUD operations\n3. Integrating with SwiftUI"
+                ),
+                (
+                    nil as String?,
+                    "Quick thought: I'm really enjoying the simplicity of SwiftData for building database-backed Swift apps. It's dramatically simpler than Core Data while maintaining most of the power."
                 )
-                context.insert(post)
+            ]
+            
+            // Create and insert posts
+            var posts: [Post] = []
+            for (index, (title, content)) in postData.enumerated() {
+                let post = Post(
+                    title: title,
+                    content: content,
+                    isDraft: index == 2 // Mark the third post as a draft
+                )
                 
-                // Set blog relationship
+                context.insert(post)
                 post.blog = blog
                 blog.posts.append(post)
+                posts.append(post)
                 
-                // Set category (if available) with circular reference
-                if i <= categories.count {
-                    post.category = categories[i-1]
-                    categories[i-1].posts.append(post)
+                // Add category to post if available
+                if index < categories.count {
+                    post.category = categories[index]
+                    categories[index].posts.append(post)
                 }
                 
-                // Add some tags
-                for j in 0..<min(2, tags.count) {
-                    let tagIndex = (i + j) % tags.count
+                // Add tags to post
+                for i in 0..<min(3, tags.count) {
+                    let tagIndex = (index + i) % tags.count
                     post.tags.append(tags[tagIndex])
                     tags[tagIndex].posts.append(post)
                 }
             }
+            
+            // Create and add embeds
+            let youtubeEmbed = Embed(
+                url: "https://www.youtube.com/watch?v=RoSQqtgCZss",
+                type: .youtube,
+                position: .below
+            )
+            context.insert(youtubeEmbed)
+            youtubeEmbed.post = posts[0]
+            posts[0].embed = youtubeEmbed
+            
+            let linkEmbed = Embed(
+                url: "https://apple.com",
+                type: .link,
+                position: .above,
+                title: "Apple",
+                embedDescription: "Apple Inc. is an American multinational technology company that designs, develops, and sells consumer electronics, computer software, and online services."
+            )
+            context.insert(linkEmbed)
+            linkEmbed.post = posts[1]
+            posts[1].embed = linkEmbed
             
             return container
         } catch {
@@ -247,5 +295,78 @@ struct PreviewData {
         NavigationStack {
             content()
         }
+    }
+    
+    /// A wrapper view that provides a model container and entities for previews
+    struct ContainerPreview<Entity, Content: View>: View {
+        @ViewBuilder let content: (Entity) -> Content
+        let entityProvider: (ModelContainer) -> Entity
+        
+        var body: some View {
+            let container = previewContainer
+            content(entityProvider(container))
+                .modelContainer(container)
+        }
+    }
+    
+    /// Helper for creating container previews with navigation
+    static func navStackPreview<Entity, Content: View>(
+        entity: @escaping (ModelContainer) -> Entity,
+        @ViewBuilder content: @escaping (Entity) -> Content
+    ) -> some View {
+        ContainerPreview(content: { entity in
+            NavigationStack {
+                content(entity)
+            }
+        }, entityProvider: entity)
+    }
+    
+    /// Get the blog from the container for previews
+    @MainActor
+    static var previewBlog: Blog {
+        do {
+            return try previewContainer.mainContext.fetch(FetchDescriptor<Blog>()).first!
+        } catch {
+            fatalError("Failed to fetch preview blog: \(error)")
+        }
+    }
+    
+    /// Get a post from the container for previews
+    @MainActor
+    static func previewPost(at index: Int = 0) -> Post {
+        do {
+            let blog = try previewContainer.mainContext.fetch(FetchDescriptor<Blog>()).first!
+            return blog.posts[index]
+        } catch {
+            fatalError("Failed to fetch preview post: \(error)")
+        }
+    }
+    
+    /// Get an embed from a post
+    @MainActor
+    static func previewEmbed(at postIndex: Int = 0) -> Embed? {
+        previewPost(at: postIndex).embed
+    }
+}
+
+/// Builder for creating consistent previews
+struct PreviewBuilder {
+    /// Create a preview with a standalone entity
+    static func entityPreview<Entity, Content: View>(
+        entity: Entity,
+        @ViewBuilder content: @escaping (Entity) -> Content
+    ) -> some View {
+        content(entity)
+    }
+    
+    /// Create a preview with a container-based entity
+    static func containerPreview<Entity, Content: View>(
+        entity: @escaping () -> Entity,
+        @ViewBuilder content: @escaping (Entity) -> Content
+    ) -> some View {
+        NavigationStack {
+            content(entity())
+        }
+        .modelContainer(PreviewData.previewContainer)
     }
 }

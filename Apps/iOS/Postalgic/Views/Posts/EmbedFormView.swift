@@ -363,27 +363,26 @@ struct EmbedFormView: View {
             print("Update post title to: \(title)")
         }
     }
-    .modelContainer(PreviewData.previewContainer)
 }
 
 #Preview("Edit YouTube Embed") {
-    NavigationStack {
-        // Get a post with a YouTube embed from our preview data
-        let post = PreviewData.blogWithContent().posts.first!
-        return EmbedFormView(post: post) { title in
-            print("Update post title to: \(title)")
+    PreviewBuilder.containerPreview(
+        entity: { PreviewData.previewPost(at: 0) },
+        content: { post in
+            EmbedFormView(post: post) { title in
+                print("Update post title to: \(title)")
+            }
         }
-    }
-    .modelContainer(PreviewData.previewContainer)
+    )
 }
 
 #Preview("Edit Link Embed") {
-    NavigationStack {
-        // Get a post with a Link embed from our preview data
-        let post = PreviewData.blogWithContent().posts[1]
-        return EmbedFormView(post: post) { title in
-            print("Update post title to: \(title)")
+    PreviewBuilder.containerPreview(
+        entity: { PreviewData.previewPost(at: 1) },
+        content: { post in
+            EmbedFormView(post: post) { title in
+                print("Update post title to: \(title)")
+            }
         }
-    }
-    .modelContainer(PreviewData.previewContainer)
+    )
 }

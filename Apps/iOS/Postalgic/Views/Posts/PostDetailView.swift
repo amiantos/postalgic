@@ -103,16 +103,19 @@ struct PostDetailView: View {
 }
 
 #Preview("Regular Post") {
-    PreviewData.withNavigationStack {
-        PostDetailView(post: PreviewData.blogWithContent().posts.first!)
-    }
-    .modelContainer(PreviewData.previewContainer)
+    PreviewBuilder.navStackContainerPreview(
+        entity: { container in container.post(at: 0) },
+        content: { post in
+            PostDetailView(post: post)
+        }
+    )
 }
 
 #Preview("Post with Embed") {
-    PreviewData.withNavigationStack {
-        let post = PreviewData.blogWithContent().posts[1]
-        return PostDetailView(post: post)
-    }
-    .modelContainer(PreviewData.previewContainer)
+    PreviewBuilder.navStackContainerPreview(
+        entity: { container in container.post(at: 1) },
+        content: { post in
+            PostDetailView(post: post)
+        }
+    )
 }
