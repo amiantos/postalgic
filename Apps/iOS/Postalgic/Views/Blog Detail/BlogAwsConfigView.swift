@@ -176,7 +176,7 @@ struct BlogAwsConfigView: View {
 
 #Preview {
     NavigationStack {
-        BlogAwsConfigView(blog: try! PreviewData.previewBlog)
+        BlogAwsConfigView(blog: PreviewData.blogWithContent())
     }
     .modelContainer(PreviewData.previewContainer)
 }

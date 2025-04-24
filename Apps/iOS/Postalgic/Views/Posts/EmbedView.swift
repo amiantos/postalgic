@@ -191,36 +191,13 @@ struct WebViewContainer: UIViewRepresentable {
     }
 }
 
-#Preview("Standalone Embeds") {
-    NavigationStack {
-        VStack(spacing: 20) {
-            // YouTube Embed using standalone entity
-            EmbedView(embed: PreviewData.youtubeEmbed)
-            
-            // Link Embed using standalone entity
-            EmbedView(embed: PreviewData.linkEmbed)
-        }
-        .padding()
+#Preview {
+    VStack(spacing: 20) {
+        // YouTube Embed
+        EmbedView(embed: PreviewData.youtubeEmbed)
+        
+        // Link Embed
+        EmbedView(embed: PreviewData.linkEmbed)
     }
-}
-
-#Preview("Container-Based Embeds") {
-    PreviewBuilder.containerPreview(
-        entity: { 
-            // Create a VStack containing both embeds
-            VStack(spacing: 20) {
-                if let youtubeEmbed = PreviewData.previewEmbed(at: 0) {
-                    EmbedView(embed: youtubeEmbed)
-                }
-                
-                if let linkEmbed = PreviewData.previewEmbed(at: 1) {
-                    EmbedView(embed: linkEmbed)
-                }
-            }
-            .padding()
-        },
-        content: { content in
-            content
-        }
-    )
+    .padding()
 }

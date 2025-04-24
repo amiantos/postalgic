@@ -117,6 +117,6 @@ struct BlogFormView: View {
 }
 
 #Preview("Edit Blog") {
-    BlogFormView(blog: try! PreviewData.previewBlog)
+    BlogFormView(blog: PreviewData.blogWithContent())
         .modelContainer(PreviewData.previewContainer)
 }

@@ -190,10 +190,11 @@ struct BlogDetailView: View {
 }
 
 #Preview {
-    PreviewBuilder.containerPreview(
-        entity: { PreviewData.previewBlog },
-        content: { blog in
-            BlogDetailView(blog: blog)
-        }
-    )
+    let modelContainer = PreviewData.previewContainer
+    
+    return NavigationStack {
+        // Fetch the first blog from the container to ensure it's properly in the context
+        BlogDetailView(blog: try! modelContainer.mainContext.fetch(FetchDescriptor<Blog>()).first!)
+    }
+    .modelContainer(modelContainer)
 }

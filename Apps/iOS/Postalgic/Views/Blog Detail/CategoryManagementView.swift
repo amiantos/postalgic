@@ -202,9 +202,12 @@ struct CategoryFormView: View {
 }
 
 #Preview {
-    NavigationStack {
-        CategoryManagementView(blog: try! PreviewData.previewBlog)
+    let modelContainer = PreviewData.previewContainer
+    
+    return NavigationStack {
+        // Fetch the first blog from the container to ensure it's properly in the context
+        CategoryManagementView(blog: try! modelContainer.mainContext.fetch(FetchDescriptor<Blog>()).first!)
     }
-    .modelContainer(PreviewData.previewContainer)
+    .modelContainer(modelContainer)
 }
 
