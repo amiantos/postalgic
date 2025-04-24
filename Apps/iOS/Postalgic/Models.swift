@@ -20,6 +20,13 @@ final class Blog {
     var awsCloudFrontDistId: String?
     var awsAccessKeyId: String?
     var awsSecretAccessKey: String?
+    
+    // SEO Configuration
+    var generateRobotsTxt: Bool = true
+    var robotsTxtContent: String? // Optional custom content
+    var generateSitemap: Bool = true
+    var sitemapChangeFreq: String = "weekly" // Default change frequency
+    var sitemapPriority: String = "0.5" // Default priority
 
     @Relationship(deleteRule: .cascade, inverse: \Post.blog)
     var posts: [Post] = []

@@ -404,7 +404,9 @@ class StaticSiteGenerator {
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
                 <title>\(pageTitle)</title>
+                <meta name="description" content="Posts from \(blog.name)">
                 <link rel="stylesheet" href="/css/style.css">
+                <link rel="alternate" type="application/rss+xml" title="\(blog.name) RSS Feed" href="/rss.xml">
                 \(customHead)
             </head>
             <body>
@@ -681,6 +683,15 @@ class StaticSiteGenerator {
         try generateTagPages()
         try generateCategoryPages()
         try generateRSSFeed()
+        
+        // Generate robots.txt and sitemap.xml if enabled
+        if blog.generateRobotsTxt {
+            try generateRobotsTxt()
+        }
+        
+        if blog.generateSitemap {
+            try generateSitemap()
+        }
 
         // If AWS is configured, publish to AWS
         if blog.hasAwsConfigured {
@@ -816,11 +827,13 @@ class StaticSiteGenerator {
             </div>
             """
 
+        let customHead = blog.generateSitemap ? 
+            "<link rel=\"sitemap\" type=\"application/xml\" title=\"Sitemap\" href=\"/sitemap.xml\" />" : ""
+
         let pageContent = completePage(
             title: blog.name,
             content: content,
-            customHead:
-                "<link rel=\"alternate\" type=\"application/rss+xml\" title=\"\(blog.name) RSS Feed\" href=\"/rss.xml\" />"
+            customHead: customHead
         )
 
         try pageContent.write(to: indexPath, atomically: true, encoding: .utf8)
@@ -1154,5 +1167,138 @@ class StaticSiteGenerator {
                 encoding: .utf8
             )
         }
+    }
+    
+    /// Generates a robots.txt file for the site
+    private func generateRobotsTxt() throws {
+        guard let siteDirectory = siteDirectory else {
+            throw SiteGeneratorError.noSiteDirectory
+        }
+        
+        let robotsPath = siteDirectory.appendingPathComponent("robots.txt")
+        
+        // Use custom content if provided, otherwise use default
+        let content: String
+        if let customContent = blog.robotsTxtContent, !customContent.isEmpty {
+            content = customContent
+        } else {
+            content = """
+            User-agent: *
+            Allow: /
+            
+            Sitemap: \(blog.url)/sitemap.xml
+            """
+        }
+        
+        try content.write(to: robotsPath, atomically: true, encoding: .utf8)
+    }
+    
+    /// Generates a sitemap.xml file for the site
+    private func generateSitemap() throws {
+        guard let siteDirectory = siteDirectory else {
+            throw SiteGeneratorError.noSiteDirectory
+        }
+        
+        let sitemapPath = siteDirectory.appendingPathComponent("sitemap.xml")
+        let sortedPosts = publishedPostsSorted()
+        
+        let dateFormatter = ISO8601DateFormatter()
+        dateFormatter.formatOptions = [.withFullDate]
+        
+        var sitemapContent = """
+        <?xml version="1.0" encoding="UTF-8"?>
+        <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+        """
+        
+        // Add home page
+        sitemapContent += """
+            <url>
+                <loc>\(blog.url)/</loc>
+                <lastmod>\(dateFormatter.string(from: Date()))</lastmod>
+                <changefreq>\(blog.sitemapChangeFreq)</changefreq>
+                <priority>\(blog.sitemapPriority)</priority>
+            </url>
+        """
+        
+        // Add archive page
+        sitemapContent += """
+            <url>
+                <loc>\(blog.url)/archives/</loc>
+                <lastmod>\(dateFormatter.string(from: Date()))</lastmod>
+                <changefreq>\(blog.sitemapChangeFreq)</changefreq>
+                <priority>0.8</priority>
+            </url>
+        """
+        
+        // Add tags page
+        sitemapContent += """
+            <url>
+                <loc>\(blog.url)/tags/</loc>
+                <lastmod>\(dateFormatter.string(from: Date()))</lastmod>
+                <changefreq>\(blog.sitemapChangeFreq)</changefreq>
+                <priority>0.7</priority>
+            </url>
+        """
+        
+        // Add categories page
+        sitemapContent += """
+            <url>
+                <loc>\(blog.url)/categories/</loc>
+                <lastmod>\(dateFormatter.string(from: Date()))</lastmod>
+                <changefreq>\(blog.sitemapChangeFreq)</changefreq>
+                <priority>0.7</priority>
+            </url>
+        """
+        
+        // Add individual posts
+        for post in sortedPosts {
+            let postLink = "\(blog.url)/\(post.urlPath)/"
+            let lastmod = dateFormatter.string(from: post.createdAt)
+            
+            sitemapContent += """
+            <url>
+                <loc>\(postLink)</loc>
+                <lastmod>\(lastmod)</lastmod>
+                <changefreq>\(blog.sitemapChangeFreq)</changefreq>
+                <priority>0.6</priority>
+            </url>
+            """
+        }
+        
+        // Add individual tag pages
+        for tag in blog.tags {
+            let tagLink = "\(blog.url)/tags/\(tag.name.urlPathFormatted())/"
+            let lastmod = dateFormatter.string(from: Date())
+            
+            sitemapContent += """
+            <url>
+                <loc>\(tagLink)</loc>
+                <lastmod>\(lastmod)</lastmod>
+                <changefreq>\(blog.sitemapChangeFreq)</changefreq>
+                <priority>0.5</priority>
+            </url>
+            """
+        }
+        
+        // Add individual category pages
+        for category in blog.categories {
+            let categoryLink = "\(blog.url)/categories/\(category.name.urlPathFormatted())/"
+            let lastmod = dateFormatter.string(from: Date())
+            
+            sitemapContent += """
+            <url>
+                <loc>\(categoryLink)</loc>
+                <lastmod>\(lastmod)</lastmod>
+                <changefreq>\(blog.sitemapChangeFreq)</changefreq>
+                <priority>0.5</priority>
+            </url>
+            """
+        }
+        
+        sitemapContent += """
+        </urlset>
+        """
+        
+        try sitemapContent.write(to: sitemapPath, atomically: true, encoding: .utf8)
     }
 }

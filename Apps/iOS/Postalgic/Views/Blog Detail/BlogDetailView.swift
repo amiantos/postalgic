@@ -130,10 +130,10 @@ struct BlogDetailView: View {
         }
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
-                EditButton()
-            }
-            ToolbarItem(placement: .navigationBarTrailing) {
                 Menu {
+                    Button(action: { showingPostForm = true }) {
+                        Label("Add Post", systemImage: "plus")
+                    }
                     Button(action: { showingEditBlogView = true }) {
                         Label("Edit Blog", systemImage: "pencil")
                     }
@@ -146,13 +146,28 @@ struct BlogDetailView: View {
                     }) {
                         Label("Manage Categories", systemImage: "folder")
                     }
+                    Divider()
+                    Menu {
+                        if blog.generateRobotsTxt {
+                            Label("robots.txt: Enabled", systemImage: "checkmark.circle")
+                        } else {
+                            Label("robots.txt: Disabled", systemImage: "xmark.circle")
+                        }
+                        
+                        if blog.generateSitemap {
+                            Label("sitemap.xml: Enabled", systemImage: "checkmark.circle")
+                        } else {
+                            Label("sitemap.xml: Disabled", systemImage: "xmark.circle")
+                        }
+                        
+                        Button(action: { showingEditBlogView = true }) {
+                            Label("Edit SEO Settings", systemImage: "pencil")
+                        }
+                    } label: {
+                        Label("SEO Settings", systemImage: "magnifyingglass")
+                    }
                 } label: {
                     Image(systemName: "ellipsis.circle")
-                }
-            }
-            ToolbarItem {
-                Button(action: { showingPostForm = true }) {
-                    Label("Add Post", systemImage: "plus")
                 }
             }
         }
