@@ -13,6 +13,11 @@ final class Blog {
     var name: String
     var url: String
     var createdAt: Date
+    
+    // Blog metadata
+    var authorName: String?
+    var authorUrl: String?
+    var tagline: String?
 
     // AWS Configuration
     var awsRegion: String?
@@ -30,10 +35,13 @@ final class Blog {
     @Relationship(deleteRule: .cascade, inverse: \Tag.blog)
     var tags: [Tag] = []
 
-    init(name: String, url: String, createdAt: Date = Date()) {
+    init(name: String, url: String, createdAt: Date = Date(), authorName: String? = nil, authorUrl: String? = nil, tagline: String? = nil) {
         self.name = name
         self.url = url
         self.createdAt = createdAt
+        self.authorName = authorName
+        self.authorUrl = authorUrl
+        self.tagline = tagline
     }
 
     var hasAwsConfigured: Bool {

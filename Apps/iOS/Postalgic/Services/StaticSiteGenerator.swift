@@ -28,6 +28,21 @@ class StaticSiteGenerator {
 
     private var cssFile: String = """
         /* Base styles */
+        
+        /* Add styles for tagline and author info */
+        header .tagline {
+            color: var(--medium-gray);
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            font-style: italic;
+        }
+        
+        .post-author {
+            color: var(--medium-gray);
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+        
         :root {
             --primary-color: #4a5568;
             --accent-color: #3182ce;
@@ -413,6 +428,7 @@ class StaticSiteGenerator {
                 <div class="container">
                     <header>
                         <h1><a href="/">\(blog.name)</a></h1>
+                        \(blog.tagline != nil ? "<p class=\"tagline\">\(blog.tagline!)</p>" : "")
                         <nav>
                             <ul>
                                 <li><a href="/">Home</a></li>
@@ -429,11 +445,20 @@ class StaticSiteGenerator {
 
     /// Returns the HTML footer for a page
     private func htmlFooter() -> String {
+        var authorText = ""
+        if let authorName = blog.authorName {
+            if let authorUrl = blog.authorUrl, !authorUrl.isEmpty {
+                authorText = " by <a href=\"\(authorUrl)\">\(authorName)</a>"
+            } else {
+                authorText = " by \(authorName)"
+            }
+        }
+        
         return """
                     </main>
                     
                     <footer>
-                        <p>&copy; \(Calendar.current.component(.year, from: Date())) \(blog.name). Generated with <a href="https://postalgic.app">Postalgic</a>.</p>
+                        <p>&copy; \(Calendar.current.component(.year, from: Date())) \(blog.name)\(authorText). Generated with <a href="https://postalgic.app">Postalgic</a>.</p>
                     </footer>
                 </div>
             </body>
@@ -497,9 +522,22 @@ class StaticSiteGenerator {
             """ : ""
 
         // Date now links to the post
-        let dateHTML = """
+        var dateHTML = """
             <div class="post-date"><a href="/\(post.urlPath)/index.html">\(post.formattedDate)</a></div>
             """
+            
+        // Add author if available
+        if let authorName = blog.authorName {
+            if let authorUrl = blog.authorUrl, !authorUrl.isEmpty {
+                dateHTML += """
+                <div class="post-author">by <a href="\(authorUrl)">\(authorName)</a></div>
+                """
+            } else {
+                dateHTML += """
+                <div class="post-author">by \(authorName)</div>
+                """
+            }
+        }
         
         // Generate post content with embeds
         let postContent = MarkdownParser().html(from: post.content)
@@ -541,9 +579,22 @@ class StaticSiteGenerator {
             """ : ""
 
         // Date now links to the post
-        let dateHTML = """
+        var dateHTML = """
             <div class="post-date"><a href="/\(post.urlPath)/index.html">\(post.formattedDate)</a></div>
             """
+            
+        // Add author if available
+        if let authorName = blog.authorName {
+            if let authorUrl = blog.authorUrl, !authorUrl.isEmpty {
+                dateHTML += """
+                <div class="post-author">by <a href="\(authorUrl)">\(authorName)</a></div>
+                """
+            } else {
+                dateHTML += """
+                <div class="post-author">by \(authorName)</div>
+                """
+            }
+        }
         
         // Generate post content with embeds
         let postContent = MarkdownParser().html(from: post.content)
@@ -755,10 +806,28 @@ class StaticSiteGenerator {
             <channel>
                 <title>\(blog.name)</title>
                 <link>\(blog.url)</link>
-                <description>Recent posts from \(blog.name)</description>
+                <description>\(blog.tagline ?? "Recent posts from \(blog.name)")</description>
                 <language>en-us</language>
                 <lastBuildDate>\(dateFormatter.string(from: Date()))</lastBuildDate>
                 <atom:link href="\(blog.url)/rss.xml" rel="self" type="application/rss+xml" />
+        """
+        
+        // Add author element if author name is available
+        if let authorName = blog.authorName {
+            if let authorUrl = blog.authorUrl, !authorUrl.isEmpty {
+                rssContent += """
+                <managingEditor>\(authorName) (\(authorUrl))</managingEditor>
+                <webMaster>\(authorName) (\(authorUrl))</webMaster>
+                """
+            } else {
+                rssContent += """
+                <managingEditor>\(authorName)</managingEditor>
+                <webMaster>\(authorName)</webMaster>
+                """
+            }
+        }
+        
+        rssContent += "
             """
 
         for post in limitedPosts {
@@ -788,6 +857,18 @@ class StaticSiteGenerator {
                     <link>\(postLink)</link>
                     <guid>\(postLink)</guid>
                     <pubDate>\(postDate)</pubDate>
+        """
+            
+            // Add author to individual posts if available
+            if let authorName = blog.authorName {
+                if let authorUrl = blog.authorUrl, !authorUrl.isEmpty {
+                    rssContent += "<author>\(authorName) (\(authorUrl))</author>\n                "
+                } else {
+                    rssContent += "<author>\(authorName)</author>\n                "
+                }
+            }
+            
+            rssContent += """
                     <description><![CDATA[\(finalContent)]]></description>
                 </item>
                 """
