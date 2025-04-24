@@ -7,7 +7,6 @@
 
 import SwiftData
 import SwiftUI
-
 struct BlogDetailView: View {
     @Environment(\.modelContext) private var modelContext
     var blog: Blog
@@ -191,9 +190,11 @@ struct BlogDetailView: View {
 }
 
 #Preview {
-    BlogDetailView(blog: Blog(name: "Test Blog", url: "https://example.com"))
-        .modelContainer(
-            for: [Blog.self, Post.self, Tag.self, Category.self],
-            inMemory: true
-        )
+    let modelContainer = PreviewData.previewContainer
+    
+    return NavigationStack {
+        // Fetch the first blog from the container to ensure it's properly in the context
+        BlogDetailView(blog: try! modelContainer.mainContext.fetch(FetchDescriptor<Blog>()).first!)
+    }
+    .modelContainer(modelContainer)
 }

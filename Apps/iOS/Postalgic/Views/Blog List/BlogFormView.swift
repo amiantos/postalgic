@@ -7,7 +7,6 @@
 
 import SwiftData
 import SwiftUI
-
 struct BlogFormView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
@@ -112,12 +111,12 @@ struct BlogFormView: View {
     }
 }
 
-#Preview {
+#Preview("New Blog") {
     BlogFormView()
-        .modelContainer(for: [Blog.self], inMemory: true)
+        .modelContainer(PreviewData.previewContainer)
 }
 
-#Preview {
-    BlogFormView(blog: Blog(name: "Test Blog", url: "https://example.com"))
-        .modelContainer(for: [Blog.self], inMemory: true)
+#Preview("Edit Blog") {
+    BlogFormView(blog: PreviewData.blogWithContent())
+        .modelContainer(PreviewData.previewContainer)
 }

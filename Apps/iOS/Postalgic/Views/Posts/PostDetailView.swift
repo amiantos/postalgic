@@ -7,7 +7,6 @@
 
 import SwiftData
 import SwiftUI
-
 struct PostDetailView: View {
     @Environment(\.modelContext) private var modelContext
     var post: Post
@@ -103,12 +102,17 @@ struct PostDetailView: View {
     }
 }
 
-#Preview {
-    PostDetailView(
-        post: Post(
-            title: "Test Post",
-            content: "This is a test post with **bold** and *italic* text."
-        )
-    )
-    .modelContainer(for: [Post.self, Tag.self, Category.self], inMemory: true)
+#Preview("Regular Post") {
+    PreviewData.withNavigationStack {
+        PostDetailView(post: PreviewData.blogWithContent().posts.first!)
+    }
+    .modelContainer(PreviewData.previewContainer)
+}
+
+#Preview("Post with Embed") {
+    PreviewData.withNavigationStack {
+        let post = PreviewData.blogWithContent().posts[1]
+        return PostDetailView(post: post)
+    }
+    .modelContainer(PreviewData.previewContainer)
 }

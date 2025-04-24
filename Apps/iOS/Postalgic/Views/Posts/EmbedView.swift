@@ -7,7 +7,6 @@
 
 import SwiftUI
 import WebKit
-
 struct EmbedView: View {
     var embed: Embed
     
@@ -195,21 +194,10 @@ struct WebViewContainer: UIViewRepresentable {
 #Preview {
     VStack(spacing: 20) {
         // YouTube Embed
-        EmbedView(embed: Embed(
-            url: "https://www.youtube.com/watch?v=RoSQqtgCZss",
-            type: .youtube,
-            position: .above
-        ))
+        EmbedView(embed: PreviewData.youtubeEmbed)
         
         // Link Embed
-        EmbedView(embed: Embed(
-            url: "https://apple.com",
-            type: .link,
-            position: .below,
-            title: "Apple",
-            embedDescription: "Apple Inc. is an American multinational technology company that designs, develops, and sells consumer electronics, computer software, and online services.",
-            imageUrl: "https://www.apple.com/ac/structured-data/images/open_graph_logo.png"
-        ))
+        EmbedView(embed: PreviewData.linkEmbed)
     }
     .padding()
 }

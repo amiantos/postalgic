@@ -7,7 +7,6 @@
 
 import SwiftData
 import SwiftUI
-
 struct BlogsView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var blogs: [Blog]
@@ -71,8 +70,5 @@ struct BlogsView: View {
 
 #Preview {
     BlogsView()
-        .modelContainer(
-            for: [Blog.self, Post.self, Tag.self, Category.self],
-            inMemory: true
-        )
+        .modelContainer(PreviewData.previewContainer)
 }

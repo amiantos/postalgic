@@ -8,7 +8,6 @@
 import SwiftData
 import SwiftUI
 import UniformTypeIdentifiers
-
 struct PublishBlogView: View {
     @Bindable var blog: Blog
 
@@ -248,7 +247,16 @@ struct ShareSheet: UIViewControllerRepresentable {
     ) {}
 }
 
-#Preview {
-    PublishBlogView(blog: Blog(name: "Test Blog", url: "https://example.com"))
-        .modelContainer(for: [Blog.self, Post.self], inMemory: true)
+#Preview("Regular Blog") {
+    NavigationStack {
+        PublishBlogView(blog: PreviewData.blog)
+    }
+    .modelContainer(PreviewData.previewContainer)
+}
+
+#Preview("AWS Configured") {
+    NavigationStack {
+        PublishBlogView(blog: PreviewData.blogWithContent())
+    }
+    .modelContainer(PreviewData.previewContainer)
 }
