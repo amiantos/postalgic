@@ -41,7 +41,7 @@ struct PublishBlogView: View {
                 .padding(.horizontal)
             } else if blog.hasFtpConfigured && blog.currentPublisherType == .ftp {
                 Text(
-                    "Publishing will generate a static website from all your blog posts and securely upload it to your web host using FTP\(blog.ftpUseSFTP == true ? "/SFTP" : "")."
+                    "Publishing will generate a static website from all your blog posts and securely upload it to your web host using SFTP."
                 )
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)
@@ -138,7 +138,7 @@ struct PublishBlogView: View {
                             HStack {
                                 Image(systemName: "arrow.up.to.line")
                                     .font(.system(size: 16, weight: .bold))
-                                Text("Publish via FTP\(blog.ftpUseSFTP == true ? "/SFTP" : "")")
+                                Text("Publish via SFTP")
                                     .fontWeight(.semibold)
                             }
                             .padding()
@@ -237,7 +237,7 @@ struct PublishBlogView: View {
                 )
             } else if blog.hasFtpConfigured && blog.currentPublisherType == .ftp {
                 Text(
-                    "Your site has been successfully published to your web host using FTP\(blog.ftpUseSFTP == true ? "/SFTP" : "")."
+                    "Your site has been successfully published to your web host using SFTP."
                 )
             } else {
                 Text(
@@ -270,7 +270,7 @@ struct PublishBlogView: View {
                     } else if blog.currentPublisherType == .ftp && blog.hasFtpConfigured {
                         // FTP publishing was used
                         self.publishSuccessMessage =
-                            "Site successfully published via FTP\(blog.ftpUseSFTP == true ? "/SFTP" : "")!"
+                            "Site successfully published via SFTP!"
                     } else if blog.currentPublisherType == .none {
                         // ZIP file was generated
                         self.generatedZipURL = result

@@ -172,7 +172,7 @@ struct PublishSettingsView: View {
     // FTP Settings View
     private var ftpSettingsView: some View {
         VStack(alignment: .leading, spacing: 20) {
-            Text("FTP/SFTP Configuration")
+            Text("SFTP Configuration")
                 .font(.headline)
                 .padding(.horizontal)
             
@@ -182,7 +182,7 @@ struct PublishSettingsView: View {
                     HStack {
                         Image(systemName: "checkmark.circle.fill")
                             .foregroundColor(Color("PGreen"))
-                        Text("FTP/SFTP is properly configured")
+                        Text("SFTP is properly configured")
                             .font(.subheadline)
                             .bold()
                     }
@@ -192,7 +192,7 @@ struct PublishSettingsView: View {
                             .font(.caption)
                         Text("Port: \(blog.ftpPort != nil ? String(blog.ftpPort!) : "Not set")")
                             .font(.caption)
-                        Text("Protocol: \(blog.ftpUseSFTP == true ? "SFTP (Secure)" : "FTP (Standard)")")
+                        Text("Protocol: SFTP (Secure)")
                             .font(.caption)
                         Text("Username: \(blog.ftpUsername ?? "Not set")")
                             .font(.caption)
@@ -210,7 +210,7 @@ struct PublishSettingsView: View {
                 Button(action: {
                     showingFtpConfigView = true
                 }) {
-                    Text("Edit FTP/SFTP Configuration")
+                    Text("Edit SFTP Configuration")
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.bordered)
@@ -221,12 +221,12 @@ struct PublishSettingsView: View {
                     HStack {
                         Image(systemName: "exclamationmark.circle.fill")
                             .foregroundColor(.orange)
-                        Text("FTP/SFTP is not fully configured")
+                        Text("SFTP is not fully configured")
                             .font(.subheadline)
                             .bold()
                     }
                     
-                    Text("You need to configure your FTP/SFTP credentials to publish directly to your web server.")
+                    Text("You need to configure your SFTP credentials to publish directly to your web server.")
                         .font(.caption)
                         .foregroundColor(.secondary)
                         .padding(.leading, 25)
@@ -239,14 +239,14 @@ struct PublishSettingsView: View {
                 Button(action: {
                     showingFtpConfigView = true
                 }) {
-                    Text("Configure FTP/SFTP")
+                    Text("Configure SFTP")
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.borderedProminent)
                 .padding(.horizontal)
             }
             
-            Text("FTP/SFTP publishing lets you directly upload your static site to any web hosting service that supports standard file transfer protocols.")
+            Text("SFTP publishing lets you directly upload your static site to any web hosting service that supports secure file transfer protocol.")
                 .font(.caption)
                 .foregroundColor(.secondary)
                 .padding(.horizontal)
