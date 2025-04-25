@@ -98,7 +98,7 @@ struct PublishSettingsView: View {
                 Label {
                     Text("AWS is not fully configured")
                 } icon: {
-                    Image(systemName: "checkmark.circle.fill").foregroundStyle(
+                    Image(systemName: "x.circle.fill").foregroundStyle(
                         .pYellow
                     )
                 }
@@ -130,7 +130,7 @@ struct PublishSettingsView: View {
                 Label {
                     Text("SFTP is not fully configured")
                 } icon: {
-                    Image(systemName: "checkmark.circle.fill").foregroundStyle(
+                    Image(systemName: "x.circle.fill").foregroundStyle(
                         .pYellow
                     )
                 }

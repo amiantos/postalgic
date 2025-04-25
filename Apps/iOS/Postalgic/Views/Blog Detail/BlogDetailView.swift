@@ -15,6 +15,7 @@ struct BlogDetailView: View {
     @State private var showingEditBlogView = false
     @State private var showingCategoryManagement = false
     @State private var showingTagManagement = false
+    @State private var showingPublishSettingsView = false
 
     enum PostFilter: String, CaseIterable, Identifiable {
         case all = "All"
@@ -129,7 +130,10 @@ struct BlogDetailView: View {
 
             ToolbarItemGroup(placement: .secondaryAction) {
                 Button(action: { showingEditBlogView = true }) {
-                    Label("Edit Blog Details", systemImage: "pencil")
+                    Label("Blog Details", systemImage: "person")
+                }
+                Button(action: { showingPublishSettingsView = true }) {
+                    Label("Publishing Settings", systemImage: "globe")
                 }
                 Button(action: {
                     showingCategoryManagement = true
@@ -157,6 +161,9 @@ struct BlogDetailView: View {
         }
         .sheet(isPresented: $showingTagManagement) {
             TagManagementView(blog: blog)
+        }
+        .sheet(isPresented: $showingPublishSettingsView) {
+            PublishSettingsView(blog: blog)
         }
     }
 }

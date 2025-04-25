@@ -8,10 +8,11 @@
 import SwiftData
 import SwiftUI
 import UniformTypeIdentifiers
+
 struct PublishBlogView: View {
     @Bindable var blog: Blog
     var autoPublish: Bool
-    
+
     init(blog: Blog, autoPublish: Bool = false) {
         self.blog = blog
         self.autoPublish = autoPublish
@@ -26,7 +27,7 @@ struct PublishBlogView: View {
     @State private var showingSuccessAlert = false
     @State private var showingPublishSettingsView = false
     @Environment(\.dismiss) private var dismiss
-    
+
     var body: some View {
         VStack(spacing: 20) {
             Text("Publish \(blog.name)")
@@ -39,7 +40,8 @@ struct PublishBlogView: View {
                 )
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)
-            } else if blog.hasFtpConfigured && blog.currentPublisherType == .ftp {
+            } else if blog.hasFtpConfigured && blog.currentPublisherType == .ftp
+            {
                 Text(
                     "Publishing will generate a static website from all your blog posts and securely upload it to your web host using SFTP."
                 )
@@ -52,7 +54,7 @@ struct PublishBlogView: View {
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)
             }
-            
+
             // Publish Settings Button
             Button(action: {
                 showingPublishSettingsView = true
@@ -91,7 +93,9 @@ struct PublishBlogView: View {
                 // Main publishing controls
                 VStack(spacing: 12) {
                     // AWS Publishing Button
-                    if blog.hasAwsConfigured && blog.currentPublisherType == .aws {
+                    if blog.hasAwsConfigured
+                        && blog.currentPublisherType == .aws
+                    {
                         Button(action: {
                             generateSite()
                         }) {
@@ -129,9 +133,11 @@ struct PublishBlogView: View {
                             .padding(.horizontal)
                             .disabled(blog.url.isEmpty)
                         }
-                    } 
+                    }
                     // FTP Publishing Button
-                    else if blog.hasFtpConfigured && blog.currentPublisherType == .ftp {
+                    else if blog.hasFtpConfigured
+                        && blog.currentPublisherType == .ftp
+                    {
                         Button(action: {
                             generateSite()
                         }) {
@@ -171,7 +177,9 @@ struct PublishBlogView: View {
                         }
                     }
                     // Local ZIP Generation Option
-                    else if generatedZipURL != nil, blog.currentPublisherType == .none {
+                    else if generatedZipURL != nil,
+                        blog.currentPublisherType == .none
+                    {
                         Button(action: {
                             showingShareSheet = true
                         }) {
@@ -199,18 +207,16 @@ struct PublishBlogView: View {
                         }
                         .padding(.horizontal)
                     } else {
-                        // Generic publish button for other publisher types or misconfigured publishers
-                        Button(action: {
-                            generateSite()
-                        }) {
-                            Label("Generate & Publish Site", systemImage: "arrow.up.doc")
-                                .padding()
-                                .frame(maxWidth: .infinity)
-                                .background(Color("PBlue"))
-                                .foregroundColor(.primary)
-                                .cornerRadius(10)
-                        }
-                        .padding(.horizontal)
+                        Label {
+                            Text(
+                                "\(blog.currentPublisherType.rawValue) support is coming soon, please pick a different publishing method in Publishing Settings in the meantime."
+                            ).font(.callout)
+                        } icon: {
+                            Image(systemName: "x.circle.fill").foregroundStyle(
+                                .pYellow
+                            )
+                        }.foregroundStyle(.secondary)
+                            .padding(.horizontal)
                     }
                 }
             }
@@ -235,7 +241,8 @@ struct PublishBlogView: View {
                 Text(
                     "Your site has been successfully published to AWS using your access keys. The CloudFront invalidation has been created."
                 )
-            } else if blog.hasFtpConfigured && blog.currentPublisherType == .ftp {
+            } else if blog.hasFtpConfigured && blog.currentPublisherType == .ftp
+            {
                 Text(
                     "Your site has been successfully published to your web host using SFTP."
                 )
@@ -263,11 +270,15 @@ struct PublishBlogView: View {
                 let result = try await generator.generateSite()
 
                 DispatchQueue.main.async {
-                    if blog.currentPublisherType == .aws && blog.hasAwsConfigured {
+                    if blog.currentPublisherType == .aws
+                        && blog.hasAwsConfigured
+                    {
                         // AWS publishing was used
                         self.publishSuccessMessage =
                             "Site successfully published to AWS!"
-                    } else if blog.currentPublisherType == .ftp && blog.hasFtpConfigured {
+                    } else if blog.currentPublisherType == .ftp
+                        && blog.hasFtpConfigured
+                    {
                         // FTP publishing was used
                         self.publishSuccessMessage =
                             "Site successfully published via SFTP!"

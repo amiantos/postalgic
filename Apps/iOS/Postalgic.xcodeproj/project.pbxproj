@@ -138,6 +138,17 @@
 			path = Publishers;
 			sourceTree = "<group>";
 		};
+		44362E802DBC2A7600EA704F /* Publishing */ = {
+			isa = PBXGroup;
+			children = (
+				44C364112DB768DB0057567C /* BlogAwsConfigView.swift */,
+				44C3641A2DB768DB0057567C /* PublishBlogView.swift */,
+				443F0B642DBB779200034EF1 /* PublishSettingsView.swift */,
+				443F0B662DBB7A7000034EF1 /* BlogFtpConfigView.swift */,
+			);
+			path = Publishing;
+			sourceTree = "<group>";
+		};
 		4436746D2DB3898500F67B00 = {
 			isa = PBXGroup;
 			children = (
@@ -185,6 +196,7 @@
 			children = (
 				44C3642F2DB768F90057567C /* Blog List */,
 				44C364302DB769260057567C /* Blog Detail */,
+				44362E802DBC2A7600EA704F /* Publishing */,
 				443F0B312DB8DFDB00034EF1 /* Posts */,
 			);
 			path = Views;
@@ -217,12 +229,8 @@
 			isa = PBXGroup;
 			children = (
 				44C364122DB768DB0057567C /* BlogDetailView.swift */,
-				44C364112DB768DB0057567C /* BlogAwsConfigView.swift */,
-				44C3641A2DB768DB0057567C /* PublishBlogView.swift */,
 				44C364152DB768DB0057567C /* CategoryManagementView.swift */,
 				443F0B622DBB6B9600034EF1 /* TagManagementView.swift */,
-				443F0B642DBB779200034EF1 /* PublishSettingsView.swift */,
-				443F0B662DBB7A7000034EF1 /* BlogFtpConfigView.swift */,
 			);
 			path = "Blog Detail";
 			sourceTree = "<group>";
