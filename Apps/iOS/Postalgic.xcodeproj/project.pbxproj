@@ -198,8 +198,8 @@
 			children = (
 				44C364122DB768DB0057567C /* BlogDetailView.swift */,
 				44C364112DB768DB0057567C /* BlogAwsConfigView.swift */,
-				44C364152DB768DB0057567C /* CategoryManagementView.swift */,
 				44C3641A2DB768DB0057567C /* PublishBlogView.swift */,
+				44C364152DB768DB0057567C /* CategoryManagementView.swift */,
 				443F0B622DBB6B9600034EF1 /* TagManagementView.swift */,
 			);
 			path = "Blog Detail";
