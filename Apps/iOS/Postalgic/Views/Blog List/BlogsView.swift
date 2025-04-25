@@ -7,10 +7,12 @@
 
 import SwiftData
 import SwiftUI
+
 struct BlogsView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var blogs: [Blog]
     @State private var showingBlogForm = false
+    @State private var showingHelpSheet = false
 
     var body: some View {
         NavigationStack {
@@ -30,10 +32,20 @@ struct BlogsView: View {
                     }
                 }
             }
+            .sheet(isPresented: $showingHelpSheet) {
+                HelpView()
+            }
             .toolbar {
                 ToolbarItem {
                     Button(action: { showingBlogForm = true }) {
                         Label("Add Blog", systemImage: "plus")
+                    }
+                }
+                ToolbarItemGroup(placement: .topBarLeading) {
+                    Button {
+                        showingHelpSheet.toggle()
+                    } label: {
+                        Label("Help", systemImage: "questionmark.circle")
                     }
                 }
             }
