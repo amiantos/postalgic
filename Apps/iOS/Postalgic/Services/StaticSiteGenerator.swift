@@ -698,10 +698,6 @@ class StaticSiteGenerator {
     /// - Returns: URL to the generated ZIP file if not publishing to AWS
     /// - Throws: SiteGeneratorError
     func generateSite() async throws -> URL? {
-        if blog.currentPublisherType == .netlify || blog.currentPublisherType == .github || blog.currentPublisherType == .gitlab || blog.currentPublisherType == .digitalOcean {
-            return nil
-        }
-        
         // Create a temporary directory for the site
         let tempDirectory = FileManager.default.temporaryDirectory
         let siteDirectory = tempDirectory.appendingPathComponent(
@@ -781,12 +777,14 @@ class StaticSiteGenerator {
                 // Fall back to manual if FTP is selected but not properly configured
                 publisher = ManualPublisher()
             }
+        case .none:
+            publisher = ManualPublisher()
         // Future publisher types would be handled here
         // case .netlify:
         //     publisher = NetlifyPublisher(...)
         default:
             // Use manual publisher by default
-            publisher = ManualPublisher()
+            throw SiteGeneratorError.publishingFailed("\(blog.publisherType ?? "Undefined") publishing is not available yet.")
         }
         
         do {
