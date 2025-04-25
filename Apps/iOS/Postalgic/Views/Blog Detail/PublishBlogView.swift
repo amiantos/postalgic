@@ -10,6 +10,12 @@ import SwiftUI
 import UniformTypeIdentifiers
 struct PublishBlogView: View {
     @Bindable var blog: Blog
+    var autoPublish: Bool
+    
+    init(blog: Blog, autoPublish: Bool = false) {
+        self.blog = blog
+        self.autoPublish = autoPublish
+    }
 
     @State private var isGenerating = false
     @State private var generatedZipURL: URL?
@@ -19,7 +25,8 @@ struct PublishBlogView: View {
     @State private var showingShareSheet = false
     @State private var showingSuccessAlert = false
     @State private var showingPublishSettingsView = false
-
+    @Environment(\.dismiss) private var dismiss
+    
     var body: some View {
         VStack(spacing: 20) {
             Text("Publish \(blog.name)")
@@ -218,7 +225,11 @@ struct PublishBlogView: View {
             PublishSettingsView(blog: blog)
         }
         .alert("Site Generated", isPresented: $showingSuccessAlert) {
-            Button("OK", role: .cancel) {}
+            Button("OK", role: .cancel) {
+                if autoPublish {
+                    dismiss()
+                }
+            }
         } message: {
             if blog.hasAwsConfigured && blog.currentPublisherType == .aws {
                 Text(
@@ -232,6 +243,11 @@ struct PublishBlogView: View {
                 Text(
                     "Your site has been successfully generated. You can now share the ZIP file."
                 )
+            }
+        }
+        .onAppear {
+            if autoPublish {
+                generateSite()
             }
         }
     }

@@ -42,6 +42,9 @@ struct PostFormView: View {
     @State private var showingSuggestions = false
     @State private var showingEmbedForm = false
     @State private var newPost: Post? = nil
+    @State private var showingPublishAlert = false
+    @State private var showingPublishView = false
+    @State private var savedPost: Post? = nil
     
     private var existingTagNames: [String] {
         return blogTags.map { $0.name }
@@ -282,10 +285,20 @@ struct PostFormView: View {
                     Button("Save") {
                         if isEditing {
                             updatePost()
+                            if !isDraft {
+                                savedPost = post
+                                showingPublishAlert = true
+                            } else {
+                                dismiss()
+                            }
                         } else {
                             addPost()
+                            if !isDraft {
+                                showingPublishAlert = true
+                            } else {
+                                dismiss()
+                            }
                         }
-                        dismiss()
                     }
                     .disabled(content.isEmpty)
                 }
@@ -307,6 +320,23 @@ struct PostFormView: View {
                         title = embedTitle
                     }
                 }
+            }
+            .sheet(isPresented: $showingPublishView, onDismiss: {
+                dismiss()
+            }) {
+                if let post = savedPost, let blog = post.blog {
+                    PublishBlogView(blog: blog, autoPublish: true)
+                }
+            }
+            .alert("Publish Now?", isPresented: $showingPublishAlert) {
+                Button("Cancel", role: .cancel) {
+                    dismiss()
+                }
+                Button("Publish") {
+                    showingPublishView = true
+                }
+            } message: {
+                Text("Would you like to publish the blog now?")
             }
         }
     }
@@ -413,6 +443,9 @@ struct PostFormView: View {
         
         // Add to blog
         blog.posts.append(postToSave)
+        
+        // Save reference to the post for publishing
+        savedPost = postToSave
     }
 }
 
