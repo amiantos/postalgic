@@ -55,7 +55,7 @@ struct CategoryManagementView: View {
                 }
             }
             .sheet(isPresented: $showingAddCategory) {
-                CategoryFormView(mode: .add, blog: blog)
+                CategoryFormView(mode: .add, blog: blog).interactiveDismissDisabled()
             }
             .sheet(
                 isPresented: $isEditing,
@@ -64,7 +64,7 @@ struct CategoryManagementView: View {
                 }
             ) {
                 if let category = selectedCategory {
-                    CategoryFormView(mode: .edit(category), blog: blog)
+                    CategoryFormView(mode: .edit(category), blog: blog).interactiveDismissDisabled()
                 }
             }
         }

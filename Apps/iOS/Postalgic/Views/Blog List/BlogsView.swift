@@ -11,7 +11,6 @@ struct BlogsView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var blogs: [Blog]
     @State private var showingBlogForm = false
-    @State private var blogToEdit: Blog?
 
     var body: some View {
         NavigationStack {
@@ -29,20 +28,9 @@ struct BlogsView: View {
                                 .foregroundStyle(.secondary)
                         }
                     }
-                    .swipeActions(edge: .trailing) {
-                        Button {
-                            blogToEdit = blog
-                        } label: {
-                            Label("Edit", systemImage: "pencil")
-                        }
-                    }
                 }
-                .onDelete(perform: deleteBlogs)
             }
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    EditButton()
-                }
                 ToolbarItem {
                     Button(action: { showingBlogForm = true }) {
                         Label("Add Blog", systemImage: "plus")
@@ -51,18 +39,7 @@ struct BlogsView: View {
             }
             .navigationTitle("Your Blogs")
             .sheet(isPresented: $showingBlogForm) {
-                BlogFormView()
-            }
-            .sheet(item: $blogToEdit) { blog in
-                BlogFormView(blog: blog)
-            }
-        }
-    }
-
-    private func deleteBlogs(offsets: IndexSet) {
-        withAnimation {
-            for index in offsets {
-                modelContext.delete(blogs[index])
+                BlogFormView().interactiveDismissDisabled()
             }
         }
     }

@@ -112,34 +112,23 @@ struct BlogDetailView: View {
                         .padding(.vertical, 4)
                     }
                 }
-                .onDelete(perform: deletePosts)
             }
         }
         .navigationTitle(blog.name)
-        .toolbarTitleMenu {
-            Button("All Posts (\(blog.posts.count))") {
-                selectedFilter = .all
-            }
-            Button("Published (\(blog.posts.filter { !$0.isDraft }.count))") {
-                selectedFilter = .published
-            }
-            Button("Drafts (\(blog.posts.filter { $0.isDraft }.count))") {
-                selectedFilter = .drafts
-            }
-        }
         .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
+            ToolbarItemGroup(placement: .primaryAction) {
+                Button(action: { showingPostForm = true }) {
+                    Label("Add Post", systemImage: "plus")
+                }
+
+                Button(action: { showingPublishView = true }) {
+                    Label("Publish", systemImage: "globe")
+                }
+
                 Menu {
-                    Button(action: { showingPostForm = true }) {
-                        Label("Add Post", systemImage: "plus")
-                    }
                     Button(action: { showingEditBlogView = true }) {
-                        Label("Edit Blog", systemImage: "pencil")
+                        Label("Edit Blog Details", systemImage: "pencil")
                     }
-                    Button(action: { showingPublishView = true }) {
-                        Label("Publish", systemImage: "globe")
-                    }
-                    Divider()
                     Button(action: {
                         showingCategoryManagement = true
                     }) {
@@ -151,40 +140,16 @@ struct BlogDetailView: View {
             }
         }
         .sheet(isPresented: $showingPostForm) {
-            PostFormView(blog: blog)
+            PostFormView(blog: blog).interactiveDismissDisabled()
         }
         .sheet(isPresented: $showingPublishView) {
             PublishBlogView(blog: blog)
         }
         .sheet(isPresented: $showingEditBlogView) {
-            BlogFormView(blog: blog)
+            BlogFormView(blog: blog).interactiveDismissDisabled()
         }
         .sheet(isPresented: $showingCategoryManagement) {
             CategoryManagementView(blog: blog)
-        }
-    }
-
-    private func deletePosts(offsets: IndexSet) {
-        withAnimation {
-            let filteredPosts = blog.posts
-                .filter { post in
-                    switch selectedFilter {
-                    case .all: return true
-                    case .published: return !post.isDraft
-                    case .drafts: return post.isDraft
-                    }
-                }
-                .sorted { $0.createdAt > $1.createdAt }
-
-            for index in offsets {
-                let postToDelete = filteredPosts[index]
-                if let postIndex = blog.posts.firstIndex(where: {
-                    $0.id == postToDelete.id
-                }) {
-                    blog.posts.remove(at: postIndex)
-                }
-                modelContext.delete(postToDelete)
-            }
         }
     }
 }

@@ -48,23 +48,30 @@ struct BlogFormView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Blog Details") {
+                Section("Blog Info") {
                     TextField("Name", text: $name)
+                    TextField("Tagline (optional)", text: $tagline)
+                }
+                
+                Section("Blog URL") {
                     TextField("URL", text: $url)
                         .autocapitalization(.none)
                         .autocorrectionDisabled(true)
                         .keyboardType(.URL)
                         .textContentType(.URL)
-                    TextField("Tagline (optional)", text: $tagline)
                 }
-                
-                Section("Author Information") {
+
+                Section {
                     TextField("Author Name (optional)", text: $authorName)
                     TextField("Author URL (optional)", text: $authorUrl)
                         .autocapitalization(.none)
                         .autocorrectionDisabled(true)
                         .keyboardType(.URL)
                         .textContentType(.URL)
+                } header: {
+                    Text("Author Information")
+                } footer: {
+                    Text("If provided, this name (with a link to the URL) will be added as a byline to every post. You can provide a URL to a website, or a `mailto:` prefix with your email address to allow others to contact you.")
                 }
             }
             .navigationTitle(isEditing ? "Edit Blog" : "New Blog")
