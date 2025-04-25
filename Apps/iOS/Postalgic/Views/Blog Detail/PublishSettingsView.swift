@@ -51,7 +51,7 @@ struct PublishSettingsView: View {
                             Text(type.displayName).tag(type)
                         }
                     }
-                    .pickerStyle(SegmentedPickerStyle())
+                    .pickerStyle(NavigationLinkPickerStyle())
                     .padding(.horizontal)
                 }
                 
