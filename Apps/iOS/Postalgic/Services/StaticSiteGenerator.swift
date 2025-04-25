@@ -678,7 +678,7 @@ class StaticSiteGenerator {
     enum SiteGeneratorError: Error, LocalizedError {
         case noSiteDirectory
         case zipCreationFailed
-        case awsPublishingFailed(String)
+        case publishingFailed(String)
 
         var errorDescription: String? {
             switch self {
@@ -686,8 +686,8 @@ class StaticSiteGenerator {
                 return "Failed to create site directory"
             case .zipCreationFailed:
                 return "Failed to create ZIP file of the site"
-            case .awsPublishingFailed(let message):
-                return "AWS publishing failed: \(message)"
+            case .publishingFailed(let message):
+                return "Publishing failed: \(message)"
             }
         }
     }
@@ -746,51 +746,39 @@ class StaticSiteGenerator {
         try generateRobotsTxt()
         try generateSitemap()
 
-        // If AWS is configured, publish to AWS
-        if blog.hasAwsConfigured {
-            print("🚀 Publishing to AWS S3...")
-            do {
-                let publisher = AWSPublisher(
+        // Get the appropriate publisher based on blog configuration
+        var publisher: Publisher
+        
+        switch blog.currentPublisherType {
+        case .aws:
+            if blog.hasAwsConfigured {
+                publisher = AWSPublisher(
                     region: blog.awsRegion!,
                     bucket: blog.awsS3Bucket!,
                     distributionId: blog.awsCloudFrontDistId!,
                     accessKeyId: blog.awsAccessKeyId!,
                     secretAccessKey: blog.awsSecretAccessKey!
                 )
-                try publisher.uploadDirectory(siteDirectory)
-
-                // Try to invalidate CloudFront cache
-                try publisher.invalidateCache()
-
-                return nil  // No ZIP to return when publishing to AWS
-            } catch {
-                throw SiteGeneratorError.awsPublishingFailed(
-                    error.localizedDescription
-                )
+            } else {
+                // Fall back to manual if AWS is selected but not properly configured
+                publisher = ManualPublisher()
             }
-        } else {
-            // Create ZIP archive
-            let zipURL = tempDirectory.appendingPathComponent(
-                "\(blog.name.replacingOccurrences(of: " ", with: "-"))-site.zip"
-            )
-
-            // Remove existing ZIP if it exists
-            if FileManager.default.fileExists(atPath: zipURL.path) {
-                try FileManager.default.removeItem(at: zipURL)
-            }
-
-            do {
-                try FileManager.default.zipItem(
-                    at: siteDirectory,
-                    to: zipURL,
-                    shouldKeepParent: false
-                )
-                print("📦 Site ZIP created at \(zipURL.path)")
-                return zipURL
-            } catch {
-                print("❌ Failed to create ZIP: \(error.localizedDescription)")
-                throw SiteGeneratorError.zipCreationFailed
-            }
+        // Future publisher types would be handled here
+        // case .ftp:
+        //     publisher = FTPPublisher(...)
+        // case .netlify:
+        //     publisher = NetlifyPublisher(...)
+        default:
+            // Use manual publisher by default
+            publisher = ManualPublisher()
+        }
+        
+        do {
+            print("🚀 Publishing site using \(publisher.publisherType.displayName) publisher...")
+            let result = try await publisher.publish(directoryURL: siteDirectory)
+            return result
+        } catch {
+            throw SiteGeneratorError.publishingFailed("\(publisher.publisherType.displayName) publishing failed: \(error.localizedDescription)")
         }
     }
 

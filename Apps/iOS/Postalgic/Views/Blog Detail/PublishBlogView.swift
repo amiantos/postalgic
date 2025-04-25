@@ -18,7 +18,7 @@ struct PublishBlogView: View {
 
     @State private var showingShareSheet = false
     @State private var showingSuccessAlert = false
-    @State private var showingAwsConfigView = false
+    @State private var showingPublishSettingsView = false
 
     var body: some View {
         VStack(spacing: 20) {
@@ -26,7 +26,7 @@ struct PublishBlogView: View {
                 .font(.title)
                 .fontWeight(.bold)
 
-            if blog.hasAwsConfigured {
+            if blog.hasAwsConfigured && blog.currentPublisherType == .aws {
                 Text(
                     "Publishing will generate a static website from all your blog posts and securely upload it to your AWS S3 bucket using your AWS access keys. A CloudFront invalidation will be created to ensure your content is served fresh."
                 )
@@ -39,41 +39,18 @@ struct PublishBlogView: View {
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)
             }
-
-            // AWS Configuration Button
+            
+            // Publish Settings Button
             Button(action: {
-                showingAwsConfigView = true
+                showingPublishSettingsView = true
             }) {
                 HStack {
-                    Image(
-                        systemName: blog.hasAwsConfigured
-                            ? "checkmark.circle.fill" : "cloud"
-                    )
-                    VStack(alignment: .leading) {
-                        Text(
-                            blog.hasAwsConfigured
-                                ? "AWS Configuration Complete"
-                                : "Configure AWS Publishing"
-                        )
-                        .font(.headline)
-
-                        if blog.hasAwsConfigured {
-                            Text("Using AWS access keys for secure deployment")
-                                .font(.caption)
-                        } else {
-                            Text(
-                                "Set up secure AWS deployment with AWS credentials"
-                            )
-                            .font(.caption)
-                        }
-                    }
+                    Image(systemName: "gear")
+                    Text("Publishing Settings")
                 }
                 .padding()
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(
-                    blog.hasAwsConfigured
-                        ? Color("PGreen") : Color.secondary.opacity(0.1)
-                )
+                .frame(maxWidth: .infinity)
+                .background(Color.secondary.opacity(0.1))
                 .foregroundColor(.primary)
                 .cornerRadius(10)
             }
@@ -101,7 +78,7 @@ struct PublishBlogView: View {
                 // Main publishing controls
                 VStack(spacing: 12) {
                     // AWS Publishing Button
-                    if blog.hasAwsConfigured {
+                    if blog.hasAwsConfigured && blog.currentPublisherType == .aws {
                         Button(action: {
                             generateSite()
                         }) {
@@ -142,7 +119,7 @@ struct PublishBlogView: View {
                     }
 
                     // Local ZIP Generation Option
-                    if generatedZipURL != nil, !blog.hasAwsConfigured {
+                    if generatedZipURL != nil, blog.currentPublisherType == .none {
                         Button(action: {
                             showingShareSheet = true
                         }) {
@@ -157,11 +134,24 @@ struct PublishBlogView: View {
                             .cornerRadius(10)
                         }
                         .padding(.horizontal)
-                    } else if !blog.hasAwsConfigured {
+                    } else if blog.currentPublisherType == .none {
                         Button(action: {
                             generateSite()
                         }) {
                             Label("Generate Site ZIP", systemImage: "globe")
+                                .padding()
+                                .frame(maxWidth: .infinity)
+                                .background(Color("PBlue"))
+                                .foregroundColor(.primary)
+                                .cornerRadius(10)
+                        }
+                        .padding(.horizontal)
+                    } else if blog.currentPublisherType != .aws || !blog.hasAwsConfigured {
+                        // Generic publish button for other publisher types or misconfigured AWS
+                        Button(action: {
+                            generateSite()
+                        }) {
+                            Label("Generate & Publish Site", systemImage: "arrow.up.doc")
                                 .padding()
                                 .frame(maxWidth: .infinity)
                                 .background(Color("PBlue"))
@@ -179,13 +169,13 @@ struct PublishBlogView: View {
                 ShareSheet(items: [zipURL])
             }
         }
-        .sheet(isPresented: $showingAwsConfigView) {
-            BlogAwsConfigView(blog: blog)
+        .sheet(isPresented: $showingPublishSettingsView) {
+            PublishSettingsView(blog: blog)
         }
         .alert("Site Generated", isPresented: $showingSuccessAlert) {
             Button("OK", role: .cancel) {}
         } message: {
-            if blog.hasAwsConfigured {
+            if blog.hasAwsConfigured && blog.currentPublisherType == .aws {
                 Text(
                     "Your site has been successfully published to AWS using your access keys. The CloudFront invalidation has been created."
                 )
@@ -208,13 +198,17 @@ struct PublishBlogView: View {
                 let result = try await generator.generateSite()
 
                 DispatchQueue.main.async {
-                    if blog.hasAwsConfigured {
+                    if blog.currentPublisherType == .aws && blog.hasAwsConfigured {
                         // AWS publishing was used
                         self.publishSuccessMessage =
                             "Site successfully published to AWS!"
-                    } else {
+                    } else if blog.currentPublisherType == .none {
                         // ZIP file was generated
                         self.generatedZipURL = result
+                    } else {
+                        // Other publisher was used
+                        self.publishSuccessMessage =
+                            "Site successfully published!"
                     }
 
                     self.isGenerating = false

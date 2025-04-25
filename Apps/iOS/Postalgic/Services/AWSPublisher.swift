@@ -9,9 +9,15 @@ import AWSCore
 import AWSS3
 import Foundation
 
+/// Protocol that all publishers must conform to
+protocol Publisher {
+    func publish(directoryURL: URL) async throws -> URL?
+    var publisherType: PublisherType { get }
+}
+
 /// AWSPublisher handles the upload of a static site to an S3 bucket
 /// and creates a CloudFront invalidation.
-class AWSPublisher {
+class AWSPublisher: Publisher {
     private let region: String
     private let bucket: String
     private let distributionId: String
@@ -19,6 +25,8 @@ class AWSPublisher {
     private let secretAccessKey: String
     private let credentialsProvider: AWSCredentialsProvider
     private let configuration: AWSServiceConfiguration
+    
+    var publisherType: PublisherType { .aws }
 
     init(
         region: String,
@@ -44,6 +52,13 @@ class AWSPublisher {
         )
         AWSServiceManager.default().defaultServiceConfiguration = configuration
 
+    }
+    
+    /// Publishes the static site from the given directory
+    func publish(directoryURL: URL) async throws -> URL? {
+        try uploadDirectory(directoryURL)
+        try invalidateCache()
+        return nil // AWS publisher doesn't return a local URL, as content is published remotely
     }
 
     func uploadDataToS3(
@@ -342,5 +357,16 @@ class AWSPublisher {
                 return "AWS authentication failed: \(message)"
             }
         }
+    }
+}
+
+/// Placeholder publisher for manual download (ZIP)
+class ManualPublisher: Publisher {
+    var publisherType: PublisherType { .none }
+    
+    func publish(directoryURL: URL) async throws -> URL? {
+        // For manual publisher, we just return the directory URL
+        // StaticSiteGenerator will handle ZIP creation
+        return directoryURL
     }
 }
