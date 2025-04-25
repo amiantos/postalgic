@@ -32,6 +32,12 @@ struct PublishBlogView: View {
                 )
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)
+            } else if blog.hasFtpConfigured && blog.currentPublisherType == .ftp {
+                Text(
+                    "Publishing will generate a static website from all your blog posts and securely upload it to your web host using FTP\(blog.ftpUseSFTP == true ? "/SFTP" : "")."
+                )
+                .multilineTextAlignment(.center)
+                .padding(.horizontal)
             } else {
                 Text(
                     "Publishing will generate a static website from all your blog posts. The site will be packaged as a ZIP file you can download and upload to any web host."
@@ -116,10 +122,49 @@ struct PublishBlogView: View {
                             .padding(.horizontal)
                             .disabled(blog.url.isEmpty)
                         }
-                    }
+                    } 
+                    // FTP Publishing Button
+                    else if blog.hasFtpConfigured && blog.currentPublisherType == .ftp {
+                        Button(action: {
+                            generateSite()
+                        }) {
+                            HStack {
+                                Image(systemName: "arrow.up.to.line")
+                                    .font(.system(size: 16, weight: .bold))
+                                Text("Publish via FTP\(blog.ftpUseSFTP == true ? "/SFTP" : "")")
+                                    .fontWeight(.semibold)
+                            }
+                            .padding()
+                            .frame(maxWidth: .infinity)
+                            .background(Color("PBlue"))
+                            .foregroundColor(.primary)
+                            .cornerRadius(10)
+                        }
+                        .padding(.horizontal)
 
+                        // View Published Site Button (shown if success message exists)
+                        if publishSuccessMessage != nil {
+                            Button(action: {
+                                if let url = URL(string: blog.url) {
+                                    UIApplication.shared.open(url)
+                                }
+                            }) {
+                                HStack {
+                                    Image(systemName: "safari")
+                                    Text("View Published Site")
+                                }
+                                .padding()
+                                .frame(maxWidth: .infinity)
+                                .background(Color("PGreen"))
+                                .foregroundColor(.primary)
+                                .cornerRadius(10)
+                            }
+                            .padding(.horizontal)
+                            .disabled(blog.url.isEmpty)
+                        }
+                    }
                     // Local ZIP Generation Option
-                    if generatedZipURL != nil, blog.currentPublisherType == .none {
+                    else if generatedZipURL != nil, blog.currentPublisherType == .none {
                         Button(action: {
                             showingShareSheet = true
                         }) {
@@ -146,8 +191,8 @@ struct PublishBlogView: View {
                                 .cornerRadius(10)
                         }
                         .padding(.horizontal)
-                    } else if blog.currentPublisherType != .aws || !blog.hasAwsConfigured {
-                        // Generic publish button for other publisher types or misconfigured AWS
+                    } else {
+                        // Generic publish button for other publisher types or misconfigured publishers
                         Button(action: {
                             generateSite()
                         }) {
@@ -179,6 +224,10 @@ struct PublishBlogView: View {
                 Text(
                     "Your site has been successfully published to AWS using your access keys. The CloudFront invalidation has been created."
                 )
+            } else if blog.hasFtpConfigured && blog.currentPublisherType == .ftp {
+                Text(
+                    "Your site has been successfully published to your web host using FTP\(blog.ftpUseSFTP == true ? "/SFTP" : "")."
+                )
             } else {
                 Text(
                     "Your site has been successfully generated. You can now share the ZIP file."
@@ -202,6 +251,10 @@ struct PublishBlogView: View {
                         // AWS publishing was used
                         self.publishSuccessMessage =
                             "Site successfully published to AWS!"
+                    } else if blog.currentPublisherType == .ftp && blog.hasFtpConfigured {
+                        // FTP publishing was used
+                        self.publishSuccessMessage =
+                            "Site successfully published via FTP\(blog.ftpUseSFTP == true ? "/SFTP" : "")!"
                     } else if blog.currentPublisherType == .none {
                         // ZIP file was generated
                         self.generatedZipURL = result

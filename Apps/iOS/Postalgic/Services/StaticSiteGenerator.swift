@@ -763,9 +763,21 @@ class StaticSiteGenerator {
                 // Fall back to manual if AWS is selected but not properly configured
                 publisher = ManualPublisher()
             }
+        case .ftp:
+            if blog.hasFtpConfigured {
+                publisher = FTPPublisher(
+                    host: blog.ftpHost!,
+                    port: blog.ftpPort!,
+                    username: blog.ftpUsername!,
+                    password: blog.ftpPassword!,
+                    remotePath: blog.ftpPath!,
+                    useSFTP: blog.ftpUseSFTP ?? false
+                )
+            } else {
+                // Fall back to manual if FTP is selected but not properly configured
+                publisher = ManualPublisher()
+            }
         // Future publisher types would be handled here
-        // case .ftp:
-        //     publisher = FTPPublisher(...)
         // case .netlify:
         //     publisher = NetlifyPublisher(...)
         default:

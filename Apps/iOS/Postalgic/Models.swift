@@ -39,11 +39,13 @@ final class Blog {
     var awsAccessKeyId: String?
     var awsSecretAccessKey: String?
     
-    // Future FTP Configuration
-    // var ftpHost: String?
-    // var ftpUsername: String?
-    // var ftpPassword: String?
-    // var ftpPath: String?
+    // FTP Configuration
+    var ftpHost: String?
+    var ftpPort: Int?
+    var ftpUsername: String?
+    var ftpPassword: String?
+    var ftpPath: String?
+    var ftpUseSFTP: Bool?
     
     // Future Netlify Configuration
     // var netlifyToken: String?
@@ -74,6 +76,13 @@ final class Blog {
             && !awsCloudFrontDistId!.isEmpty && awsAccessKeyId != nil
             && !awsAccessKeyId!.isEmpty && awsSecretAccessKey != nil
             && !awsSecretAccessKey!.isEmpty
+    }
+    
+    var hasFtpConfigured: Bool {
+        return ftpHost != nil && !ftpHost!.isEmpty && ftpUsername != nil
+            && !ftpUsername!.isEmpty && ftpPassword != nil
+            && !ftpPassword!.isEmpty && ftpPath != nil
+            && !ftpPath!.isEmpty && ftpPort != nil
     }
     
     var currentPublisherType: PublisherType {

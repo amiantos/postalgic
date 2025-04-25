@@ -14,6 +14,7 @@ struct PublishSettingsView: View {
     
     @State private var selectedTab = 0
     @State private var showingAwsConfigView = false
+    @State private var showingFtpConfigView = false
     
     var body: some View {
         NavigationStack {
@@ -77,6 +78,9 @@ struct PublishSettingsView: View {
             )
             .sheet(isPresented: $showingAwsConfigView) {
                 BlogAwsConfigView(blog: blog)
+            }
+            .sheet(isPresented: $showingFtpConfigView) {
+                BlogFtpConfigView(blog: blog)
             }
         }
     }
@@ -165,31 +169,87 @@ struct PublishSettingsView: View {
         }
     }
     
-    // FTP Settings View (placeholder for future implementation)
+    // FTP Settings View
     private var ftpSettingsView: some View {
         VStack(alignment: .leading, spacing: 20) {
             Text("FTP/SFTP Configuration")
                 .font(.headline)
                 .padding(.horizontal)
             
-            VStack(alignment: .leading) {
-                HStack {
-                    Image(systemName: "hammer.fill")
-                        .foregroundColor(.blue)
-                    Text("Coming Soon")
-                        .font(.subheadline)
-                        .bold()
-                }
-                
-                Text("FTP/SFTP publishing is not yet available. Please choose another publishing method for now.")
-                    .font(.caption)
+            if blog.hasFtpConfigured {
+                // FTP Configured View
+                VStack(alignment: .leading) {
+                    HStack {
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundColor(Color("PGreen"))
+                        Text("FTP/SFTP is properly configured")
+                            .font(.subheadline)
+                            .bold()
+                    }
+                    
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text("Host: \(blog.ftpHost ?? "Not set")")
+                            .font(.caption)
+                        Text("Port: \(blog.ftpPort != nil ? String(blog.ftpPort!) : "Not set")")
+                            .font(.caption)
+                        Text("Protocol: \(blog.ftpUseSFTP == true ? "SFTP (Secure)" : "FTP (Standard)")")
+                            .font(.caption)
+                        Text("Username: \(blog.ftpUsername ?? "Not set")")
+                            .font(.caption)
+                        Text("Remote Path: \(blog.ftpPath ?? "Not set")")
+                            .font(.caption)
+                    }
                     .foregroundColor(.secondary)
                     .padding(.leading, 25)
+                }
+                .padding()
+                .background(Color("PGreen").opacity(0.1))
+                .cornerRadius(10)
+                .padding(.horizontal)
+                
+                Button(action: {
+                    showingFtpConfigView = true
+                }) {
+                    Text("Edit FTP/SFTP Configuration")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.bordered)
+                .padding(.horizontal)
+            } else {
+                // FTP Not Configured View
+                VStack(alignment: .leading) {
+                    HStack {
+                        Image(systemName: "exclamationmark.circle.fill")
+                            .foregroundColor(.orange)
+                        Text("FTP/SFTP is not fully configured")
+                            .font(.subheadline)
+                            .bold()
+                    }
+                    
+                    Text("You need to configure your FTP/SFTP credentials to publish directly to your web server.")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .padding(.leading, 25)
+                }
+                .padding()
+                .background(Color.orange.opacity(0.1))
+                .cornerRadius(10)
+                .padding(.horizontal)
+                
+                Button(action: {
+                    showingFtpConfigView = true
+                }) {
+                    Text("Configure FTP/SFTP")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .padding(.horizontal)
             }
-            .padding()
-            .background(Color.blue.opacity(0.1))
-            .cornerRadius(10)
-            .padding(.horizontal)
+            
+            Text("FTP/SFTP publishing lets you directly upload your static site to any web hosting service that supports standard file transfer protocols.")
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .padding(.horizontal)
             
             Spacer()
         }
