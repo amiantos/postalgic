@@ -145,7 +145,7 @@ final class Embed {
         switch embedType {
         case .youtube:
             // Extract YouTube video ID from URL
-            if let videoId = extractYouTubeId(from: url) {
+            if let videoId = Utils.extractYouTubeId(from: url) {
                 return """
                 <div class="embed youtube-embed">
                     <iframe width="560" height="315" src="https://www.youtube.com/embed/\(videoId)" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
@@ -182,28 +182,6 @@ final class Embed {
             
             return html
         }
-    }
-    
-    private func extractYouTubeId(from url: String) -> String? {
-        let patterns = [
-            // youtu.be URLs
-            "youtu\\.be\\/([a-zA-Z0-9_-]{11})",
-            // youtube.com/watch?v= URLs
-            "youtube\\.com\\/watch\\?v=([a-zA-Z0-9_-]{11})",
-            // youtube.com/embed/ URLs
-            "youtube\\.com\\/embed\\/([a-zA-Z0-9_-]{11})",
-            "youtube\\.com\\/live\\/([a-zA-Z0-9_-]{11})"
-        ]
-        
-        for pattern in patterns {
-            if let regex = try? NSRegularExpression(pattern: pattern),
-               let match = regex.firstMatch(in: url, range: NSRange(url.startIndex..., in: url)),
-               let range = Range(match.range(at: 1), in: url) {
-                return String(url[range])
-            }
-        }
-        
-        return nil
     }
 }
 
