@@ -121,27 +121,25 @@ struct BlogDetailView: View {
                 Button(action: { showingPostForm = true }) {
                     Label("Add Post", systemImage: "plus")
                 }
-
+                
                 Button(action: { showingPublishView = true }) {
                     Label("Publish", systemImage: "globe")
                 }
+            }
 
-                Menu {
-                    Button(action: { showingEditBlogView = true }) {
-                        Label("Edit Blog Details", systemImage: "pencil")
-                    }
-                    Button(action: {
-                        showingCategoryManagement = true
-                    }) {
-                        Label("Manage Categories", systemImage: "folder")
-                    }
-                    Button(action: {
-                        showingTagManagement = true
-                    }) {
-                        Label("Manage Tags", systemImage: "tag")
-                    }
-                } label: {
-                    Image(systemName: "ellipsis.circle")
+            ToolbarItemGroup(placement: .secondaryAction) {
+                Button(action: { showingEditBlogView = true }) {
+                    Label("Edit Blog Details", systemImage: "pencil")
+                }
+                Button(action: {
+                    showingCategoryManagement = true
+                }) {
+                    Label("Manage Categories", systemImage: "folder")
+                }
+                Button(action: {
+                    showingTagManagement = true
+                }) {
+                    Label("Manage Tags", systemImage: "tag")
                 }
             }
         }
