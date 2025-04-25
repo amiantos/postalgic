@@ -369,6 +369,13 @@ class StaticSiteGenerator {
             object-fit: cover;
         }
         
+        blockquote {
+            color: #666;
+            font-style: italic;
+            border-left: 2px solid black;
+            padding-left: 1.3em;
+        }
+        
         /* Responsive */
         @media (max-width: 768px) {
             .container {
