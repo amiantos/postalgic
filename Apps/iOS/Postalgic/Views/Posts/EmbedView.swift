@@ -62,7 +62,8 @@ struct YouTubeEmbedView: View {
             // youtube.com/watch?v= URLs
             "youtube\\.com\\/watch\\?v=([a-zA-Z0-9_-]{11})",
             // youtube.com/embed/ URLs
-            "youtube\\.com\\/embed\\/([a-zA-Z0-9_-]{11})"
+            "youtube\\.com\\/embed\\/([a-zA-Z0-9_-]{11})",
+            "youtube\\.com\\/live\\/([a-zA-Z0-9_-]{11})"
         ]
         
         for pattern in patterns {
