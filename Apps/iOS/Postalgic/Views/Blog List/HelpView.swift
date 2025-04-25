@@ -55,7 +55,7 @@ struct HelpTextView<Content: View>: View {
             content()
         }
         .padding(20)
-        .background(Color(UIColor.secondarySystemFill))
+        .background(.fill)
         .clipShape(RoundedRectangle(cornerRadius: 25.0))
         .padding([.leading, .trailing, .bottom])
         .frame(maxWidth: .infinity, alignment: .leading)

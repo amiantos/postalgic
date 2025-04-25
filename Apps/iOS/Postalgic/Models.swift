@@ -8,6 +8,16 @@
 import Foundation
 import SwiftData
 
+// Publisher type enum
+enum PublisherType: String, Codable, CaseIterable {
+    case aws = "AWS"
+    case ftp = "FTP/SFTP"
+    case netlify = "Netlify"
+    case none = "Manual Download"
+    
+    var displayName: String { rawValue }
+}
+
 @Model
 final class Blog {
     var name: String
@@ -18,13 +28,28 @@ final class Blog {
     var authorName: String?
     var authorUrl: String?
     var tagline: String?
-
+    
+    // Publisher Type
+    var publisherType: String?
+    
     // AWS Configuration
     var awsRegion: String?
     var awsS3Bucket: String?
     var awsCloudFrontDistId: String?
     var awsAccessKeyId: String?
     var awsSecretAccessKey: String?
+    
+    // FTP Configuration
+    var ftpHost: String?
+    var ftpPort: Int?
+    var ftpUsername: String?
+    var ftpPassword: String?
+    var ftpPath: String?
+    var ftpUseSFTP: Bool?
+    
+    // Future Netlify Configuration
+    // var netlifyToken: String?
+    // var netlifySiteId: String?
 
     @Relationship(deleteRule: .cascade, inverse: \Post.blog)
     var posts: [Post] = []
@@ -42,6 +67,7 @@ final class Blog {
         self.authorName = authorName
         self.authorUrl = authorUrl
         self.tagline = tagline
+        self.publisherType = PublisherType.none.rawValue
     }
 
     var hasAwsConfigured: Bool {
@@ -50,6 +76,17 @@ final class Blog {
             && !awsCloudFrontDistId!.isEmpty && awsAccessKeyId != nil
             && !awsAccessKeyId!.isEmpty && awsSecretAccessKey != nil
             && !awsSecretAccessKey!.isEmpty
+    }
+    
+    var hasFtpConfigured: Bool {
+        return ftpHost != nil && !ftpHost!.isEmpty && ftpUsername != nil
+            && !ftpUsername!.isEmpty && ftpPassword != nil
+            && !ftpPassword!.isEmpty && ftpPath != nil
+            && !ftpPath!.isEmpty && ftpPort != nil
+    }
+    
+    var currentPublisherType: PublisherType {
+        return PublisherType(rawValue: publisherType ?? "") ?? .none
     }
 }
 
