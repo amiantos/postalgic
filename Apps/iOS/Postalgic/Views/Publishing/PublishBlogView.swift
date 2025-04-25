@@ -287,14 +287,6 @@ struct PublishBlogView: View {
             do {
                 let generator = StaticSiteGenerator(blog: blog)
                 let result = try await generator.generateSite()
-                
-                if result == nil {
-                    DispatchQueue.main.async {
-                        self.errorMessage = "Publishing is not configured properly."
-                        self.isGenerating = false
-                    }
-                    return
-                }
 
                 DispatchQueue.main.async {
                     if blog.currentPublisherType == .aws
