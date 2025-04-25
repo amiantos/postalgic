@@ -13,6 +13,7 @@
 		443F0B512DBAD7AC00034EF1 /* PreviewData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 443F0B502DBAD7AC00034EF1 /* PreviewData.swift */; };
 		443F0B532DBB5B7900034EF1 /* Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 443F0B522DBB5B7900034EF1 /* Utils.swift */; };
 		443F0B612DBB696600034EF1 /* HelpView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 443F0B602DBB696600034EF1 /* HelpView.swift */; };
+		443F0B632DBB6B9600034EF1 /* TagManagementView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 443F0B622DBB6B9600034EF1 /* TagManagementView.swift */; };
 		448E851D2DB3984200772502 /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = 448E851C2DB3984200772502 /* ZIPFoundation */; };
 		449CAF852DB47E2900558395 /* AWSCore in Frameworks */ = {isa = PBXBuildFile; productRef = 449CAF842DB47E2900558395 /* AWSCore */; };
 		449CAF872DB47E2900558395 /* AWSS3 in Frameworks */ = {isa = PBXBuildFile; productRef = 449CAF862DB47E2900558395 /* AWSS3 */; };
@@ -59,6 +60,7 @@
 		443F0B502DBAD7AC00034EF1 /* PreviewData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewData.swift; sourceTree = "<group>"; };
 		443F0B522DBB5B7900034EF1 /* Utils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utils.swift; sourceTree = "<group>"; };
 		443F0B602DBB696600034EF1 /* HelpView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelpView.swift; sourceTree = "<group>"; };
+		443F0B622DBB6B9600034EF1 /* TagManagementView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagManagementView.swift; sourceTree = "<group>"; };
 		44C3640E2DB768DB0057567C /* AWSPublisher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AWSPublisher.swift; sourceTree = "<group>"; };
 		44C3640F2DB768DB0057567C /* StaticSiteGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StaticSiteGenerator.swift; sourceTree = "<group>"; };
 		44C364112DB768DB0057567C /* BlogAwsConfigView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlogAwsConfigView.swift; sourceTree = "<group>"; };
@@ -198,6 +200,7 @@
 				44C364112DB768DB0057567C /* BlogAwsConfigView.swift */,
 				44C364152DB768DB0057567C /* CategoryManagementView.swift */,
 				44C3641A2DB768DB0057567C /* PublishBlogView.swift */,
+				443F0B622DBB6B9600034EF1 /* TagManagementView.swift */,
 			);
 			path = "Blog Detail";
 			sourceTree = "<group>";
@@ -364,6 +367,7 @@
 				443F0B512DBAD7AC00034EF1 /* PreviewData.swift in Sources */,
 				443F0B532DBB5B7900034EF1 /* Utils.swift in Sources */,
 				44C364262DB768DB0057567C /* CategoryManagementView.swift in Sources */,
+				443F0B632DBB6B9600034EF1 /* TagManagementView.swift in Sources */,
 				44C364282DB768DB0057567C /* PostDetailView.swift in Sources */,
 				44C3642A2DB768DB0057567C /* PostFormView.swift in Sources */,
 				443F0B612DBB696600034EF1 /* HelpView.swift in Sources */,

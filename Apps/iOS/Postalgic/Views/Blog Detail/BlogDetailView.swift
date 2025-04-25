@@ -14,6 +14,7 @@ struct BlogDetailView: View {
     @State private var showingPublishView = false
     @State private var showingEditBlogView = false
     @State private var showingCategoryManagement = false
+    @State private var showingTagManagement = false
 
     enum PostFilter: String, CaseIterable, Identifiable {
         case all = "All"
@@ -134,6 +135,11 @@ struct BlogDetailView: View {
                     }) {
                         Label("Manage Categories", systemImage: "folder")
                     }
+                    Button(action: {
+                        showingTagManagement = true
+                    }) {
+                        Label("Manage Tags", systemImage: "tag")
+                    }
                 } label: {
                     Image(systemName: "ellipsis.circle")
                 }
@@ -150,6 +156,9 @@ struct BlogDetailView: View {
         }
         .sheet(isPresented: $showingCategoryManagement) {
             CategoryManagementView(blog: blog)
+        }
+        .sheet(isPresented: $showingTagManagement) {
+            TagManagementView(blog: blog)
         }
     }
 }
