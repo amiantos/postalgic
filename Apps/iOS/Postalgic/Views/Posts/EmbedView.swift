@@ -40,7 +40,7 @@ struct YouTubeEmbedView: View {
     
     var body: some View {
         ZStack {
-            if let videoId = extractYouTubeId(from: embed.url) {
+            if let videoId = Utils.extractYouTubeId(from: embed.url) {
                 WebViewContainer(urlString: "https://www.youtube.com/embed/\(videoId)")
             } else {
                 VStack {
@@ -54,27 +54,6 @@ struct YouTubeEmbedView: View {
                 .background(Color(.systemGray6))
             }
         }
-    }
-    
-    private func extractYouTubeId(from url: String) -> String? {
-        let patterns = [
-            // youtu.be URLs
-            "youtu\\.be\\/([a-zA-Z0-9_-]{11})",
-            // youtube.com/watch?v= URLs
-            "youtube\\.com\\/watch\\?v=([a-zA-Z0-9_-]{11})",
-            // youtube.com/embed/ URLs
-            "youtube\\.com\\/embed\\/([a-zA-Z0-9_-]{11})"
-        ]
-        
-        for pattern in patterns {
-            if let regex = try? NSRegularExpression(pattern: pattern),
-               let match = regex.firstMatch(in: url, range: NSRange(url.startIndex..., in: url)),
-               let range = Range(match.range(at: 1), in: url) {
-                return String(url[range])
-            }
-        }
-        
-        return nil
     }
 }
 
@@ -195,21 +174,10 @@ struct WebViewContainer: UIViewRepresentable {
 #Preview {
     VStack(spacing: 20) {
         // YouTube Embed
-        EmbedView(embed: Embed(
-            url: "https://www.youtube.com/watch?v=RoSQqtgCZss",
-            type: .youtube,
-            position: .above
-        ))
+        EmbedView(embed: PreviewData.youtubeEmbed)
         
         // Link Embed
-        EmbedView(embed: Embed(
-            url: "https://apple.com",
-            type: .link,
-            position: .below,
-            title: "Apple",
-            embedDescription: "Apple Inc. is an American multinational technology company that designs, develops, and sells consumer electronics, computer software, and online services.",
-            imageUrl: "https://www.apple.com/ac/structured-data/images/open_graph_logo.png"
-        ))
+        EmbedView(embed: PreviewData.linkEmbed)
     }
     .padding()
 }

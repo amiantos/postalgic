@@ -7,7 +7,6 @@
 
 import SwiftData
 import SwiftUI
-
 struct BlogAwsConfigView: View {
     @Bindable var blog: Blog
     @Environment(\.dismiss) private var dismiss
@@ -176,10 +175,8 @@ struct BlogAwsConfigView: View {
 }
 
 #Preview {
-    let config = ModelConfiguration(isStoredInMemoryOnly: true)
-    let container = try! ModelContainer(for: Blog.self, configurations: config)
-    let blog = Blog(name: "Sample Blog", url: "https://example.com")
-
-    return BlogAwsConfigView(blog: blog)
-        .modelContainer(container)
+    NavigationStack {
+        BlogAwsConfigView(blog: PreviewData.blogWithContent())
+    }
+    .modelContainer(PreviewData.previewContainer)
 }

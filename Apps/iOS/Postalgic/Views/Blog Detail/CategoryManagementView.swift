@@ -7,7 +7,6 @@
 
 import SwiftData
 import SwiftUI
-
 struct CategoryManagementView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
@@ -56,7 +55,7 @@ struct CategoryManagementView: View {
                 }
             }
             .sheet(isPresented: $showingAddCategory) {
-                CategoryFormView(mode: .add, blog: blog)
+                CategoryFormView(mode: .add, blog: blog).interactiveDismissDisabled()
             }
             .sheet(
                 isPresented: $isEditing,
@@ -65,7 +64,7 @@ struct CategoryManagementView: View {
                 }
             ) {
                 if let category = selectedCategory {
-                    CategoryFormView(mode: .edit(category), blog: blog)
+                    CategoryFormView(mode: .edit(category), blog: blog).interactiveDismissDisabled()
                 }
             }
         }
@@ -203,11 +202,12 @@ struct CategoryFormView: View {
 }
 
 #Preview {
-    //    let container = ModelContainer(for: Blog.self, Category.self, Post.self, inMemory: true)
-    //    let context = ModelContext(container)
-    //    let blog = Blog(name: "Test Blog", url: "https://example.com")
-    //    context.insert(blog)
-    //
-    //    CategoryManagementView(blog: blog)
-    //        .modelContainer(container)
+    let modelContainer = PreviewData.previewContainer
+    
+    return NavigationStack {
+        // Fetch the first blog from the container to ensure it's properly in the context
+        CategoryManagementView(blog: try! modelContainer.mainContext.fetch(FetchDescriptor<Blog>()).first!)
+    }
+    .modelContainer(modelContainer)
 }
+

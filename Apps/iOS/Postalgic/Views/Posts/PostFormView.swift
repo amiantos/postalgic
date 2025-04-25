@@ -7,7 +7,6 @@
 
 import SwiftData
 import SwiftUI
-
 struct PostFormView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
@@ -417,22 +416,24 @@ struct PostFormView: View {
     }
 }
 
-#Preview {
-    PostFormView(blog: Blog(name: "Test Blog", url: "https://example.com"))
-        .modelContainer(
-            for: [Blog.self, Post.self, Tag.self, Category.self, Embed.self],
-            inMemory: true
-        )
+#Preview("New Post") {
+    let modelContainer = PreviewData.previewContainer
+    
+    return NavigationStack {
+        // Fetch the first blog from the container to ensure it's properly in the context
+        PostFormView(blog: try! modelContainer.mainContext.fetch(FetchDescriptor<Blog>()).first!)
+    }
+    .modelContainer(modelContainer)
 }
 
-#Preview {
-    let testPost = Post(
-        title: "Test Post",
-        content: "This is a test post with **bold** and *italic* text."
-    )
-    return PostFormView(post: testPost)
-        .modelContainer(
-            for: [Post.self, Tag.self, Category.self, Blog.self, Embed.self],
-            inMemory: true
-        )
+#Preview("Edit Post") {
+    let modelContainer = PreviewData.previewContainer
+    let blog = try! modelContainer.mainContext.fetch(FetchDescriptor<Blog>()).first!
+    
+    return NavigationStack {
+        // Use the first post from the blog that's in the context
+        PostFormView(post: blog.posts.first!)
+    }
+    .modelContainer(modelContainer)
 }
+

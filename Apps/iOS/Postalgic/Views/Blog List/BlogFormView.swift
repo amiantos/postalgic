@@ -7,7 +7,6 @@
 
 import SwiftData
 import SwiftUI
-
 struct BlogFormView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
@@ -49,23 +48,30 @@ struct BlogFormView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Blog Details") {
+                Section("Blog Info") {
                     TextField("Name", text: $name)
+                    TextField("Tagline (optional)", text: $tagline)
+                }
+                
+                Section("Blog URL") {
                     TextField("URL", text: $url)
                         .autocapitalization(.none)
                         .autocorrectionDisabled(true)
                         .keyboardType(.URL)
                         .textContentType(.URL)
-                    TextField("Tagline (optional)", text: $tagline)
                 }
-                
-                Section("Author Information") {
+
+                Section {
                     TextField("Author Name (optional)", text: $authorName)
                     TextField("Author URL (optional)", text: $authorUrl)
                         .autocapitalization(.none)
                         .autocorrectionDisabled(true)
                         .keyboardType(.URL)
                         .textContentType(.URL)
+                } header: {
+                    Text("Author Information")
+                } footer: {
+                    Text("If provided, this name (with a link to the URL) will be added as a byline to every post. You can provide a URL to a website, or a `mailto:` prefix with your email address to allow others to contact you.")
                 }
             }
             .navigationTitle(isEditing ? "Edit Blog" : "New Blog")
@@ -112,12 +118,12 @@ struct BlogFormView: View {
     }
 }
 
-#Preview {
+#Preview("New Blog") {
     BlogFormView()
-        .modelContainer(for: [Blog.self], inMemory: true)
+        .modelContainer(PreviewData.previewContainer)
 }
 
-#Preview {
-    BlogFormView(blog: Blog(name: "Test Blog", url: "https://example.com"))
-        .modelContainer(for: [Blog.self], inMemory: true)
+#Preview("Edit Blog") {
+    BlogFormView(blog: PreviewData.blogWithContent())
+        .modelContainer(PreviewData.previewContainer)
 }

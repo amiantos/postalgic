@@ -7,7 +7,6 @@
 
 import SwiftData
 import SwiftUI
-
 // Define a struct to pass back to parent view
 struct EmbedTitleUpdate {
     let title: String
@@ -358,11 +357,33 @@ struct EmbedFormView: View {
     }
 }
 
-#Preview {
-    let post = Post(title: "Test Post", content: "Test content")
-    
-    return EmbedFormView(post: post) { title in
-        print("Update post title to: \(title)")
+#Preview("New Embed") {
+    NavigationStack {
+        EmbedFormView(post: PreviewData.post) { title in
+            print("Update post title to: \(title)")
+        }
     }
-    .modelContainer(for: [Post.self, Embed.self], inMemory: true)
+    .modelContainer(PreviewData.previewContainer)
+}
+
+#Preview("Edit YouTube Embed") {
+    NavigationStack {
+        // Get a post with a YouTube embed from our preview data
+        let post = PreviewData.blogWithContent().posts.first!
+        return EmbedFormView(post: post) { title in
+            print("Update post title to: \(title)")
+        }
+    }
+    .modelContainer(PreviewData.previewContainer)
+}
+
+#Preview("Edit Link Embed") {
+    NavigationStack {
+        // Get a post with a Link embed from our preview data
+        let post = PreviewData.blogWithContent().posts[1]
+        return EmbedFormView(post: post) { title in
+            print("Update post title to: \(title)")
+        }
+    }
+    .modelContainer(PreviewData.previewContainer)
 }
