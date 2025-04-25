@@ -698,6 +698,10 @@ class StaticSiteGenerator {
     /// - Returns: URL to the generated ZIP file if not publishing to AWS
     /// - Throws: SiteGeneratorError
     func generateSite() async throws -> URL? {
+        if blog.currentPublisherType == .netlify || blog.currentPublisherType == .github || blog.currentPublisherType == .gitlab || blog.currentPublisherType == .digitalOcean {
+            return nil
+        }
+        
         // Create a temporary directory for the site
         let tempDirectory = FileManager.default.temporaryDirectory
         let siteDirectory = tempDirectory.appendingPathComponent(

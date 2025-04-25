@@ -47,9 +47,15 @@ struct PublishBlogView: View {
                 )
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)
-            } else {
+            } else if blog.currentPublisherType == .none {
                 Text(
                     "Publishing will generate a static website from all your blog posts. The site will be packaged as a ZIP file you can download and upload to any web host."
+                )
+                .multilineTextAlignment(.center)
+                .padding(.horizontal)
+            } else {
+                Text(
+                    "Publishing will generate a static website from all your blog posts for uploading to the host of your choice."
                 )
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)
@@ -207,16 +213,29 @@ struct PublishBlogView: View {
                         }
                         .padding(.horizontal)
                     } else {
-                        Label {
-                            Text(
-                                "\(blog.currentPublisherType.rawValue) support is coming soon, please pick a different publishing method in Publishing Settings in the meantime."
-                            ).font(.callout)
-                        } icon: {
-                            Image(systemName: "x.circle.fill").foregroundStyle(
-                                .pYellow
-                            )
-                        }.foregroundStyle(.secondary)
-                            .padding(.horizontal)
+                        if blog.currentPublisherType == .aws || blog.currentPublisherType == .ftp {
+                            Label {
+                                Text(
+                                    "Please check that you've fully configured \(blog.currentPublisherType.rawValue) for publication. Once configured, a publish button will appear here."
+                                ).font(.callout)
+                            } icon: {
+                                Image(systemName: "x.circle.fill").foregroundStyle(
+                                    .pYellow
+                                )
+                            }.foregroundStyle(.secondary)
+                                .padding(.horizontal)
+                        } else {
+                            Label {
+                                Text(
+                                    "\(blog.currentPublisherType.rawValue) support is coming soon, please pick a different publishing method in Publishing Settings in the meantime."
+                                ).font(.callout)
+                            } icon: {
+                                Image(systemName: "x.circle.fill").foregroundStyle(
+                                    .pYellow
+                                )
+                            }.foregroundStyle(.secondary)
+                                .padding(.horizontal)
+                        }
                     }
                 }
             }
@@ -268,6 +287,14 @@ struct PublishBlogView: View {
             do {
                 let generator = StaticSiteGenerator(blog: blog)
                 let result = try await generator.generateSite()
+                
+                if result == nil {
+                    DispatchQueue.main.async {
+                        self.errorMessage = "Publishing is not configured properly."
+                        self.isGenerating = false
+                    }
+                    return
+                }
 
                 DispatchQueue.main.async {
                     if blog.currentPublisherType == .aws
