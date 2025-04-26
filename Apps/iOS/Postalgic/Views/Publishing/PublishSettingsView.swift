@@ -15,6 +15,7 @@ struct PublishSettingsView: View {
     @State private var selectedTab = 0
     @State private var showingAwsConfigView = false
     @State private var showingFtpConfigView = false
+    @State private var showingTemplateCustomizationView = false
 
     var body: some View {
         NavigationStack {
@@ -45,6 +46,18 @@ struct PublishSettingsView: View {
                     .pickerStyle(NavigationLinkPickerStyle())
                 }
 
+                // Template customization section
+                Section(header: Text("Site Templates")) {
+                    Button("Customize Templates") {
+                        showingTemplateCustomizationView.toggle()
+                    }
+                    .frame(maxWidth: .infinity)
+                    
+                    Text("Customize the look and feel of your static site by editing the HTML templates.")
+                        .font(.callout)
+                        .foregroundColor(.secondary)
+                }
+                
                 switch blog.currentPublisherType {
                 case .aws:
                     awsSettingsView
@@ -74,6 +87,9 @@ struct PublishSettingsView: View {
             }
             .sheet(isPresented: $showingFtpConfigView) {
                 BlogFtpConfigView(blog: blog)
+            }
+            .sheet(isPresented: $showingTemplateCustomizationView) {
+                TemplateCustomizationView(blog: blog)
             }
         }
     }
