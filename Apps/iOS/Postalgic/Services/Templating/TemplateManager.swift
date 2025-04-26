@@ -13,15 +13,16 @@ class TemplateManager {
     // Default templates
     private var defaultTemplates = [String: String]()
     
-    // User-defined custom templates
-    private var customTemplates = [String: String]()
-    
     // Compiled templates
     private var compiledTemplates = [String: MustacheTemplate]()
     
+    // Reference to the blog
+    private let blog: Blog
+    
     // MARK: - Initialization
     
-    init() {
+    init(blog: Blog) {
+        self.blog = blog
         setupDefaultTemplates()
     }
     
@@ -716,26 +717,35 @@ class TemplateManager {
     
     /// Compiles a template for the specified template type
     private func compileTemplate(for templateType: String) throws -> MustacheTemplate {
-        // Check if there's a custom template first
-        if let customTemplate = customTemplates[templateType] {
-            return try MustacheTemplate(string: customTemplate)
-        } else if let defaultTemplate = defaultTemplates[templateType] {
-            // Otherwise use the default template
+        // First check if the blog has a saved template of this type
+        if let blogTemplate = blog.template(for: templateType) {
+            return try MustacheTemplate(string: blogTemplate.content)
+        } 
+        // Otherwise use the default template
+        else if let defaultTemplate = defaultTemplates[templateType] {
             return try MustacheTemplate(string: defaultTemplate)
-        } else {
-            // If no template exists for this type, throw an error
+        } 
+        // If no template exists for this type, throw an error
+        else {
             throw TemplateError.templateNotFound(templateType)
         }
     }
     
     // MARK: - Template Access
     
-    /// Registers a custom template, overriding the default one
+    /// Registers a custom template for the blog and handles saving it to the database
     /// - Parameters:
     ///   - template: The template content
     ///   - type: The template type identifier
     func registerCustomTemplate(_ template: String, for type: String) {
-        customTemplates[type] = template
+        // If the template content is empty, delete the template from the blog
+        if template.isEmpty {
+            blog.deleteTemplate(for: type)
+        } else {
+            // Save the template to the blog
+            blog.saveTemplate(template, for: type)
+        }
+        
         // Remove from cache to ensure it's recompiled next time
         compiledTemplates[type] = nil
     }
@@ -765,11 +775,16 @@ class TemplateManager {
     /// - Returns: The template string
     /// - Throws: TemplateError if the template doesn't exist
     func getTemplateString(for type: String) throws -> String {
-        if let customTemplate = customTemplates[type] {
-            return customTemplate
-        } else if let defaultTemplate = defaultTemplates[type] {
+        // First check if the blog has a saved template of this type
+        if let blogTemplate = blog.template(for: type) {
+            return blogTemplate.content
+        }
+        // Otherwise use the default template
+        else if let defaultTemplate = defaultTemplates[type] {
             return defaultTemplate
-        } else {
+        } 
+        // If no template exists for this type, throw an error
+        else {
             throw TemplateError.templateNotFound(type)
         }
     }
@@ -777,10 +792,14 @@ class TemplateManager {
     /// Returns all available template types
     /// - Returns: Array of template type identifiers
     func availableTemplateTypes() -> [String] {
-        // Combine default and custom template types (removing duplicates)
+        // Get the default template types
         let defaultTypes = Set(defaultTemplates.keys)
-        let customTypes = Set(customTemplates.keys)
-        return Array(defaultTypes.union(customTypes)).sorted()
+        
+        // Get blog-specific templates
+        let blogTemplateTypes = Set(blog.templates.map { $0.type })
+        
+        // Combine and sort
+        return Array(defaultTypes.union(blogTemplateTypes)).sorted()
     }
     
     // MARK: - Errors

@@ -21,7 +21,7 @@ class TemplateEngine {
     ///   - templateManager: The template manager to use (creates a new one if not provided)
     init(blog: Blog, templateManager: TemplateManager? = nil) {
         self.blog = blog
-        self.templateManager = templateManager ?? TemplateManager()
+        self.templateManager = templateManager ?? TemplateManager(blog: blog)
         self.markdownParser = MarkdownParser()
     }
     
