@@ -125,6 +125,10 @@ struct BlogDetailView: View {
                         Label("Visit Blog", systemImage: "safari")
                     }
                     
+                    Button(action: { showingEditBlogView = true }) {
+                        Label("Blog Details", systemImage: "person")
+                    }
+                    
                     Divider()
                     
                     Button(action: { showingPublishView = true }) {
@@ -136,9 +140,7 @@ struct BlogDetailView: View {
                     
                     Divider()
                     
-                    Button(action: { showingEditBlogView = true }) {
-                        Label("Blog Details", systemImage: "person")
-                    }
+                   
                     Button(action: {
                         showingCategoryManagement = true
                     }) {

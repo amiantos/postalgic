@@ -14,19 +14,19 @@ struct PostRowView: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-
-            if let title = post.title {
-                Text(title).font(.headline)
-            }
             
             if showDate {
                 Text(post.createdAt, format: .dateTime)
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.tertiary)
+            }
+
+            if let title = post.title {
+                Text(title).font(.headline)
             }
            
             Text(post.content.prefix(150))
-                .font(.body)
+                .font(.callout)
                 .lineLimit(3)
             
             if post.category != nil || !post.tags.isEmpty || post.isDraft {
