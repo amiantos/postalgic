@@ -357,15 +357,3 @@ class AWSPublisher: Publisher {
         }
     }
 }
-
-/// Placeholder publisher for manual download (ZIP)
-class ManualPublisher: Publisher {
-    var publisherType: PublisherType { .none }
-    
-    func publish(directoryURL: URL, statusUpdate: @escaping (String) -> Void = { _ in }) async throws -> URL? {
-        // For manual publisher, we just return the directory URL
-        // StaticSiteGenerator will handle ZIP creation
-        statusUpdate("Creating ZIP file for manual download...")
-        return directoryURL
-    }
-}

@@ -22,6 +22,21 @@ enum PublisherType: String, Codable, CaseIterable {
 }
 
 @Model
+final class BlogTemplate {
+    var type: String      // template type (e.g., "layout", "post", "index")
+    var content: String   // template content
+    var updatedAt: Date   // date when template was last updated
+    
+    var blog: Blog?       // the blog this template belongs to
+    
+    init(type: String, content: String, updatedAt: Date = Date()) {
+        self.type = type
+        self.content = content
+        self.updatedAt = updatedAt
+    }
+}
+
+@Model
 final class Blog {
     var name: String
     var url: String
@@ -62,6 +77,9 @@ final class Blog {
 
     @Relationship(deleteRule: .cascade, inverse: \Tag.blog)
     var tags: [Tag] = []
+    
+    @Relationship(deleteRule: .cascade, inverse: \BlogTemplate.blog)
+    var templates: [BlogTemplate] = []
 
     init(name: String, url: String, createdAt: Date = Date(), authorName: String? = nil, authorUrl: String? = nil, tagline: String? = nil) {
         self.name = name
@@ -90,6 +108,40 @@ final class Blog {
     
     var currentPublisherType: PublisherType {
         return PublisherType(rawValue: publisherType ?? "") ?? .none
+    }
+    
+    /// Get a template of a specific type if it exists
+    /// - Parameter type: The type of template to retrieve
+    /// - Returns: The template if it exists, nil otherwise
+    func template(for type: String) -> BlogTemplate? {
+        return templates.first { $0.type == type }
+    }
+    
+    /// Save a template of a specific type
+    /// - Parameters:
+    ///   - content: The template content
+    ///   - type: The template type
+    /// - Returns: The created or updated template
+    @discardableResult
+    func saveTemplate(_ content: String, for type: String) -> BlogTemplate {
+        // Check if template already exists
+        if let existingTemplate = template(for: type) {
+            existingTemplate.content = content
+            existingTemplate.updatedAt = Date()
+            return existingTemplate
+        } else {
+            // Create new template
+            let newTemplate = BlogTemplate(type: type, content: content)
+            newTemplate.blog = self
+            templates.append(newTemplate)
+            return newTemplate
+        }
+    }
+    
+    /// Delete a template of a specific type
+    /// - Parameter type: The template type to delete
+    func deleteTemplate(for type: String) {
+        templates.removeAll { $0.type == type }
     }
 }
 
