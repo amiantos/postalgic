@@ -41,6 +41,7 @@ class StaticSiteGenerator {
             color: var(--medium-gray);
             font-size: 0.9rem;
             margin-top: 5px;
+            display:inline-block;
         }
         
         :root {
@@ -151,6 +152,7 @@ class StaticSiteGenerator {
             color: var(--medium-gray);
             font-size: 0.9rem;
             margin-bottom: 10px;
+            display:inline-block;
         }
 
         .post-date a {
@@ -537,11 +539,11 @@ class StaticSiteGenerator {
         if let authorName = blog.authorName {
             if let authorUrl = blog.authorUrl, !authorUrl.isEmpty {
                 dateHTML += """
-                <div class="post-author">by <a href="\(authorUrl)">\(authorName)</a></div>
+                <div class="post-author"> by <a href="\(authorUrl)">\(authorName)</a></div>
                 """
             } else {
                 dateHTML += """
-                <div class="post-author">by \(authorName)</div>
+                <div class="post-author"> by \(authorName)</div>
                 """
             }
         }
@@ -594,11 +596,11 @@ class StaticSiteGenerator {
         if let authorName = blog.authorName {
             if let authorUrl = blog.authorUrl, !authorUrl.isEmpty {
                 dateHTML += """
-                <div class="post-author">by <a href="\(authorUrl)">\(authorName)</a></div>
+                <div class="post-author"> by <a href="\(authorUrl)">\(authorName)</a></div>
                 """
             } else {
                 dateHTML += """
-                <div class="post-author">by \(authorName)</div>
+                <div class="post-author"> by \(authorName)</div>
                 """
             }
         }
