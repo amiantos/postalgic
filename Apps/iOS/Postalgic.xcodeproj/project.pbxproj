@@ -10,6 +10,7 @@
 		44362E792DBC0AEE00EA704F /* FTPPublisher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44362E782DBC0AE900EA704F /* FTPPublisher.swift */; };
 		44362E7B2DBC0B0E00EA704F /* Publisher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44362E7A2DBC0B0B00EA704F /* Publisher.swift */; };
 		44362E7F2DBC10F700EA704F /* Citadel in Frameworks */ = {isa = PBXBuildFile; productRef = 44362E7E2DBC10F700EA704F /* Citadel */; };
+		44362E9F2DBCD04800EA704F /* PostRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44362E9E2DBCD04800EA704F /* PostRowView.swift */; };
 		443F0B2D2DB8D47500034EF1 /* EmbedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 443F0B2C2DB8D47500034EF1 /* EmbedView.swift */; };
 		443F0B2E2DB8D47500034EF1 /* EmbedFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 443F0B2B2DB8D47500034EF1 /* EmbedFormView.swift */; };
 		443F0B302DB8D48B00034EF1 /* LinkMetadataService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 443F0B2F2DB8D48B00034EF1 /* LinkMetadataService.swift */; };
@@ -58,6 +59,7 @@
 /* Begin PBXFileReference section */
 		44362E782DBC0AE900EA704F /* FTPPublisher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FTPPublisher.swift; sourceTree = "<group>"; };
 		44362E7A2DBC0B0B00EA704F /* Publisher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Publisher.swift; sourceTree = "<group>"; };
+		44362E9E2DBCD04800EA704F /* PostRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostRowView.swift; sourceTree = "<group>"; };
 		443674762DB3898500F67B00 /* Postalgic.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Postalgic.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		443674852DB3898600F67B00 /* PostalgicTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PostalgicTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		4436748F2DB3898600F67B00 /* PostalgicUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PostalgicUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -228,6 +230,7 @@
 		44C364302DB769260057567C /* Blog Detail */ = {
 			isa = PBXGroup;
 			children = (
+				44362E9E2DBCD04800EA704F /* PostRowView.swift */,
 				44C364122DB768DB0057567C /* BlogDetailView.swift */,
 				44C364152DB768DB0057567C /* CategoryManagementView.swift */,
 				443F0B622DBB6B9600034EF1 /* TagManagementView.swift */,
@@ -409,6 +412,7 @@
 				443F0B612DBB696600034EF1 /* HelpView.swift in Sources */,
 				44C3642B2DB768DB0057567C /* PublishBlogView.swift in Sources */,
 				44C3642C2DB768DB0057567C /* Models.swift in Sources */,
+				44362E9F2DBCD04800EA704F /* PostRowView.swift in Sources */,
 				44C3642D2DB768DB0057567C /* PostalgicApp.swift in Sources */,
 				443F0B302DB8D48B00034EF1 /* LinkMetadataService.swift in Sources */,
 			);

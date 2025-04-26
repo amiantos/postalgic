@@ -7,6 +7,7 @@
 
 import SwiftData
 import SwiftUI
+
 struct BlogDetailView: View {
     @Environment(\.modelContext) private var modelContext
     var blog: Blog
@@ -53,65 +54,7 @@ struct BlogDetailView: View {
                     NavigationLink {
                         PostDetailView(post: post)
                     } label: {
-                        VStack(alignment: .leading, spacing: 4) {
-                            HStack {
-                                if let title = post.title {
-                                    Text(title)
-                                        .font(.headline)
-                                } else {
-                                    Text(post.content.prefix(50))
-                                        .font(.headline)
-                                        .lineLimit(1)
-                                }
-
-                                if post.isDraft {
-                                    Spacer()
-                                    Text("DRAFT")
-                                        .font(.caption)
-                                        .foregroundStyle(.white)
-                                        .padding(.horizontal, 6)
-                                        .padding(.vertical, 2)
-                                        .background(Color("PPink"))
-                                        .cornerRadius(4)
-                                }
-                            }
-
-                            HStack {
-                                Text(post.createdAt, format: .dateTime)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-
-                                if let category = post.category {
-                                    Spacer()
-                                    Text(category.name)
-                                        .font(.caption)
-                                        .foregroundStyle(.white)
-                                        .padding(.horizontal, 6)
-                                        .padding(.vertical, 2)
-                                        .background(Color("PGreen"))
-                                        .cornerRadius(4)
-                                }
-                            }
-
-                            if !post.tags.isEmpty {
-                                HStack {
-                                    ForEach(post.tags.prefix(3)) { tag in
-                                        Text(tag.name)
-                                            .font(.caption)
-                                            .padding(.horizontal, 6)
-                                            .padding(.vertical, 2)
-                                            .background(Color("PBlue"))
-                                            .cornerRadius(4)
-                                    }
-                                    if post.tags.count > 3 {
-                                        Text("+\(post.tags.count - 3)")
-                                            .font(.caption)
-                                            .foregroundStyle(.secondary)
-                                    }
-                                }
-                            }
-                        }
-                        .padding(.vertical, 4)
+                        PostRowView(post: post)
                     }
                 }
             }
