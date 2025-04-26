@@ -88,7 +88,6 @@ struct PostTemplateData {
     
     var lastmod: String {
         let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withFullDate]
         return formatter.string(from: post.createdAt)
     }
     
