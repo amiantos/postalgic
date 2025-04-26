@@ -12,6 +12,33 @@ struct BlogDetailView: View {
     @Environment(\.modelContext) private var modelContext
     var blog: Blog
     @State private var showingPostForm = false
+    
+    // Initialized in init with proper fetch descriptor
+    @Query private var allPosts: [Post]
+    
+    // Computed property for date-grouped posts
+    private var postsByDate: [Date: [Post]] {
+        let filteredPosts = allPosts.filter { post in
+            // First filter by blog
+            guard post.blog?.id == blog.id else { return false }
+            
+            // Then filter by selected filter type
+            switch selectedFilter {
+            case .all: return true
+            case .published: return !post.isDraft
+            case .drafts: return post.isDraft
+            }
+        }
+        
+        return Dictionary(grouping: filteredPosts) { post in
+            Calendar.current.startOfDay(for: post.createdAt)
+        }
+    }
+    
+    // Sorted dates for display
+    private var sortedDates: [Date] {
+        postsByDate.keys.sorted(by: >)
+    }
     @State private var showingPublishView = false
     @State private var showingEditBlogView = false
     @State private var showingCategoryManagement = false
@@ -27,6 +54,17 @@ struct BlogDetailView: View {
     }
 
     @State private var selectedFilter: PostFilter = .all
+    
+    init(blog: Blog) {
+        self.blog = blog
+        
+        // Create a sorted fetch descriptor
+        let sortDescriptor = SortDescriptor<Post>(\.createdAt, order: .reverse)
+        let descriptor = FetchDescriptor<Post>(sortBy: [sortDescriptor])
+        
+        // Initialize the query with the descriptor
+        self._allPosts = Query(descriptor)
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -38,52 +76,27 @@ struct BlogDetailView: View {
             .pickerStyle(.segmented)
             .padding(.horizontal)
             .padding(.top)
-
-            let filteredPosts = blog.posts
-                .filter { post in
-                    switch selectedFilter {
-                    case .all: return true
-                    case .published: return !post.isDraft
-                    case .drafts: return post.isDraft
-                    }
-                }
-                .sorted { $0.createdAt > $1.createdAt }
             
-            if filteredPosts.isEmpty {
-                VStack(spacing: 20) {
-                    Image(systemName: "square.and.pencil")
-                        .font(.system(size: 60))
-                        .foregroundStyle(.secondary)
-                    
-                    Text("No \(selectedFilter.rawValue.lowercased()) posts yet")
-                        .font(.headline)
-                    
-                    Text("Create your first post by tapping the + button")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+            if postsByDate.isEmpty {
+                List{
+                    VStack(alignment: .leading) {
+                        Text("No \(selectedFilter.rawValue.lowercased()) posts yet")
+                            .font(.headline)
+                        
+                        Text("Create your first post by tapping the + button, or, you know, the button right below this text.")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
                     
                     Button(action: { showingPostForm = true }) {
                         Text("Create Post")
-                            .padding(.horizontal, 20)
-                            .padding(.vertical, 10)
                     }
-                    .buttonStyle(.borderedProminent)
                 }
-                .padding(.top, 40)
-                .frame(maxWidth: .infinity)
             } else {
                 List {
-                    // Group posts by date (truncated to day)
-                    let groupedPosts = Dictionary(grouping: filteredPosts) { post in
-                        Calendar.current.startOfDay(for: post.createdAt)
-                    }
-                    
-                    // Sort dates in descending order
-                    let sortedDates = groupedPosts.keys.sorted(by: >)
-                    
                     ForEach(sortedDates, id: \.self) { date in
                         Section(header: Text(formatDate(date))) {
-                            ForEach(groupedPosts[date]!) { post in
+                            ForEach(postsByDate[date]!) { post in
                                 NavigationLink {
                                     PostDetailView(post: post)
                                 } label: {

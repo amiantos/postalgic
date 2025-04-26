@@ -13,67 +13,65 @@ struct PostRowView: View {
     var showDate: Bool = true
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack {
-                if let title = post.title {
-                    Text(title)
-                        .font(.headline)
-                } else {
-                    Text(post.content.prefix(50))
-                        .font(.headline)
-                        .lineLimit(1)
-                }
-                
-                if post.isDraft {
-                    Spacer()
-                    Text("DRAFT")
-                        .font(.caption)
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
-                        .background(Color("PPink"))
-                        .cornerRadius(4)
-                }
+        VStack(alignment: .leading, spacing: 10) {
+
+            if let title = post.title {
+                Text(title).font(.headline)
             }
             
-            HStack {
-                if showDate {
-                    Text(post.createdAt, format: .dateTime)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-                
-                if let category = post.category {
-                    if showDate { Spacer() }
-                    Text(category.name)
-                        .font(.caption)
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
-                        .background(Color("PGreen"))
-                        .cornerRadius(4)
-                }
+            if showDate {
+                Text(post.createdAt, format: .dateTime)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
+           
+            Text(post.content.prefix(150))
+                .font(.body)
+                .lineLimit(3)
             
-            if !post.tags.isEmpty {
+            if post.category != nil || !post.tags.isEmpty || post.isDraft {
                 HStack {
-                    ForEach(post.tags.prefix(3)) { tag in
-                        Text(tag.name)
+                    if post.isDraft {
+                        Text("Draft")
                             .font(.caption)
+                            .foregroundStyle(.white)
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
-                            .background(Color("PBlue"))
+                            .background(Color("PPink"))
                             .cornerRadius(4)
                     }
-                    if post.tags.count > 3 {
-                        Text("+\(post.tags.count - 3)")
+                    
+                    if let category = post.category {
+                        Text(category.name)
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(Color("PGreen"))
+                            .cornerRadius(4)
+                            .lineLimit(1)
+                    }
+                    
+                    if !post.tags.isEmpty {
+                        ForEach(post.tags.prefix(3)) { tag in
+                            Text(tag.name)
+                                .font(.caption)
+                                .foregroundStyle(.white)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(Color("PBlue"))
+                                .cornerRadius(4)
+                                .lineLimit(1)
+                        }
+                        if post.tags.count > 3 {
+                            Text("+\(post.tags.count - 3)")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
                     }
                 }
             }
         }
-        .padding(.vertical, 4)
     }
 }
 

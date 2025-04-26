@@ -213,7 +213,7 @@ struct PreviewData {
             for i in 1...3 {
                 let post = Post(
                     title: "Post \(i)", 
-                    content: "Content for post \(i)"
+                    content: "Content for post \(i). SwiftUI is Apple's modern UI framework that enables developers to design and develop user interfaces with a declarative Swift syntax. This post explores the basics of SwiftUI and how to get started with it.\n\nHere are some key concepts:\n\n- **Views**: The basic building blocks\n- **State and Binding**: For managing UI state\n- **Modifiers**: For customizing views\n\nStay tuned for more SwiftUI content!"
                 )
                 context.insert(post)
                 
