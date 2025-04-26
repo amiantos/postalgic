@@ -10,6 +10,7 @@ import SwiftUI
 
 struct PostRowView: View {
     var post: Post
+    var showDate: Bool = true
     
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -36,12 +37,14 @@ struct PostRowView: View {
             }
             
             HStack {
-                Text(post.createdAt, format: .dateTime)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                if showDate {
+                    Text(post.createdAt, format: .dateTime)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
                 
                 if let category = post.category {
-                    Spacer()
+                    if showDate { Spacer() }
                     Text(category.name)
                         .font(.caption)
                         .foregroundStyle(.white)

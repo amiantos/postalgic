@@ -39,24 +39,61 @@ struct BlogDetailView: View {
             .padding(.horizontal)
             .padding(.top)
 
-            List {
-                let filteredPosts = blog.posts
-                    .filter { post in
-                        switch selectedFilter {
-                        case .all: return true
-                        case .published: return !post.isDraft
-                        case .drafts: return post.isDraft
-                        }
-                    }
-                    .sorted { $0.createdAt > $1.createdAt }
-
-                ForEach(filteredPosts) { post in
-                    NavigationLink {
-                        PostDetailView(post: post)
-                    } label: {
-                        PostRowView(post: post)
+            let filteredPosts = blog.posts
+                .filter { post in
+                    switch selectedFilter {
+                    case .all: return true
+                    case .published: return !post.isDraft
+                    case .drafts: return post.isDraft
                     }
                 }
+                .sorted { $0.createdAt > $1.createdAt }
+            
+            if filteredPosts.isEmpty {
+                VStack(spacing: 20) {
+                    Image(systemName: "square.and.pencil")
+                        .font(.system(size: 60))
+                        .foregroundStyle(.secondary)
+                    
+                    Text("No \(selectedFilter.rawValue.lowercased()) posts yet")
+                        .font(.headline)
+                    
+                    Text("Create your first post by tapping the + button")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    
+                    Button(action: { showingPostForm = true }) {
+                        Text("Create Post")
+                            .padding(.horizontal, 20)
+                            .padding(.vertical, 10)
+                    }
+                    .buttonStyle(.borderedProminent)
+                }
+                .padding(.top, 40)
+                .frame(maxWidth: .infinity)
+            } else {
+                List {
+                    // Group posts by date (truncated to day)
+                    let groupedPosts = Dictionary(grouping: filteredPosts) { post in
+                        Calendar.current.startOfDay(for: post.createdAt)
+                    }
+                    
+                    // Sort dates in descending order
+                    let sortedDates = groupedPosts.keys.sorted(by: >)
+                    
+                    ForEach(sortedDates, id: \.self) { date in
+                        Section(header: Text(formatDate(date))) {
+                            ForEach(groupedPosts[date]!) { post in
+                                NavigationLink {
+                                    PostDetailView(post: post)
+                                } label: {
+                                    PostRowView(post: post, showDate: true)
+                                }
+                            }
+                        }
+                    }
+                }
+                .listStyle(.insetGrouped)
             }
         }
         .navigationTitle(blog.name)
@@ -120,6 +157,41 @@ struct BlogDetailView: View {
         .sheet(isPresented: $showingPublishSettingsView) {
             PublishSettingsView(blog: blog)
         }
+    }
+    
+    private func formatDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        
+        // Check if date is today
+        if Calendar.current.isDateInToday(date) {
+            return "Today"
+        }
+        
+        // Check if date is yesterday
+        if Calendar.current.isDateInYesterday(date) {
+            return "Yesterday"
+        }
+        
+        // Check if date is in the current week
+        let currentWeek = Calendar.current.component(.weekOfYear, from: Date())
+        let dateWeek = Calendar.current.component(.weekOfYear, from: date)
+        let dateYear = Calendar.current.component(.year, from: date)
+        let currentYear = Calendar.current.component(.year, from: Date())
+        
+        if dateWeek == currentWeek && dateYear == currentYear {
+            formatter.dateFormat = "EEEE" // Day name (e.g., "Monday")
+            return formatter.string(from: date)
+        }
+        
+        // Current year but not current week
+        if dateYear == currentYear {
+            formatter.dateFormat = "MMMM d" // Month and day (e.g., "April 15")
+            return formatter.string(from: date)
+        }
+        
+        // Different year
+        formatter.dateFormat = "MMMM d, yyyy" // Full date (e.g., "April 15, 2024")
+        return formatter.string(from: date)
     }
 }
 
