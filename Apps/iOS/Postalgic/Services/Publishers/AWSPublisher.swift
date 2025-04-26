@@ -116,26 +116,31 @@ class AWSPublisher: Publisher {
     ///   - directory: The local directory containing the site files
     ///   - statusUpdate: Closure for updating status messages
     func uploadDirectory(_ directory: URL, statusUpdate: @escaping (String) -> Void) async throws {
-        // Use file enumeration to upload all files
+        // Use file enumeration to collect files before async operations
         let fileManager = FileManager.default
-        let enumerator = fileManager.enumerator(
-            at: directory,
-            includingPropertiesForKeys: [.isRegularFileKey],
-            options: [.skipsHiddenFiles]
-        )
-
-        guard let enumerator = enumerator else {
-            throw AWSPublisherError.directoryEnumerationFailed
+        
+        // Collect all files before entering async context
+        func collectFiles() throws -> [URL] {
+            guard let enumerator = fileManager.enumerator(
+                at: directory,
+                includingPropertiesForKeys: [.isRegularFileKey],
+                options: [.skipsHiddenFiles]
+            ) else {
+                throw AWSPublisherError.directoryEnumerationFailed
+            }
+            
+            var files: [URL] = []
+            for case let fileURL as URL in enumerator {
+                let attributes = try fileURL.resourceValues(forKeys: [.isRegularFileKey])
+                if attributes.isRegularFile == true {
+                    files.append(fileURL)
+                }
+            }
+            return files
         }
         
-        // First, count total files to upload for progress reporting
-        var filesToUpload: [URL] = []
-        for case let fileURL as URL in enumerator {
-            let attributes = try fileURL.resourceValues(forKeys: [.isRegularFileKey])
-            if attributes.isRegularFile == true {
-                filesToUpload.append(fileURL)
-            }
-        }
+        // Collect files synchronously before async operations
+        let filesToUpload = try collectFiles()
         
         let totalFiles = filesToUpload.count
         statusUpdate("Found \(totalFiles) files to upload")

@@ -53,26 +53,31 @@ class FTPPublisher: Publisher {
     ///   - directory: The local directory containing the site files
     ///   - statusUpdate: Closure for updating status messages
     private func uploadDirectory(_ directory: URL, statusUpdate: @escaping (String) -> Void) async throws {
-        // Use file enumeration to upload all files
+        // Use file enumeration to collect files before async operations
         let fileManager = FileManager.default
-        let enumerator = fileManager.enumerator(
-            at: directory,
-            includingPropertiesForKeys: [.isRegularFileKey],
-            options: [.skipsHiddenFiles]
-        )
         
-        guard let enumerator = enumerator else {
-            throw FTPPublisherError.directoryEnumerationFailed
-        }
-        
-        // First, count total files to upload for progress reporting
-        var filesToUpload: [URL] = []
-        for case let fileURL as URL in enumerator {
-            let attributes = try fileURL.resourceValues(forKeys: [.isRegularFileKey])
-            if attributes.isRegularFile == true {
-                filesToUpload.append(fileURL)
+        // Collect all files before entering async context
+        func collectFiles() throws -> [URL] {
+            guard let enumerator = fileManager.enumerator(
+                at: directory,
+                includingPropertiesForKeys: [.isRegularFileKey],
+                options: [.skipsHiddenFiles]
+            ) else {
+                throw FTPPublisherError.directoryEnumerationFailed
             }
+            
+            var files: [URL] = []
+            for case let fileURL as URL in enumerator {
+                let attributes = try fileURL.resourceValues(forKeys: [.isRegularFileKey])
+                if attributes.isRegularFile == true {
+                    files.append(fileURL)
+                }
+            }
+            return files
         }
+        
+        // Collect files synchronously before async operations
+        let filesToUpload = try collectFiles()
         
         let totalFiles = filesToUpload.count
         statusUpdate("Found \(totalFiles) files to upload")
@@ -178,7 +183,7 @@ class FTPPublisher: Publisher {
     /// Upload a file to the SFTP server
     private func uploadFile(sftp: SFTPClient, fileData: Data, remotePath: String) async throws {
         // Convert Data to ByteBuffer for NIO
-        var buffer = ByteBuffer(bytes: [UInt8](fileData))
+        let buffer = ByteBuffer(bytes: [UInt8](fileData))
         
         try await sftp.withFile(
             filePath: remotePath,
