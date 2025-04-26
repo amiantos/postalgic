@@ -15,11 +15,12 @@ Online "social networks" have proven themselves incapable of nuturing meaningful
 
 - [x] Create, manage, and update blogs in the palm of your hand
 - [x] Generate static HTML / CSS websites automatically
-- [ ] Upload your static website to a variety of static site hosting services
+- [x] Templating system using [Mustache](https://mustache.github.io)
+- [x] Upload your static website to a variety of static site hosting services
   - [x] AWS S3 with CloudFront
   - [x] Any SFTP Server
   - [ ] Postalgic Pro
-  - [ ] Others?
+  - [ ] Others...?
 
 # Sample Sites
 - https://brad.postalgic.app
