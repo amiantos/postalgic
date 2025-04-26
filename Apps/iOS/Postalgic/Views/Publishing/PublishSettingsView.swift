@@ -83,13 +83,13 @@ struct PublishSettingsView: View {
                 }
             )
             .sheet(isPresented: $showingAwsConfigView) {
-                BlogAwsConfigView(blog: blog)
+                BlogAwsConfigView(blog: blog).interactiveDismissDisabled()
             }
             .sheet(isPresented: $showingFtpConfigView) {
-                BlogFtpConfigView(blog: blog)
+                BlogFtpConfigView(blog: blog).interactiveDismissDisabled()
             }
             .sheet(isPresented: $showingTemplateCustomizationView) {
-                TemplateCustomizationView(blog: blog)
+                TemplateCustomizationView(blog: blog).interactiveDismissDisabled()
             }
         }
     }

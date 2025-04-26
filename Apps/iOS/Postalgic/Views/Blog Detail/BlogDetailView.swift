@@ -44,6 +44,7 @@ struct BlogDetailView: View {
     @State private var showingCategoryManagement = false
     @State private var showingTagManagement = false
     @State private var showingPublishSettingsView = false
+    @State private var showingTemplateCustomizationView = false
 
     enum PostFilter: String, CaseIterable, Identifiable {
         case all = "All"
@@ -137,6 +138,9 @@ struct BlogDetailView: View {
                     Button(action: { showingPublishSettingsView = true }) {
                         Label("Publishing Settings", systemImage: "gear")
                     }
+                    Button(action: { showingTemplateCustomizationView.toggle() }) {
+                        Label("Customize Template", systemImage: "richtext.page")
+                    }
                     
                     Divider()
                     
@@ -173,6 +177,9 @@ struct BlogDetailView: View {
         }
         .sheet(isPresented: $showingPublishSettingsView) {
             PublishSettingsView(blog: blog)
+        }
+        .sheet(isPresented: $showingTemplateCustomizationView) {
+            TemplateCustomizationView(blog: blog).interactiveDismissDisabled()
         }
     }
     

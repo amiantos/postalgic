@@ -31,63 +31,51 @@ struct TemplateCustomizationView: View {
                 if !errorMessage.isEmpty {
                     Text(errorMessage)
                         .foregroundColor(.red)
-                        .padding()
-                }
-                
-                Picker("Template Type", selection: $selectedTemplateType) {
-                    ForEach(availableTemplateTypes, id: \.self) { type in
-                        Text(type.capitalized)
-                            .tag(type)
-                    }
-                }
-                .pickerStyle(.automatic)
-                .padding()
-                .onChange(of: selectedTemplateType) { _, newValue in
-                    loadTemplate(type: newValue)
                 }
                 
                 TextEditor(text: $templateContent)
-                    .font(.system(.body, design: .monospaced))
+                    .font(.system(.caption, design: .monospaced))
                     .frame(minHeight: 400)
-                    .padding()
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8)
-                            .stroke(Color.secondary.opacity(0.3), lineWidth: 1)
-                    )
                     .disabled(!isEditing)
-                
-                HStack {
-                    if isEditing {
-                        Button("Cancel") {
-                            isEditing = false
-                            loadTemplate(type: selectedTemplateType)
-                        }
-                        .buttonStyle(.bordered)
-                        
-                        Button("Save") {
-                            saveTemplate()
-                        }
-                        .buttonStyle(.borderedProminent)
-                    } else {
-                        Button("Reset to Default") {
-                            resetTemplate()
-                        }
-                        .buttonStyle(.bordered)
-                        
-                        Button("Edit") {
-                            isEditing = true
-                        }
-                        .buttonStyle(.borderedProminent)
-                    }
-                }
-                .padding()
             }
             .navigationTitle("Customize Templates")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
+                ToolbarItemGroup(placement: .topBarLeading) {
                     Button("Close") {
                         dismiss()
+                    }
+                }
+                ToolbarItemGroup(placement: .topBarTrailing) {
+                    Picker("Template Type", selection: $selectedTemplateType) {
+                        ForEach(availableTemplateTypes, id: \.self) { type in
+                            Text(type)
+                                .tag(type)
+                        }
+                    }
+                    .onChange(of: selectedTemplateType) { _, newValue in
+                        loadTemplate(type: newValue)
+                    }
+                }
+                ToolbarItemGroup(placement: .bottomBar) {
+                    if isEditing {
+                        Button("Cancel", role: .destructive) {
+                            isEditing = false
+                            loadTemplate(type: selectedTemplateType)
+                        }
+                        
+                        Button("Save") {
+                            saveTemplate()
+                        }
+                    } else {
+                        Button("Reset to Default", role: .destructive) {
+                            resetTemplate()
+                        }
+                        
+                        
+                        Button("Edit") {
+                            isEditing = true
+                        }
                     }
                 }
             }
