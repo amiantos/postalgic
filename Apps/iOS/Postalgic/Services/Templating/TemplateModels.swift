@@ -15,24 +15,16 @@ struct PostTemplateData {
     let blog: Blog
     let markdownParser: MarkdownParser
     
-    // Computed properties that will be available in templates
-    var displayTitle: String {
-        return post.displayTitle
-    }
-    
-    var hasTitle: Bool {
-        return post.title?.isEmpty == false
-    }
-    
-    var formattedDate: String {
-        return post.formattedDate
-    }
-    
-    var urlPath: String {
-        return post.urlPath
-    }
-    
-    var contentHtml: String {
+    // Method to convert to a dictionary for Mustache
+    func toDictionary() -> [String: Any] {
+        var dict: [String: Any] = [
+            "displayTitle": post.displayTitle,
+            "hasTitle": post.title?.isEmpty == false,
+            "formattedDate": post.formattedDate,
+            "urlPath": post.urlPath,
+            "hasTags": !post.tags.isEmpty
+        ]
+        
         // Generate post content with embeds
         let postContent = markdownParser.html(from: post.content)
         var finalContent = ""
@@ -48,56 +40,44 @@ struct PostTemplateData {
             finalContent += "\n" + embed.generateHtml()
         }
         
-        return finalContent
-    }
-    
-    var hasTags: Bool {
-        return !post.tags.isEmpty
-    }
-    
-    var tags: [[String: String]] {
-        return post.tags.map { tag in
-            return [
-                "name": tag.name,
-                "urlPath": tag.name.urlPathFormatted()
-            ]
+        dict["contentHtml"] = finalContent
+        
+        // Add tags if present
+        if !post.tags.isEmpty {
+            dict["tags"] = post.tags.map { tag in
+                return [
+                    "name": tag.name,
+                    "urlPath": tag.name.urlPathFormatted()
+                ]
+            }
         }
-    }
-    
-    var hasCategory: Bool {
-        return post.category != nil
-    }
-    
-    var categoryName: String? {
-        return post.category?.name
-    }
-    
-    var categoryDescription: String? {
-        return post.category?.categoryDescription
-    }
-    
-    var categoryUrlPath: String? {
-        return post.category?.name.urlPathFormatted()
-    }
-    
-    // ISO8601 formatted date for RSS, etc.
-    var pubDate: String {
+        
+        // Add category if present
+        dict["hasCategory"] = post.category != nil
+        if let category = post.category {
+            dict["categoryName"] = category.name
+            dict["categoryUrlPath"] = category.name.urlPathFormatted()
+            
+            if let description = category.categoryDescription {
+                dict["categoryDescription"] = description
+            }
+        }
+        
+        // ISO8601 formatted date for RSS, etc.
         let formatter = ISO8601DateFormatter()
-        return formatter.string(from: post.createdAt)
-    }
-    
-    var lastmod: String {
-        let formatter = ISO8601DateFormatter()
-        return formatter.string(from: post.createdAt)
-    }
-    
-    // Blog author information
-    var blogAuthor: String? {
-        return blog.authorName
-    }
-    
-    var blogAuthorUrl: String? {
-        return blog.authorUrl
+        dict["pubDate"] = formatter.string(from: post.createdAt)
+        dict["lastmod"] = formatter.string(from: post.createdAt)
+        
+        // Blog author information
+        if let authorName = blog.authorName {
+            dict["blogAuthor"] = authorName
+        }
+        
+        if let authorUrl = blog.authorUrl {
+            dict["blogAuthorUrl"] = authorUrl
+        }
+        
+        return dict
     }
 }
 
@@ -107,29 +87,24 @@ struct CategoryTemplateData {
     let posts: [Post]
     let markdownParser: MarkdownParser
     
-    var name: String {
-        return category.name
-    }
-    
-    var urlPath: String {
-        return category.name.urlPathFormatted()
-    }
-    
-    var hasDescription: Bool {
-        return category.categoryDescription?.isEmpty == false
-    }
-    
-    var description: String? {
-        return category.categoryDescription
-    }
-    
-    var postCount: Int {
-        return posts.count
-    }
-    
-    var lastmod: String {
+    func toDictionary() -> [String: Any] {
+        var dict: [String: Any] = [
+            "name": category.name,
+            "urlPath": category.name.urlPathFormatted(),
+            "postCount": posts.count
+        ]
+        
+        let hasDescription = category.categoryDescription?.isEmpty == false
+        dict["hasDescription"] = hasDescription
+        
+        if hasDescription, let description = category.categoryDescription {
+            dict["description"] = description
+        }
+        
         let formatter = ISO8601DateFormatter()
-        return formatter.string(from: Date())
+        dict["lastmod"] = formatter.string(from: Date())
+        
+        return dict
     }
 }
 
@@ -139,21 +114,17 @@ struct TagTemplateData {
     let posts: [Post]
     let markdownParser: MarkdownParser
     
-    var name: String {
-        return tag.name
-    }
-    
-    var urlPath: String {
-        return tag.name.urlPathFormatted()
-    }
-    
-    var postCount: Int {
-        return posts.count
-    }
-    
-    var lastmod: String {
+    func toDictionary() -> [String: Any] {
+        var dict: [String: Any] = [
+            "name": tag.name,
+            "urlPath": tag.name.urlPathFormatted(),
+            "postCount": posts.count
+        ]
+        
         let formatter = ISO8601DateFormatter()
-        return formatter.string(from: Date())
+        dict["lastmod"] = formatter.string(from: Date())
+        
+        return dict
     }
 }
 
@@ -162,26 +133,28 @@ struct ArchiveMonthData {
     let month: Int
     let monthName: String
     let posts: [ArchivePostData]
+    
+    func toDictionary() -> [String: Any] {
+        return [
+            "month": month,
+            "monthName": monthName,
+            "posts": posts.map { $0.toDictionary() }
+        ]
+    }
 }
 
 /// Structure that represents a post in the archives template
 struct ArchivePostData {
     let post: Post
     
-    var displayTitle: String {
-        return post.displayTitle
-    }
-    
-    var urlPath: String {
-        return post.urlPath
-    }
-    
-    var day: Int {
-        return Calendar.current.component(.day, from: post.createdAt)
-    }
-    
-    var dayPadded: String {
-        return String(format: "%02d", day)
+    func toDictionary() -> [String: Any] {
+        let day = Calendar.current.component(.day, from: post.createdAt)
+        return [
+            "displayTitle": post.displayTitle,
+            "urlPath": post.urlPath,
+            "day": day,
+            "dayPadded": String(format: "%02d", day)
+        ]
     }
 }
 
@@ -189,29 +162,39 @@ struct ArchivePostData {
 struct ArchiveYearData {
     let year: Int
     let months: [ArchiveMonthData]
+    
+    func toDictionary() -> [String: Any] {
+        return [
+            "year": year,
+            "months": months.map { $0.toDictionary() }
+        ]
+    }
 }
 
 /// Collection of helper functions to convert model data to template data
 struct TemplateDataConverter {
     static let markdownParser = MarkdownParser()
     
-    /// Converts a Post to PostTemplateData
-    static func convert(post: Post, blog: Blog) -> PostTemplateData {
-        return PostTemplateData(post: post, blog: blog, markdownParser: markdownParser)
+    /// Converts a Post to a dictionary for template rendering
+    static func convert(post: Post, blog: Blog) -> [String: Any] {
+        let templateData = PostTemplateData(post: post, blog: blog, markdownParser: markdownParser)
+        return templateData.toDictionary()
     }
     
-    /// Converts a Category to CategoryTemplateData
-    static func convert(category: Category, posts: [Post]) -> CategoryTemplateData {
-        return CategoryTemplateData(category: category, posts: posts, markdownParser: markdownParser)
+    /// Converts a Category to a dictionary for template rendering
+    static func convert(category: Category, posts: [Post]) -> [String: Any] {
+        let templateData = CategoryTemplateData(category: category, posts: posts, markdownParser: markdownParser)
+        return templateData.toDictionary()
     }
     
-    /// Converts a Tag to TagTemplateData
-    static func convert(tag: Tag, posts: [Post]) -> TagTemplateData {
-        return TagTemplateData(tag: tag, posts: posts, markdownParser: markdownParser)
+    /// Converts a Tag to a dictionary for template rendering
+    static func convert(tag: Tag, posts: [Post]) -> [String: Any] {
+        let templateData = TagTemplateData(tag: tag, posts: posts, markdownParser: markdownParser)
+        return templateData.toDictionary()
     }
     
     /// Creates archive data organized by year and month
-    static func createArchiveData(from posts: [Post]) -> [ArchiveYearData] {
+    static func createArchiveData(from posts: [Post]) -> [[String: Any]] {
         let calendar = Calendar.current
         var yearMonthPosts: [Int: [Int: [Post]]] = [:]
         
@@ -269,6 +252,7 @@ struct TemplateDataConverter {
             ))
         }
         
-        return archiveYears
+        // Convert to dictionaries for template rendering
+        return archiveYears.map { $0.toDictionary() }
     }
 }

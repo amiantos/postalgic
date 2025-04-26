@@ -53,15 +53,27 @@ class TemplateEngine {
     
     /// Creates the base context with shared properties for all templates
     private func createBaseContext() -> [String: Any] {
-        return [
+        var context: [String: Any] = [
             "blogName": blog.name,
             "blogUrl": blog.url,
-            "blogTagline": blog.tagline,
-            "blogAuthor": blog.authorName,
-            "blogAuthorUrl": blog.authorUrl,
             "currentYear": Calendar.current.component(.year, from: Date()),
             "buildDate": ISO8601DateFormatter().string(from: Date())
         ]
+        
+        // Add optional values only if they exist
+        if let tagline = blog.tagline {
+            context["blogTagline"] = tagline
+        }
+        
+        if let authorName = blog.authorName {
+            context["blogAuthor"] = authorName
+        }
+        
+        if let authorUrl = blog.authorUrl {
+            context["blogAuthorUrl"] = authorUrl
+        }
+        
+        return context
     }
     
     // MARK: - Render Methods
@@ -111,24 +123,22 @@ class TemplateEngine {
         
         var context = createBaseContext()
         let postData = TemplateDataConverter.convert(post: post, blog: blog)
-        context["displayTitle"] = postData.displayTitle
-        context["hasTitle"] = postData.hasTitle
-        context["formattedDate"] = postData.formattedDate
-        context["urlPath"] = postData.urlPath
-        context["contentHtml"] = postData.contentHtml
-        context["hasTags"] = postData.hasTags
-        context["tags"] = postData.tags
-        context["hasCategory"] = postData.hasCategory
-        context["categoryName"] = postData.categoryName
-        context["categoryUrlPath"] = postData.categoryUrlPath
-        context["blogAuthor"] = postData.blogAuthor
-        context["blogAuthorUrl"] = postData.blogAuthorUrl
+        
+        // Merge the post data into the context
+        for (key, value) in postData {
+            context[key] = value
+        }
         
         let content = postTemplate.render(context)
         
-        let pageTitle = postData.hasTitle 
-            ? "\(postData.displayTitle) - \(blog.name)" 
-            : "\(postData.formattedDate) - \(blog.name)"
+        // We need to extract these values for the page title
+        let hasTitle = post.title?.isEmpty == false
+        let displayTitle = post.displayTitle
+        let formattedDate = post.formattedDate
+        
+        let pageTitle = hasTitle 
+            ? "\(displayTitle) - \(blog.name)" 
+            : "\(formattedDate) - \(blog.name)"
         
         return try renderLayout(content: content, pageTitle: pageTitle)
     }
@@ -173,8 +183,14 @@ class TemplateEngine {
         let tagTemplate = try templateManager.getTemplate(for: "tag")
         
         var context = createBaseContext()
+        // Add tag data
+        let tagData = TemplateDataConverter.convert(tag: tag, posts: posts)
+        for (key, value) in tagData {
+            context[key] = value
+        }
+        
+        // Add additional context
         context["tagName"] = tag.name
-        context["postCount"] = posts.count
         context["postCountText"] = posts.count == 1 ? "post" : "posts"
         context["posts"] = posts.map { TemplateDataConverter.convert(post: $0, blog: blog) }
         
@@ -208,10 +224,15 @@ class TemplateEngine {
         let categoryTemplate = try templateManager.getTemplate(for: "category")
         
         var context = createBaseContext()
+        
+        // Add category data
+        let categoryData = TemplateDataConverter.convert(category: category, posts: posts)
+        for (key, value) in categoryData {
+            context[key] = value
+        }
+        
+        // Add additional context
         context["categoryName"] = category.name
-        context["hasDescription"] = category.categoryDescription?.isEmpty == false
-        context["description"] = category.categoryDescription
-        context["postCount"] = posts.count
         context["postCountText"] = posts.count == 1 ? "post" : "posts"
         context["posts"] = posts.map { TemplateDataConverter.convert(post: $0, blog: blog) }
         
@@ -254,23 +275,17 @@ class TemplateEngine {
         context["posts"] = posts.map { TemplateDataConverter.convert(post: $0, blog: blog) }
         
         // Convert tags
-        context["tags"] = tags.map { tag in
-            let formatter = ISO8601DateFormatter()
-            return [
-                "name": tag.name,
-                "urlPath": tag.name.urlPathFormatted(),
-                "lastmod": formatter.string(from: Date())
-            ]
+        context["tags"] = tags.map { tag -> [String: Any] in
+            // Create dummy TagTemplateData
+            let emptyPosts: [Post] = []
+            return TemplateDataConverter.convert(tag: tag, posts: emptyPosts)
         }
         
         // Convert categories
-        context["categories"] = categories.map { category in
-            let formatter = ISO8601DateFormatter()
-            return [
-                "name": category.name,
-                "urlPath": category.name.urlPathFormatted(),
-                "lastmod": formatter.string(from: Date())
-            ]
+        context["categories"] = categories.map { category -> [String: Any] in
+            // Create dummy CategoryTemplateData
+            let emptyPosts: [Post] = []
+            return TemplateDataConverter.convert(category: category, posts: emptyPosts)
         }
         
         return sitemapTemplate.render(context)

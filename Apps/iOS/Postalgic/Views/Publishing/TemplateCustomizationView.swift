@@ -40,7 +40,7 @@ struct TemplateCustomizationView: View {
                             .tag(type)
                     }
                 }
-                .pickerStyle(.segmented)
+                .pickerStyle(.automatic)
                 .padding()
                 .onChange(of: selectedTemplateType) { _, newValue in
                     loadTemplate(type: newValue)
