@@ -8,11 +8,11 @@ import { aws_cloudfront_origins as origins } from "aws-cdk-lib";
 import { aws_route53 as route53 } from "aws-cdk-lib";
 import { aws_route53_targets as targets } from "aws-cdk-lib";
 
-export class BradPostalgicAppStack extends cdk.Stack {
+export class DevPostalgicAppStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    const SUBDOMAIN = "brad";
+    const SUBDOMAIN = "dev";
     const PARENT_DOMAIN = "postalgic.app";
     const DOMAIN_NAME = `${SUBDOMAIN}.${PARENT_DOMAIN}`;
     const HOSTED_ZONE_ID = "Z0678296322S0NR3YLJXV";
@@ -35,7 +35,7 @@ export class BradPostalgicAppStack extends cdk.Stack {
 
     // Deploy website files to S3 bucket
     new s3deploy.BucketDeployment(this, "DeployWebsite", {
-      sources: [s3deploy.Source.asset("./temp_website")], // Path to the directory containing the index.html file
+      sources: [s3deploy.Source.asset("../temp_website")], // Path to the directory containing the index.html file
       destinationBucket: bucket,
     });
 

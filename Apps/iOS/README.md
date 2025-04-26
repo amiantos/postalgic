@@ -13,7 +13,8 @@ Postalgic for iOS is a pocket-sized decentralized micro-blogging platform. Simpl
   - [ ] Others?
 
 # Sample Sites
-- https://micro.amiantos.net
+- https://brad.postalgic.app
+- https://dev.postalgic.app
 - https://test.postalgic.app
 
 # Credits
