@@ -22,6 +22,7 @@ struct PublishBlogView: View {
     @State private var generatedZipURL: URL?
     @State private var errorMessage: String?
     @State private var publishSuccessMessage: String?
+    @State private var statusMessage: String = "Initializing..."
 
     @State private var showingShareSheet = false
     @State private var showingSuccessAlert = false
@@ -94,7 +95,9 @@ struct PublishBlogView: View {
             if isGenerating {
                 ProgressView()
                     .padding()
-                Text("Generating site...")
+                Text(statusMessage)
+                    .padding(.horizontal)
+                    .multilineTextAlignment(.center)
             } else {
                 // Main publishing controls
                 VStack(spacing: 12) {
@@ -272,20 +275,38 @@ struct PublishBlogView: View {
             }
         }
         .onAppear {
+            setupNotificationObservers()
             if autoPublish {
                 generateSite()
             }
         }
+        .onDisappear {
+            removeNotificationObservers()
+        }
     }
 
+    private func setupNotificationObservers() {
+        NotificationCenter.default.addObserver(forName: .publishStatusUpdated, object: nil, queue: .main) { [self] notification in
+            if let status = notification.object as? String {
+                self.statusMessage = status
+            }
+        }
+    }
+    
+    private func removeNotificationObservers() {
+        NotificationCenter.default.removeObserver(self, name: .publishStatusUpdated, object: nil)
+    }
+    
     private func generateSite() {
         isGenerating = true
         errorMessage = nil
         publishSuccessMessage = nil
+        statusMessage = "Preparing to generate site..."
 
         Task {
             do {
                 let generator = StaticSiteGenerator(blog: blog)
+                statusMessage = "Generating site content..."
                 let result = try await generator.generateSite()
 
                 DispatchQueue.main.async {
@@ -316,6 +337,7 @@ struct PublishBlogView: View {
             } catch {
                 DispatchQueue.main.async {
                     self.errorMessage = "Error: \(error.localizedDescription)"
+                    self.statusMessage = "Error occurred during publishing"
                     self.isGenerating = false
                 }
             }

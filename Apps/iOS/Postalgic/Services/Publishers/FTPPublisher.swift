@@ -39,29 +39,48 @@ class FTPPublisher: Publisher {
     }
     
     /// Publishes the static site from the given directory
-    func publish(directoryURL: URL) async throws -> URL? {
-        print("🔄 Starting SFTP file upload to \(host):\(port)")
+    func publish(directoryURL: URL, statusUpdate: @escaping (String) -> Void = { _ in }) async throws -> URL? {
+        statusUpdate("Starting SFTP file upload to \(host):\(port)...")
         
-        try await uploadDirectory(directoryURL)
+        try await uploadDirectory(directoryURL, statusUpdate: statusUpdate)
         
-        print("🔄 SFTP upload completed")
+        statusUpdate("SFTP upload completed")
         return nil // SFTP publisher doesn't return a local URL, as content is published remotely
     }
     
     /// Uploads the contents of a directory to the SFTP server
-    /// - Parameter directory: The local directory containing the site files
-    private func uploadDirectory(_ directory: URL) async throws {
-        // Use file enumeration to upload all files
+    /// - Parameters:
+    ///   - directory: The local directory containing the site files
+    ///   - statusUpdate: Closure for updating status messages
+    private func uploadDirectory(_ directory: URL, statusUpdate: @escaping (String) -> Void) async throws {
+        // Use file enumeration to collect files before async operations
         let fileManager = FileManager.default
-        let enumerator = fileManager.enumerator(
-            at: directory,
-            includingPropertiesForKeys: [.isRegularFileKey],
-            options: [.skipsHiddenFiles]
-        )
         
-        guard let enumerator = enumerator else {
-            throw FTPPublisherError.directoryEnumerationFailed
+        // Collect all files before entering async context
+        func collectFiles() throws -> [URL] {
+            guard let enumerator = fileManager.enumerator(
+                at: directory,
+                includingPropertiesForKeys: [.isRegularFileKey],
+                options: [.skipsHiddenFiles]
+            ) else {
+                throw FTPPublisherError.directoryEnumerationFailed
+            }
+            
+            var files: [URL] = []
+            for case let fileURL as URL in enumerator {
+                let attributes = try fileURL.resourceValues(forKeys: [.isRegularFileKey])
+                if attributes.isRegularFile == true {
+                    files.append(fileURL)
+                }
+            }
+            return files
         }
+        
+        // Collect files synchronously before async operations
+        let filesToUpload = try collectFiles()
+        
+        let totalFiles = filesToUpload.count
+        statusUpdate("Found \(totalFiles) files to upload")
         
         var fileCount = 0
         var uploadErrors: [String] = []
@@ -69,7 +88,7 @@ class FTPPublisher: Publisher {
         // Connect to the server
         let client: SSHClient
         do {
-            print("🔄 Creating SFTP connection to \(host):\(port)")
+            statusUpdate("Creating SFTP connection to \(host):\(port)...")
             client = try await SSHClient.connect(host: host,
                                                  port: port,
                                                  authenticationMethod: .passwordBased(
@@ -78,25 +97,22 @@ class FTPPublisher: Publisher {
                                                  ),
                                                  hostKeyValidator: .acceptAnything(), // Note: In production, consider using a stricter validator)
                                                  reconnect: .never)
-            print("🔄 Connected and authenticated to \(host)")
+            statusUpdate("Connected and authenticated to \(host)")
         } catch {
             print("❌ SFTP connection failed: \(error.localizedDescription)")
+            statusUpdate("Connection failed: \(error.localizedDescription)")
             throw FTPPublisherError.connectionFailed("Failed to connect to \(host):\(port) - \(error.localizedDescription)")
         }
         
         // Create SFTP session
+        statusUpdate("Opening SFTP session...")
         let sftp = try await client.openSFTP()
         
         // Track processed directories to avoid redundant checks/creation
         var processedDirectories: Set<String> = []
         
         // Upload each file to SFTP
-        for case let fileURL as URL in enumerator {
-            let attributes = try fileURL.resourceValues(forKeys: [
-                .isRegularFileKey
-            ])
-            guard attributes.isRegularFile == true else { continue }
-            
+        for (index, fileURL) in filesToUpload.enumerated() {
             // Determine the relative path from the base directory
             let relativePath = fileURL.path.replacingOccurrences(
                 of: directory.path,
@@ -115,27 +131,31 @@ class FTPPublisher: Publisher {
             
             // Create remote directory if it doesn't exist yet and isn't in our processed list
             if !processedDirectories.contains(remoteDirectoryPath) {
+                statusUpdate("Creating remote directory: \(remoteDirectoryPath)")
                 try await createRemoteDirectoryStructure(sftp: sftp, path: remoteDirectoryPath)
                 processedDirectories.insert(remoteDirectoryPath)
             }
+            
+            // Update status with current file being uploaded
+            let progressPercent = Int(Double(index + 1) / Double(totalFiles) * 100)
+            statusUpdate("Uploading file \(index + 1)/\(totalFiles) (\(progressPercent)%): \(relativePath)")
             
             do {
                 // Read file data
                 let fileData = try Data(contentsOf: fileURL)
                 
-                print("📤 Uploading: \(relativePath)")
-                
+                // Upload the file
                 try await uploadFile(
                     sftp: sftp,
                     fileData: fileData,
                     remotePath: remoteFilePath
                 )
                 
-                print("📤 Uploaded: \(relativePath)")
                 fileCount += 1
                 
             } catch {
                 print("❌ Error uploading \(relativePath): \(error.localizedDescription)")
+                statusUpdate("Error uploading \(relativePath): \(error.localizedDescription)")
                 uploadErrors.append(
                     "\(relativePath): \(error.localizedDescription)"
                 )
@@ -143,10 +163,11 @@ class FTPPublisher: Publisher {
         }
         
         // Close the SFTP session and SSH connection
+        statusUpdate("Closing SFTP connection...")
         try await sftp.close()
         try await client.close()
         
-        print("📤 Uploaded \(fileCount) files total")
+        statusUpdate("Completed upload of \(fileCount) files to \(host)")
         
         if fileCount == 0 {
             throw FTPPublisherError.ftpUploadFailed("No files were uploaded")
@@ -162,7 +183,7 @@ class FTPPublisher: Publisher {
     /// Upload a file to the SFTP server
     private func uploadFile(sftp: SFTPClient, fileData: Data, remotePath: String) async throws {
         // Convert Data to ByteBuffer for NIO
-        var buffer = ByteBuffer(bytes: [UInt8](fileData))
+        let buffer = ByteBuffer(bytes: [UInt8](fileData))
         
         try await sftp.withFile(
             filePath: remotePath,

@@ -9,6 +9,6 @@ import Foundation
 
 /// Protocol that all publishers must conform to
 protocol Publisher {
-    func publish(directoryURL: URL) async throws -> URL?
+    func publish(directoryURL: URL, statusUpdate: @escaping (String) -> Void) async throws -> URL?
     var publisherType: PublisherType { get }
 }

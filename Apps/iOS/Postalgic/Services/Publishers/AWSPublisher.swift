@@ -51,9 +51,12 @@ class AWSPublisher: Publisher {
     }
     
     /// Publishes the static site from the given directory
-    func publish(directoryURL: URL) async throws -> URL? {
-        try uploadDirectory(directoryURL)
-        try invalidateCache()
+    func publish(directoryURL: URL, statusUpdate: @escaping (String) -> Void = { _ in }) async throws -> URL? {
+        statusUpdate("Starting S3 upload...")
+        try await uploadDirectory(directoryURL, statusUpdate: statusUpdate)
+        statusUpdate("Upload complete. Creating CloudFront invalidation...")
+        try await invalidateCache(statusUpdate: statusUpdate)
+        statusUpdate("Publication complete!")
         return nil // AWS publisher doesn't return a local URL, as content is published remotely
     }
 
@@ -62,71 +65,91 @@ class AWSPublisher: Publisher {
         bucket: String,
         key: String,
         contentType: String
-    ) {
+    ) async throws {
         let expression = AWSS3TransferUtilityUploadExpression()
         expression.progressBlock = { (task, progress) in
             DispatchQueue.main.async(qos: .background) {
                 print("Progress: \(progress.fractionCompleted)")
             }
         }
-
-        let completionHandler:
-            AWSS3TransferUtilityUploadCompletionHandlerBlock = {
-                (task, error) in
-                DispatchQueue.main.async(qos: .background) {
-                    if let error = error {
-                        print("Upload failed: \(error.localizedDescription)")
-                    } else {
-                        print("Upload succeeded!")
+        
+        return try await withCheckedThrowingContinuation { continuation in
+            let completionHandler:
+                AWSS3TransferUtilityUploadCompletionHandlerBlock = {
+                    (task, error) in
+                    DispatchQueue.main.async(qos: .background) {
+                        if let error = error {
+                            print("Upload failed: \(error.localizedDescription)")
+                            continuation.resume(throwing: error)
+                        } else {
+                            print("Upload succeeded!")
+                            continuation.resume(returning: ())
+                        }
                     }
                 }
-            }
 
-        let transferUtility = AWSS3TransferUtility.default()
-        transferUtility.uploadData(
-            data,
-            bucket: bucket,
-            key: key,
-            contentType: contentType,
-            expression: expression,
-            completionHandler: completionHandler
-        ).continueWith { (task) -> AnyObject? in
-            if let error = task.error {
-                print("Error: \(error.localizedDescription)")
+            let transferUtility = AWSS3TransferUtility.default()
+            transferUtility.uploadData(
+                data,
+                bucket: bucket,
+                key: key,
+                contentType: contentType,
+                expression: expression,
+                completionHandler: completionHandler
+            ).continueWith { (task) -> AnyObject? in
+                if let error = task.error {
+                    print("Error: \(error.localizedDescription)")
+                    continuation.resume(throwing: error)
+                }
+                if task.result == nil {
+                    // Only consider this an error if we haven't already resolved the continuation
+                    print("Upload task failed to start")
+                    // We don't resolve here because the completion handler should still be called
+                }
+                return nil
             }
-            if task.result != nil {
-                print("Upload started...")
-            }
-            return nil
         }
     }
 
     /// Uploads the contents of a directory to an S3 bucket
-    /// - Parameter directory: The local directory containing the site files
-    func uploadDirectory(_ directory: URL) throws {
-
-        // Use file enumeration to upload all files
+    /// - Parameters:
+    ///   - directory: The local directory containing the site files
+    ///   - statusUpdate: Closure for updating status messages
+    func uploadDirectory(_ directory: URL, statusUpdate: @escaping (String) -> Void) async throws {
+        // Use file enumeration to collect files before async operations
         let fileManager = FileManager.default
-        let enumerator = fileManager.enumerator(
-            at: directory,
-            includingPropertiesForKeys: [.isRegularFileKey],
-            options: [.skipsHiddenFiles]
-        )
-
-        guard let enumerator = enumerator else {
-            throw AWSPublisherError.directoryEnumerationFailed
+        
+        // Collect all files before entering async context
+        func collectFiles() throws -> [URL] {
+            guard let enumerator = fileManager.enumerator(
+                at: directory,
+                includingPropertiesForKeys: [.isRegularFileKey],
+                options: [.skipsHiddenFiles]
+            ) else {
+                throw AWSPublisherError.directoryEnumerationFailed
+            }
+            
+            var files: [URL] = []
+            for case let fileURL as URL in enumerator {
+                let attributes = try fileURL.resourceValues(forKeys: [.isRegularFileKey])
+                if attributes.isRegularFile == true {
+                    files.append(fileURL)
+                }
+            }
+            return files
         }
+        
+        // Collect files synchronously before async operations
+        let filesToUpload = try collectFiles()
+        
+        let totalFiles = filesToUpload.count
+        statusUpdate("Found \(totalFiles) files to upload")
 
         var fileCount = 0
         var uploadErrors: [String] = []
 
-        // Upload each file to S3
-        for case let fileURL as URL in enumerator {
-            let attributes = try fileURL.resourceValues(forKeys: [
-                .isRegularFileKey
-            ])
-            guard attributes.isRegularFile == true else { continue }
-
+        // Upload each file to S3 sequentially
+        for fileURL in filesToUpload {
             // Determine the relative path from the base directory to use as S3 key
             let relativePath = fileURL.path.replacingOccurrences(
                 of: directory.path,
@@ -142,28 +165,27 @@ class AWSPublisher: Publisher {
                 // Read file data
                 let fileData = try Data(contentsOf: fileURL)
 
-                print("📤 Uploading: \(relativePath)")
-                uploadDataToS3(
+                // Update status with current file being uploaded
+                fileCount += 1
+                let progressPercent = Int((Double(fileCount) / Double(totalFiles)) * 100)
+                statusUpdate("Uploading file \(fileCount)/\(totalFiles) (\(progressPercent)%): \(relativePath)")
+                
+                // Upload the file and wait for completion
+                try await uploadDataToS3(
                     data: fileData,
                     bucket: self.bucket,
                     key: relativePath,
                     contentType: contentType
                 )
-                print("📤 Uploaded: \(relativePath)")
-                fileCount += 1
 
             } catch {
                 print("ERROR: ", dump(error, name: "Putting an object."))
-                print(
-                    "❌ Error uploading \(relativePath): \(error.localizedDescription)"
-                )
-                uploadErrors.append(
-                    "\(relativePath): \(error.localizedDescription)"
-                )
+                print("❌ Error uploading \(relativePath): \(error.localizedDescription)")
+                uploadErrors.append("\(relativePath): \(error.localizedDescription)")
             }
         }
 
-        print("📤 Uploaded \(fileCount) files total")
+        statusUpdate("Completed upload of \(fileCount) files")
 
         if fileCount == 0 {
             throw AWSPublisherError.s3UploadFailed("No files were uploaded")
@@ -177,7 +199,9 @@ class AWSPublisher: Publisher {
     }
 
     /// Creates a CloudFront cache invalidation for the distribution
-    func invalidateCache() throws {
+    /// - Parameter statusUpdate: Closure for updating status messages
+    func invalidateCache(statusUpdate: @escaping (String) -> Void) async throws {
+        statusUpdate("Creating CloudFront invalidation...")
         print("🔄 AWSPublisher authenticated successfully")
         print("🔄 Distribution ID: \(distributionId)")
 
@@ -191,7 +215,7 @@ class AWSPublisher: Publisher {
             string:
                 "https://\(cloudFrontHost)/2020-05-31/distribution/\(distributionId)/invalidation"
         )!
-        var request = NSMutableURLRequest(url: endpoint)
+        let request = NSMutableURLRequest(url: endpoint)
         request.httpMethod = "POST"
         request.setValue(
             "application/x-amz-json-1.0",
@@ -210,14 +234,14 @@ class AWSPublisher: Publisher {
         """.data(using: .utf8)
 
         // Sign the request using AWSSignatureV4Signer
-        let thing = AWSEndpoint(
+        let awsEndpoint = AWSEndpoint(
             region: .USEast1,
             serviceName: "cloudfront",
             url: endpoint
         )!
         let signer = AWSSignatureV4Signer(
             credentialsProvider: self.credentialsProvider,
-            endpoint: thing
+            endpoint: awsEndpoint
         )
         let baseInterceptor = AWSNetworkingRequestInterceptor(
             userAgent: self.configuration.userAgent
@@ -225,81 +249,59 @@ class AWSPublisher: Publisher {
         baseInterceptor?.interceptRequest(request)
         signer.interceptRequest(request)
 
-        // Create a task to send the request
-        let semaphore = DispatchSemaphore(value: 0)
-        var invalidationError: Error?
-        var invalidationId: String?
-
-        let task = URLSession.shared.dataTask(with: request as URLRequest) {
-            data,
-            response,
-            error in
-            defer { semaphore.signal() }
-
-            if let error = error {
-                invalidationError =
-                    AWSPublisherError.cloudFrontInvalidationFailed(
-                        error.localizedDescription
-                    )
-                return
-            }
-
-            guard let httpResponse = response as? HTTPURLResponse else {
-                invalidationError =
-                    AWSPublisherError.cloudFrontInvalidationFailed(
-                        "Invalid response"
-                    )
-                return
-            }
-
-            if httpResponse.statusCode == 201 || httpResponse.statusCode == 200
-            {
-                // Successfully created invalidation
-                if let data = data,
-                    let jsonString = String(data: data, encoding: .utf8)
-                {
-                    print("🔄 CloudFront invalidation successful: \(jsonString)")
-                    // Try to extract the invalidation ID if needed
-                    if let jsonData = try? JSONSerialization.jsonObject(
-                        with: data
-                    ) as? [String: Any],
-                        let invalidation = jsonData["Invalidation"]
-                            as? [String: Any],
-                        let id = invalidation["Id"] as? String
-                    {
-                        invalidationId = id
-                    }
+        // Use async/await with URLSession
+        return try await withCheckedThrowingContinuation { continuation in
+            let task = URLSession.shared.dataTask(with: request as URLRequest) { data, response, error in
+                if let error = error {
+                    let awsError = AWSPublisherError.cloudFrontInvalidationFailed(error.localizedDescription)
+                    continuation.resume(throwing: awsError)
+                    return
                 }
-            } else {
-                // Handle error
-                if let data = data,
-                    let errorString = String(data: data, encoding: .utf8)
-                {
-                    print("HTTP \(httpResponse.statusCode): \(errorString)")
-                    invalidationError =
-                        AWSPublisherError.cloudFrontInvalidationFailed(
+
+                guard let httpResponse = response as? HTTPURLResponse else {
+                    let awsError = AWSPublisherError.cloudFrontInvalidationFailed("Invalid response")
+                    continuation.resume(throwing: awsError)
+                    return
+                }
+
+                if httpResponse.statusCode == 201 || httpResponse.statusCode == 200 {
+                    // Successfully created invalidation
+                    if let data = data, let jsonString = String(data: data, encoding: .utf8) {
+                        print("🔄 CloudFront invalidation successful: \(jsonString)")
+                        
+                        // Try to extract the invalidation ID if needed
+                        var invalidationId = "unknown"
+                        if let jsonData = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                           let invalidation = jsonData["Invalidation"] as? [String: Any],
+                           let id = invalidation["Id"] as? String {
+                            invalidationId = id
+                        }
+                        
+                        statusUpdate("CloudFront invalidation created (ID: \(invalidationId))")
+                        continuation.resume(returning: ())
+                    } else {
+                        continuation.resume(returning: ())
+                    }
+                } else {
+                    // Handle error
+                    if let data = data, let errorString = String(data: data, encoding: .utf8) {
+                        print("HTTP \(httpResponse.statusCode): \(errorString)")
+                        let awsError = AWSPublisherError.cloudFrontInvalidationFailed(
                             "HTTP \(httpResponse.statusCode): \(errorString)"
                         )
-                } else {
-                    print("HTTP \(httpResponse.statusCode)")
-                    invalidationError =
-                        AWSPublisherError.cloudFrontInvalidationFailed(
+                        continuation.resume(throwing: awsError)
+                    } else {
+                        print("HTTP \(httpResponse.statusCode)")
+                        let awsError = AWSPublisherError.cloudFrontInvalidationFailed(
                             "HTTP \(httpResponse.statusCode)"
                         )
+                        continuation.resume(throwing: awsError)
+                    }
                 }
             }
+
+            task.resume()
         }
-
-        task.resume()
-        //        _ = semaphore.wait(timeout: .distantFuture)
-
-        if let error = invalidationError {
-            throw error
-        }
-
-        print(
-            "🔄 CloudFront invalidation created: ID \(invalidationId ?? "unknown")"
-        )
     }
 
     /// Determines the appropriate content type for a file based on its extension
@@ -360,9 +362,10 @@ class AWSPublisher: Publisher {
 class ManualPublisher: Publisher {
     var publisherType: PublisherType { .none }
     
-    func publish(directoryURL: URL) async throws -> URL? {
+    func publish(directoryURL: URL, statusUpdate: @escaping (String) -> Void = { _ in }) async throws -> URL? {
         // For manual publisher, we just return the directory URL
         // StaticSiteGenerator will handle ZIP creation
+        statusUpdate("Creating ZIP file for manual download...")
         return directoryURL
     }
 }

@@ -19,6 +19,11 @@ extension String {
     }
 }
 
+extension Notification.Name {
+    /// Notification sent when a publish status update is available
+    static let publishStatusUpdated = Notification.Name("publishStatusUpdated")
+}
+
 /// StaticSiteGenerator handles the generation of a static site from a Blog model
 class StaticSiteGenerator {
     private let blog: Blog
@@ -791,7 +796,12 @@ class StaticSiteGenerator {
         
         do {
             print("🚀 Publishing site using \(publisher.publisherType.displayName) publisher...")
-            let result = try await publisher.publish(directoryURL: siteDirectory)
+            let result = try await publisher.publish(directoryURL: siteDirectory) { statusMessage in
+                NotificationCenter.default.post(
+                    name: .publishStatusUpdated, 
+                    object: statusMessage
+                )
+            }
             return result
         } catch {
             throw SiteGeneratorError.publishingFailed("\(publisher.publisherType.displayName) publishing failed: \(error.localizedDescription)")
