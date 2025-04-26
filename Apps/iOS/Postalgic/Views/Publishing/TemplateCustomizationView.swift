@@ -38,43 +38,47 @@ struct TemplateCustomizationView: View {
                     .frame(minHeight: 400)
                     .disabled(!isEditing)
             }
-            .navigationTitle("Customize Templates")
+            .navigationTitle("Customize")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItemGroup(placement: .topBarLeading) {
-                    Button("Close") {
-                        dismiss()
-                    }
-                }
-                ToolbarItemGroup(placement: .topBarTrailing) {
-                    Picker("Template Type", selection: $selectedTemplateType) {
-                        ForEach(availableTemplateTypes, id: \.self) { type in
-                            Text(type)
-                                .tag(type)
-                        }
-                    }
-                    .onChange(of: selectedTemplateType) { _, newValue in
-                        loadTemplate(type: newValue)
-                    }
-                }
-                ToolbarItemGroup(placement: .bottomBar) {
                     if isEditing {
                         Button("Cancel", role: .destructive) {
                             isEditing = false
                             loadTemplate(type: selectedTemplateType)
                         }
-                        
+                    } else {
+                        Button("Close") {
+                            dismiss()
+                        }
+                    }
+                }
+                ToolbarItemGroup(placement: .primaryAction) {
+                    if isEditing {
                         Button("Save") {
                             saveTemplate()
+                            isEditing = false
                         }
                     } else {
-                        Button("Reset to Default", role: .destructive) {
-                            resetTemplate()
+                        Picker("Template Type", selection: $selectedTemplateType) {
+                            ForEach(availableTemplateTypes, id: \.self) { type in
+                                Text(type)
+                                    .tag(type)
+                            }
                         }
-                        
+                        .onChange(of: selectedTemplateType) { _, newValue in
+                            loadTemplate(type: newValue)
+                        }
                         
                         Button("Edit") {
                             isEditing = true
+                        }
+                    }
+                }
+                ToolbarItemGroup(placement: .secondaryAction) {
+                    if !isEditing {
+                        Button("Reset to Default", role: .destructive) {
+                            resetTemplate()
                         }
                     }
                 }
