@@ -777,12 +777,14 @@ class StaticSiteGenerator {
                 // Fall back to manual if FTP is selected but not properly configured
                 publisher = ManualPublisher()
             }
+        case .none:
+            publisher = ManualPublisher()
         // Future publisher types would be handled here
         // case .netlify:
         //     publisher = NetlifyPublisher(...)
         default:
             // Use manual publisher by default
-            publisher = ManualPublisher()
+            throw SiteGeneratorError.publishingFailed("\(blog.publisherType ?? "Undefined") publishing is not available yet.")
         }
         
         do {

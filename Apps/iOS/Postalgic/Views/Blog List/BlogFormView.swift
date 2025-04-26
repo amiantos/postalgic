@@ -18,7 +18,6 @@ struct BlogFormView: View {
     private var blog: Blog?
     
     @State private var name: String
-    @State private var url: String
     @State private var authorName: String
     @State private var authorUrl: String
     @State private var tagline: String
@@ -28,7 +27,6 @@ struct BlogFormView: View {
         self.isEditing = false
         self.blog = nil
         _name = State(initialValue: "")
-        _url = State(initialValue: "")
         _authorName = State(initialValue: "")
         _authorUrl = State(initialValue: "")
         _tagline = State(initialValue: "")
@@ -39,7 +37,6 @@ struct BlogFormView: View {
         self.isEditing = true
         self.blog = blog
         _name = State(initialValue: blog.name)
-        _url = State(initialValue: blog.url)
         _authorName = State(initialValue: blog.authorName ?? "")
         _authorUrl = State(initialValue: blog.authorUrl ?? "")
         _tagline = State(initialValue: blog.tagline ?? "")
@@ -51,14 +48,6 @@ struct BlogFormView: View {
                 Section("Blog Info") {
                     TextField("Name", text: $name)
                     TextField("Tagline (optional)", text: $tagline)
-                }
-                
-                Section("Blog URL") {
-                    TextField("URL", text: $url)
-                        .autocapitalization(.none)
-                        .autocorrectionDisabled(true)
-                        .keyboardType(.URL)
-                        .textContentType(.URL)
                 }
 
                 Section {
@@ -90,7 +79,7 @@ struct BlogFormView: View {
                         }
                         dismiss()
                     }
-                    .disabled(name.isEmpty || url.isEmpty)
+                    .disabled(name.isEmpty)
                 }
             }
         }
@@ -99,7 +88,7 @@ struct BlogFormView: View {
     private func addBlog() {
         let newBlog = Blog(
             name: name, 
-            url: url, 
+            url: "",
             authorName: authorName.isEmpty ? nil : authorName,
             authorUrl: authorUrl.isEmpty ? nil : authorUrl,
             tagline: tagline.isEmpty ? nil : tagline
@@ -110,7 +99,6 @@ struct BlogFormView: View {
     private func updateBlog() {
         if let blogToUpdate = blog {
             blogToUpdate.name = name
-            blogToUpdate.url = url
             blogToUpdate.authorName = authorName.isEmpty ? nil : authorName
             blogToUpdate.authorUrl = authorUrl.isEmpty ? nil : authorUrl
             blogToUpdate.tagline = tagline.isEmpty ? nil : tagline

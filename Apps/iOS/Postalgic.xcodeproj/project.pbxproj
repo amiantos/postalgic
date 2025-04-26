@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		44362E792DBC0AEE00EA704F /* FTPPublisher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44362E782DBC0AE900EA704F /* FTPPublisher.swift */; };
+		44362E7B2DBC0B0E00EA704F /* Publisher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44362E7A2DBC0B0B00EA704F /* Publisher.swift */; };
+		44362E7F2DBC10F700EA704F /* Citadel in Frameworks */ = {isa = PBXBuildFile; productRef = 44362E7E2DBC10F700EA704F /* Citadel */; };
 		443F0B2D2DB8D47500034EF1 /* EmbedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 443F0B2C2DB8D47500034EF1 /* EmbedView.swift */; };
 		443F0B2E2DB8D47500034EF1 /* EmbedFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 443F0B2B2DB8D47500034EF1 /* EmbedFormView.swift */; };
 		443F0B302DB8D48B00034EF1 /* LinkMetadataService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 443F0B2F2DB8D48B00034EF1 /* LinkMetadataService.swift */; };
@@ -53,6 +56,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		44362E782DBC0AE900EA704F /* FTPPublisher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FTPPublisher.swift; sourceTree = "<group>"; };
+		44362E7A2DBC0B0B00EA704F /* Publisher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Publisher.swift; sourceTree = "<group>"; };
 		443674762DB3898500F67B00 /* Postalgic.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Postalgic.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		443674852DB3898600F67B00 /* PostalgicTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PostalgicTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		4436748F2DB3898600F67B00 /* PostalgicUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PostalgicUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -98,6 +103,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				44362E7F2DBC10F700EA704F /* Citadel in Frameworks */,
 				449CAF872DB47E2900558395 /* AWSS3 in Frameworks */,
 				44C363C32DB632430057567C /* Ink in Frameworks */,
 				448E851D2DB3984200772502 /* ZIPFoundation in Frameworks */,
@@ -122,6 +128,27 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		44362E7C2DBC0B1A00EA704F /* Publishers */ = {
+			isa = PBXGroup;
+			children = (
+				44362E7A2DBC0B0B00EA704F /* Publisher.swift */,
+				44362E782DBC0AE900EA704F /* FTPPublisher.swift */,
+				44C3640E2DB768DB0057567C /* AWSPublisher.swift */,
+			);
+			path = Publishers;
+			sourceTree = "<group>";
+		};
+		44362E802DBC2A7600EA704F /* Publishing */ = {
+			isa = PBXGroup;
+			children = (
+				44C364112DB768DB0057567C /* BlogAwsConfigView.swift */,
+				44C3641A2DB768DB0057567C /* PublishBlogView.swift */,
+				443F0B642DBB779200034EF1 /* PublishSettingsView.swift */,
+				443F0B662DBB7A7000034EF1 /* BlogFtpConfigView.swift */,
+			);
+			path = Publishing;
+			sourceTree = "<group>";
+		};
 		4436746D2DB3898500F67B00 = {
 			isa = PBXGroup;
 			children = (
@@ -156,7 +183,7 @@
 		44C364102DB768DB0057567C /* Services */ = {
 			isa = PBXGroup;
 			children = (
-				44C3640E2DB768DB0057567C /* AWSPublisher.swift */,
+				44362E7C2DBC0B1A00EA704F /* Publishers */,
 				443F0B2F2DB8D48B00034EF1 /* LinkMetadataService.swift */,
 				44C3640F2DB768DB0057567C /* StaticSiteGenerator.swift */,
 				443F0B522DBB5B7900034EF1 /* Utils.swift */,
@@ -169,6 +196,7 @@
 			children = (
 				44C3642F2DB768F90057567C /* Blog List */,
 				44C364302DB769260057567C /* Blog Detail */,
+				44362E802DBC2A7600EA704F /* Publishing */,
 				443F0B312DB8DFDB00034EF1 /* Posts */,
 			);
 			path = Views;
@@ -201,12 +229,8 @@
 			isa = PBXGroup;
 			children = (
 				44C364122DB768DB0057567C /* BlogDetailView.swift */,
-				44C364112DB768DB0057567C /* BlogAwsConfigView.swift */,
-				44C3641A2DB768DB0057567C /* PublishBlogView.swift */,
 				44C364152DB768DB0057567C /* CategoryManagementView.swift */,
 				443F0B622DBB6B9600034EF1 /* TagManagementView.swift */,
-				443F0B642DBB779200034EF1 /* PublishSettingsView.swift */,
-				443F0B662DBB7A7000034EF1 /* BlogFtpConfigView.swift */,
 			);
 			path = "Blog Detail";
 			sourceTree = "<group>";
@@ -232,6 +256,7 @@
 				449CAF842DB47E2900558395 /* AWSCore */,
 				449CAF862DB47E2900558395 /* AWSS3 */,
 				44C363C22DB632430057567C /* Ink */,
+				44362E7E2DBC10F700EA704F /* Citadel */,
 			);
 			productName = Postalgic;
 			productReference = 443674762DB3898500F67B00 /* Postalgic.app */;
@@ -319,6 +344,7 @@
 				448E851B2DB3984200772502 /* XCRemoteSwiftPackageReference "ZIPFoundation" */,
 				449CAF832DB47E2900558395 /* XCRemoteSwiftPackageReference "aws-sdk-ios-spm" */,
 				44C363C12DB632430057567C /* XCRemoteSwiftPackageReference "Ink" */,
+				44362E7D2DBC10F700EA704F /* XCRemoteSwiftPackageReference "Citadel" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 443674772DB3898500F67B00 /* Products */;
@@ -375,8 +401,10 @@
 				443F0B512DBAD7AC00034EF1 /* PreviewData.swift in Sources */,
 				443F0B532DBB5B7900034EF1 /* Utils.swift in Sources */,
 				44C364262DB768DB0057567C /* CategoryManagementView.swift in Sources */,
+				44362E7B2DBC0B0E00EA704F /* Publisher.swift in Sources */,
 				443F0B632DBB6B9600034EF1 /* TagManagementView.swift in Sources */,
 				44C364282DB768DB0057567C /* PostDetailView.swift in Sources */,
+				44362E792DBC0AEE00EA704F /* FTPPublisher.swift in Sources */,
 				44C3642A2DB768DB0057567C /* PostFormView.swift in Sources */,
 				443F0B612DBB696600034EF1 /* HelpView.swift in Sources */,
 				44C3642B2DB768DB0057567C /* PublishBlogView.swift in Sources */,
@@ -709,6 +737,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		44362E7D2DBC10F700EA704F /* XCRemoteSwiftPackageReference "Citadel" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/orlandos-nl/Citadel";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.10.0;
+			};
+		};
 		448E851B2DB3984200772502 /* XCRemoteSwiftPackageReference "ZIPFoundation" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/weichsel/ZIPFoundation";
@@ -736,6 +772,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		44362E7E2DBC10F700EA704F /* Citadel */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 44362E7D2DBC10F700EA704F /* XCRemoteSwiftPackageReference "Citadel" */;
+			productName = Citadel;
+		};
 		448E851C2DB3984200772502 /* ZIPFoundation */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 448E851B2DB3984200772502 /* XCRemoteSwiftPackageReference "ZIPFoundation" */;

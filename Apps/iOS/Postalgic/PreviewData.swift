@@ -31,6 +31,7 @@ struct PreviewData {
         )
         
         // Add AWS configuration
+        blog.publisherType = "AWS"
         blog.awsRegion = "us-west-2"
         blog.awsS3Bucket = "techchronicles-blog"
         blog.awsCloudFrontDistId = "E1A2B3C4D5E6F7"

@@ -10,10 +10,13 @@ import SwiftData
 
 // Publisher type enum
 enum PublisherType: String, Codable, CaseIterable {
+    case none = "Manual Download (Zip)"
     case aws = "AWS"
-    case ftp = "FTP/SFTP"
+    case ftp = "SFTP"
     case netlify = "Netlify"
-    case none = "Manual Download"
+    case github = "GitHub Pages"
+    case gitlab = "GitLab Pages"
+    case digitalOcean = "DigitalOcean Spaces"
     
     var displayName: String { rawValue }
 }
