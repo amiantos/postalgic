@@ -11,6 +11,7 @@
 		44362E7B2DBC0B0E00EA704F /* Publisher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44362E7A2DBC0B0B00EA704F /* Publisher.swift */; };
 		44362E7F2DBC10F700EA704F /* Citadel in Frameworks */ = {isa = PBXBuildFile; productRef = 44362E7E2DBC10F700EA704F /* Citadel */; };
 		44362E9F2DBCD04800EA704F /* PostRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44362E9E2DBCD04800EA704F /* PostRowView.swift */; };
+		44362ED82DBD815F00EA704F /* Mustache in Frameworks */ = {isa = PBXBuildFile; productRef = 44362ED72DBD815F00EA704F /* Mustache */; };
 		443F0B2D2DB8D47500034EF1 /* EmbedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 443F0B2C2DB8D47500034EF1 /* EmbedView.swift */; };
 		443F0B2E2DB8D47500034EF1 /* EmbedFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 443F0B2B2DB8D47500034EF1 /* EmbedFormView.swift */; };
 		443F0B302DB8D48B00034EF1 /* LinkMetadataService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 443F0B2F2DB8D48B00034EF1 /* LinkMetadataService.swift */; };
@@ -105,6 +106,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				44362ED82DBD815F00EA704F /* Mustache in Frameworks */,
 				44362E7F2DBC10F700EA704F /* Citadel in Frameworks */,
 				449CAF872DB47E2900558395 /* AWSS3 in Frameworks */,
 				44C363C32DB632430057567C /* Ink in Frameworks */,
@@ -260,6 +262,7 @@
 				449CAF862DB47E2900558395 /* AWSS3 */,
 				44C363C22DB632430057567C /* Ink */,
 				44362E7E2DBC10F700EA704F /* Citadel */,
+				44362ED72DBD815F00EA704F /* Mustache */,
 			);
 			productName = Postalgic;
 			productReference = 443674762DB3898500F67B00 /* Postalgic.app */;
@@ -348,6 +351,7 @@
 				449CAF832DB47E2900558395 /* XCRemoteSwiftPackageReference "aws-sdk-ios-spm" */,
 				44C363C12DB632430057567C /* XCRemoteSwiftPackageReference "Ink" */,
 				44362E7D2DBC10F700EA704F /* XCRemoteSwiftPackageReference "Citadel" */,
+				44362ED62DBD815F00EA704F /* XCRemoteSwiftPackageReference "swift-mustache" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 443674772DB3898500F67B00 /* Products */;
@@ -749,6 +753,14 @@
 				minimumVersion = 0.10.0;
 			};
 		};
+		44362ED62DBD815F00EA704F /* XCRemoteSwiftPackageReference "swift-mustache" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/hummingbird-project/swift-mustache?tab=readme-ov-file";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.0.0;
+			};
+		};
 		448E851B2DB3984200772502 /* XCRemoteSwiftPackageReference "ZIPFoundation" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/weichsel/ZIPFoundation";
@@ -780,6 +792,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 44362E7D2DBC10F700EA704F /* XCRemoteSwiftPackageReference "Citadel" */;
 			productName = Citadel;
+		};
+		44362ED72DBD815F00EA704F /* Mustache */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 44362ED62DBD815F00EA704F /* XCRemoteSwiftPackageReference "swift-mustache" */;
+			productName = Mustache;
 		};
 		448E851C2DB3984200772502 /* ZIPFoundation */ = {
 			isa = XCSwiftPackageProductDependency;
