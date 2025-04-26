@@ -91,37 +91,11 @@ struct PostFormView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Post Details") {
+                Section("Post Content") {
                     TextField("Title (optional)", text: $title)
-                    Toggle("Save as Draft", isOn: $isDraft)
-                    
-                    HStack {
-                        Picker("Category", selection: $selectedCategory) {
-                            Text("None").tag(Category?.none)
-                            
-                            if !blogCategories.isEmpty {
-                                Divider()
-                                
-                                ForEach(
-                                    blogCategories.sorted { $0.name < $1.name }
-                                ) { category in
-                                    Text(category.name).tag(Optional(category))
-                                }
-                            }
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        
-                        Button(action: {
-                            showingCategoryManagement = true
-                        }) {
-                            Image(systemName: "gear")
-                        }
-                    }
-                }
-                
-                Section("Content") {
                     TextEditor(text: $content)
                         .frame(minHeight: 200)
+                    Toggle("Save as Draft", isOn: $isDraft)
                 }
                 
                 Section("Embed") {
@@ -193,6 +167,29 @@ struct PostFormView: View {
                         }
                         .buttonStyle(.bordered)
                         .tint(.blue)
+                    }
+                }
+                
+                Section("Category") {
+                    Picker("Category", selection: $selectedCategory) {
+                        Text("None").tag(Category?.none)
+                        
+                        if !blogCategories.isEmpty {
+                            Divider()
+                            
+                            ForEach(
+                                blogCategories.sorted { $0.name < $1.name }
+                            ) { category in
+                                Text(category.name).tag(Optional(category))
+                            }
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    
+                    Button(action: {
+                        showingCategoryManagement = true
+                    }) {
+                        Text("Manage Categories")
                     }
                 }
                 

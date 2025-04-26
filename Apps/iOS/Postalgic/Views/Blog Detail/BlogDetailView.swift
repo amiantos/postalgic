@@ -122,19 +122,31 @@ struct BlogDetailView: View {
                 Button(action: { showingPostForm = true }) {
                     Label("Add Post", systemImage: "plus")
                 }
-                
-                Button(action: { showingPublishView = true }) {
-                    Label("Publish", systemImage: "globe")
-                }
             }
 
             ToolbarItemGroup(placement: .secondaryAction) {
+                Button(action:{
+                    if let url = URL(string: blog.url) {
+                        UIApplication.shared.open(url)
+                    }
+                }) {
+                    Label("Visit Blog", systemImage: "safari")
+                }
                 Button(action: { showingEditBlogView = true }) {
                     Label("Blog Details", systemImage: "person")
                 }
-                Button(action: { showingPublishSettingsView = true }) {
-                    Label("Publishing Settings", systemImage: "globe")
+                
+                Divider()
+                
+                Button(action: { showingPublishView = true }) {
+                    Label("Publish", systemImage: "paperplane")
                 }
+                Button(action: { showingPublishSettingsView = true }) {
+                    Label("Publishing Settings", systemImage: "paperplane.circle")
+                }
+                
+                Divider()
+                
                 Button(action: {
                     showingCategoryManagement = true
                 }) {
