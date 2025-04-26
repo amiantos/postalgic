@@ -22,7 +22,7 @@ Online "social networks" have proven themselves incapable of nuturing meaningful
   - [ ] Others?
 
 # Sample Sites
-- https://micro.amiantos.net
+- https://brad.postalgic.app
 - https://test.postalgic.app
 
 # Credits
