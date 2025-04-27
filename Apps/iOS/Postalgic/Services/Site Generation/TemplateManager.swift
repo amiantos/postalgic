@@ -48,15 +48,30 @@ class TemplateManager {
                 <header>
                     <h1><a href="/">{{blogName}}</a></h1>
                     {{#blogTagline}}<p class="tagline">{{blogTagline}}</p>{{/blogTagline}}
-                    <nav>
-                        <ul>
-                            <li><a href="/">Home</a></li>
-                            <li><a href="/archives/">Archives</a></li>
-                            <li><a href="/tags/">Tags</a></li>
-                            <li><a href="/categories/">Categories</a></li>
-                        </ul>
-                    </nav>
                 </header>
+        
+                <nav>
+                    <ul>
+                        <li><a href="/">Home</a></li>
+                        <li><a href="/archives/">Archives</a></li>
+                        <li><a href="/tags/">Tags</a></li>
+                        <li><a href="/categories/">Categories</a></li>
+                    </ul>
+                </nav>
+        
+                <aside>
+                    <h2>About</h2>
+                    <div class="about-text">
+                        My name is <b><a href="https://bradroot.me">Brad Root</a></b> and I'm an artist, software engineer, tech enthusiast, music aficionado, video game junkie, weird coffee person, and occasional unicyclist. Find out more about me at <a href="https://bradroot.me">my portfolio site</a>.
+                    </div>
+        
+                    <h2>My Sites</h2>
+                    <ul>
+                        <li><a href="https://amiantos.net">amiantos.net</a></li>
+                        <li><a href="https://bradroot.me">bradroot.me</a></li>
+                        <li><a href="https://staires.org">staires.org</a></li>
+                    </ul>
+                </aside>
                 
                 <main>
                     {{{content}}}
@@ -307,18 +322,22 @@ class TemplateManager {
 
         /* Header */
         header {
-            margin-bottom: 30px;
+            margin-bottom: 15px;
             border-bottom: 1px solid var(--light-gray);
-            padding-bottom: 20px;
         }
 
         header h1 {
-            margin-bottom: 15px;
+
         }
 
         header h1 a {
             color: var(--primary-color);
             text-decoration: none;
+        }
+        
+        nav {
+            border-bottom: 1px solid var(--light-gray);
+            padding-bottom: 15px;
         }
 
         nav ul {
@@ -329,6 +348,32 @@ class TemplateManager {
 
         nav a {
             font-weight: 500;
+        }
+        
+        aside {
+            width: 30%;
+            padding-left: 15px;
+            margin-left: 15px;
+            float: right;
+            border-left: 1px solid var(--light-gray);
+            border-bottom: 1px solid var(--light-gray);
+            padding-top: 15px;
+            padding-bottom: 15px;
+        }
+        
+        aside h2 {
+            margin-bottom: 5px;
+            font-size: 1.2em;
+        }
+        
+        aside .about-text {
+            font-size: 0.85em;
+            margin-bottom: 15px;
+        }
+        
+        aside ul {
+            padding-left: 20px;
+            font-size: 0.85em;
         }
 
         /* Main */
@@ -609,6 +654,10 @@ class TemplateManager {
             
             .link-image {
                 height: 200px;
+            }
+        
+            aside {
+                display:none;
             }
         }
         """

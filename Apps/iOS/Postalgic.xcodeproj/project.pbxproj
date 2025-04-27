@@ -165,14 +165,15 @@
 			path = Publishing;
 			sourceTree = "<group>";
 		};
-		44362EDA2DBD826B00EA704F /* Templating */ = {
+		44362EF62DBDE7BF00EA704F /* Site Generation */ = {
 			isa = PBXGroup;
 			children = (
+				44C3640F2DB768DB0057567C /* StaticSiteGenerator.swift */,
 				44362EDE2DBD82B700EA704F /* TemplateEngine.swift */,
 				44362EDC2DBD829000EA704F /* TemplateModels.swift */,
 				44362ED92DBD826B00EA704F /* TemplateManager.swift */,
 			);
-			path = Templating;
+			path = "Site Generation";
 			sourceTree = "<group>";
 		};
 		4436746D2DB3898500F67B00 = {
@@ -209,10 +210,9 @@
 		44C364102DB768DB0057567C /* Services */ = {
 			isa = PBXGroup;
 			children = (
-				44362EDA2DBD826B00EA704F /* Templating */,
+				44362EF62DBDE7BF00EA704F /* Site Generation */,
 				44362E7C2DBC0B1A00EA704F /* Publishers */,
 				443F0B2F2DB8D48B00034EF1 /* LinkMetadataService.swift */,
-				44C3640F2DB768DB0057567C /* StaticSiteGenerator.swift */,
 				443F0B522DBB5B7900034EF1 /* Utils.swift */,
 			);
 			path = Services;
