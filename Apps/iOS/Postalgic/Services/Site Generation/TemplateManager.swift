@@ -247,19 +247,12 @@ class TemplateManager {
         // Default CSS style
         defaultTemplates["css"] = """
         /* Base styles */
-        
-        /* Add styles for tagline and author info */
-        header .tagline {
-            color: var(--medium-gray);
-            font-size: 1.1rem;
-            margin-bottom: 15px;
-            font-style: italic;
-        }
-        
+
         :root {
             --primary-color: #4a5568;
-            --accent-color: #3182ce;
+            --accent-color: #FFA100;
             --background-color: #ffffff;
+            --background-outline-color: #515151;
             --text-color: #2d3748;
             --light-gray: #edf2f7;
             --medium-gray: #a0aec0;
@@ -276,11 +269,20 @@ class TemplateManager {
             padding: 0;
         }
 
+        html {
+            overflow-y: scroll;
+            height: 100%;
+            font: 100%/1.5 sans-serif;
+            word-wrap: break-word;
+            margin: 0 auto;
+            padding: 1.5em;
+         }
+
         body {
             font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
             line-height: 1.6;
             color: var(--text-color);
-            background-color: var(--background-color);
+            background-color: var(--background-outline-color);
         }
 
         a {
@@ -296,28 +298,20 @@ class TemplateManager {
         .container {
             max-width: 1000px;
             margin: 0 auto;
-            padding: 20px;
-        }
-
-        @media (min-width: 769px) {
-            body {
-                background-color: #f7fafc;
-            }
-            
-            .container {
-                margin-top: 30px;
-                margin-bottom: 30px;
-                background-color: var(--background-color);
-                border-radius: 8px;
-                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
-            }
+            background-color: var(--background-color);
         }
 
         /* Header */
         header {
-            margin-bottom: 15px;
-            border-bottom: 1px solid var(--light-gray);
+            padding:1.5em;
         }
+
+        header .tagline {
+            color: var(--medium-gray);
+            font-size: 1.2rem;
+            font-style: italic;
+        }
+
 
         header h1 {
 
@@ -327,10 +321,13 @@ class TemplateManager {
             color: var(--primary-color);
             text-decoration: none;
         }
-        
+
         nav {
+            border-top: 1px solid var(--light-gray);
             border-bottom: 1px solid var(--light-gray);
-            padding-bottom: 15px;
+            padding-left:1.5em;
+            padding-top:1em;
+            padding-bottom:1em;
         }
 
         nav ul {
@@ -342,31 +339,29 @@ class TemplateManager {
         nav a {
             font-weight: 500;
         }
-        
+
         aside {
             width: 30%;
-            padding-left: 15px;
-            margin-left: 15px;
+            padding: 1.5em;
+            margin-left: 1.5em;
             float: right;
             border-left: 1px solid var(--light-gray);
             border-bottom: 1px solid var(--light-gray);
-            padding-top: 15px;
-            padding-bottom: 15px;
         }
-        
+
         aside h2 {
-            margin-bottom: 5px;
+            margin-bottom: 0.3em;
             font-size: 1.2em;
         }
-        
+
         aside .about-text {
-            font-size: 0.85em;
+            font-size: 0.8em;
             margin-bottom: 15px;
         }
-        
+
         aside ul {
-            padding-left: 20px;
-            font-size: 0.85em;
+            padding-left: 1.5em;
+            font-size: 0.8em;
         }
 
         /* Main */
@@ -378,52 +373,49 @@ class TemplateManager {
         .post-list {
             display: flex;
             flex-direction: column;
+            padding-left:1.5em;
+            padding-right:1.5em;
         }
 
-        .post-item {
+        .post-item, article {
             border-bottom: 1px solid var(--light-gray);
-            padding-top:20px;
-            padding-bottom: 20px;
+            padding-top:1.5em;
+            padding-bottom: 1.5em;
         }
 
-        .post-item h2 {
-            margin-bottom: 5px;
+        .post-item h2, article h2 {
+            margin-bottom: 0.2em;
         }
 
         .post-date {
             color: var(--medium-gray);
-            font-size: 0.9rem;
+            font-size: 0.9em;
             display:inline-block;
         }
 
-        .post-date a {
+        .post-date a, .post-author a {
             color: var(--medium-gray);
             text-decoration: none;
-            border-bottom: 1px dotted var(--medium-gray);
         }
 
-        .post-date a:hover {
+        .post-date a:hover, .post-author a:hover {
             color: var(--accent-color);
-            border-bottom-color: var(--accent-color);
+            text-decoration: underline;
         }
 
         .post-author {
             color: var(--medium-gray);
-            font-size: 0.9rem;
+            font-size: 0.9em;
             display:inline-block;
         }
 
         .post-tags, .post-category {
             margin: 10px 0;
-            font-size: 0.9rem;
+            font-size: 0.9em;
         }
 
-        .post-summary {
-            margin-top: 10px;
-        }
-        
         .post-summary p, .post-content p {
-            margin-top:1.2em;
+            margin-top:1em;
         }
 
         /* Tags */
@@ -489,11 +481,12 @@ class TemplateManager {
 
         /* Article */
         article {
-            margin-bottom: 40px;
+            padding-left:1.5em;
+            padding-right:1.5em;
         }
 
         article h1 {
-            margin-bottom: 15px;
+            /* margin-bottom: 15px; */
         }
 
         .post-meta {
@@ -530,8 +523,8 @@ class TemplateManager {
 
         /* Footer */
         footer {
-            border-top: 1px solid var(--light-gray);
-            padding-top: 20px;
+            text-align: center;
+            padding: 2em;
             color: var(--medium-gray);
             font-size: 0.9rem;
         }
@@ -542,14 +535,14 @@ class TemplateManager {
             border-radius: 8px;
             overflow: hidden;
         }
-        
+
         .youtube-embed {
             position: relative;
             padding-bottom: 56.25%; /* 16:9 ratio */
             height: 0;
             overflow: hidden;
         }
-        
+
         .youtube-embed iframe {
             position: absolute;
             top: 0;
@@ -558,13 +551,13 @@ class TemplateManager {
             height: 100%;
             border: 0;
         }
-        
+
         .link-embed {
             border: 1px solid var(--light-gray);
             border-radius: 8px;
             overflow: hidden;
         }
-        
+
         .link-embed a {
             display: grid;
             grid-template-areas: 
@@ -577,25 +570,25 @@ class TemplateManager {
             color: var(--text-color);
             text-decoration: none;
         }
-        
+
         .link-embed a:hover {
             background-color: var(--light-gray);
             text-decoration: none;
         }
-        
+
         .link-title {
             grid-area: title;
             font-weight: bold;
             padding: 10px 10px 5px 10px;
         }
-        
+
         .link-description {
             grid-area: description;
             font-size: 0.9em;
             padding: 0 10px;
             color: var(--dark-gray);
         }
-        
+
         .link-url {
             grid-area: url;
             font-size: 0.8em;
@@ -605,34 +598,71 @@ class TemplateManager {
             overflow: hidden;
             text-overflow: ellipsis;
         }
-        
+
         .link-image {
             grid-area: image;
             height: 100%;
         }
-        
+
         .link-image img {
             width: 100%;
             height: 100%;
             object-fit: cover;
         }
-        
+
         blockquote {
-            color: #666;
+            color: var(--dark-gray);
             font-style: italic;
-            border-left: 2px solid black;
+            border-left: 2px solid var(--accent-color);
             padding-left: 1.3em;
         }
-        
+
+
+        /* Bigger screens */
+        @media (min-width: 769px) {
+            body {
+                background-color: var(--background-outline-color);
+                font-size: 115%;
+            }
+            .container {
+                background-color: var(--background-color);
+            }
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
+            html {
+                padding: 0.6em;
+            }
+            body {
+                background-color: var(--background-outline-color);
+            }
             .container {
                 padding: 15px;
             }
+
+            footer {
+                padding: 1em;
+            }
+
+            nav {
+                text-align:center;
+                padding:0px;
+                padding-top: 0.8em;
+                padding-bottom: 0.8em;
+            }
             
             nav ul {
-                flex-direction: column;
+                display:flex;
+                flex: auto;
+                flex-direction: row;
+                flex-wrap: wrap;
                 gap: 10px;
+            }
+
+            nav ul li {
+                flex: auto;
+                text-align: center;
             }
             
             .tag-list, .category-list {
@@ -652,7 +682,7 @@ class TemplateManager {
             .link-image {
                 height: 200px;
             }
-        
+
             aside {
                 display:none;
             }
