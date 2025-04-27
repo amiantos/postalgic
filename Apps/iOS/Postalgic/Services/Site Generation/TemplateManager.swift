@@ -90,7 +90,7 @@ class TemplateManager {
         <div class="post-list">
             {{#posts}}
                 <div class="post-item">
-                    {{#hasTitle}}<h2><a href="/{{urlPath}}/index.html">{{displayTitle}}</a></h2>{{/hasTitle}}
+                    {{#hasTitle}}<h2>{{displayTitle}}</h2>{{/hasTitle}}
                     <div class="post-date"><a href="/{{urlPath}}/index.html">{{formattedDate}}</a></div>
                     {{#blogAuthor}}<div class="post-author"> by {{#blogAuthorUrl}}<a href="{{blogAuthorUrl}}">{{blogAuthor}}</a>{{/blogAuthorUrl}}{{^blogAuthorUrl}}{{blogAuthor}}{{/blogAuthorUrl}}</div>{{/blogAuthor}}
                     <div class="post-summary">{{{contentHtml}}}</div>
@@ -179,7 +179,7 @@ class TemplateManager {
         <div class="post-list">
             {{#posts}}
                 <div class="post-item">
-                    {{#hasTitle}}<h2><a href="/{{urlPath}}/index.html">{{displayTitle}}</a></h2>{{/hasTitle}}
+                    {{#hasTitle}}<h2>{{displayTitle}}</h2>{{/hasTitle}}
                     <div class="post-date"><a href="/{{urlPath}}/index.html">{{formattedDate}}</a></div>
                     {{#blogAuthor}}<div class="post-author"> by {{#blogAuthorUrl}}<a href="{{blogAuthorUrl}}">{{blogAuthor}}</a>{{/blogAuthorUrl}}{{^blogAuthorUrl}}{{blogAuthor}}{{/blogAuthorUrl}}</div>{{/blogAuthor}}
                     <div class="post-summary">{{{contentHtml}}}</div>
@@ -222,7 +222,7 @@ class TemplateManager {
         <div class="post-list">
             {{#posts}}
                 <div class="post-item">
-                    {{#hasTitle}}<h2><a href="/{{urlPath}}/index.html">{{displayTitle}}</a></h2>{{/hasTitle}}
+                    {{#hasTitle}}<h2>{{displayTitle}}</h2>{{/hasTitle}}
                     <div class="post-date"><a href="/{{urlPath}}/index.html">{{formattedDate}}</a></div>
                     {{#blogAuthor}}<div class="post-author"> by {{#blogAuthorUrl}}<a href="{{blogAuthorUrl}}">{{blogAuthor}}</a>{{/blogAuthorUrl}}{{^blogAuthorUrl}}{{blogAuthor}}{{/blogAuthorUrl}}</div>{{/blogAuthor}}
                     <div class="post-summary">{{{contentHtml}}}</div>
@@ -254,13 +254,6 @@ class TemplateManager {
             font-size: 1.1rem;
             margin-bottom: 15px;
             font-style: italic;
-        }
-        
-        .post-author {
-            color: var(--medium-gray);
-            font-size: 0.9rem;
-            margin-top: 5px;
-            display:inline-block;
         }
         
         :root {
@@ -301,7 +294,7 @@ class TemplateManager {
 
         /* Container */
         .container {
-            max-width: 800px;
+            max-width: 1000px;
             margin: 0 auto;
             padding: 20px;
         }
@@ -385,11 +378,11 @@ class TemplateManager {
         .post-list {
             display: flex;
             flex-direction: column;
-            gap: 30px;
         }
 
         .post-item {
             border-bottom: 1px solid var(--light-gray);
+            padding-top:20px;
             padding-bottom: 20px;
         }
 
@@ -400,7 +393,6 @@ class TemplateManager {
         .post-date {
             color: var(--medium-gray);
             font-size: 0.9rem;
-            margin-bottom: 10px;
             display:inline-block;
         }
 
@@ -415,6 +407,12 @@ class TemplateManager {
             border-bottom-color: var(--accent-color);
         }
 
+        .post-author {
+            color: var(--medium-gray);
+            font-size: 0.9rem;
+            display:inline-block;
+        }
+
         .post-tags, .post-category {
             margin: 10px 0;
             font-size: 0.9rem;
@@ -426,7 +424,6 @@ class TemplateManager {
         
         .post-summary p, .post-content p {
             margin-top:1.2em;
-            margin-bottom:1.2em;
         }
 
         /* Tags */
