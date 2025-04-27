@@ -20,99 +20,40 @@ class ManualPublisher: Publisher {
     /// - Throws: Error if zipping fails
     func publish(directoryURL: URL, statusUpdate: @escaping (String) -> Void) async throws -> URL? {
         statusUpdate("Creating ZIP file...")
+        print("📝 Creating ZIP file from site directory: \(directoryURL.path)")
         
-        // Create a temporary file URL for the zip file
-        let zipFileName = "site_\(Int(Date().timeIntervalSince1970)).zip"
+        // Create a temporary file URL for the zip file with a unique timestamp
+        let timestamp = Int(Date().timeIntervalSince1970)
+        let zipFileName = "site_\(timestamp).zip"
         let zipFilePath = FileManager.default.temporaryDirectory.appendingPathComponent(zipFileName)
         
-        // Create the zip file
-        guard let archive = Archive(url: zipFilePath, accessMode: .create) else {
-            throw StaticSiteGenerator.SiteGeneratorError.zipCreationFailed
-        }
-        
-        let directoryContents = try FileManager.default.contentsOfDirectory(
-            at: directoryURL,
-            includingPropertiesForKeys: nil,
-            options: [.skipsHiddenFiles]
-        )
-        
-        // Get total count of items to add to the archive
-        var totalItems = directoryContents.count
-        
-        // Add special directories that might not be counted in directoryContents
-        if FileManager.default.fileExists(atPath: directoryURL.appendingPathComponent("css").path) {
-            totalItems += 1
-        }
-        
-        // Add each file and directory to the zip file
-        var itemsProcessed = 0
-        for fileURL in directoryContents {
-            let relativePath = fileURL.lastPathComponent
-            let isDirectory = (try? fileURL.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory ?? false
-            
-            if isDirectory {
-                try self.addDirectoryToArchive(
-                    archive: archive,
-                    directoryURL: fileURL,
-                    relativePath: relativePath,
-                    statusUpdate: { message in
-                        statusUpdate("\(message) (\(itemsProcessed)/\(totalItems))")
-                    }
-                )
-            } else {
-                try archive.addEntry(
-                    with: relativePath,
-                    relativeTo: directoryURL,
-                    compressionMethod: .deflate
-                )
-            }
-            
-            itemsProcessed += 1
-            statusUpdate("Added \(relativePath) to ZIP (\(itemsProcessed)/\(totalItems))")
-        }
-        
-        statusUpdate("ZIP file created successfully")
-        return zipFilePath
-    }
-    
-    /// Recursively add a directory and its contents to the zip archive
-    /// - Parameters:
-    ///   - archive: The zip archive
-    ///   - directoryURL: The directory to add
-    ///   - relativePath: The relative path within the zip file
-    ///   - statusUpdate: Closure to call with status updates
-    private func addDirectoryToArchive(
-        archive: Archive,
-        directoryURL: URL,
-        relativePath: String,
-        statusUpdate: @escaping (String) -> Void
-    ) throws {
+        // Remove existing file if it exists
         let fileManager = FileManager.default
-        let directoryContents = try fileManager.contentsOfDirectory(
-            at: directoryURL,
-            includingPropertiesForKeys: nil,
-            options: [.skipsHiddenFiles]
+        if fileManager.fileExists(atPath: zipFilePath.path) {
+            try fileManager.removeItem(at: zipFilePath)
+            print("🗑️ Removed existing ZIP file at path: \(zipFilePath.path)")
+        }
+        
+        // Make sure the directory exists
+        try fileManager.createDirectory(
+            at: zipFilePath.deletingLastPathComponent(),
+            withIntermediateDirectories: true,
+            attributes: nil
         )
         
-        for fileURL in directoryContents {
-            let fileRelativePath = relativePath + "/" + fileURL.lastPathComponent
-            let isDirectory = (try? fileURL.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory ?? false
+        do {
+            print("📦 Adding directory contents: \(directoryURL.path) to ZIP")
+            statusUpdate("Adding files to ZIP...")
             
-            if isDirectory {
-                try self.addDirectoryToArchive(
-                    archive: archive,
-                    directoryURL: fileURL,
-                    relativePath: fileRelativePath,
-                    statusUpdate: statusUpdate
-                )
-            } else {
-                try archive.addEntry(
-                    with: fileRelativePath,
-                    relativeTo: directoryURL.deletingLastPathComponent(),
-                    compressionMethod: .deflate
-                )
-                statusUpdate("Added \(fileRelativePath) to ZIP")
-            }
+            // Zip the directory contents
+            try fileManager.zipItem(at: directoryURL, to: zipFilePath, shouldKeepParent: false)
+            
+            print("✅ ZIP file created successfully at: \(zipFilePath.path)")
+            statusUpdate("ZIP file created successfully")
+            return zipFilePath
+        } catch {
+            print("❌ Error creating ZIP file: \(error.localizedDescription)")
+            throw StaticSiteGenerator.SiteGeneratorError.publishingFailed("Failed to create ZIP file: \(error.localizedDescription)")
         }
     }
 }
