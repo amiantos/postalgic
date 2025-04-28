@@ -45,6 +45,7 @@ final class Blog {
     // Blog metadata
     var authorName: String?
     var authorUrl: String?
+    var authorEmail: String?
     var tagline: String?
     
     // Publisher Type
@@ -84,11 +85,12 @@ final class Blog {
     @Relationship(deleteRule: .cascade, inverse: \PublishedFiles.blog)
     var publishedFiles: [PublishedFiles] = []
 
-    init(name: String, url: String, createdAt: Date = Date(), authorName: String? = nil, authorUrl: String? = nil, tagline: String? = nil) {
+    init(name: String, url: String, createdAt: Date = Date(), authorName: String? = nil, authorEmail: String? = nil, authorUrl: String? = nil, tagline: String? = nil) {
         self.name = name
         self.url = url
         self.createdAt = createdAt
         self.authorName = authorName
+        self.authorEmail = authorEmail
         self.authorUrl = authorUrl
         self.tagline = tagline
         self.publisherType = PublisherType.none.rawValue

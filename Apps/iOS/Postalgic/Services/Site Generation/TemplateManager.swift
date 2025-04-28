@@ -689,40 +689,51 @@ class TemplateManager {
         }
         """
         
-        // RSS Feed template
+        // Atom Feed template
         defaultTemplates["rss"] = """
-        <?xml version="1.0" encoding="UTF-8" ?>
-        <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
-        <channel>
+        <?xml version="1.0" encoding="UTF-8"?>
+        <feed xmlns="http://www.w3.org/2005/Atom" xml:base="{{blogUrl}}/">
             <title>{{blogName}}</title>
-            <link>{{blogUrl}}</link>
-            <description>{{#blogTagline}}{{blogTagline}}{{/blogTagline}}{{^blogTagline}}Recent posts from {{blogName}}{{/blogTagline}}</description>
-            <language>en-us</language>
-            <lastBuildDate>{{buildDate}}</lastBuildDate>
-            <atom:link href="{{blogUrl}}/rss.xml" rel="self" type="application/rss+xml" />
+            <link href="{{blogUrl}}/" rel="alternate" type="text/html" />
+            <link href="{{blogUrl}}/rss.xml" rel="self" type="application/atom+xml" />
+            <id>{{blogUrl}}/</id>
+            <updated>{{lastmod}}</updated>
+            <subtitle>{{#blogTagline}}{{blogTagline}}{{/blogTagline}}{{^blogTagline}}Posts from {{blogName}}{{/blogTagline}}</subtitle>
             {{#blogAuthor}}
-            <managingEditor>{{blogAuthor}}{{#blogAuthorUrl}} ({{blogAuthorUrl}}){{/blogAuthorUrl}}</managingEditor>
-            <webMaster>{{blogAuthor}}{{#blogAuthorUrl}} ({{blogAuthorUrl}}){{/blogAuthorUrl}}</webMaster>
+            <author>
+                <name>{{blogAuthor}}</name>
+                {{#blogAuthorUrl}}<uri>{{blogAuthorUrl}}</uri>{{/blogAuthorUrl}}
+                {{#blogAuthorEmail}}<email>{{blogAuthorEmail}}</email>{{/blogAuthorEmail}}
+            </author>
             {{/blogAuthor}}
+            <generator uri="https://postalgic.app/" version="1.0">Postalgic</generator>
             
             {{#posts}}
-            <item>
+            <entry>
                 <title>{{displayTitle}}</title>
-                <link>{{blogUrl}}/{{urlPath}}/</link>
-                <guid>{{blogUrl}}/{{urlPath}}/</guid>
-                <pubDate>{{pubDate}}</pubDate>
+                <link href="{{blogUrl}}/{{urlPath}}/" rel="alternate" type="text/html" />
+                <id>{{blogUrl}}/{{urlPath}}/</id>
+                <published>{{lastmod}}</published>
+                <updated>{{lastmod}}</updated>
                 {{#blogAuthor}}
                 <author>
                     <name>{{blogAuthor}}</name>
                     {{#blogAuthorUrl}}<uri>{{blogAuthorUrl}}</uri>{{/blogAuthorUrl}}
+                    {{#blogAuthorEmail}}<email>{{blogAuthorEmail}}</email>{{/blogAuthorEmail}}
                 </author>
                 {{/blogAuthor}}
-                <description><![CDATA[{{{contentHtml}}}]]></description>
-            </item>
+                {{#hasCategory}}
+                <category term="{{categoryName}}" />
+                {{/hasCategory}}
+                {{#hasTags}}
+                {{#tags}}
+                <category term="{{name}}" />
+                {{/tags}}
+                {{/hasTags}}
+                <content type="html"><![CDATA[{{{contentHtml}}}]]></content>
+            </entry>
             {{/posts}}
-            
-        </channel>
-        </rss>
+        </feed>
         """
         
         // Robots.txt template

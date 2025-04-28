@@ -19,6 +19,7 @@ struct BlogFormView: View {
     
     @State private var name: String
     @State private var authorName: String
+    @State private var authorEmail: String
     @State private var authorUrl: String
     @State private var tagline: String
     
@@ -28,6 +29,7 @@ struct BlogFormView: View {
         self.blog = nil
         _name = State(initialValue: "")
         _authorName = State(initialValue: "")
+        _authorEmail = State(initialValue: "")
         _authorUrl = State(initialValue: "")
         _tagline = State(initialValue: "")
     }
@@ -38,6 +40,7 @@ struct BlogFormView: View {
         self.blog = blog
         _name = State(initialValue: blog.name)
         _authorName = State(initialValue: blog.authorName ?? "")
+        _authorEmail = State(initialValue: blog.authorEmail ?? "")
         _authorUrl = State(initialValue: blog.authorUrl ?? "")
         _tagline = State(initialValue: blog.tagline ?? "")
     }
@@ -52,6 +55,11 @@ struct BlogFormView: View {
 
                 Section {
                     TextField("Author Name (optional)", text: $authorName)
+                    TextField("Author Email (optional)", text: $authorEmail)
+                        .autocapitalization(.none)
+                        .autocorrectionDisabled(true)
+                        .keyboardType(.emailAddress)
+                        .textContentType(.emailAddress)
                     TextField("Author URL (optional)", text: $authorUrl)
                         .autocapitalization(.none)
                         .autocorrectionDisabled(true)
@@ -60,7 +68,7 @@ struct BlogFormView: View {
                 } header: {
                     Text("Author Information")
                 } footer: {
-                    Text("If provided, this name (with a link to the URL) will be added as a byline to every post. You can provide a URL to a website, or a `mailto:` prefix with your email address to allow others to contact you.")
+                    Text("If provided, author information will be added to posts and included in the RSS feed. The email is only used in the RSS feed's <email> tag.")
                 }
             }
             .navigationTitle(isEditing ? "Edit Blog" : "New Blog")
@@ -90,6 +98,7 @@ struct BlogFormView: View {
             name: name, 
             url: "",
             authorName: authorName.isEmpty ? nil : authorName,
+            authorEmail: authorEmail.isEmpty ? nil : authorEmail,
             authorUrl: authorUrl.isEmpty ? nil : authorUrl,
             tagline: tagline.isEmpty ? nil : tagline
         )
@@ -100,6 +109,7 @@ struct BlogFormView: View {
         if let blogToUpdate = blog {
             blogToUpdate.name = name
             blogToUpdate.authorName = authorName.isEmpty ? nil : authorName
+            blogToUpdate.authorEmail = authorEmail.isEmpty ? nil : authorEmail
             blogToUpdate.authorUrl = authorUrl.isEmpty ? nil : authorUrl
             blogToUpdate.tagline = tagline.isEmpty ? nil : tagline
         }

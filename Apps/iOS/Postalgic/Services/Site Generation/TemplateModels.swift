@@ -63,14 +63,24 @@ struct PostTemplateData {
             }
         }
         
-        // ISO8601 formatted date for RSS, etc.
+        // ISO8601 formatted date for sitemap and general use
         let formatter = ISO8601DateFormatter()
-        dict["pubDate"] = formatter.string(from: post.createdAt)
         dict["lastmod"] = formatter.string(from: post.createdAt)
+        
+        // RFC 822 formatted date for RSS (required by RSS 2.0)
+        let rfcDateFormatter = DateFormatter()
+        rfcDateFormatter.dateFormat = "EEE, dd MMM yyyy HH:mm:ss zzz"
+        rfcDateFormatter.locale = Locale(identifier: "en_US_POSIX")
+        rfcDateFormatter.timeZone = TimeZone(abbreviation: "GMT")
+        dict["pubDate"] = rfcDateFormatter.string(from: post.createdAt)
         
         // Blog author information
         if let authorName = blog.authorName {
             dict["blogAuthor"] = authorName
+        }
+        
+        if let authorEmail = blog.authorEmail {
+            dict["blogAuthorEmail"] = authorEmail
         }
         
         if let authorUrl = blog.authorUrl {
