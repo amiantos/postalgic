@@ -48,6 +48,125 @@ class FTPPublisher: Publisher {
         return nil // SFTP publisher doesn't return a local URL, as content is published remotely
     }
     
+    /// Publishes only modified files and removes deleted files
+    func smartPublish(directoryURL: URL, modifiedFiles: [String], deletedFiles: [String], statusUpdate: @escaping (String) -> Void) async throws -> URL? {
+        let fileManager = FileManager.default
+        statusUpdate("Starting smart SFTP upload to \(host):\(port)...")
+        
+        // Connect to the server
+        let client: SSHClient
+        do {
+            statusUpdate("Creating SFTP connection to \(host):\(port)...")
+            client = try await SSHClient.connect(host: host,
+                                               port: port,
+                                               authenticationMethod: .passwordBased(
+                                                 username: username,
+                                                 password: password
+                                               ),
+                                               hostKeyValidator: .acceptAnything(),
+                                               reconnect: .never)
+            statusUpdate("Connected and authenticated to \(host)")
+        } catch {
+            print("❌ SFTP connection failed: \(error.localizedDescription)")
+            statusUpdate("Connection failed: \(error.localizedDescription)")
+            throw FTPPublisherError.connectionFailed("Failed to connect to \(host):\(port) - \(error.localizedDescription)")
+        }
+        
+        // Create SFTP session
+        statusUpdate("Opening SFTP session...")
+        let sftp = try await client.openSFTP()
+        
+        // Track processed directories to avoid redundant checks/creation
+        var processedDirectories: Set<String> = []
+        
+        // First upload modified files
+        if !modifiedFiles.isEmpty {
+            statusUpdate("Preparing to upload \(modifiedFiles.count) modified files...")
+            
+            for (index, relativePath) in modifiedFiles.enumerated() {
+                // Create the full file URL
+                let fileURL = directoryURL.appendingPathComponent(relativePath)
+                
+                // Skip if file doesn't exist
+                guard fileManager.fileExists(atPath: fileURL.path) else {
+                    continue
+                }
+                
+                // Combine with remote path
+                let remoteFilePath = remotePath.hasSuffix("/") ?
+                    "\(remotePath)\(relativePath)" :
+                    "\(remotePath)/\(relativePath)"
+                
+                // Get the remote directory path for this file
+                let remoteFileComponents = remoteFilePath.components(separatedBy: "/")
+                let remoteDirectoryPath = remoteFileComponents.dropLast().joined(separator: "/")
+                
+                // Create remote directory if it doesn't exist yet and isn't in our processed list
+                if !processedDirectories.contains(remoteDirectoryPath) {
+                    statusUpdate("Creating remote directory: \(remoteDirectoryPath)")
+                    try await createRemoteDirectoryStructure(sftp: sftp, path: remoteDirectoryPath)
+                    processedDirectories.insert(remoteDirectoryPath)
+                }
+                
+                // Update status with current file being uploaded
+                let progressPercent = Int(Double(index + 1) / Double(modifiedFiles.count) * 100)
+                statusUpdate("Uploading file \(index + 1)/\(modifiedFiles.count) (\(progressPercent)%): \(relativePath)")
+                
+                do {
+                    // Read file data
+                    let fileData = try Data(contentsOf: fileURL)
+                    
+                    // Upload the file
+                    try await uploadFile(
+                        sftp: sftp,
+                        fileData: fileData,
+                        remotePath: remoteFilePath
+                    )
+                } catch {
+                    print("❌ Error uploading \(relativePath): \(error.localizedDescription)")
+                    statusUpdate("Error uploading \(relativePath): \(error.localizedDescription)")
+                    
+                    // Close connections and throw the error
+                    try? await sftp.close()
+                    try? await client.close()
+                    throw FTPPublisherError.ftpUploadFailed("Failed to upload \(relativePath): \(error.localizedDescription)")
+                }
+            }
+        }
+        
+        // Then delete removed files
+        if !deletedFiles.isEmpty {
+            statusUpdate("Deleting \(deletedFiles.count) removed files...")
+            
+            for (index, relativePath) in deletedFiles.enumerated() {
+                // Combine with remote path
+                let remoteFilePath = remotePath.hasSuffix("/") ?
+                    "\(remotePath)\(relativePath)" :
+                    "\(remotePath)/\(relativePath)"
+                
+                // Update status
+                statusUpdate("Deleting file \(index + 1)/\(deletedFiles.count): \(relativePath)")
+                
+                do {
+                    // Try to delete the file
+                    try await sftp.remove(at: remoteFilePath)
+                } catch {
+                    // Just log the error but continue with other files
+                    print("⚠️ Error deleting \(relativePath): \(error.localizedDescription)")
+                    statusUpdate("Warning: Could not delete \(relativePath): \(error.localizedDescription)")
+                }
+            }
+        }
+        
+        // Close the SFTP session and SSH connection
+        statusUpdate("Closing SFTP connection...")
+        try await sftp.close()
+        try await client.close()
+        
+        statusUpdate("Smart SFTP upload completed")
+        return nil
+    }
+    
     /// Uploads the contents of a directory to the SFTP server
     /// - Parameters:
     ///   - directory: The local directory containing the site files

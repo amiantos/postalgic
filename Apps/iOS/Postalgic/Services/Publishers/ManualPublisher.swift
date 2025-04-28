@@ -56,4 +56,19 @@ class ManualPublisher: Publisher {
             throw StaticSiteGenerator.SiteGeneratorError.publishingFailed("Failed to create ZIP file: \(error.localizedDescription)")
         }
     }
+    
+    /// For manual publishing, we always create a full zip file even with smart publishing
+    /// - Parameters:
+    ///   - directoryURL: URL of the directory to zip
+    ///   - modifiedFiles: List of modified files (ignored for manual publisher)
+    ///   - deletedFiles: List of deleted files (ignored for manual publisher)
+    ///   - statusUpdate: Closure to call with status updates
+    /// - Returns: URL to the zip file
+    /// - Throws: Error if zipping fails
+    func smartPublish(directoryURL: URL, modifiedFiles: [String], deletedFiles: [String], statusUpdate: @escaping (String) -> Void) async throws -> URL? {
+        statusUpdate("Creating full ZIP file for manual download...")
+        // For manual publishing, we always create a full zip
+        // since the user needs a complete site to upload manually
+        return try await publish(directoryURL: directoryURL, statusUpdate: statusUpdate)
+    }
 }

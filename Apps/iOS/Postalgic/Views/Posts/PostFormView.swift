@@ -326,10 +326,10 @@ struct PostFormView: View {
                 }
             }
             .alert("Publish Now?", isPresented: $showingPublishAlert) {
-                Button("Cancel", role: .cancel) {
+                Button("No", role: .cancel) {
                     dismiss()
                 }
-                Button("Publish") {
+                Button("Yes") {
                     showingPublishView = true
                 }
             } message: {

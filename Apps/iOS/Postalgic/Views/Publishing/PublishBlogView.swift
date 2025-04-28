@@ -23,11 +23,13 @@ struct PublishBlogView: View {
     @State private var errorMessage: String?
     @State private var publishSuccessMessage: String?
     @State private var statusMessage: String = "Initializing..."
+    @State private var forceFullUpload = false
 
     @State private var showingShareSheet = false
     @State private var showingSuccessAlert = false
     @State private var showingPublishSettingsView = false
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
 
     var body: some View {
         VStack(spacing: 20) {
@@ -105,22 +107,43 @@ struct PublishBlogView: View {
                     if blog.hasAwsConfigured
                         && blog.currentPublisherType == .aws
                     {
-                        Button(action: {
-                            generateSite()
-                        }) {
-                            HStack {
-                                Image(systemName: "arrow.up.to.line")
-                                    .font(.system(size: 16, weight: .bold))
-                                Text("Publish to AWS")
-                                    .fontWeight(.semibold)
+                        VStack(spacing: 12) {
+                            Button(action: {
+                                forceFullUpload = false
+                                generateSite()
+                            }) {
+                                HStack {
+                                    Image(systemName: "arrow.up.to.line")
+                                        .font(.system(size: 16, weight: .bold))
+                                    Text("Smart Publish to AWS")
+                                        .fontWeight(.semibold)
+                                }
+                                .padding()
+                                .frame(maxWidth: .infinity)
+                                .background(Color("PBlue"))
+                                .foregroundColor(.primary)
+                                .cornerRadius(10)
                             }
-                            .padding()
-                            .frame(maxWidth: .infinity)
-                            .background(Color("PBlue"))
-                            .foregroundColor(.primary)
-                            .cornerRadius(10)
+                            .padding(.horizontal)
+                            
+                            Button(action: {
+                                forceFullUpload = true
+                                generateSite()
+                            }) {
+                                HStack {
+                                    Image(systemName: "arrow.up.to.line.square")
+                                        .font(.system(size: 16, weight: .bold))
+                                    Text("Full Publish to AWS")
+                                        .fontWeight(.semibold)
+                                }
+                                .padding()
+                                .frame(maxWidth: .infinity)
+                                .background(Color("PYellow"))
+                                .foregroundColor(.primary)
+                                .cornerRadius(10)
+                            }
+                            .padding(.horizontal)
                         }
-                        .padding(.horizontal)
 
                         // View Published Site Button (shown if success message exists)
                         if publishSuccessMessage != nil {
@@ -147,22 +170,43 @@ struct PublishBlogView: View {
                     else if blog.hasFtpConfigured
                         && blog.currentPublisherType == .ftp
                     {
-                        Button(action: {
-                            generateSite()
-                        }) {
-                            HStack {
-                                Image(systemName: "arrow.up.to.line")
-                                    .font(.system(size: 16, weight: .bold))
-                                Text("Publish via SFTP")
-                                    .fontWeight(.semibold)
+                        VStack(spacing: 12) {
+                            Button(action: {
+                                forceFullUpload = false
+                                generateSite()
+                            }) {
+                                HStack {
+                                    Image(systemName: "arrow.up.to.line")
+                                        .font(.system(size: 16, weight: .bold))
+                                    Text("Smart Publish via SFTP")
+                                        .fontWeight(.semibold)
+                                }
+                                .padding()
+                                .frame(maxWidth: .infinity)
+                                .background(Color("PBlue"))
+                                .foregroundColor(.primary)
+                                .cornerRadius(10)
                             }
-                            .padding()
-                            .frame(maxWidth: .infinity)
-                            .background(Color("PBlue"))
-                            .foregroundColor(.primary)
-                            .cornerRadius(10)
+                            .padding(.horizontal)
+                            
+                            Button(action: {
+                                forceFullUpload = true
+                                generateSite()
+                            }) {
+                                HStack {
+                                    Image(systemName: "arrow.up.to.line.square")
+                                        .font(.system(size: 16, weight: .bold))
+                                    Text("Full Publish via SFTP")
+                                        .fontWeight(.semibold)
+                                }
+                                .padding()
+                                .frame(maxWidth: .infinity)
+                                .background(Color("PYellow"))
+                                .foregroundColor(.primary)
+                                .cornerRadius(10)
+                            }
+                            .padding(.horizontal)
                         }
-                        .padding(.horizontal)
 
                         // View Published Site Button (shown if success message exists)
                         if publishSuccessMessage != nil {
@@ -277,6 +321,8 @@ struct PublishBlogView: View {
         .onAppear {
             setupNotificationObservers()
             if autoPublish {
+                // Use smart publishing for auto-publish by default
+                forceFullUpload = false
                 generateSite()
             }
         }
@@ -305,8 +351,15 @@ struct PublishBlogView: View {
 
         Task {
             do {
-                let generator = StaticSiteGenerator(blog: blog)
-                statusMessage = "Generating site content..."
+                // Pass modelContext and forceFullUpload flags to StaticSiteGenerator
+                let generator = StaticSiteGenerator(
+                    blog: blog, 
+                    modelContext: modelContext,
+                    forceFullUpload: forceFullUpload
+                )
+                
+                let publishMode = forceFullUpload ? "full" : "smart"
+                statusMessage = "Generating site content for \(publishMode) publishing..."
                 let result = try await generator.generateSite()
 
                 DispatchQueue.main.async {

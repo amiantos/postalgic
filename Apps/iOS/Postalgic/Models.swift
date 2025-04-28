@@ -80,6 +80,9 @@ final class Blog {
     
     @Relationship(deleteRule: .cascade, inverse: \BlogTemplate.blog)
     var templates: [BlogTemplate] = []
+    
+    @Relationship(deleteRule: .cascade, inverse: \PublishedFiles.blog)
+    var publishedFiles: [PublishedFiles] = []
 
     init(name: String, url: String, createdAt: Date = Date(), authorName: String? = nil, authorUrl: String? = nil, tagline: String? = nil) {
         self.name = name

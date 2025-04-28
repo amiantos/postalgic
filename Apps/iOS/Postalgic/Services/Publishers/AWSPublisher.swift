@@ -59,6 +59,129 @@ class AWSPublisher: Publisher {
         statusUpdate("Publication complete!")
         return nil // AWS publisher doesn't return a local URL, as content is published remotely
     }
+    
+    /// Publishes only modified files and removes deleted files
+    func smartPublish(directoryURL: URL, modifiedFiles: [String], deletedFiles: [String], statusUpdate: @escaping (String) -> Void) async throws -> URL? {
+        // Upload modified files
+        if !modifiedFiles.isEmpty {
+            statusUpdate("Starting S3 upload of \(modifiedFiles.count) changed files...")
+            try await uploadSelectedFiles(from: directoryURL, filePaths: modifiedFiles, statusUpdate: statusUpdate)
+        }
+        
+        // Delete files that were removed
+        if !deletedFiles.isEmpty {
+            statusUpdate("Deleting \(deletedFiles.count) removed files from S3...")
+            try await deleteFiles(paths: deletedFiles, statusUpdate: statusUpdate)
+        }
+        
+        // Always invalidate the cache to ensure the site is fresh
+        statusUpdate("Upload complete. Creating CloudFront invalidation...")
+        try await invalidateCache(statusUpdate: statusUpdate)
+        statusUpdate("Smart publication complete!")
+        return nil
+    }
+    
+    /// Uploads specific files from the directory to S3
+    private func uploadSelectedFiles(from directoryURL: URL, filePaths: [String], statusUpdate: @escaping (String) -> Void) async throws {
+        let fileManager = FileManager.default
+        let totalFiles = filePaths.count
+        
+        statusUpdate("Preparing to upload \(totalFiles) files")
+        var fileCount = 0
+        var uploadErrors: [String] = []
+        
+        for relativePath in filePaths {
+            // Create the full file URL
+            let fileURL = directoryURL.appendingPathComponent(relativePath)
+            
+            // Skip if file doesn't exist
+            guard fileManager.fileExists(atPath: fileURL.path) else {
+                continue
+            }
+            
+            // Get file content type based on extension
+            let fileExtension = fileURL.pathExtension
+            let contentType = contentType(forFileExtension: fileExtension)
+            
+            do {
+                // Read file data
+                let fileData = try Data(contentsOf: fileURL)
+                
+                // Update status with current file being uploaded
+                fileCount += 1
+                let progressPercent = Int((Double(fileCount) / Double(totalFiles)) * 100)
+                statusUpdate("Uploading file \(fileCount)/\(totalFiles) (\(progressPercent)%): \(relativePath)")
+                
+                // Upload the file and wait for completion
+                try await uploadDataToS3(
+                    data: fileData,
+                    bucket: self.bucket,
+                    key: relativePath,
+                    contentType: contentType
+                )
+            } catch {
+                print("ERROR: ", dump(error, name: "Putting an object."))
+                print("❌ Error uploading \(relativePath): \(error.localizedDescription)")
+                uploadErrors.append("\(relativePath): \(error.localizedDescription)")
+            }
+        }
+        
+        statusUpdate("Completed upload of \(fileCount) files")
+        
+        if fileCount == 0 && totalFiles > 0 {
+            throw AWSPublisherError.s3UploadFailed("No files were uploaded")
+        }
+        
+        if !uploadErrors.isEmpty {
+            throw AWSPublisherError.s3UploadFailed(
+                "Failed to upload some files: \(uploadErrors.joined(separator: ", "))"
+            )
+        }
+    }
+    
+    /// Deletes files from S3
+    private func deleteFiles(paths: [String], statusUpdate: @escaping (String) -> Void) async throws {
+        let totalFiles = paths.count
+        var deleteErrors: [String] = []
+        
+        for (index, path) in paths.enumerated() {
+            statusUpdate("Deleting file \(index + 1)/\(totalFiles): \(path)")
+            
+            do {
+                try await deleteFileFromS3(bucket: self.bucket, key: path)
+            } catch {
+                print("❌ Error deleting \(path): \(error.localizedDescription)")
+                deleteErrors.append("\(path): \(error.localizedDescription)")
+            }
+        }
+        
+        if !deleteErrors.isEmpty {
+            throw AWSPublisherError.s3UploadFailed(
+                "Failed to delete some files: \(deleteErrors.joined(separator: ", "))"
+            )
+        }
+    }
+    
+    /// Deletes a file from S3
+    private func deleteFileFromS3(bucket: String, key: String) async throws {
+        return try await withCheckedThrowingContinuation { continuation in
+            let deleteRequest = AWSS3DeleteObjectRequest()!
+            deleteRequest.bucket = bucket
+            deleteRequest.key = key
+            
+            AWSS3.default().deleteObject(deleteRequest) { (output, error) in
+                DispatchQueue.main.async {
+                    if let error = error {
+                        print("Delete failed: \(error.localizedDescription)")
+                        continuation.resume(throwing: error)
+                    } else {
+                        print("Delete succeeded: \(key)")
+                        continuation.resume(returning: ())
+                    }
+                }
+            }
+        }
+    }
 
     func uploadDataToS3(
         data: Data,
@@ -82,7 +205,7 @@ class AWSPublisher: Publisher {
                             print("Upload failed: \(error.localizedDescription)")
                             continuation.resume(throwing: error)
                         } else {
-                            print("Upload succeeded!")
+                            print("Upload succeeded for \(key)!")
                             continuation.resume(returning: ())
                         }
                     }

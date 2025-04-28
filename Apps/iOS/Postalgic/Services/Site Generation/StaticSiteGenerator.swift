@@ -8,6 +8,7 @@
 import Foundation
 import Ink
 import ZIPFoundation
+import SwiftData
 
 extension String {
     /// Formats a string for use in a URL path, replacing spaces with hyphens and ensuring URL safety
@@ -29,6 +30,8 @@ class StaticSiteGenerator {
     private let blog: Blog
     private var siteDirectory: URL?
     private let templateEngine: TemplateEngine
+    private let modelContext: ModelContext?
+    private var forceFullUpload: Bool = false
     
     // MARK: - Error Handling
 
@@ -54,10 +57,15 @@ class StaticSiteGenerator {
     }
 
     /// Initializes a StaticSiteGenerator with a Blog model
-    /// - Parameter blog: The Blog to generate a site for
-    init(blog: Blog) {
+    /// - Parameters:
+    ///   - blog: The Blog to generate a site for
+    ///   - modelContext: The SwiftData model context for fetching/saving file hashes
+    ///   - forceFullUpload: Whether to force a full upload regardless of file changes
+    init(blog: Blog, modelContext: ModelContext? = nil, forceFullUpload: Bool = false) {
         self.blog = blog
         self.templateEngine = TemplateEngine(blog: blog)
+        self.modelContext = modelContext
+        self.forceFullUpload = forceFullUpload
     }
     
     // MARK: - Template Management
@@ -111,6 +119,84 @@ class StaticSiteGenerator {
         }
     }
 
+    // MARK: - File Tracking and Diffing
+    
+    /// Calculates hashes for all files in a directory
+    /// - Parameter directory: Directory containing the files
+    /// - Returns: Dictionary mapping file paths to content hashes
+    private func calculateFileHashes(in directory: URL) throws -> [String: String] {
+        let fileManager = FileManager.default
+        var fileHashes: [String: String] = [:]
+        
+        guard let enumerator = fileManager.enumerator(
+            at: directory,
+            includingPropertiesForKeys: [.isRegularFileKey],
+            options: [.skipsHiddenFiles]
+        ) else {
+            throw SiteGeneratorError.publishingFailed("Failed to enumerate site directory")
+        }
+        
+        for case let fileURL as URL in enumerator {
+            let attributes = try fileURL.resourceValues(forKeys: [.isRegularFileKey])
+            guard attributes.isRegularFile == true else { continue }
+            
+            // Get relative path for consistent keys
+            let relativePath = fileURL.path.replacingOccurrences(
+                of: directory.path,
+                with: ""
+            ).trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+            
+            // Calculate hash of file content
+            let fileData = try Data(contentsOf: fileURL)
+            let hash = fileData.sha256Hash()
+            
+            fileHashes[relativePath] = hash
+        }
+        
+        return fileHashes
+    }
+    
+    /// Gets the previous PublishedFiles record for this blog and publisher
+    /// - Returns: PublishedFiles if found, nil otherwise
+    private func getPreviousPublishedFiles() -> PublishedFiles? {
+        guard let modelContext = modelContext else {
+            return nil
+        }
+        
+        let publisherTypeString = blog.publisherType ?? PublisherType.none.rawValue
+        
+        // Find an existing record for this blog with the current publisher type
+        return blog.publishedFiles.first { $0.publisherType == publisherTypeString }
+    }
+    
+    /// Saves file hashes for this publication
+    /// - Parameter hashes: Dictionary of file paths to content hashes
+    private func saveFileHashes(_ hashes: [String: String]) {
+        guard let modelContext = modelContext else {
+            return
+        }
+        
+        let publisherTypeString = blog.publisherType ?? PublisherType.none.rawValue
+        
+        // Check if a record already exists
+        if let existingRecord = getPreviousPublishedFiles() {
+            existingRecord.updateHashes(hashes)
+        } else {
+            // Create a new record
+            let newRecord = PublishedFiles(blog: blog, publisherType: publisherTypeString)
+            newRecord.updateHashes(hashes)
+            modelContext.insert(newRecord)
+            blog.publishedFiles.append(newRecord)
+        }
+        
+        // Save changes
+        do {
+            try modelContext.save()
+        } catch {
+            print("Error saving published files: \(error)")
+        }
+    }
+    
     // MARK: - Main Generation Methods
 
     /// Generates a static site for the blog
@@ -208,13 +294,70 @@ class StaticSiteGenerator {
         
         do {
             print("🚀 Publishing site using \(publisher.publisherType.displayName) publisher...")
-            let result = try await publisher.publish(directoryURL: siteDirectory) { statusMessage in
-                NotificationCenter.default.post(
-                    name: .publishStatusUpdated, 
-                    object: statusMessage
-                )
+            
+            // Calculate hashes for the newly generated files
+            let newFileHashes = try calculateFileHashes(in: siteDirectory)
+            
+            // For smart publishing, we need the previous file hashes
+            if !forceFullUpload, let previousFiles = getPreviousPublishedFiles() {
+                // Determine which files changed
+                let changes = previousFiles.determineChanges(with: newFileHashes)
+                
+                if changes.hasChanges {
+                    NotificationCenter.default.post(
+                        name: .publishStatusUpdated,
+                        object: "Smart publishing: \(changes.modified.count) files to update, \(changes.deleted.count) files to delete"
+                    )
+                    
+                    // Selectively publish only changed files
+                    let result = try await publisher.smartPublish(
+                        directoryURL: siteDirectory,
+                        modifiedFiles: changes.modified,
+                        deletedFiles: changes.deleted
+                    ) { statusMessage in
+                        NotificationCenter.default.post(
+                            name: .publishStatusUpdated,
+                            object: statusMessage
+                        )
+                    }
+                    
+                    // Save the new file hashes after successful publishing
+                    saveFileHashes(newFileHashes)
+                    
+                    return result
+                } else {
+                    NotificationCenter.default.post(
+                        name: .publishStatusUpdated,
+                        object: "No changes detected since last publish. Nothing to upload."
+                    )
+                    return nil
+                }
+            } else {
+                // Full upload (forced or no previous publish data)
+                if forceFullUpload {
+                    NotificationCenter.default.post(
+                        name: .publishStatusUpdated,
+                        object: "Performing full site upload as requested"
+                    )
+                } else {
+                    NotificationCenter.default.post(
+                        name: .publishStatusUpdated,
+                        object: "No previous publish data found. Performing full site upload."
+                    )
+                }
+                
+                let result = try await publisher.publish(directoryURL: siteDirectory) { statusMessage in
+                    NotificationCenter.default.post(
+                        name: .publishStatusUpdated,
+                        object: statusMessage
+                    )
+                }
+                
+                // Save the file hashes after successful publishing
+                saveFileHashes(newFileHashes)
+                
+                return result
             }
-            return result
         } catch {
             throw SiteGeneratorError.publishingFailed("\(publisher.publisherType.displayName) publishing failed: \(error.localizedDescription)")
         }
