@@ -712,7 +712,10 @@ class TemplateManager {
                 <guid>{{blogUrl}}/{{urlPath}}/</guid>
                 <pubDate>{{pubDate}}</pubDate>
                 {{#blogAuthor}}
-                <author>{{blogAuthor}}{{#blogAuthorUrl}} ({{blogAuthorUrl}}){{/blogAuthorUrl}}</author>
+                <author>
+                    <name>{{blogAuthor}}</name>
+                    {{#blogAuthorUrl}}<uri>{{blogAuthorUrl}}</uri>{{/blogAuthorUrl}}
+                </author>
                 {{/blogAuthor}}
                 <description><![CDATA[{{{contentHtml}}}]]></description>
             </item>
