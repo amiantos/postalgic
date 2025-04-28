@@ -9,8 +9,10 @@ import SwiftData
 import SwiftUI
 struct PostDetailView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.dismiss) private var dismiss
     var post: Post
     @State private var showingEditSheet = false
+    @State private var showingDeleteAlert = false
 
     var body: some View {
         ScrollView {
@@ -90,15 +92,34 @@ struct PostDetailView: View {
         .navigationTitle(post.title ?? "Post")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
+            ToolbarItemGroup(placement: .topBarTrailing) {
                 Button(action: { showingEditSheet = true }) {
                     Text("Edit")
+                }
+                
+                Button(action: { showingDeleteAlert = true }) {
+                    Text("Delete")
+                        .foregroundStyle(.red)
                 }
             }
         }
         .sheet(isPresented: $showingEditSheet) {
             PostFormView(post: post)
         }
+        .alert("Delete Post", isPresented: $showingDeleteAlert) {
+            Button("Cancel", role: .cancel) { }
+            Button("Delete", role: .destructive) {
+                deletePost()
+            }
+        } message: {
+            Text("Are you sure you want to delete this post? This action cannot be undone.")
+        }
+    }
+    
+    private func deletePost() {
+        modelContext.delete(post)
+        try? modelContext.save()
+        dismiss()
     }
 }
 
