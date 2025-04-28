@@ -45,6 +45,9 @@ struct BlogDetailView: View {
     @State private var showingTagManagement = false
     @State private var showingPublishSettingsView = false
     @State private var showingTemplateCustomizationView = false
+    @State private var showingDeleteAlert = false
+    @State private var deleteConfirmationText = ""
+    @Environment(\.dismiss) private var dismiss
 
     enum PostFilter: String, CaseIterable, Identifiable {
         case all = "All"
@@ -155,6 +158,14 @@ struct BlogDetailView: View {
                     }) {
                         Label("Manage Tags", systemImage: "tag")
                     }
+                    
+                    Divider()
+                    
+                    Button(action: {
+                        showingDeleteAlert = true
+                    }) {
+                        Label("Delete Blog", systemImage: "trash")
+                    }
                 } label: {
                     Label("More", systemImage: "ellipsis.circle")
                 }
@@ -180,6 +191,25 @@ struct BlogDetailView: View {
         }
         .sheet(isPresented: $showingTemplateCustomizationView) {
             TemplateCustomizationView(blog: blog).interactiveDismissDisabled()
+        }
+        .alert("Delete Blog", isPresented: $showingDeleteAlert) {
+            TextField("Type 'delete' to confirm", text: $deleteConfirmationText)
+                .autocorrectionDisabled()
+                .textInputAutocapitalization(.never)
+            
+            Button("Cancel", role: .cancel) {
+                deleteConfirmationText = ""
+            }
+            
+            Button("Delete", role: .destructive) {
+                if deleteConfirmationText.lowercased() == "delete" {
+                    deleteBlog()
+                }
+                deleteConfirmationText = ""
+            }
+            .disabled(deleteConfirmationText.lowercased() != "delete")
+        } message: {
+            Text("This will permanently delete the blog '\(blog.name)' and all its posts.\n\nTo confirm, type 'delete' in the field below.")
         }
     }
     
@@ -216,6 +246,12 @@ struct BlogDetailView: View {
         // Different year
         formatter.dateFormat = "MMMM d, yyyy" // Full date (e.g., "April 15, 2024")
         return formatter.string(from: date)
+    }
+    
+    private func deleteBlog() {
+        modelContext.delete(blog)
+        try? modelContext.save()
+        dismiss()
     }
 }
 

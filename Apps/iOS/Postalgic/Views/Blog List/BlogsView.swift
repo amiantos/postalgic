@@ -25,9 +25,11 @@ struct BlogsView: View {
                         VStack(alignment: .leading) {
                             Text(blog.name)
                                 .font(.headline)
-                            Text(blog.url)
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
+                            if !blog.url.isEmpty {
+                                Text(blog.url)
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                            }
                         }
                     }
                 }

@@ -183,6 +183,13 @@ struct PreviewData {
             )
             context.insert(blog)
             
+            let blog2 = Blog(
+                name: "Preview Blog",
+                url: "",
+                authorName: "John Doe"
+            )
+            context.insert(blog2)
+            
             // Add 3 categories with proper relationships
             let categoryNames = ["Technology", "Programming", "Design"]
             let categories = categoryNames.map { name -> Category in
