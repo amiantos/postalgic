@@ -53,11 +53,14 @@ class TemplateEngine {
     
     /// Creates the base context with shared properties for all templates
     private func createBaseContext() -> [String: Any] {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        
         var context: [String: Any] = [
             "blogName": blog.name,
             "blogUrl": blog.url,
             "currentYear": Calendar.current.component(.year, from: Date()),
-            "buildDate": ISO8601DateFormatter().string(from: Date())
+            "buildDate": formatter.string(from: Date())
         ]
         
         // Add optional values only if they exist

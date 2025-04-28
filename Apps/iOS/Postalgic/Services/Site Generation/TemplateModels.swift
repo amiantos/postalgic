@@ -65,7 +65,12 @@ struct PostTemplateData {
         
         // ISO8601 formatted date for sitemap and general use
         let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         dict["lastmod"] = formatter.string(from: post.createdAt)
+        
+        // Atom feed requires RFC-3339 dates (ISO8601 with specific formatting)
+        dict["published"] = formatter.string(from: post.createdAt)
+        dict["updated"] = formatter.string(from: post.createdAt)
         
         // RFC 822 formatted date for RSS (required by RSS 2.0)
         let rfcDateFormatter = DateFormatter()

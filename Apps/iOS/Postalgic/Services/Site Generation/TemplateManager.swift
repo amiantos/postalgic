@@ -697,7 +697,7 @@ class TemplateManager {
             <link href="{{blogUrl}}/" rel="alternate" type="text/html" />
             <link href="{{blogUrl}}/rss.xml" rel="self" type="application/atom+xml" />
             <id>{{blogUrl}}/</id>
-            <updated>{{lastmod}}</updated>
+            <updated>{{buildDate}}</updated>
             <subtitle>{{#blogTagline}}{{blogTagline}}{{/blogTagline}}{{^blogTagline}}Posts from {{blogName}}{{/blogTagline}}</subtitle>
             {{#blogAuthor}}
             <author>
@@ -713,8 +713,8 @@ class TemplateManager {
                 <title>{{displayTitle}}</title>
                 <link href="{{blogUrl}}/{{urlPath}}/" rel="alternate" type="text/html" />
                 <id>{{blogUrl}}/{{urlPath}}/</id>
-                <published>{{lastmod}}</published>
-                <updated>{{lastmod}}</updated>
+                <published>{{published}}</published>
+                <updated>{{updated}}</updated>
                 {{#blogAuthor}}
                 <author>
                     <name>{{blogAuthor}}</name>
