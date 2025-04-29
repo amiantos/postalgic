@@ -7,6 +7,7 @@
 
 import Foundation
 import SwiftData
+import Ink
 
 // Publisher type enum
 enum PublisherType: String, Codable, CaseIterable {
@@ -84,6 +85,9 @@ final class Blog {
     
     @Relationship(deleteRule: .cascade, inverse: \PublishedFiles.blog)
     var publishedFiles: [PublishedFiles] = []
+    
+    @Relationship(deleteRule: .cascade, inverse: \SidebarObject.blog)
+    var sidebarObjects: [SidebarObject] = []
 
     init(name: String, url: String, createdAt: Date = Date(), authorName: String? = nil, authorEmail: String? = nil, authorUrl: String? = nil, tagline: String? = nil) {
         self.name = name
@@ -336,5 +340,95 @@ final class Post {
 
     var formattedTags: String {
         return tagNames.joined(separator: ", ")
+    }
+}
+
+// MARK: - Sidebar Models
+
+enum SidebarObjectType: String, Codable {
+    case text = "Text"
+    case linkList = "Link List"
+}
+
+@Model
+final class SidebarObject {
+    var title: String
+    var type: String // SidebarObjectType.rawValue
+    var order: Int
+    var createdAt: Date
+    
+    // For text blocks
+    var content: String?
+    
+    // For link lists
+    @Relationship(deleteRule: .cascade)
+    var links: [LinkItem] = []
+    
+    var blog: Blog?
+    
+    init(title: String, type: SidebarObjectType, order: Int, createdAt: Date = Date()) {
+        self.title = title
+        self.type = type.rawValue
+        self.order = order
+        self.createdAt = createdAt
+    }
+    
+    var objectType: SidebarObjectType {
+        return SidebarObjectType(rawValue: type) ?? .text
+    }
+    
+    func generateHtml() -> String {
+        switch objectType {
+        case .text:
+            if let content = content {
+                let markdownParser = MarkdownParser()
+                let contentHtml = markdownParser.html(from: content)
+                
+                return """
+                <div class="sidebar-text">
+                    <h2>\(title)</h2>
+                    <div class="sidebar-text-content">
+                        \(contentHtml)
+                    </div>
+                </div>
+                """
+            } else {
+                return "<!-- Empty text block -->"
+            }
+            
+        case .linkList:
+            let sortedLinks = links.sorted { $0.order < $1.order }
+            var linksHtml = ""
+            
+            for link in sortedLinks {
+                linksHtml += "<li><a href=\"\(link.url)\">\(link.title)</a></li>\n"
+            }
+            
+            return """
+            <div class="sidebar-links">
+                <h2>\(title)</h2>
+                <ul>
+                    \(linksHtml)
+                </ul>
+            </div>
+            """
+        }
+    }
+}
+
+@Model
+final class LinkItem {
+    var title: String
+    var url: String
+    var order: Int
+    var createdAt: Date
+    
+    var sidebarObject: SidebarObject?
+    
+    init(title: String, url: String, order: Int, createdAt: Date = Date()) {
+        self.title = title
+        self.url = url
+        self.order = order
+        self.createdAt = createdAt
     }
 }

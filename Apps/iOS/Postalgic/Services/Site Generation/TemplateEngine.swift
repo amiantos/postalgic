@@ -96,7 +96,25 @@ class TemplateEngine {
         context["pageTitle"] = pageTitle
         context["customHead"] = customHead
         
+        // Generate sidebar content
+        let sidebarContent = generateSidebarContent()
+        context["sidebarContent"] = sidebarContent
+        
         return layoutTemplate.render(context, library: templateManager.getLibrary())
+    }
+    
+    /// Generates the HTML content for the sidebar based on the blog's sidebar objects
+    /// - Returns: HTML content for the sidebar
+    private func generateSidebarContent() -> String {
+        // Sort sidebar objects by order
+        let sortedObjects = blog.sidebarObjects.sorted { $0.order < $1.order }
+        var sidebarHtml = ""
+        
+        for object in sortedObjects {
+            sidebarHtml += object.generateHtml()
+        }
+        
+        return sidebarHtml
     }
     
     /// Renders the index page with a list of posts

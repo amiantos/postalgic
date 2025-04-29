@@ -60,17 +60,7 @@ class TemplateManager {
                 </nav>
         
                 <aside>
-                    <h2>About</h2>
-                    <div class="about-text">
-                        My name is <b><a href="https://bradroot.me">Brad Root</a></b> and I'm an artist, software engineer, tech enthusiast, music aficionado, video game junkie, weird coffee person, and occasional unicyclist. Find out more about me at <a href="https://bradroot.me">my portfolio site</a>.
-                    </div>
-        
-                    <h2>My Sites</h2>
-                    <ul>
-                        <li><a href="https://amiantos.net">amiantos.net</a></li>
-                        <li><a href="https://bradroot.me">bradroot.me</a></li>
-                        <li><a href="https://staires.org">staires.org</a></li>
-                    </ul>
+                    {{{sidebarContent}}}
                 </aside>
                 
                 <main>
@@ -304,8 +294,13 @@ class TemplateManager {
             margin-bottom: 0.3em;
             font-size: 1.2em;
         }
+        
+        aside .sidebar-links ul {
+            font-size: 0.8em;
+            margin-bottom: 15px;
+        }
 
-        aside .about-text {
+        aside .sidebar-text div {
             font-size: 0.8em;
             margin-bottom: 15px;
         }

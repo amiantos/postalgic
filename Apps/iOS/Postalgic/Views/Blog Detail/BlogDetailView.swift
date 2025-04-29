@@ -43,6 +43,7 @@ struct BlogDetailView: View {
     @State private var showingEditBlogView = false
     @State private var showingCategoryManagement = false
     @State private var showingTagManagement = false
+    @State private var showingSidebarManagement = false
     @State private var showingPublishSettingsView = false
     @State private var showingTemplateCustomizationView = false
     @State private var showingDeleteAlert = false
@@ -159,6 +160,12 @@ struct BlogDetailView: View {
                         Label("Manage Tags", systemImage: "tag")
                     }
                     
+                    Button(action: {
+                        showingSidebarManagement = true
+                    }) {
+                        Label("Manage Sidebar", systemImage: "sidebar.left")
+                    }
+                    
                     Divider()
                     
                     Button(action: {
@@ -191,6 +198,9 @@ struct BlogDetailView: View {
         }
         .sheet(isPresented: $showingTemplateCustomizationView) {
             TemplateCustomizationView(blog: blog).interactiveDismissDisabled()
+        }
+        .sheet(isPresented: $showingSidebarManagement) {
+            SidebarManagementView(blog: blog)
         }
         .alert("Delete Blog", isPresented: $showingDeleteAlert) {
             TextField("Type 'delete' to confirm", text: $deleteConfirmationText)
