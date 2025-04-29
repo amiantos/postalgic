@@ -187,6 +187,16 @@
 			path = "Site Generation";
 			sourceTree = "<group>";
 		};
+		44362F3A2DC152C800EA704F /* Sidebar Management */ = {
+			isa = PBXGroup;
+			children = (
+				44362F142DC0989000EA704F /* SidebarManagementView.swift */,
+				44362F132DC0989000EA704F /* LinkListFormView.swift */,
+				44362F152DC0989000EA704F /* TextBlockFormView.swift */,
+			);
+			path = "Sidebar Management";
+			sourceTree = "<group>";
+		};
 		4436746D2DB3898500F67B00 = {
 			isa = PBXGroup;
 			children = (
@@ -267,9 +277,7 @@
 		44C364302DB769260057567C /* Blog Detail */ = {
 			isa = PBXGroup;
 			children = (
-				44362F132DC0989000EA704F /* LinkListFormView.swift */,
-				44362F142DC0989000EA704F /* SidebarManagementView.swift */,
-				44362F152DC0989000EA704F /* TextBlockFormView.swift */,
+				44362F3A2DC152C800EA704F /* Sidebar Management */,
 				44362E9E2DBCD04800EA704F /* PostRowView.swift */,
 				44C364122DB768DB0057567C /* BlogDetailView.swift */,
 				44C364152DB768DB0057567C /* CategoryManagementView.swift */,

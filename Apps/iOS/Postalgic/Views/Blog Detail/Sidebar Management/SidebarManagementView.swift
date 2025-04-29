@@ -17,7 +17,15 @@ struct SidebarManagementView: View {
     @State private var isAddingObject = false
     @State private var sidebarObjectType: SidebarObjectType = .text
     @State private var showingAlert = false
-    @State private var selectedObject: SidebarObject?
+    
+    @ViewBuilder
+    private func objectDestination(for object: SidebarObject) -> some View {
+        if object.objectType == .text {
+            EditTextBlockView(sidebarObject: object, blog: blog)
+        } else if object.objectType == .linkList {
+            EditLinkListView(sidebarObject: object, blog: blog)
+        }
+    }
     
     var body: some View {
         NavigationStack {
@@ -30,10 +38,9 @@ struct SidebarManagementView: View {
                             .padding(.vertical)
                     } else {
                         ForEach(blog.sidebarObjects.sorted(by: { $0.order < $1.order })) { object in
-                            SidebarObjectRow(object: object)
-                                .onTapGesture {
-                                    selectedObject = object
-                                }
+                            NavigationLink(destination: objectDestination(for: object)) {
+                                SidebarObjectRow(object: object)
+                            }
                         }
                         .onMove { indices, newOffset in
                             let sortedObjects = blog.sidebarObjects.sorted(by: { $0.order < $1.order })
@@ -115,22 +122,12 @@ struct SidebarManagementView: View {
                         Label("Add", systemImage: "plus")
                     }
                 }
-                ToolbarItem(placement: .topBarTrailing) {
-                    EditButton()
-                }
             }
             .sheet(isPresented: $isAddingObject) {
                 if sidebarObjectType == .text {
-                    TextBlockFormView(blog: blog)
+                    AddTextBlockView(blog: blog).interactiveDismissDisabled()
                 } else {
-                    LinkListFormView(blog: blog)
-                }
-            }
-            .sheet(item: $selectedObject) { object in
-                if object.objectType == .text {
-                    TextBlockFormView(blog: blog, sidebarObject: object)
-                } else if object.objectType == .linkList {
-                    LinkListFormView(blog: blog, sidebarObject: object)
+                    AddLinkListView(blog: blog).interactiveDismissDisabled()
                 }
             }
         }
@@ -161,9 +158,6 @@ struct SidebarObjectRow: View {
             }
             
             Spacer()
-            
-            Image(systemName: "chevron.right")
-                .foregroundColor(.secondary)
         }
     }
 }

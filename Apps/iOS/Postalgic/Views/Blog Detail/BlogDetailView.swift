@@ -12,16 +12,16 @@ struct BlogDetailView: View {
     @Environment(\.modelContext) private var modelContext
     var blog: Blog
     @State private var showingPostForm = false
-    
+
     // Initialized in init with proper fetch descriptor
     @Query private var allPosts: [Post]
-    
+
     // Computed property for date-grouped posts
     private var postsByDate: [Date: [Post]] {
         let filteredPosts = allPosts.filter { post in
             // First filter by blog
             guard post.blog?.id == blog.id else { return false }
-            
+
             // Then filter by selected filter type
             switch selectedFilter {
             case .all: return true
@@ -29,12 +29,12 @@ struct BlogDetailView: View {
             case .drafts: return post.isDraft
             }
         }
-        
+
         return Dictionary(grouping: filteredPosts) { post in
             Calendar.current.startOfDay(for: post.createdAt)
         }
     }
-    
+
     // Sorted dates for display
     private var sortedDates: [Date] {
         postsByDate.keys.sorted(by: >)
@@ -59,14 +59,14 @@ struct BlogDetailView: View {
     }
 
     @State private var selectedFilter: PostFilter = .all
-    
+
     init(blog: Blog) {
         self.blog = blog
-        
+
         // Create a sorted fetch descriptor
         let sortDescriptor = SortDescriptor<Post>(\.createdAt, order: .reverse)
         let descriptor = FetchDescriptor<Post>(sortBy: [sortDescriptor])
-        
+
         // Initialize the query with the descriptor
         self._allPosts = Query(descriptor)
     }
@@ -81,18 +81,22 @@ struct BlogDetailView: View {
             .pickerStyle(.segmented)
             .padding(.horizontal)
             .padding(.top)
-            
+
             if postsByDate.isEmpty {
-                List{
+                List {
                     VStack(alignment: .leading) {
-                        Text("No \(selectedFilter.rawValue.lowercased()) posts yet")
-                            .font(.headline)
-                        
-                        Text("Create your first post by tapping the + button, or, you know, the button right below this text.")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                        Text(
+                            "No \(selectedFilter.rawValue.lowercased()) posts yet"
+                        )
+                        .font(.headline)
+
+                        Text(
+                            "Create your first post by tapping the + button, or, you know, the button right below this text."
+                        )
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
                     }
-                    
+
                     Button(action: { showingPostForm = true }) {
                         Text("Create Post")
                     }
@@ -122,33 +126,29 @@ struct BlogDetailView: View {
                 }
 
                 Menu {
-                    Button(action:{
+                    Button(action: {
                         if let url = URL(string: blog.url) {
                             UIApplication.shared.open(url)
                         }
                     }) {
                         Label("Visit Blog", systemImage: "safari")
                     }
-                    
+
                     Button(action: { showingEditBlogView = true }) {
                         Label("Blog Details", systemImage: "person")
                     }
-                    
+
                     Divider()
-                    
+
                     Button(action: { showingPublishView = true }) {
                         Label("Publish", systemImage: "paperplane")
                     }
                     Button(action: { showingPublishSettingsView = true }) {
                         Label("Publishing Settings", systemImage: "gear")
                     }
-                    Button(action: { showingTemplateCustomizationView.toggle() }) {
-                        Label("Customize Template", systemImage: "richtext.page")
-                    }
-                    
+
                     Divider()
-                    
-                   
+
                     Button(action: {
                         showingCategoryManagement = true
                     }) {
@@ -159,15 +159,20 @@ struct BlogDetailView: View {
                     }) {
                         Label("Manage Tags", systemImage: "tag")
                     }
-                    
+
                     Button(action: {
                         showingSidebarManagement = true
                     }) {
-                        Label("Manage Sidebar", systemImage: "sidebar.left")
+                        Label("Manage Sidebar", systemImage: "sidebar.right")
                     }
-                    
+
+                    Button(action: { showingTemplateCustomizationView = true })
+                    {
+                        Label("Manage Templates", systemImage: "richtext.page")
+                    }
+
                     Divider()
-                    
+
                     Button(action: {
                         showingDeleteAlert = true
                     }) {
@@ -206,11 +211,11 @@ struct BlogDetailView: View {
             TextField("Type 'delete' to confirm", text: $deleteConfirmationText)
                 .autocorrectionDisabled()
                 .textInputAutocapitalization(.never)
-            
+
             Button("Cancel", role: .cancel) {
                 deleteConfirmationText = ""
             }
-            
+
             Button("Delete", role: .destructive) {
                 if deleteConfirmationText.lowercased() == "delete" {
                     deleteBlog()
@@ -219,45 +224,47 @@ struct BlogDetailView: View {
             }
             .disabled(deleteConfirmationText.lowercased() != "delete")
         } message: {
-            Text("This will permanently delete the blog '\(blog.name)' and all its posts.\n\nTo confirm, type 'delete' in the field below.")
+            Text(
+                "This will permanently delete the blog '\(blog.name)' and all its posts.\n\nTo confirm, type 'delete' in the field below."
+            )
         }
     }
-    
+
     private func formatDate(_ date: Date) -> String {
         let formatter = DateFormatter()
-        
+
         // Check if date is today
         if Calendar.current.isDateInToday(date) {
             return "Today"
         }
-        
+
         // Check if date is yesterday
         if Calendar.current.isDateInYesterday(date) {
             return "Yesterday"
         }
-        
+
         // Check if date is in the current week
         let currentWeek = Calendar.current.component(.weekOfYear, from: Date())
         let dateWeek = Calendar.current.component(.weekOfYear, from: date)
         let dateYear = Calendar.current.component(.year, from: date)
         let currentYear = Calendar.current.component(.year, from: Date())
-        
+
         if dateWeek == currentWeek && dateYear == currentYear {
-            formatter.dateFormat = "EEEE" // Day name (e.g., "Monday")
+            formatter.dateFormat = "EEEE"  // Day name (e.g., "Monday")
             return formatter.string(from: date)
         }
-        
+
         // Current year but not current week
         if dateYear == currentYear {
-            formatter.dateFormat = "MMMM d" // Month and day (e.g., "April 15")
+            formatter.dateFormat = "MMMM d"  // Month and day (e.g., "April 15")
             return formatter.string(from: date)
         }
-        
+
         // Different year
-        formatter.dateFormat = "MMMM d, yyyy" // Full date (e.g., "April 15, 2024")
+        formatter.dateFormat = "MMMM d, yyyy"  // Full date (e.g., "April 15, 2024")
         return formatter.string(from: date)
     }
-    
+
     private func deleteBlog() {
         modelContext.delete(blog)
         try? modelContext.save()
@@ -267,10 +274,13 @@ struct BlogDetailView: View {
 
 #Preview {
     let modelContainer = PreviewData.previewContainer
-    
+
     return NavigationStack {
         // Fetch the first blog from the container to ensure it's properly in the context
-        BlogDetailView(blog: try! modelContainer.mainContext.fetch(FetchDescriptor<Blog>()).first!)
+        BlogDetailView(
+            blog: try! modelContainer.mainContext.fetch(FetchDescriptor<Blog>())
+                .first!
+        )
     }
     .modelContainer(modelContainer)
 }

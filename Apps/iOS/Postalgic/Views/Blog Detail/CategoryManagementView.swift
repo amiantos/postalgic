@@ -20,27 +20,19 @@ struct CategoryManagementView: View {
     }
 
     @State private var showingAddCategory = false
-    @State private var selectedCategory: Category?
-    @State private var isEditing = false
 
     var body: some View {
         NavigationStack {
             List {
                 ForEach(categories.sorted { $0.name < $1.name }) { category in
-                    CategoryRowView(category: category)
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            selectedCategory = category
-                            isEditing = true
-                        }
+                    NavigationLink(destination: EditCategoryView(category: category, blog: blog)) {
+                        CategoryRowView(category: category)
+                    }
                 }
                 .onDelete(perform: deleteCategories)
             }
             .navigationTitle("Categories")
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    EditButton()
-                }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: {
                         showingAddCategory = true
@@ -55,17 +47,7 @@ struct CategoryManagementView: View {
                 }
             }
             .sheet(isPresented: $showingAddCategory) {
-                CategoryFormView(mode: .add, blog: blog).interactiveDismissDisabled()
-            }
-            .sheet(
-                isPresented: $isEditing,
-                onDismiss: {
-                    selectedCategory = nil
-                }
-            ) {
-                if let category = selectedCategory {
-                    CategoryFormView(mode: .edit(category), blog: blog).interactiveDismissDisabled()
-                }
+                AddCategoryView(blog: blog).interactiveDismissDisabled()
             }
         }
     }
@@ -111,13 +93,7 @@ struct CategoryRowView: View {
     }
 }
 
-struct CategoryFormView: View {
-    enum Mode {
-        case add
-        case edit(Category)
-    }
-
-    let mode: Mode
+struct AddCategoryView: View {
     let blog: Blog
 
     @Environment(\.modelContext) private var modelContext
@@ -125,15 +101,6 @@ struct CategoryFormView: View {
 
     @State private var name = ""
     @State private var description = ""
-
-    var title: String {
-        switch mode {
-        case .add:
-            return "Add Category"
-        case .edit:
-            return "Edit Category"
-        }
-    }
 
     var body: some View {
         NavigationStack {
@@ -151,14 +118,14 @@ struct CategoryFormView: View {
                     TextField("Description (optional)", text: $description)
                 }
             }
-            .navigationTitle(title)
+            .navigationTitle("Add Category")
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Cancel") {
                         dismiss()
                     }
                 }
-
+                
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Save") {
                         saveCategory()
@@ -167,36 +134,90 @@ struct CategoryFormView: View {
                     .disabled(name.isEmpty)
                 }
             }
-            .onAppear {
-                if case .edit(let category) = mode {
-                    name = category.name
-                    description = category.categoryDescription ?? ""
-                }
-            }
         }
     }
 
     private func saveCategory() {
-        switch mode {
-        case .add:
-            let newCategory = Category(
-                name: name,
-                categoryDescription: description.isEmpty ? nil : description
-            )
-            modelContext.insert(newCategory)
-            newCategory.blog = blog
-            blog.categories.append(newCategory)
+        let newCategory = Category(
+            name: name,
+            categoryDescription: description.isEmpty ? nil : description
+        )
+        modelContext.insert(newCategory)
+        newCategory.blog = blog
+        blog.categories.append(newCategory)
+    }
+}
 
-        case .edit(let category):
-            category.name = name.capitalized
-            category.categoryDescription =
-                description.isEmpty ? nil : description
+struct EditCategoryView: View {
+    let blog: Blog
+    @Bindable var category: Category
+    
+    @Environment(\.modelContext) private var modelContext
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.presentationMode) private var presentationMode
 
-            // Ensure category is associated with blog
-            if category.blog == nil {
-                category.blog = blog
-                blog.categories.append(category)
+    @State private var name: String
+    @State private var description: String
+    @State private var hasChanges = false
+
+    init(category: Category, blog: Blog) {
+        self.category = category
+        self.blog = blog
+        _name = State(initialValue: category.name)
+        _description = State(initialValue: category.categoryDescription ?? "")
+    }
+
+    var body: some View {
+        Form {
+            Section {
+                TextField("Name", text: $name)
+                    .onChange(of: name) { _, newValue in
+                        // Automatically capitalize while typing
+                        let capitalized = newValue.capitalized
+                        if capitalized != newValue {
+                            name = capitalized
+                        }
+                        checkForChanges()
+                    }
+
+                TextField("Description (optional)", text: $description)
+                    .onChange(of: description) { _, _ in
+                        checkForChanges()
+                    }
             }
+        }
+        .navigationTitle("Edit Category")
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button("Save") {
+                    saveCategory()
+                    dismiss()
+                }
+                .disabled(name.isEmpty || !hasChanges)
+            }
+        }
+        .interactiveDismissDisabled(hasChanges)
+        .onChange(of: presentationMode.wrappedValue.isPresented) { wasPresented, isPresented in
+            if wasPresented && !isPresented && hasChanges {
+                // The view is being dismissed, but we have unsaved changes
+                // This is handled by interactiveDismissDisabled now
+            }
+        }
+    }
+    
+    private func checkForChanges() {
+        hasChanges = name != category.name || 
+                    description != (category.categoryDescription ?? "")
+    }
+
+    private func saveCategory() {
+        category.name = name.capitalized
+        category.categoryDescription = description.isEmpty ? nil : description
+
+        // Ensure category is associated with blog
+        if category.blog == nil {
+            category.blog = blog
+            blog.categories.append(category)
         }
     }
 }

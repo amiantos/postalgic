@@ -21,27 +21,19 @@ struct TagManagementView: View {
     }
     
     @State private var showingAddTag = false
-    @State private var selectedTag: Tag?
-    @State private var isEditing = false
     
     var body: some View {
         NavigationStack {
             List {
                 ForEach(tags.sorted { $0.name < $1.name }) { tag in
-                    TagRowView(tag: tag)
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            selectedTag = tag
-                            isEditing = true
-                        }
+                    NavigationLink(destination: EditTagView(tag: tag, blog: blog)) {
+                        TagRowView(tag: tag)
+                    }
                 }
                 .onDelete(perform: deleteTags)
             }
             .navigationTitle("Tags")
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    EditButton()
-                }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: {
                         showingAddTag = true
@@ -56,17 +48,7 @@ struct TagManagementView: View {
                 }
             }
             .sheet(isPresented: $showingAddTag) {
-                TagFormView(mode: .add, blog: blog).interactiveDismissDisabled()
-            }
-            .sheet(
-                isPresented: $isEditing,
-                onDismiss: {
-                    selectedTag = nil
-                }
-            ) {
-                if let tag = selectedTag {
-                    TagFormView(mode: .edit(tag), blog: blog).interactiveDismissDisabled()
-                }
+                AddTagView(blog: blog).interactiveDismissDisabled()
             }
         }
     }
@@ -104,28 +86,13 @@ struct TagRowView: View {
     }
 }
 
-struct TagFormView: View {
-    enum Mode {
-        case add
-        case edit(Tag)
-    }
-    
-    let mode: Mode
+struct AddTagView: View {
     let blog: Blog
     
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     
     @State private var name = ""
-    
-    var title: String {
-        switch mode {
-        case .add:
-            return "Add Tag"
-        case .edit:
-            return "Edit Tag"
-        }
-    }
     
     var body: some View {
         NavigationStack {
@@ -134,7 +101,7 @@ struct TagFormView: View {
                     TextField("Name", text: $name)
                 }
             }
-            .navigationTitle(title)
+            .navigationTitle("Add Tag")
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Cancel") {
@@ -150,30 +117,73 @@ struct TagFormView: View {
                     .disabled(name.isEmpty)
                 }
             }
-            .onAppear {
-                if case .edit(let tag) = mode {
-                    name = tag.name
-                }
-            }
         }
     }
     
     private func saveTag() {
-        switch mode {
-        case .add:
-            let newTag = Tag(name: name)
-            modelContext.insert(newTag)
-            newTag.blog = blog
-            blog.tags.append(newTag)
-            
-        case .edit(let tag):
-            tag.name = name.lowercased()
-            
-            // Ensure tag is associated with blog
-            if tag.blog == nil {
-                tag.blog = blog
-                blog.tags.append(tag)
+        let newTag = Tag(name: name)
+        modelContext.insert(newTag)
+        newTag.blog = blog
+        blog.tags.append(newTag)
+    }
+}
+
+struct EditTagView: View {
+    let blog: Blog
+    @Bindable var tag: Tag
+    
+    @Environment(\.modelContext) private var modelContext
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.presentationMode) private var presentationMode
+    
+    @State private var name: String
+    @State private var hasChanges = false
+    
+    init(tag: Tag, blog: Blog) {
+        self.tag = tag
+        self.blog = blog
+        _name = State(initialValue: tag.name)
+    }
+    
+    var body: some View {
+        Form {
+            Section {
+                TextField("Name", text: $name)
+                    .onChange(of: name) { _, _ in
+                        checkForChanges()
+                    }
             }
+        }
+        .navigationTitle("Edit Tag")
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button("Save") {
+                    saveTag()
+                    dismiss()
+                }
+                .disabled(name.isEmpty || !hasChanges)
+            }
+        }
+        .interactiveDismissDisabled(hasChanges)
+        .onChange(of: presentationMode.wrappedValue.isPresented) { wasPresented, isPresented in
+            if wasPresented && !isPresented && hasChanges {
+                // The view is being dismissed, but we have unsaved changes
+                // This is handled by interactiveDismissDisabled now
+            }
+        }
+    }
+    
+    private func checkForChanges() {
+        hasChanges = name != tag.name
+    }
+    
+    private func saveTag() {
+        tag.name = name.lowercased()
+        
+        // Ensure tag is associated with blog
+        if tag.blog == nil {
+            tag.blog = blog
+            blog.tags.append(tag)
         }
     }
 }
