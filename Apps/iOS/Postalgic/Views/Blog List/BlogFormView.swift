@@ -71,7 +71,7 @@ struct BlogFormView: View {
                     Text("If provided, author information will be added to posts and included in the RSS feed. The email is only used in the RSS feed's <email> tag.")
                 }
             }
-            .navigationTitle(isEditing ? "Edit Blog" : "New Blog")
+            .navigationTitle(isEditing ? "Metadata" : "New Blog")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {

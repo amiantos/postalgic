@@ -95,7 +95,7 @@ struct SidebarManagementView: View {
                     Text("Drag to reorder. Tap to edit. Swipe to delete.")
                 }
             }
-            .navigationTitle("Manage Sidebar")
+            .navigationTitle("Sidebar")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {

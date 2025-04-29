@@ -278,8 +278,8 @@
 			isa = PBXGroup;
 			children = (
 				44362F3A2DC152C800EA704F /* Sidebar Management */,
-				44362E9E2DBCD04800EA704F /* PostRowView.swift */,
 				44C364122DB768DB0057567C /* BlogDetailView.swift */,
+				44362E9E2DBCD04800EA704F /* PostRowView.swift */,
 				44C364152DB768DB0057567C /* CategoryManagementView.swift */,
 				443F0B622DBB6B9600034EF1 /* TagManagementView.swift */,
 			);

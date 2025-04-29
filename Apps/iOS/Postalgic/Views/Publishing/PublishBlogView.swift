@@ -329,6 +329,11 @@ struct PublishBlogView: View {
         .onDisappear {
             removeNotificationObservers()
         }
+        .toolbar {
+            Button("Done") {
+                dismiss()
+            }
+        }
     }
 
     private func setupNotificationObservers() {

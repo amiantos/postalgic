@@ -126,6 +126,16 @@ struct BlogDetailView: View {
                 }
 
                 Menu {
+                    Button(action: { showingPublishView = true }) {
+                        Label("Publish", systemImage: "paperplane")
+                    }
+                    
+                    Button(action: { showingPublishSettingsView = true }) {
+                        Label("Publish Settings", systemImage: "gear")
+                    }
+                    
+                    Divider()
+                    
                     Button(action: {
                         if let url = URL(string: blog.url) {
                             UIApplication.shared.open(url)
@@ -133,42 +143,35 @@ struct BlogDetailView: View {
                     }) {
                         Label("Visit Blog", systemImage: "safari")
                     }
+                } label: {
+                    Label("Publish", systemImage: "paperplane")
+                }
 
+                Menu {
                     Button(action: { showingEditBlogView = true }) {
-                        Label("Blog Details", systemImage: "person")
+                        Label("Metadata", systemImage: "person")
                     }
-
-                    Divider()
-
-                    Button(action: { showingPublishView = true }) {
-                        Label("Publish", systemImage: "paperplane")
+                    
+                    Button(action: {
+                        showingSidebarManagement = true
+                    }) {
+                        Label("Sidebar", systemImage: "sidebar.right")
                     }
-                    Button(action: { showingPublishSettingsView = true }) {
-                        Label("Publishing Settings", systemImage: "gear")
-                    }
-
-                    Divider()
 
                     Button(action: {
                         showingCategoryManagement = true
                     }) {
-                        Label("Manage Categories", systemImage: "folder")
+                        Label("Categories", systemImage: "folder")
                     }
                     Button(action: {
                         showingTagManagement = true
                     }) {
-                        Label("Manage Tags", systemImage: "tag")
-                    }
-
-                    Button(action: {
-                        showingSidebarManagement = true
-                    }) {
-                        Label("Manage Sidebar", systemImage: "sidebar.right")
+                        Label("Tags", systemImage: "tag")
                     }
 
                     Button(action: { showingTemplateCustomizationView = true })
                     {
-                        Label("Manage Templates", systemImage: "richtext.page")
+                        Label("Templates", systemImage: "richtext.page")
                     }
 
                     Divider()
@@ -179,7 +182,7 @@ struct BlogDetailView: View {
                         Label("Delete Blog", systemImage: "trash")
                     }
                 } label: {
-                    Label("More", systemImage: "ellipsis.circle")
+                    Label("Blog Settings", systemImage: "gear")
                 }
             }
         }
