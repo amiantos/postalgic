@@ -31,7 +31,6 @@ struct SidebarManagementView: View {
                     } else {
                         ForEach(blog.sidebarObjects.sorted(by: { $0.order < $1.order })) { object in
                             SidebarObjectRow(object: object)
-                                .contentShape(Rectangle())
                                 .onTapGesture {
                                     selectedObject = object
                                 }

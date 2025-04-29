@@ -31,7 +31,6 @@ struct LinkListFormView: View {
                     if let sidebarObject = sidebarObject, !sidebarObject.links.isEmpty {
                         ForEach(sidebarObject.links.sorted(by: { $0.order < $1.order })) { link in
                             LinkRow(link: link)
-                                .contentShape(Rectangle())
                                 .onTapGesture {
                                     selectedLink = link
                                 }
@@ -82,7 +81,7 @@ struct LinkListFormView: View {
                                 link.order = i
                             }
                         }
-                    } else {
+                    } else if sidebarObject != nil {
                         Text("No links added yet. Tap '+' to add a link.")
                             .foregroundColor(.secondary)
                             .frame(maxWidth: .infinity, alignment: .center)
@@ -110,11 +109,13 @@ struct LinkListFormView: View {
                     .disabled(title.isEmpty)
                 }
                 
-                ToolbarItem(placement: .primaryAction) {
-                    Button {
-                        showingLinkForm = true
-                    } label: {
-                        Label("Add Link", systemImage: "plus")
+                if sidebarObject != nil {
+                    ToolbarItem(placement: .primaryAction) {
+                        Button {
+                            showingLinkForm = true
+                        } label: {
+                            Label("Add Link", systemImage: "plus")
+                        }
                     }
                 }
                 
