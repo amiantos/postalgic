@@ -46,6 +46,13 @@ class TemplateManager {
         <body>
             <div class="container">
                 <header>
+                    <div class="hamburger-menu">
+                        <div class="hamburger-icon">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                    </div>
                     <h1><a href="/">{{blogName}}</a></h1>
                     {{#blogTagline}}<p class="tagline">{{blogTagline}}</p>{{/blogTagline}}
                 </header>
@@ -58,8 +65,9 @@ class TemplateManager {
                         <li><a href="/categories/">Categories</a></li>
                     </ul>
                 </nav>
-        
-                <aside>
+                
+                <div class="mobile-sidebar-overlay"></div>
+                <aside class="sidebar">
                     {{{sidebarContent}}}
                 </aside>
                 
@@ -71,6 +79,21 @@ class TemplateManager {
                     <p>&copy; {{currentYear}} {{blogName}}{{#blogAuthor}} by {{#blogAuthorUrl}}<a href="{{blogAuthorUrl}}">{{blogAuthor}}</a>{{/blogAuthorUrl}}{{^blogAuthorUrl}}{{blogAuthor}}{{/blogAuthorUrl}}{{/blogAuthor}}. Generated with <a href="https://postalgic.app">Postalgic</a>.</p>
                 </footer>
             </div>
+            
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    const hamburgerIcon = document.querySelector('.hamburger-icon');
+                    const sidebar = document.querySelector('.sidebar');
+                    const overlay = document.querySelector('.mobile-sidebar-overlay');
+                    
+                    function toggleSidebar() {
+                        document.body.classList.toggle('sidebar-open');
+                    }
+                    
+                    hamburgerIcon.addEventListener('click', toggleSidebar);
+                    overlay.addEventListener('click', toggleSidebar);
+                });
+            </script>
         </body>
         </html>
         """
@@ -281,7 +304,38 @@ class TemplateManager {
             font-weight: 500;
         }
 
-        aside {
+        /* Hamburger menu */
+        .hamburger-menu {
+            display: none;
+        }
+        
+        .hamburger-icon {
+            cursor: pointer;
+            padding: 10px;
+        }
+        
+        .hamburger-icon span {
+            display: block;
+            width: 25px;
+            height: 3px;
+            background-color: var(--dark-gray);
+            margin: 5px 0;
+            transition: 0.3s;
+        }
+        
+        .mobile-sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 998;
+        }
+        
+        /* Sidebar */
+        aside, .sidebar {
             width: 30%;
             padding: 1.5em;
             margin-left: 1.5em;
@@ -290,22 +344,22 @@ class TemplateManager {
             border-bottom: 1px solid var(--light-gray);
         }
 
-        aside h2 {
+        aside h2, .sidebar h2 {
             margin-bottom: 0.3em;
             font-size: 1.2em;
         }
         
-        aside .sidebar-links ul {
+        aside .sidebar-links ul, .sidebar .sidebar-links ul {
             font-size: 0.8em;
             margin-bottom: 15px;
         }
 
-        aside .sidebar-text div {
+        aside .sidebar-text div, .sidebar .sidebar-text div {
             font-size: 0.8em;
             margin-bottom: 15px;
         }
 
-        aside ul {
+        aside ul, .sidebar ul {
             padding-left: 1.5em;
             font-size: 0.8em;
         }
@@ -565,7 +619,7 @@ class TemplateManager {
 
 
         /* Bigger screens */
-        @media (min-width: 769px) {
+        @media (min-width: 901px) {
             body {
                 background-color: var(--background-outline-color);
                 font-size: 115%;
@@ -576,7 +630,7 @@ class TemplateManager {
         }
 
         /* Responsive */
-        @media (max-width: 768px) {
+        @media (max-width: 900px) {
             html {
                 padding: 0.6em;
             }
@@ -585,6 +639,8 @@ class TemplateManager {
             }
             .container {
                 padding: 15px;
+                position: relative;
+                overflow-x: hidden;
             }
 
             footer {
@@ -596,6 +652,7 @@ class TemplateManager {
                 padding:0px;
                 padding-top: 0.8em;
                 padding-bottom: 0.8em;
+                position: relative;
             }
             
             nav ul {
@@ -609,6 +666,59 @@ class TemplateManager {
             nav ul li {
                 flex: auto;
                 text-align: center;
+            }
+            
+            /* Show hamburger menu on mobile */
+            .hamburger-menu {
+                display: block;
+                position: absolute;
+                top: 10px;
+                right: 15px;
+                z-index: 10;
+            }
+            
+            /* Transform hamburger to X when sidebar is open */
+            body.sidebar-open .hamburger-icon span:nth-child(1) {
+                transform: rotate(-45deg) translate(-5px, 6px);
+            }
+            
+            body.sidebar-open .hamburger-icon span:nth-child(2) {
+                opacity: 0;
+            }
+            
+            body.sidebar-open .hamburger-icon span:nth-child(3) {
+                transform: rotate(45deg) translate(-5px, -6px);
+            }
+            
+            /* Show overlay when sidebar is open */
+            body.sidebar-open .mobile-sidebar-overlay {
+                display: block;
+            }
+            
+            /* Mobile sidebar styling */
+            .sidebar {
+                position: fixed;
+                top: 0;
+                right: -80%; /* Start offscreen */
+                width: 80%;
+                height: 100%;
+                background-color: var(--background-color);
+                padding: 20px;
+                margin: 0;
+                float: none;
+                border: none;
+                transition: right 0.3s ease;
+                z-index: 999;
+                overflow-y: auto;
+            }
+            
+            body.sidebar-open .sidebar {
+                right: 0; /* Slide in from right */
+            }
+            
+            /* Hide regular aside on mobile */
+            aside:not(.sidebar) {
+                display: none;
             }
             
             .tag-list, .category-list {
@@ -628,14 +738,11 @@ class TemplateManager {
             .link-image {
                 height: 200px;
             }
-
-            aside {
-                display:none;
-            }
         
             main {
                 padding-left:1em;
                 padding-right:1em;
+                width: 100%; /* Full width when sidebar is hidden */
             }
 
             article.post-item, article.post-single {
