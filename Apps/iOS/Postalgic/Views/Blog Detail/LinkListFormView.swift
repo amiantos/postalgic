@@ -19,7 +19,8 @@ struct LinkListFormView: View {
     @State private var isEditing = false
     @State private var links = [LinkItemData]()
     @State private var showingAddLink = false
-    @State private var editingLinkIndex: Int?
+    @State private var showingEditLink = false
+    @State private var selectedLink: LinkItemData?
     
     var body: some View {
         NavigationStack {
@@ -32,8 +33,8 @@ struct LinkListFormView: View {
                     Text("Links")
                     Spacer()
                     Button(action: {
+                        selectedLink = nil
                         showingAddLink = true
-                        editingLinkIndex = nil
                     }) {
                         Image(systemName: "plus.circle")
                     }
@@ -54,13 +55,15 @@ struct LinkListFormView: View {
                                         .foregroundColor(.secondary)
                                 }
                                 Spacer()
-                                Button(action: {
-                                    editingLinkIndex = index
-                                    showingAddLink = true
-                                }) {
-                                    Image(systemName: "pencil")
-                                        .foregroundColor(.blue)
-                                }
+                                Image(systemName: "chevron.right")
+                                    .foregroundColor(.secondary)
+                            }
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                // Set the selected link before showing the sheet
+                                selectedLink = links[index]
+                                // Present the edit sheet
+                                showingEditLink = true
                             }
                         }
                         .onDelete { indexSet in
@@ -104,19 +107,30 @@ struct LinkListFormView: View {
                     }
                 }
             }
-            .sheet(isPresented: $showingAddLink) {
+        }
+        // Sheet for adding a new link
+        .sheet(isPresented: $showingAddLink) {
+            LinkItemFormView(
+                isPresented: $showingAddLink,
+                linkItem: nil,
+                isEditing: false
+            ) { newLinkItem in
+                // Add new link
+                links.append(newLinkItem)
+            }
+        }
+        // Sheet for editing an existing link
+        .sheet(isPresented: $showingEditLink) {
+            if let linkToEdit = selectedLink {
                 LinkItemFormView(
-                    isPresented: $showingAddLink,
-                    linkItem: editingLinkIndex != nil ? links[editingLinkIndex!] : nil
-                ) { newLinkItem in
-                    if let editingIndex = editingLinkIndex {
+                    isPresented: $showingEditLink,
+                    linkItem: linkToEdit,
+                    isEditing: true
+                ) { updatedLink in
+                    if let index = links.firstIndex(where: { $0.id == linkToEdit.id }) {
                         // Update existing link
-                        links[editingIndex] = newLinkItem
-                    } else {
-                        // Add new link
-                        links.append(newLinkItem)
+                        links[index] = updatedLink
                     }
-                    editingLinkIndex = nil
                 }
             }
         }
@@ -176,6 +190,7 @@ struct LinkItemData: Identifiable {
 struct LinkItemFormView: View {
     @Binding var isPresented: Bool
     var linkItem: LinkItemData?
+    var isEditing: Bool
     var onSave: (LinkItemData) -> Void
     
     @State private var title = ""
@@ -192,21 +207,27 @@ struct LinkItemFormView: View {
                         .autocorrectionDisabled()
                 }
             }
-            .navigationTitle(linkItem == nil ? "Add Link" : "Edit Link")
+            .navigationTitle(isEditing ? "Edit Link" : "Add Link")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
+                ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
                         isPresented = false
                     }
                 }
-                ToolbarItem(placement: .navigationBarTrailing) {
+                
+                ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
+                        var order = 0
+                        if let existingItem = linkItem {
+                            order = existingItem.order
+                        }
+                        
                         let newLink = LinkItemData(
                             id: linkItem?.id,
                             title: title,
                             url: url,
-                            order: linkItem?.order ?? 0
+                            order: order
                         )
                         onSave(newLink)
                         isPresented = false
@@ -214,11 +235,14 @@ struct LinkItemFormView: View {
                     .disabled(title.isEmpty || url.isEmpty)
                 }
             }
-            .onAppear {
-                if let linkItem = linkItem {
-                    title = linkItem.title
-                    url = linkItem.url
-                }
+        }
+        .onAppear {
+            if let linkItem = linkItem {
+                title = linkItem.title
+                url = linkItem.url
+            } else {
+                title = ""
+                url = ""
             }
         }
     }
