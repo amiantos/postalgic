@@ -17,10 +17,8 @@ struct LinkListFormView: View {
     
     @State private var title = ""
     @State private var isEditing = false
-    @State private var links = [LinkItemData]()
-    @State private var showingAddLink = false
-    @State private var showingEditLink = false
-    @State private var selectedLink: LinkItemData?
+    @State private var showingLinkForm = false
+    @State private var selectedLink: LinkItem?
     
     var body: some View {
         NavigationStack {
@@ -29,50 +27,71 @@ struct LinkListFormView: View {
                     TextField("Title", text: $title)
                 }
                 
-                Section(header: HStack {
-                    Text("Links")
-                    Spacer()
-                    Button(action: {
-                        selectedLink = nil
-                        showingAddLink = true
-                    }) {
-                        Image(systemName: "plus.circle")
-                    }
-                }) {
-                    if links.isEmpty {
+                Section {
+                    if let sidebarObject = sidebarObject, !sidebarObject.links.isEmpty {
+                        ForEach(sidebarObject.links.sorted(by: { $0.order < $1.order })) { link in
+                            LinkRow(link: link)
+                                .contentShape(Rectangle())
+                                .onTapGesture {
+                                    selectedLink = link
+                                }
+                        }
+                        .onMove { indices, newOffset in
+                            let sortedLinks = sidebarObject.links.sorted(by: { $0.order < $1.order })
+                            let links = Array(sortedLinks)
+                            
+                            // Get the items to move
+                            var itemsToMove = [LinkItem]()
+                            for index in indices {
+                                itemsToMove.append(links[index])
+                            }
+                            
+                            // Update the order property of each item
+                            for (i, link) in links.enumerated() {
+                                if indices.contains(i) {
+                                    // Skip the items we're moving
+                                    continue
+                                }
+                                
+                                if i < newOffset {
+                                    // Items before the insertion point
+                                    link.order = i
+                                } else {
+                                    // Items after the insertion point
+                                    link.order = i + itemsToMove.count
+                                }
+                            }
+                            
+                            // Update the order of the moved items
+                            for (offset, link) in itemsToMove.enumerated() {
+                                link.order = newOffset + offset
+                            }
+                        }
+                        .onDelete { indexSet in
+                            let sortedLinks = sidebarObject.links.sorted(by: { $0.order < $1.order })
+                            let linksToDelete = indexSet.map { sortedLinks[$0] }
+                            
+                            for link in linksToDelete {
+                                sidebarObject.links.removeAll { $0.id == link.id }
+                                modelContext.delete(link)
+                            }
+                            
+                            // Reorder remaining links
+                            let remainingLinks = sidebarObject.links.sorted(by: { $0.order < $1.order })
+                            for (i, link) in remainingLinks.enumerated() {
+                                link.order = i
+                            }
+                        }
+                    } else {
                         Text("No links added yet. Tap '+' to add a link.")
                             .foregroundColor(.secondary)
                             .frame(maxWidth: .infinity, alignment: .center)
                             .padding(.vertical)
-                    } else {
-                        ForEach(links.indices, id: \.self) { index in
-                            HStack {
-                                VStack(alignment: .leading) {
-                                    Text(links[index].title)
-                                        .font(.headline)
-                                    Text(links[index].url)
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
-                                }
-                                Spacer()
-                                Image(systemName: "chevron.right")
-                                    .foregroundColor(.secondary)
-                            }
-                            .contentShape(Rectangle())
-                            .onTapGesture {
-                                // Set the selected link before showing the sheet
-                                selectedLink = links[index]
-                                // Present the edit sheet
-                                showingEditLink = true
-                            }
-                        }
-                        .onDelete { indexSet in
-                            links.remove(atOffsets: indexSet)
-                        }
-                        .onMove { source, destination in
-                            links.move(fromOffsets: source, toOffset: destination)
-                        }
                     }
+                } header: {
+                    Text("Links")
+                } footer: {
+                    Text("Drag to reorder. Tap to edit.")
                 }
             }
             .navigationTitle(sidebarObject == nil ? "Add Link List" : "Edit Link List")
@@ -90,111 +109,100 @@ struct LinkListFormView: View {
                     }
                     .disabled(title.isEmpty)
                 }
-                if !links.isEmpty {
+                
+                ToolbarItem(placement: .primaryAction) {
+                    Button {
+                        showingLinkForm = true
+                    } label: {
+                        Label("Add Link", systemImage: "plus")
+                    }
+                }
+                
+                if let sidebarObject = sidebarObject, !sidebarObject.links.isEmpty {
                     ToolbarItem(placement: .topBarTrailing) {
                         EditButton()
                     }
                 }
             }
             .onAppear {
-                if let sidebarObject = sidebarObject {
-                    title = sidebarObject.title
-                    isEditing = true
-                    
-                    // Convert stored LinkItems to local LinkItemData objects
-                    links = sidebarObject.links.sorted { $0.order < $1.order }.map {
-                        LinkItemData(id: $0.id, title: $0.title, url: $0.url, order: $0.order)
-                    }
-                }
+                loadData()
+            }
+            .sheet(isPresented: $showingLinkForm) {
+                LinkFormView(onSave: { linkTitle, linkUrl in
+                    addNewLink(title: linkTitle, url: linkUrl)
+                })
+            }
+            .sheet(item: $selectedLink) { link in
+                LinkEditFormView(link: link)
             }
         }
-        // Sheet for adding a new link
-        .sheet(isPresented: $showingAddLink) {
-            LinkItemFormView(
-                isPresented: $showingAddLink,
-                linkItem: nil,
-                isEditing: false
-            ) { newLinkItem in
-                // Add new link
-                links.append(newLinkItem)
-            }
+    }
+    
+    private func loadData() {
+        if let sidebarObject = sidebarObject {
+            title = sidebarObject.title
+            isEditing = true
         }
-        // Sheet for editing an existing link
-        .sheet(isPresented: $showingEditLink) {
-            if let linkToEdit = selectedLink {
-                LinkItemFormView(
-                    isPresented: $showingEditLink,
-                    linkItem: linkToEdit,
-                    isEditing: true
-                ) { updatedLink in
-                    if let index = links.firstIndex(where: { $0.id == linkToEdit.id }) {
-                        // Update existing link
-                        links[index] = updatedLink
-                    }
-                }
-            }
+    }
+    
+    private func addNewLink(title: String, url: String) {
+        guard let sidebarObject = sidebarObject else {
+            // For adding a link to a new sidebar object, we'll create it on save
+            return
         }
+        
+        let nextOrder = sidebarObject.links.count
+        let newLink = LinkItem(title: title, url: url, order: nextOrder)
+        newLink.sidebarObject = sidebarObject
+        sidebarObject.links.append(newLink)
     }
     
     private func saveLinkList() {
         if isEditing, let sidebarObject = sidebarObject {
             // Update existing link list
             sidebarObject.title = title
-            
-            // Remove all existing links
-            for link in sidebarObject.links {
-                modelContext.delete(link)
-            }
-            sidebarObject.links.removeAll()
-            
-            // Add updated links
-            for (index, linkData) in links.enumerated() {
-                let link = LinkItem(title: linkData.title, url: linkData.url, order: index)
-                link.sidebarObject = sidebarObject
-                sidebarObject.links.append(link)
-            }
         } else {
             // Create a new link list with the next available order
             let nextOrder = blog.sidebarObjects.count
             let newSidebarObject = SidebarObject(title: title, type: .linkList, order: nextOrder)
             newSidebarObject.blog = blog
-            
-            // Add links to the new link list
-            for (index, linkData) in links.enumerated() {
-                let link = LinkItem(title: linkData.title, url: linkData.url, order: index)
-                link.sidebarObject = newSidebarObject
-                newSidebarObject.links.append(link)
-            }
-            
             blog.sidebarObjects.append(newSidebarObject)
+            
+            // If we have any temporary links, add them now
+            // (This code path won't be reached since we don't save temporary links anymore, 
+            // but keeping it for future extensibility)
         }
     }
 }
 
-// Helper struct for managing link data in the form
-struct LinkItemData: Identifiable {
-    var id: PersistentIdentifier?
-    var title: String
-    var url: String
-    var order: Int
+struct LinkRow: View {
+    let link: LinkItem
     
-    init(id: PersistentIdentifier? = nil, title: String, url: String, order: Int) {
-        self.id = id
-        self.title = title
-        self.url = url
-        self.order = order
+    var body: some View {
+        HStack {
+            VStack(alignment: .leading) {
+                Text(link.title)
+                    .font(.headline)
+                Text(link.url)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            
+            Spacer()
+            
+            Image(systemName: "chevron.right")
+                .foregroundColor(.secondary)
+        }
     }
 }
 
-// Form for adding/editing a single link
-struct LinkItemFormView: View {
-    @Binding var isPresented: Bool
-    var linkItem: LinkItemData?
-    var isEditing: Bool
-    var onSave: (LinkItemData) -> Void
+struct LinkFormView: View {
+    @Environment(\.dismiss) private var dismiss
     
     @State private var title = ""
     @State private var url = ""
+    
+    let onSave: (String, String) -> Void
     
     var body: some View {
         NavigationStack {
@@ -207,42 +215,68 @@ struct LinkItemFormView: View {
                         .autocorrectionDisabled()
                 }
             }
-            .navigationTitle(isEditing ? "Edit Link" : "Add Link")
+            .navigationTitle("Add Link")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
-                        isPresented = false
+                        dismiss()
                     }
                 }
-                
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
-                        var order = 0
-                        if let existingItem = linkItem {
-                            order = existingItem.order
-                        }
-                        
-                        let newLink = LinkItemData(
-                            id: linkItem?.id,
-                            title: title,
-                            url: url,
-                            order: order
-                        )
-                        onSave(newLink)
-                        isPresented = false
+                        onSave(title, url)
+                        dismiss()
                     }
                     .disabled(title.isEmpty || url.isEmpty)
                 }
             }
         }
-        .onAppear {
-            if let linkItem = linkItem {
-                title = linkItem.title
-                url = linkItem.url
-            } else {
-                title = ""
-                url = ""
+    }
+}
+
+struct LinkEditFormView: View {
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
+    
+    @Bindable var link: LinkItem
+    
+    @State private var title: String
+    @State private var url: String
+    
+    init(link: LinkItem) {
+        self.link = link
+        _title = State(initialValue: link.title)
+        _url = State(initialValue: link.url)
+    }
+    
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section(header: Text("Link Details")) {
+                    TextField("Title", text: $title)
+                    TextField("URL", text: $url)
+                        .keyboardType(.URL)
+                        .autocapitalization(.none)
+                        .autocorrectionDisabled()
+                }
+            }
+            .navigationTitle("Edit Link")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        link.title = title
+                        link.url = url
+                        dismiss()
+                    }
+                    .disabled(title.isEmpty || url.isEmpty)
+                }
             }
         }
     }
