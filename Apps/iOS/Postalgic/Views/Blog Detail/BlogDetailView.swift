@@ -184,7 +184,7 @@ struct BlogDetailView: View {
                 
                 
                 Button(action: { showingPostForm = true }) {
-                    Label("Add Post", systemImage: "plus")
+                    Label("New Post", systemImage: "bubble.and.pencil")
                 }
                 
             }

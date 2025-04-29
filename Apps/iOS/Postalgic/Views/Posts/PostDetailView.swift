@@ -93,13 +93,13 @@ struct PostDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItemGroup(placement: .topBarTrailing) {
-                Button(action: { showingEditSheet = true }) {
-                    Text("Edit")
-                }
-                
                 Button(action: { showingDeleteAlert = true }) {
                     Text("Delete")
                         .foregroundStyle(.red)
+                }
+
+                Button(action: { showingEditSheet = true }) {
+                    Text("Edit")
                 }
             }
         }
