@@ -87,7 +87,7 @@ class TemplateManager {
         
         // Post template (used for both individual post pages and list items)
         defaultTemplates["post"] = """
-        <article class="{{#inList}}post-item{{/inList}}{{^inList}}post-single{{/inList}}">
+        <article class="post-item">
             {{#hasTitle}}
                 {{#inList}}<h2>{{displayTitle}}</h2>{{/inList}}
                 {{^inList}}<h1>{{displayTitle}}</h1>{{/inList}}
@@ -96,7 +96,7 @@ class TemplateManager {
                 <div class="post-date"><a href="/{{urlPath}}/index.html">{{formattedDate}}</a></div>
                 {{#blogAuthor}}<div class="post-author"> by {{#blogAuthorUrl}}<a href="{{blogAuthorUrl}}">{{blogAuthor}}</a>{{/blogAuthorUrl}}{{^blogAuthorUrl}}{{blogAuthor}}{{/blogAuthorUrl}}</div>{{/blogAuthor}}
             </div>
-            <div class="{{#inList}}post-summary{{/inList}}{{^inList}}post-content{{/inList}}">
+            <div class="post-content">
                 {{{contentHtml}}}
             </div>
             <div class="post-meta">
@@ -119,11 +119,9 @@ class TemplateManager {
         
         // Index page template
         defaultTemplates["index"] = """
-        <div class="post-list">
-            {{#posts}}
-                {{> post}}
-            {{/posts}}
-        </div>
+        {{#posts}}
+            {{> post}}
+        {{/posts}}
         """
         
         // Archives template
@@ -319,7 +317,7 @@ class TemplateManager {
         }
 
         /* Posts */
-        .post-list {
+        main {
             display: flex;
             flex-direction: column;
             padding-left:1.5em;
@@ -636,7 +634,7 @@ class TemplateManager {
                 display:none;
             }
         
-            .post-list {
+            main {
                 padding-left:1em;
                 padding-right:1em;
             }
