@@ -92,7 +92,7 @@ struct SidebarManagementView: View {
                 } header: {
                     Text("Sidebar Objects")
                 } footer: {
-                    Text("Drag to reorder. Tap to edit.")
+                    Text("Drag to reorder. Tap to edit. Swipe to delete.")
                 }
             }
             .navigationTitle("Manage Sidebar")

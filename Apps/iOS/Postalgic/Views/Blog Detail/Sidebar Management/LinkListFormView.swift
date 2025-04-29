@@ -148,9 +148,17 @@ struct EditLinkListView: View {
                         .padding(.vertical)
                 }
             } header: {
-                Text("Links")
+                HStack {
+                    Text("Links")
+                    Spacer()
+                    Button {
+                        showingLinkForm = true
+                    } label: {
+                        Image(systemName: "plus")
+                    }
+                }
             } footer: {
-                Text("Drag to reorder. Tap to edit.")
+                Text("Drag to reorder. Tap to edit. Swipe to delete.")
             }
         }
         .navigationTitle("Edit Link List")
@@ -164,13 +172,6 @@ struct EditLinkListView: View {
                 .disabled(!hasChanges && title == sidebarObject.title)
             }
             
-            ToolbarItem(placement: .primaryAction) {
-                Button {
-                    showingLinkForm = true
-                } label: {
-                    Label("Add Link", systemImage: "plus")
-                }
-            }
         }
         .interactiveDismissDisabled(hasChanges)
         .onChange(of: presentationMode.wrappedValue.isPresented) { wasPresented, isPresented in
@@ -259,6 +260,12 @@ struct LinkFormView: View {
             .navigationTitle("Add Link")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                }
+                
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
                         onSave(title, url)
