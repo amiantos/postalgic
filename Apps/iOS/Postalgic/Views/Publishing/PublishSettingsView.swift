@@ -50,16 +50,16 @@ struct PublishSettingsView: View {
                     awsSettingsView
                 case .ftp:
                     ftpSettingsView
-                case .netlify:
-                    netlifySettingsView
+//                case .netlify:
+//                    netlifySettingsView
                 case .none:
                     manualDownloadView
-                case .github:
-                    githubSettingsView
-                case .gitlab:
-                    gitlabSettingsView
-                case .digitalOcean:
-                    digitalOceanSettingsView
+//                case .github:
+//                    githubSettingsView
+//                case .gitlab:
+//                    gitlabSettingsView
+//                case .digitalOcean:
+//                    digitalOceanSettingsView
                 }
             }
             .listStyle(InsetGroupedListStyle())

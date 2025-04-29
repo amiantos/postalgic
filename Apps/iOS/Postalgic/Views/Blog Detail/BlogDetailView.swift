@@ -147,6 +147,10 @@ struct BlogDetailView: View {
                     {
                         Label("Templates", systemImage: "richtext.page")
                     }
+                    
+                    Button(action: { showingPublishSettingsView = true }) {
+                        Label("Publishing", systemImage: "paperplane")
+                    }
 
                     Divider()
 

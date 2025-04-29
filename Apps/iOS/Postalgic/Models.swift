@@ -14,10 +14,10 @@ enum PublisherType: String, Codable, CaseIterable {
     case none = "Manual Download (Zip)"
     case aws = "AWS"
     case ftp = "SFTP"
-    case netlify = "Netlify"
-    case github = "GitHub Pages"
-    case gitlab = "GitLab Pages"
-    case digitalOcean = "DigitalOcean Spaces"
+//    case netlify = "Netlify"
+//    case github = "GitHub Pages"
+//    case gitlab = "GitLab Pages"
+//    case digitalOcean = "DigitalOcean Spaces"
     
     var displayName: String { rawValue }
 }
