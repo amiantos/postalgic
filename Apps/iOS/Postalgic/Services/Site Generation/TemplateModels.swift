@@ -191,9 +191,15 @@ struct TemplateDataConverter {
     static let markdownParser = MarkdownParser()
     
     /// Converts a Post to a dictionary for template rendering
-    static func convert(post: Post, blog: Blog) -> [String: Any] {
-        let templateData = PostTemplateData(post: post, blog: blog, markdownParser: markdownParser)
-        return templateData.toDictionary()
+    /// - Parameters:
+    ///   - post: The post to convert
+    ///   - blog: The blog the post belongs to
+    ///   - inList: Whether this post is being displayed in a list view (default: true)
+    /// - Returns: Dictionary for template rendering
+    static func convert(post: Post, blog: Blog, inList: Bool = true) -> [String: Any] {
+        var result = PostTemplateData(post: post, blog: blog, markdownParser: markdownParser).toDictionary()
+        result["inList"] = inList
+        return result
     }
     
     /// Converts a Category to a dictionary for template rendering

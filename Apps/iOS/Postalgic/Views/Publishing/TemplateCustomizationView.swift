@@ -19,6 +19,7 @@ struct TemplateCustomizationView: View {
     @State private var isEditing: Bool = false
     @State private var errorMessage: String = ""
     @State private var availableTemplateTypes: [String] = []
+    @State private var showingResetAllConfirmation: Bool = false
     
     // Create a template generator for this blog to access templates
     private var templateGenerator: StaticSiteGenerator {
@@ -80,6 +81,12 @@ struct TemplateCustomizationView: View {
                         Button("Reset to Default", role: .destructive) {
                             resetTemplate()
                         }
+                        
+                        Divider()
+                        
+                        Button("Reset All Templates", role: .destructive) {
+                            showingResetAllConfirmation = true
+                        }
                     }
                 }
             }
@@ -87,6 +94,19 @@ struct TemplateCustomizationView: View {
                 availableTemplateTypes = templateGenerator.availableTemplateTypes()
                 loadTemplate(type: selectedTemplateType)
             }
+            .confirmationDialog(
+                "Reset All Templates",
+                isPresented: $showingResetAllConfirmation,
+                actions: {
+                    Button("Reset All", role: .destructive) {
+                        resetAllTemplates()
+                    }
+                    Button("Cancel", role: .cancel) {}
+                },
+                message: {
+                    Text("This will reset ALL template customizations to their default values. This action cannot be undone.")
+                }
+            )
         }
     }
     
@@ -113,6 +133,18 @@ struct TemplateCustomizationView: View {
         templateGenerator.registerCustomTemplate("", for: selectedTemplateType)
         loadTemplate(type: selectedTemplateType)
         errorMessage = "Template reset to default"
+    }
+    
+    // Reset all templates to their defaults
+    private func resetAllTemplates() {
+        // Reset each available template type
+        for templateType in availableTemplateTypes {
+            templateGenerator.registerCustomTemplate("", for: templateType)
+        }
+        
+        // Reload the current template
+        loadTemplate(type: selectedTemplateType)
+        errorMessage = "All templates have been reset to defaults"
     }
 }
 
