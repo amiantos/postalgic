@@ -92,28 +92,32 @@ class TemplateManager {
                 {{#inList}}<h2>{{displayTitle}}</h2>{{/inList}}
                 {{^inList}}<h1>{{displayTitle}}</h1>{{/inList}}
             {{/hasTitle}}
-            <div class="post-meta">
-                <div class="post-date"><a href="/{{urlPath}}/index.html">{{formattedDate}}</a></div>
-                {{#blogAuthor}}<div class="post-author"> by {{#blogAuthorUrl}}<a href="{{blogAuthorUrl}}">{{blogAuthor}}</a>{{/blogAuthorUrl}}{{^blogAuthorUrl}}{{blogAuthor}}{{/blogAuthorUrl}}</div>{{/blogAuthor}}
-            </div>
+            
+            <div class="post-date"><a href="/{{urlPath}}/index.html">{{formattedDate}}</a></div>
+            
+            {{#blogAuthor}}
+                <div class="post-author"> by {{#blogAuthorUrl}}<a href="{{blogAuthorUrl}}">{{blogAuthor}}</a>{{/blogAuthorUrl}}{{^blogAuthorUrl}}{{blogAuthor}}{{/blogAuthorUrl}}</div>
+            {{/blogAuthor}}
+        
             <div class="post-content">
                 {{{contentHtml}}}
             </div>
-            <div class="post-meta">
-                {{#hasCategory}}
+
+            {{#hasCategory}}
                 <div class="post-category">
                     Category: <a href="/categories/{{categoryUrlPath}}/">{{categoryName}}</a>
                 </div>
-                {{/hasCategory}}
-                {{#hasTags}}
+            {{/hasCategory}}
+        
+            {{#hasTags}}
                 <div class="post-tags">
                     Tags: 
                     {{#tags}}
                         <a href="/tags/{{urlPath}}/" class="tag">{{name}}</a> 
                     {{/tags}}
                 </div>
-                {{/hasTags}}
-            </div>
+            {{/hasTags}}
+
         </article>
         """
         
