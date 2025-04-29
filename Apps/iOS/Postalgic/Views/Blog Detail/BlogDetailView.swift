@@ -121,32 +121,6 @@ struct BlogDetailView: View {
         .navigationTitle(blog.name)
         .toolbar {
             ToolbarItemGroup(placement: .primaryAction) {
-                Button(action: { showingPostForm = true }) {
-                    Label("Add Post", systemImage: "plus")
-                }
-
-                Menu {
-                    Button(action: { showingPublishView = true }) {
-                        Label("Publish", systemImage: "paperplane")
-                    }
-                    
-                    Button(action: { showingPublishSettingsView = true }) {
-                        Label("Publish Settings", systemImage: "gear")
-                    }
-                    
-                    Divider()
-                    
-                    Button(action: {
-                        if let url = URL(string: blog.url) {
-                            UIApplication.shared.open(url)
-                        }
-                    }) {
-                        Label("Visit Blog", systemImage: "safari")
-                    }
-                } label: {
-                    Label("Publish", systemImage: "paperplane")
-                }
-
                 Menu {
                     Button(action: { showingEditBlogView = true }) {
                         Label("Metadata", systemImage: "person")
@@ -184,6 +158,35 @@ struct BlogDetailView: View {
                 } label: {
                     Label("Blog Settings", systemImage: "gear")
                 }
+                
+
+                Menu {
+                    Button(action: { showingPublishView = true }) {
+                        Label("Publish", systemImage: "paperplane")
+                    }
+                    
+                    Button(action: { showingPublishSettingsView = true }) {
+                        Label("Publish Settings", systemImage: "gear")
+                    }
+                    
+                    Divider()
+                    
+                    Button(action: {
+                        if let url = URL(string: blog.url) {
+                            UIApplication.shared.open(url)
+                        }
+                    }) {
+                        Label("Visit Blog", systemImage: "safari")
+                    }
+                } label: {
+                    Label("Publish", systemImage: "paperplane")
+                }
+                
+                
+                Button(action: { showingPostForm = true }) {
+                    Label("Add Post", systemImage: "plus")
+                }
+                
             }
         }
         .sheet(isPresented: $showingPostForm) {
