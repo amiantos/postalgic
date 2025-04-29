@@ -686,6 +686,20 @@ class TemplateManager {
             aside {
                 display:none;
             }
+        
+            .post-list {
+                padding-left:1em;
+                padding-right:1em;
+            }
+
+            .post-item, article {
+                padding-top:1em;
+                padding-bottom: 1em;
+            }
+        
+            header {
+                padding: 1em;
+            }
         }
         """
         
