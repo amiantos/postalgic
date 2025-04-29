@@ -85,42 +85,18 @@ class TemplateManager {
         </html>
         """
         
-        // Index page template
-        defaultTemplates["index"] = """
-        <div class="post-list">
-            {{#posts}}
-                <div class="post-item">
-                    {{#hasTitle}}<h2>{{displayTitle}}</h2>{{/hasTitle}}
-                    <div class="post-date"><a href="/{{urlPath}}/index.html">{{formattedDate}}</a></div>
-                    {{#blogAuthor}}<div class="post-author"> by {{#blogAuthorUrl}}<a href="{{blogAuthorUrl}}">{{blogAuthor}}</a>{{/blogAuthorUrl}}{{^blogAuthorUrl}}{{blogAuthor}}{{/blogAuthorUrl}}</div>{{/blogAuthor}}
-                    <div class="post-summary">{{{contentHtml}}}</div>
-                    {{#hasCategory}}
-                    <div class="post-category">
-                        Category: <a href="/categories/{{categoryUrlPath}}/">{{categoryName}}</a>
-                    </div>
-                    {{/hasCategory}}
-                    {{#hasTags}}
-                    <div class="post-tags">
-                        Tags: 
-                        {{#tags}}
-                            <a href="/tags/{{urlPath}}/" class="tag">{{name}}</a> 
-                        {{/tags}}
-                    </div>
-                    {{/hasTags}}
-                </div>
-            {{/posts}}
-        </div>
-        """
-        
-        // Post template
+        // Post template (used for both individual post pages and list items)
         defaultTemplates["post"] = """
-        <article>
-            {{#hasTitle}}<h1>{{displayTitle}}</h1>{{/hasTitle}}
+        <article class="{{#inList}}post-item{{/inList}}{{^inList}}post-single{{/inList}}">
+            {{#hasTitle}}
+                {{#inList}}<h2>{{displayTitle}}</h2>{{/inList}}
+                {{^inList}}<h1>{{displayTitle}}</h1>{{/inList}}
+            {{/hasTitle}}
             <div class="post-meta">
                 <div class="post-date"><a href="/{{urlPath}}/index.html">{{formattedDate}}</a></div>
                 {{#blogAuthor}}<div class="post-author"> by {{#blogAuthorUrl}}<a href="{{blogAuthorUrl}}">{{blogAuthor}}</a>{{/blogAuthorUrl}}{{^blogAuthorUrl}}{{blogAuthor}}{{/blogAuthorUrl}}</div>{{/blogAuthor}}
             </div>
-            <div class="post-content">
+            <div class="{{#inList}}post-summary{{/inList}}{{^inList}}post-content{{/inList}}">
                 {{{contentHtml}}}
             </div>
             <div class="post-meta">
@@ -139,6 +115,15 @@ class TemplateManager {
                 {{/hasTags}}
             </div>
         </article>
+        """
+        
+        // Index page template
+        defaultTemplates["index"] = """
+        <div class="post-list">
+            {{#posts}}
+                {{> post}}
+            {{/posts}}
+        </div>
         """
         
         // Archives template
@@ -178,25 +163,7 @@ class TemplateManager {
         <p class="tag-meta">{{postCount}} {{postCountText}} with this tag</p>
         <div class="post-list">
             {{#posts}}
-                <div class="post-item">
-                    {{#hasTitle}}<h2>{{displayTitle}}</h2>{{/hasTitle}}
-                    <div class="post-date"><a href="/{{urlPath}}/index.html">{{formattedDate}}</a></div>
-                    {{#blogAuthor}}<div class="post-author"> by {{#blogAuthorUrl}}<a href="{{blogAuthorUrl}}">{{blogAuthor}}</a>{{/blogAuthorUrl}}{{^blogAuthorUrl}}{{blogAuthor}}{{/blogAuthorUrl}}</div>{{/blogAuthor}}
-                    <div class="post-summary">{{{contentHtml}}}</div>
-                    {{#hasCategory}}
-                    <div class="post-category">
-                        Category: <a href="/categories/{{categoryUrlPath}}/">{{categoryName}}</a>
-                    </div>
-                    {{/hasCategory}}
-                    {{#hasTags}}
-                    <div class="post-tags">
-                        Tags: 
-                        {{#tags}}
-                            <a href="/tags/{{urlPath}}/" class="tag">{{name}}</a> 
-                        {{/tags}}
-                    </div>
-                    {{/hasTags}}
-                </div>
+                {{> post}}
             {{/posts}}
         </div>
         """
@@ -221,25 +188,7 @@ class TemplateManager {
         <p class="category-meta">{{postCount}} {{postCountText}} in this category</p>
         <div class="post-list">
             {{#posts}}
-                <div class="post-item">
-                    {{#hasTitle}}<h2>{{displayTitle}}</h2>{{/hasTitle}}
-                    <div class="post-date"><a href="/{{urlPath}}/index.html">{{formattedDate}}</a></div>
-                    {{#blogAuthor}}<div class="post-author"> by {{#blogAuthorUrl}}<a href="{{blogAuthorUrl}}">{{blogAuthor}}</a>{{/blogAuthorUrl}}{{^blogAuthorUrl}}{{blogAuthor}}{{/blogAuthorUrl}}</div>{{/blogAuthor}}
-                    <div class="post-summary">{{{contentHtml}}}</div>
-                    {{#hasCategory}}
-                    <div class="post-category">
-                        Category: <a href="/categories/{{categoryUrlPath}}/">{{categoryName}}</a>
-                    </div>
-                    {{/hasCategory}}
-                    {{#hasTags}}
-                    <div class="post-tags">
-                        Tags: 
-                        {{#tags}}
-                            <a href="/tags/{{urlPath}}/" class="tag">{{name}}</a> 
-                        {{/tags}}
-                    </div>
-                    {{/hasTags}}
-                </div>
+                {{> post}}
             {{/posts}}
         </div>
         """
@@ -377,13 +326,13 @@ class TemplateManager {
             padding-right:1.5em;
         }
 
-        .post-item, article {
+        article.post-item, article.post-single {
             border-bottom: 1px solid var(--light-gray);
             padding-top:1.5em;
             padding-bottom: 1.5em;
         }
 
-        .post-item h2, article h2 {
+        article.post-item h2, article.post-single h2 {
             margin-bottom: 0.2em;
         }
 
@@ -485,7 +434,7 @@ class TemplateManager {
             padding-right:1.5em;
         }
 
-        article h1 {
+        article.post-single h1 {
             /* margin-bottom: 15px; */
         }
 
@@ -692,7 +641,7 @@ class TemplateManager {
                 padding-right:1em;
             }
 
-            .post-item, article {
+            article.post-item, article.post-single {
                 padding-top:1em;
                 padding-bottom: 1em;
             }
@@ -819,6 +768,31 @@ class TemplateManager {
     
     // MARK: - Template Compilation
     
+    // Create a library to store all templates for partials
+    private lazy var templateLibrary: MustacheLibrary = {
+        var library = MustacheLibrary()
+        
+        // Register all default templates
+        for (name, content) in defaultTemplates {
+            do {
+                try library.register(content, named: name)
+            } catch {
+                print("Error registering default template \(name): \(error)")
+            }
+        }
+        
+        // Register all custom blog templates (these will override defaults with the same name)
+        for templateObj in blog.templates {
+            do {
+                try library.register(templateObj.content, named: templateObj.type)
+            } catch {
+                print("Error registering custom template \(templateObj.type): \(error)")
+            }
+        }
+        
+        return library
+    }()
+    
     /// Compiles a template for the specified template type
     private func compileTemplate(for templateType: String) throws -> MustacheTemplate {
         // First check if the blog has a saved template of this type
@@ -852,6 +826,13 @@ class TemplateManager {
         
         // Remove from cache to ensure it's recompiled next time
         compiledTemplates[type] = nil
+        
+        // Update the template in the library
+        do {
+            try templateLibrary.register(template, named: type)
+        } catch {
+            print("Error updating template library for \(type): \(error)")
+        }
     }
     
     /// Gets the compiled template for the specified type
@@ -868,6 +849,10 @@ class TemplateManager {
             // Otherwise compile and cache it
             let template = try compileTemplate(for: type)
             compiledTemplates[type] = template
+            
+            // Refresh the library when a template changes
+            let _ = templateLibrary
+            
             return template
         } catch {
             throw TemplateError.compilationFailed(type, error)
@@ -904,6 +889,12 @@ class TemplateManager {
         
         // Combine and sort
         return Array(defaultTypes.union(blogTemplateTypes)).sorted()
+    }
+    
+    /// Returns the template library for use with partials
+    /// - Returns: The template library
+    func getLibrary() -> MustacheLibrary {
+        return templateLibrary
     }
     
     // MARK: - Errors

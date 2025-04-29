@@ -96,7 +96,7 @@ class TemplateEngine {
         context["pageTitle"] = pageTitle
         context["customHead"] = customHead
         
-        return layoutTemplate.render(context)
+        return layoutTemplate.render(context, library: templateManager.getLibrary())
     }
     
     /// Renders the index page with a list of posts
@@ -109,7 +109,7 @@ class TemplateEngine {
         var context = createBaseContext()
         context["posts"] = posts.map { TemplateDataConverter.convert(post: $0, blog: blog) }
         
-        let content = indexTemplate.render(context)
+        let content = indexTemplate.render(context, library: templateManager.getLibrary())
         return try renderLayout(
             content: content,
             pageTitle: blog.name,
@@ -125,14 +125,14 @@ class TemplateEngine {
         let postTemplate = try templateManager.getTemplate(for: "post")
         
         var context = createBaseContext()
-        let postData = TemplateDataConverter.convert(post: post, blog: blog)
+        let postData = TemplateDataConverter.convert(post: post, blog: blog, inList: false)
         
         // Merge the post data into the context
         for (key, value) in postData {
             context[key] = value
         }
         
-        let content = postTemplate.render(context)
+        let content = postTemplate.render(context, library: templateManager.getLibrary())
         
         // We need to extract these values for the page title
         let hasTitle = post.title?.isEmpty == false
@@ -156,7 +156,7 @@ class TemplateEngine {
         var context = createBaseContext()
         context["years"] = TemplateDataConverter.createArchiveData(from: posts)
         
-        let content = archivesTemplate.render(context)
+        let content = archivesTemplate.render(context, library: templateManager.getLibrary())
         return try renderLayout(content: content, pageTitle: "Archives - \(blog.name)")
     }
     
@@ -172,7 +172,7 @@ class TemplateEngine {
             return TemplateDataConverter.convert(tag: tag, posts: posts)
         }
         
-        let content = tagsTemplate.render(context)
+        let content = tagsTemplate.render(context, library: templateManager.getLibrary())
         return try renderLayout(content: content, pageTitle: "Tags - \(blog.name)")
     }
     
@@ -197,7 +197,7 @@ class TemplateEngine {
         context["postCountText"] = posts.count == 1 ? "post" : "posts"
         context["posts"] = posts.map { TemplateDataConverter.convert(post: $0, blog: blog) }
         
-        let content = tagTemplate.render(context)
+        let content = tagTemplate.render(context, library: templateManager.getLibrary())
         return try renderLayout(content: content, pageTitle: "Tag: \(tag.name) - \(blog.name)")
     }
     
@@ -213,7 +213,7 @@ class TemplateEngine {
             return TemplateDataConverter.convert(category: category, posts: posts)
         }
         
-        let content = categoriesTemplate.render(context)
+        let content = categoriesTemplate.render(context, library: templateManager.getLibrary())
         return try renderLayout(content: content, pageTitle: "Categories - \(blog.name)")
     }
     
@@ -239,7 +239,7 @@ class TemplateEngine {
         context["postCountText"] = posts.count == 1 ? "post" : "posts"
         context["posts"] = posts.map { TemplateDataConverter.convert(post: $0, blog: blog) }
         
-        let content = categoryTemplate.render(context)
+        let content = categoryTemplate.render(context, library: templateManager.getLibrary())
         return try renderLayout(content: content, pageTitle: "Category: \(category.name) - \(blog.name)")
     }
     
@@ -253,7 +253,7 @@ class TemplateEngine {
         var context = createBaseContext()
         context["posts"] = posts.map { TemplateDataConverter.convert(post: $0, blog: blog) }
         
-        return rssTemplate.render(context)
+        return rssTemplate.render(context, library: templateManager.getLibrary())
     }
     
     /// Renders the robots.txt file
@@ -261,7 +261,7 @@ class TemplateEngine {
     /// - Throws: Error if rendering fails
     func renderRobotsTxt() throws -> String {
         let robotsTemplate = try templateManager.getTemplate(for: "robots")
-        return robotsTemplate.render(createBaseContext())
+        return robotsTemplate.render(createBaseContext(), library: templateManager.getLibrary())
     }
     
     /// Renders the sitemap.xml file
@@ -291,7 +291,7 @@ class TemplateEngine {
             return TemplateDataConverter.convert(category: category, posts: emptyPosts)
         }
         
-        return sitemapTemplate.render(context)
+        return sitemapTemplate.render(context, library: templateManager.getLibrary())
     }
     
     /// Renders the CSS stylesheet
