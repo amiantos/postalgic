@@ -45,14 +45,15 @@ class TemplateManager {
         </head>
         <body>
             <div class="container">
-                <header>
-                    <div class="hamburger-menu">
-                        <div class="hamburger-icon">
-                            <span></span>
-                            <span></span>
-                            <span></span>
-                        </div>
+                <div class="hamburger-menu">
+                    <div class="hamburger-icon">
+                        <span></span>
+                        <span></span>
+                        <span></span>
                     </div>
+                </div>
+
+                <header>
                     <h1><a href="/">{{blogName}}</a></h1>
                     {{#blogTagline}}<p class="tagline">{{blogTagline}}</p>{{/blogTagline}}
                 </header>
@@ -66,14 +67,18 @@ class TemplateManager {
                     </ul>
                 </nav>
                 
-                <div class="mobile-sidebar-overlay"></div>
-                <aside class="sidebar">
-                    {{{sidebarContent}}}
-                </aside>
-                
-                <main>
-                    {{{content}}}
-                </main>
+                <div class="content-wrapper">
+                    <div class="mobile-sidebar-overlay"></div>
+                    <aside class="sidebar">
+                        {{{sidebarContent}}}
+                    </aside>
+                    
+                    <main>
+                        {{{content}}}
+                    </main>
+                    
+                    <div class="clearfix"></div>
+                </div>
                 
                 <footer>
                     <p>&copy; {{currentYear}} {{blogName}}{{#blogAuthor}} by {{#blogAuthorUrl}}<a href="{{blogAuthorUrl}}">{{blogAuthor}}</a>{{/blogAuthorUrl}}{{^blogAuthorUrl}}{{blogAuthor}}{{/blogAuthorUrl}}{{/blogAuthor}}. Generated with <a href="https://postalgic.app">Postalgic</a>.</p>
@@ -90,8 +95,20 @@ class TemplateManager {
                         document.body.classList.toggle('sidebar-open');
                     }
                     
-                    hamburgerIcon.addEventListener('click', toggleSidebar);
-                    overlay.addEventListener('click', toggleSidebar);
+                    if (hamburgerIcon) {
+                        hamburgerIcon.addEventListener('click', toggleSidebar);
+                    }
+                    
+                    if (overlay) {
+                        overlay.addEventListener('click', toggleSidebar);
+                    }
+                    
+                    // Handle page resize events
+                    window.addEventListener('resize', function() {
+                        if (window.innerWidth > 900 && document.body.classList.contains('sidebar-open')) {
+                            document.body.classList.remove('sidebar-open');
+                        }
+                    });
                 });
             </script>
         </body>
@@ -263,6 +280,10 @@ class TemplateManager {
             max-width: 1000px;
             margin: 0 auto;
             background-color: var(--background-color);
+            position: relative;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
 
         /* Header */
@@ -335,13 +356,11 @@ class TemplateManager {
         }
         
         /* Sidebar */
-        aside, .sidebar {
-            width: 30%;
+        aside.sidebar {
+            width: 100%;
             padding: 1.5em;
-            margin-left: 1.5em;
-            float: right;
-            border-left: 1px solid var(--light-gray);
-            border-bottom: 1px solid var(--light-gray);
+            box-sizing: border-box;
+            background-color: var(--background-color);
         }
 
         aside h2, .sidebar h2 {
@@ -364,9 +383,18 @@ class TemplateManager {
             font-size: 0.8em;
         }
 
+        /* Content wrapper */
+        .content-wrapper {
+            display: block;
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+        }
+        
         /* Main */
         main {
             margin-bottom: 30px;
+            flex: 1;
         }
 
         /* Posts */
@@ -375,6 +403,7 @@ class TemplateManager {
             flex-direction: column;
             padding-left:1.5em;
             padding-right:1.5em;
+            overflow: hidden; /* Create a new block formatting context */
         }
 
         article.post-item, article.post-single {
@@ -527,6 +556,9 @@ class TemplateManager {
             padding: 2em;
             color: var(--medium-gray);
             font-size: 0.9rem;
+            margin-top: auto;
+            width: 100%;
+            border-top: 1px solid var(--light-gray);
         }
 
         /* Embeds */
@@ -616,6 +648,13 @@ class TemplateManager {
             border-left: 2px solid var(--accent-color);
             padding-left: 1.3em;
         }
+        
+        /* Clearfix for floated elements */
+        .clearfix {
+            clear: both;
+            width: 100%;
+            display: block;
+        }
 
 
         /* Bigger screens */
@@ -626,6 +665,32 @@ class TemplateManager {
             }
             .container {
                 background-color: var(--background-color);
+            }
+            
+            aside.sidebar {
+                float: right;
+                width: 30%;
+                padding: 1.5em;
+                margin-left: 1.5em;
+                border-left: 1px solid var(--light-gray);
+                border-bottom: 1px solid var(--light-gray);
+                position: static;
+                height: auto;
+                right: auto;
+                top: auto;
+            }
+            
+            main {
+                overflow: auto;
+                margin-right: 0;
+            }
+            
+            .mobile-sidebar-overlay {
+                display: none !important;
+            }
+            
+            .hamburger-menu {
+                display: none !important;
             }
         }
 
@@ -672,9 +737,9 @@ class TemplateManager {
             .hamburger-menu {
                 display: block;
                 position: absolute;
-                top: 10px;
-                right: 15px;
-                z-index: 10;
+                top: 0px;
+                right: 3px;
+                z-index: 1000;
             }
             
             /* Transform hamburger to X when sidebar is open */
@@ -696,7 +761,7 @@ class TemplateManager {
             }
             
             /* Mobile sidebar styling */
-            .sidebar {
+            aside.sidebar {
                 position: fixed;
                 top: 0;
                 right: -80%; /* Start offscreen */
@@ -710,6 +775,7 @@ class TemplateManager {
                 transition: right 0.3s ease;
                 z-index: 999;
                 overflow-y: auto;
+                box-shadow: -2px 0 5px rgba(0,0,0,0.1);
             }
             
             body.sidebar-open .sidebar {
