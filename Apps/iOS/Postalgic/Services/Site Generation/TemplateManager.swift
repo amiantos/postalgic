@@ -240,17 +240,40 @@ class TemplateManager {
         
         // Default CSS style
         defaultTemplates["css"] = """
-        /* Base styles */
+        /* 
+         * Blog/Website Theme CSS
+         * Table of Contents:
+         * 1. CSS Variables & Reset
+         * 2. Base Styles
+         * 3. Layout & Container
+         * 4. Header & Navigation
+         * 5. Sidebar
+         * 6. Content & Posts
+         * 7. Post Elements (tags, categories)
+         * 8. Archives
+         * 9. Embeds & Media
+         * 10. Typography Elements
+         * 11. Footer
+         * 12. Responsive Styles
+         */
 
+        /* ==========================================
+           1. CSS Variables & Reset
+           ========================================== */
         :root {
+            /* Colors */
             --primary-color: #4a5568;
             --accent-color: #FFA100;
             --background-color: #efefef;
             --background-outline-color: #515151;
             --text-color: #2d3748;
+            
+            /* Grays */
             --light-gray: #dedede;
             --medium-gray: #a0aec0;
             --dark-gray: #4a5568;
+            
+            /* Tag & Category Colors */
             --tag-bg: #f5e5ef;
             --tag-color: #CB7BAC;
             --category-bg: #fff2db;
@@ -263,6 +286,9 @@ class TemplateManager {
             padding: 0;
         }
 
+        /* ==========================================
+           2. Base Styles
+           ========================================== */
         html {
             overflow-y: scroll;
             height: 100%;
@@ -270,7 +296,7 @@ class TemplateManager {
             word-wrap: break-word;
             margin: 0 auto;
             padding: 1.5em;
-         }
+        }
 
         body {
             font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
@@ -288,7 +314,9 @@ class TemplateManager {
             text-decoration: underline;
         }
 
-        /* Container */
+        /* ==========================================
+           3. Layout & Container
+           ========================================== */
         .container {
             max-width: 1000px;
             margin: 0 auto;
@@ -299,10 +327,31 @@ class TemplateManager {
             flex-direction: column;
         }
 
-        /* Header */
+        .content-wrapper {
+            display: block;
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Clearfix for floated elements */
+        .clearfix {
+            clear: both;
+            width: 100%;
+            display: block;
+        }
+
+        /* ==========================================
+           4. Header & Navigation
+           ========================================== */
         header {
-            padding:2em;
+            padding: 2em;
             border-bottom: 1px solid var(--light-gray);
+        }
+
+        header h1 a {
+            color: var(--primary-color);
+            text-decoration: none;
         }
 
         header .tagline {
@@ -311,22 +360,10 @@ class TemplateManager {
             font-style: italic;
         }
 
-
-        header h1 {
-            
-        }
-
-        header h1 a {
-            color: var(--primary-color);
-            text-decoration: none;
-        }
-
+        /* Main Navigation */
         nav {
             border-bottom: 1px solid var(--light-gray);
-            padding-left:2em;
-            padding-right:2em;
-            padding-top:1em;
-            padding-bottom:1em;
+            padding: 1em 2em;
         }
 
         nav ul {
@@ -339,12 +376,9 @@ class TemplateManager {
             font-weight: 500;
         }
 
-        /* Hamburger menu */
+        /* Hamburger Menu (Mobile) */
         .hamburger-menu {
             display: none;
-        }
-
-        .hamburger-icon {
             cursor: pointer;
             padding: 10px;
         }
@@ -369,7 +403,9 @@ class TemplateManager {
             z-index: 998;
         }
 
-        /* Sidebar */
+        /* ==========================================
+           5. Sidebar
+           ========================================== */
         aside.sidebar {
             width: 100%;
             padding: 1.5em;
@@ -410,65 +446,60 @@ class TemplateManager {
             color: var(--primary-color);
         }
 
-        aside h2, .sidebar h2 {
+        aside h2, 
+        .sidebar h2 {
             margin-bottom: 0.3em;
             font-size: 1.2em;
         }
 
-        aside .sidebar-links ul, .sidebar .sidebar-links ul {
+        aside .sidebar-links ul, 
+        .sidebar .sidebar-links ul {
             font-size: 0.8em;
             margin-bottom: 15px;
         }
 
-        aside .sidebar-text div, .sidebar .sidebar-text div {
+        aside .sidebar-text div, 
+        .sidebar .sidebar-text div {
             font-size: 0.8em;
             margin-bottom: 15px;
         }
 
-        aside ul, .sidebar ul {
+        aside ul, 
+        .sidebar ul {
             padding-left: 1.5em;
             font-size: 0.8em;
         }
 
-        /* Content wrapper */
-        .content-wrapper {
-            display: block;
-            flex: 1;
-            position: relative;
-            overflow: hidden;
-        }
-
-        /* Main */
+        /* ==========================================
+           6. Content & Posts
+           ========================================== */
         main {
+            display: flex;
+            flex-direction: column;
+            padding: 2em;
+            overflow: hidden;
             margin-bottom: 30px;
             flex: 1;
         }
 
-        /* Posts */
-        main {
-            display: flex;
-            flex-direction: column;
-            padding:2em;
-            overflow: hidden; /* Create a new block formatting context */
+        .post-content a {
+            text-decoration: underline;
         }
-
-        article.post-item, article.post-single {
-            
-        }
-
 
         .post-date {
             color: var(--medium-gray);
             font-size: 0.9em;
-            display:inline-block;
+            display: inline-block;
         }
 
-        .post-date a, .post-author a {
+        .post-date a, 
+        .post-author a {
             color: var(--medium-gray);
             text-decoration: none;
         }
 
-        .post-date a:hover, .post-author a:hover {
+        .post-date a:hover, 
+        .post-author a:hover {
             color: var(--accent-color);
             text-decoration: underline;
         }
@@ -476,10 +507,41 @@ class TemplateManager {
         .post-author {
             color: var(--medium-gray);
             font-size: 0.9em;
-            display:inline-block;
+            display: inline-block;
         }
 
-        .post-tags, .post-category {
+        .post-summary p, 
+        .post-content p {
+            margin-top: 1.5em;
+        }
+
+        .post-meta {
+            margin-bottom: 20px;
+        }
+
+        .post-content {
+            line-height: 1.8;
+        }
+
+        .post-separator {
+            height: 30px;
+            width: 100%;
+            background-color: var(--accent-color);
+            --mask:
+              radial-gradient(10.96px at 50% calc(100% + 5.6px),#0000 calc(99% - 4px),#000 calc(101% - 4px) 99%,#0000 101%) calc(50% - 14px) calc(50% - 5.5px + .5px)/28px 11px repeat-x,
+              radial-gradient(10.96px at 50% -5.6px,#0000 calc(99% - 4px),#000 calc(101% - 4px) 99%,#0000 101%) 50% calc(50% + 5.5px)/28px 11px repeat-x;
+            -webkit-mask: var(--mask);
+            mask: var(--mask);
+            margin-top: 3em;
+            margin-bottom: 3em;
+        }
+
+        /* ==========================================
+           7. Post Elements (tags, categories)
+           ========================================== */
+        /* Tags */
+        .post-tags, 
+        .post-category {
             margin-top: 3em;
             font-size: 0.6em;
         }
@@ -488,25 +550,6 @@ class TemplateManager {
             display: inline-block;
         }
 
-        .post-summary p, .post-content p {
-            margin-top:1.5em;
-        }
-
-
-        .post-separator {
-            height:20px;
-            width:100%;
-            background-color: var(--accent-color);
-            --mask:
-              radial-gradient(10.96px at 50% calc(100% + 5.6px),#0000 calc(99% - 4px),#000 calc(101% - 4px) 99%,#0000 101%) calc(50% - 14px) calc(50% - 5.5px + .5px)/28px 11px repeat-x,
-              radial-gradient(10.96px at 50% -5.6px,#0000 calc(99% - 4px),#000 calc(101% - 4px) 99%,#0000 101%) 50% calc(50% + 5.5px)/28px 11px repeat-x;
-            -webkit-mask: var(--mask);
-                    mask: var(--mask);
-            margin-top:3em;
-            margin-bottom:3em;
-          }
-
-        /* Tags */
         .tag {
             display: inline-block;
             background-color: var(--tag-bg);
@@ -522,26 +565,30 @@ class TemplateManager {
             text-decoration: none;
         }
 
-        .tag-list, .category-list {
+        .tag-list, 
+        .category-list {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
             gap: 20px;
             margin-top: 20px;
         }
 
-        .tag-item, .category-item {
+        .tag-item, 
+        .category-item {
             background-color: var(--light-gray);
             padding: 15px;
             border-radius: 4px;
         }
 
-        .tag-count, .category-count {
+        .tag-count, 
+        .category-count {
             font-size: 0.8rem;
             color: var(--medium-gray);
             font-weight: normal;
         }
 
-        .tag-meta, .category-meta {
+        .tag-meta, 
+        .category-meta {
             color: var(--medium-gray);
             font-style: italic;
             margin-bottom: 20px;
@@ -551,6 +598,7 @@ class TemplateManager {
         .post-category {
             display: inline-block;
         }
+
         .post-category a {
             display: inline-block;
             color: var(--category-color);
@@ -571,25 +619,9 @@ class TemplateManager {
             font-size: 0.9rem;
         }
 
-        /* Article */
-        article {
-
-        }
-
-        article.post-single h1 {
-            /* margin-bottom: 15px; */
-        }
-
-        .post-meta {
-            margin-bottom: 20px;
-        }
-
-        .post-content {
-            line-height: 1.8;
-        }
-
-
-        /* Archives */
+        /* ==========================================
+           8. Archives
+           ========================================== */
         .archive-year {
             font-size: 1.5rem;
             font-weight: bold;
@@ -609,18 +641,9 @@ class TemplateManager {
             width: 100px;
         }
 
-        /* Footer */
-        footer {
-            text-align: center;
-            padding: 2em;
-            color: var(--medium-gray);
-            font-size: 0.9rem;
-            margin-top: auto;
-            width: 100%;
-            border-top: 1px solid var(--light-gray);
-        }
-
-        /* Embeds */
+        /* ==========================================
+           9. Embeds & Media
+           ========================================== */
         .embed {
             margin: 1.5em 0;
             border-radius: 8px;
@@ -701,6 +724,9 @@ class TemplateManager {
             object-fit: cover;
         }
 
+        /* ==========================================
+           10. Typography Elements
+           ========================================== */
         blockquote {
             color: var(--dark-gray);
             font-style: italic;
@@ -708,20 +734,29 @@ class TemplateManager {
             padding-left: 1.3em;
         }
 
-        /* Clearfix for floated elements */
-        .clearfix {
-            clear: both;
+        /* ==========================================
+           11. Footer
+           ========================================== */
+        footer {
+            text-align: center;
+            padding: 2em;
+            color: var(--medium-gray);
+            font-size: 0.9rem;
+            margin-top: auto;
             width: 100%;
-            display: block;
+            border-top: 1px solid var(--light-gray);
         }
 
-
-        /* Bigger screens */
+        /* ==========================================
+           12. Responsive Styles
+           ========================================== */
+        /* Desktop (> 900px) */
         @media (min-width: 901px) {
             body {
                 background-color: var(--background-outline-color);
                 font-size: 115%;
             }
+            
             .container {
                 background-color: var(--background-color);
             }
@@ -753,18 +788,24 @@ class TemplateManager {
             }
         }
 
-        /* Responsive */
+        /* Mobile (≤ 900px) */
         @media (max-width: 900px) {
             html {
                 padding: 0.6em;
             }
+            
             body {
                 background-color: var(--background-outline-color);
             }
+            
             .container {
                 padding: 15px;
                 position: relative;
                 overflow-x: hidden;
+            }
+
+            header {
+                padding: 1em;
             }
 
             footer {
@@ -840,6 +881,7 @@ class TemplateManager {
                 grid-template-columns: 1fr;
             }
             
+            /* Mobile link embeds */
             .link-embed a {
                 grid-template-areas: 
                     "image"
@@ -855,18 +897,9 @@ class TemplateManager {
             }
 
             main {
-                padding-left:1em;
-                padding-right:1em;
+                padding-left: 1em;
+                padding-right: 1em;
                 width: 100%; /* Full width when sidebar is hidden */
-            }
-
-            article.post-item, article.post-single {
-                /* padding-top:1em;
-                padding-bottom: 1em; */
-            }
-
-            header {
-                padding: 1em;
             }
         }
         """
