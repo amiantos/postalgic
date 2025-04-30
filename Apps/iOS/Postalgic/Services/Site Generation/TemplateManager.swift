@@ -46,6 +46,13 @@ class TemplateManager {
         <body>
             <div class="container">
                 <header>
+                    <div class="hamburger-menu">
+                        <div class="hamburger-icon">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                    </div>
                     <h1><a href="/">{{blogName}}</a></h1>
                     {{#blogTagline}}<p class="tagline">{{blogTagline}}</p>{{/blogTagline}}
                 </header>
@@ -58,19 +65,63 @@ class TemplateManager {
                         <li><a href="/categories/">Categories</a></li>
                     </ul>
                 </nav>
-        
-                <aside>
-                    {{{sidebarContent}}}
-                </aside>
                 
-                <main>
-                    {{{content}}}
-                </main>
+                <div class="content-wrapper">
+                    <div class="mobile-sidebar-overlay"></div>
+                    <aside class="sidebar">
+                        <div class="mobile-nav">
+                            <nav class="sidebar-nav">
+                                <ul>
+                                    <li><a href="/">Home</a></li>
+                                    <li><a href="/archives/">Archives</a></li>
+                                    <li><a href="/tags/">Tags</a></li>
+                                    <li><a href="/categories/">Categories</a></li>
+                                </ul>
+                            </nav>
+                        </div>
+                        <div class="sidebar-content">
+                            {{{sidebarContent}}}
+                        </div>
+                    </aside>
+                    
+                    <main>
+                        {{{content}}}
+                    </main>
+                    
+                    <div class="clearfix"></div>
+                </div>
                 
                 <footer>
                     <p>&copy; {{currentYear}} {{blogName}}{{#blogAuthor}} by {{#blogAuthorUrl}}<a href="{{blogAuthorUrl}}">{{blogAuthor}}</a>{{/blogAuthorUrl}}{{^blogAuthorUrl}}{{blogAuthor}}{{/blogAuthorUrl}}{{/blogAuthor}}. Generated with <a href="https://postalgic.app">Postalgic</a>.</p>
                 </footer>
             </div>
+            
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    const hamburgerIcon = document.querySelector('.hamburger-icon');
+                    const sidebar = document.querySelector('.sidebar');
+                    const overlay = document.querySelector('.mobile-sidebar-overlay');
+                    
+                    function toggleSidebar() {
+                        document.body.classList.toggle('sidebar-open');
+                    }
+                    
+                    if (hamburgerIcon) {
+                        hamburgerIcon.addEventListener('click', toggleSidebar);
+                    }
+                    
+                    if (overlay) {
+                        overlay.addEventListener('click', toggleSidebar);
+                    }
+                    
+                    // Handle page resize events
+                    window.addEventListener('resize', function() {
+                        if (window.innerWidth > 900 && document.body.classList.contains('sidebar-open')) {
+                            document.body.classList.remove('sidebar-open');
+                        }
+                    });
+                });
+            </script>
         </body>
         </html>
         """
@@ -82,7 +133,7 @@ class TemplateManager {
                 {{#inList}}<h2>{{displayTitle}}</h2>{{/inList}}
                 {{^inList}}<h1>{{displayTitle}}</h1>{{/inList}}
             {{/hasTitle}}
-            
+        
             <div class="post-date"><a href="/{{urlPath}}/index.html">{{formattedDate}}</a></div>
             
             {{#blogAuthor}}
@@ -93,22 +144,24 @@ class TemplateManager {
                 {{{contentHtml}}}
             </div>
 
+            <div>
             {{#hasCategory}}
                 <div class="post-category">
-                    Category: <a href="/categories/{{categoryUrlPath}}/">{{categoryName}}</a>
+                    <a href="/categories/{{categoryUrlPath}}/">{{categoryName}}</a>
                 </div>
             {{/hasCategory}}
         
             {{#hasTags}}
                 <div class="post-tags">
-                    Tags: 
                     {{#tags}}
                         <a href="/tags/{{urlPath}}/" class="tag">{{name}}</a> 
                     {{/tags}}
                 </div>
             {{/hasTags}}
+            </div>
 
         </article>
+        <div class="post-separator"></div>
         """
         
         // Index page template
@@ -240,11 +293,16 @@ class TemplateManager {
             max-width: 1000px;
             margin: 0 auto;
             background-color: var(--background-color);
+            position: relative;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
 
         /* Header */
         header {
-            padding:1.5em;
+            padding:2em;
+            border-bottom: 1px solid var(--light-gray);
         }
 
         header .tagline {
@@ -255,7 +313,7 @@ class TemplateManager {
 
 
         header h1 {
-
+            
         }
 
         header h1 a {
@@ -264,9 +322,9 @@ class TemplateManager {
         }
 
         nav {
-            border-top: 1px solid var(--light-gray);
             border-bottom: 1px solid var(--light-gray);
-            padding-left:1.5em;
+            padding-left:2em;
+            padding-right:2em;
             padding-top:1em;
             padding-bottom:1em;
         }
@@ -281,57 +339,123 @@ class TemplateManager {
             font-weight: 500;
         }
 
-        aside {
-            width: 30%;
-            padding: 1.5em;
-            margin-left: 1.5em;
-            float: right;
-            border-left: 1px solid var(--light-gray);
-            border-bottom: 1px solid var(--light-gray);
+        /* Hamburger menu */
+        .hamburger-menu {
+            display: none;
         }
 
-        aside h2 {
+        .hamburger-icon {
+            cursor: pointer;
+            padding: 10px;
+        }
+
+        .hamburger-icon span {
+            display: block;
+            width: 25px;
+            height: 3px;
+            background-color: var(--dark-gray);
+            margin: 5px 0;
+            transition: 0.3s;
+        }
+
+        .mobile-sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 998;
+        }
+
+        /* Sidebar */
+        aside.sidebar {
+            width: 100%;
+            padding: 1.5em;
+            box-sizing: border-box;
+            background-color: var(--background-color);
+        }
+
+        /* Mobile Navigation in Sidebar */
+        .mobile-nav {
+            display: none;
+            margin-bottom: 25px;
+            border-bottom: 1px solid var(--light-gray);
+            padding-bottom: 20px;
+        }
+
+        .sidebar-content {
+            padding-top: 5px;
+        }
+
+        .sidebar-nav ul {
+            display: flex;
+            flex-direction: column;
+            list-style: none;
+            padding: 0;
+            margin-bottom: 15px;
+            font-size: 1rem;
+        }
+
+        .sidebar-nav li {
+            margin-bottom: 10px;
+        }
+
+        .sidebar-nav a {
+            display: block;
+            padding: 8px 0;
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: var(--primary-color);
+        }
+
+        aside h2, .sidebar h2 {
             margin-bottom: 0.3em;
             font-size: 1.2em;
         }
-        
-        aside .sidebar-links ul {
+
+        aside .sidebar-links ul, .sidebar .sidebar-links ul {
             font-size: 0.8em;
             margin-bottom: 15px;
         }
 
-        aside .sidebar-text div {
+        aside .sidebar-text div, .sidebar .sidebar-text div {
             font-size: 0.8em;
             margin-bottom: 15px;
         }
 
-        aside ul {
+        aside ul, .sidebar ul {
             padding-left: 1.5em;
             font-size: 0.8em;
+        }
+
+        /* Content wrapper */
+        .content-wrapper {
+            display: block;
+            flex: 1;
+            position: relative;
+            overflow: hidden;
         }
 
         /* Main */
         main {
             margin-bottom: 30px;
+            flex: 1;
         }
 
         /* Posts */
         main {
             display: flex;
             flex-direction: column;
-            padding-left:1.5em;
-            padding-right:1.5em;
+            padding:2em;
+            overflow: hidden; /* Create a new block formatting context */
         }
 
         article.post-item, article.post-single {
-            border-bottom: 1px solid var(--light-gray);
-            padding-top:1.5em;
-            padding-bottom: 1.5em;
+            
         }
 
-        article.post-item h2, article.post-single h2 {
-            margin-bottom: 0.2em;
-        }
 
         .post-date {
             color: var(--medium-gray);
@@ -356,23 +480,40 @@ class TemplateManager {
         }
 
         .post-tags, .post-category {
-            margin: 10px 0;
-            font-size: 0.9em;
+            margin-top: 3em;
+            font-size: 0.6em;
+        }
+
+        .post-tags {
+            display: inline-block;
         }
 
         .post-summary p, .post-content p {
-            margin-top:1em;
+            margin-top:1.5em;
         }
+
+
+        .post-separator {
+            height:20px;
+            width:100%;
+            background-color: var(--accent-color);
+            --mask:
+              radial-gradient(10.96px at 50% calc(100% + 5.6px),#0000 calc(99% - 4px),#000 calc(101% - 4px) 99%,#0000 101%) calc(50% - 14px) calc(50% - 5.5px + .5px)/28px 11px repeat-x,
+              radial-gradient(10.96px at 50% -5.6px,#0000 calc(99% - 4px),#000 calc(101% - 4px) 99%,#0000 101%) 50% calc(50% + 5.5px)/28px 11px repeat-x;
+            -webkit-mask: var(--mask);
+                    mask: var(--mask);
+            margin-top:3em;
+            margin-bottom:3em;
+          }
 
         /* Tags */
         .tag {
             display: inline-block;
             background-color: var(--tag-bg);
             color: var(--tag-color);
+            border: 1px solid var(--tag-color);
             padding: 3px 8px;
             border-radius: 4px;
-            font-size: 0.8rem;
-            margin-right: 5px;
         }
 
         .tag:hover {
@@ -407,9 +548,14 @@ class TemplateManager {
         }
 
         /* Categories */
+        .post-category {
+            display: inline-block;
+        }
         .post-category a {
+            display: inline-block;
             color: var(--category-color);
             background-color: var(--category-bg);
+            border: 1px solid var(--category-color);
             padding: 3px 8px;
             border-radius: 4px;
         }
@@ -427,8 +573,7 @@ class TemplateManager {
 
         /* Article */
         article {
-            padding-left:1.5em;
-            padding-right:1.5em;
+
         }
 
         article.post-single h1 {
@@ -443,9 +588,6 @@ class TemplateManager {
             line-height: 1.8;
         }
 
-        .post-content p, .post-content ul, .post-content ol {
-            margin-bottom: 1.2em;
-        }
 
         /* Archives */
         .archive-year {
@@ -473,6 +615,9 @@ class TemplateManager {
             padding: 2em;
             color: var(--medium-gray);
             font-size: 0.9rem;
+            margin-top: auto;
+            width: 100%;
+            border-top: 1px solid var(--light-gray);
         }
 
         /* Embeds */
@@ -563,9 +708,16 @@ class TemplateManager {
             padding-left: 1.3em;
         }
 
+        /* Clearfix for floated elements */
+        .clearfix {
+            clear: both;
+            width: 100%;
+            display: block;
+        }
+
 
         /* Bigger screens */
-        @media (min-width: 769px) {
+        @media (min-width: 901px) {
             body {
                 background-color: var(--background-outline-color);
                 font-size: 115%;
@@ -573,10 +725,36 @@ class TemplateManager {
             .container {
                 background-color: var(--background-color);
             }
+            
+            aside.sidebar {
+                float: right;
+                width: 30%;
+                padding: 1.5em;
+                margin-left: 1.5em;
+                border-left: 1px solid var(--light-gray);
+                border-bottom: 1px solid var(--light-gray);
+                position: static;
+                height: auto;
+                right: auto;
+                top: auto;
+            }
+            
+            main {
+                overflow: auto;
+                margin-right: 0;
+            }
+            
+            .mobile-sidebar-overlay {
+                display: none !important;
+            }
+            
+            .hamburger-menu {
+                display: none !important;
+            }
         }
 
         /* Responsive */
-        @media (max-width: 768px) {
+        @media (max-width: 900px) {
             html {
                 padding: 0.6em;
             }
@@ -585,30 +763,77 @@ class TemplateManager {
             }
             .container {
                 padding: 15px;
+                position: relative;
+                overflow-x: hidden;
             }
 
             footer {
                 padding: 1em;
             }
 
-            nav {
-                text-align:center;
-                padding:0px;
-                padding-top: 0.8em;
-                padding-bottom: 0.8em;
+            /* Hide desktop nav on mobile */
+            nav:not(.sidebar-nav) {
+                display: none;
             }
             
-            nav ul {
-                display:flex;
-                flex: auto;
-                flex-direction: row;
-                flex-wrap: wrap;
-                gap: 10px;
+            /* Show mobile nav in sidebar */
+            .mobile-nav {
+                display: block;
             }
-
-            nav ul li {
-                flex: auto;
-                text-align: center;
+            
+            /* Show hamburger menu on mobile */
+            .hamburger-menu {
+                display: block;
+                position: absolute;
+                top: 15px;
+                right: 15px;
+                z-index: 1000;
+            }
+            
+            /* Transform hamburger to X when sidebar is open */
+            body.sidebar-open .hamburger-icon span:nth-child(1) {
+                transform: rotate(-45deg) translate(-5px, 6px);
+            }
+            
+            body.sidebar-open .hamburger-icon span:nth-child(2) {
+                opacity: 0;
+            }
+            
+            body.sidebar-open .hamburger-icon span:nth-child(3) {
+                transform: rotate(45deg) translate(-5px, -6px);
+            }
+            
+            /* Show overlay when sidebar is open */
+            body.sidebar-open .mobile-sidebar-overlay {
+                display: block;
+            }
+            
+            /* Mobile sidebar styling */
+            aside.sidebar {
+                position: fixed;
+                top: 0;
+                right: -85%; /* Start offscreen */
+                width: 85%;
+                height: 100%;
+                background-color: var(--background-color);
+                padding: 25px 20px;
+                padding-top: 30px;
+                margin: 0;
+                float: none;
+                border: none;
+                transition: right 0.3s ease;
+                z-index: 999;
+                overflow-y: auto;
+                box-shadow: -2px 0 5px rgba(0,0,0,0.1);
+            }
+            
+            body.sidebar-open .sidebar {
+                right: 0; /* Slide in from right */
+            }
+            
+            /* Hide regular aside on mobile */
+            aside:not(.sidebar) {
+                display: none;
             }
             
             .tag-list, .category-list {
@@ -629,20 +854,17 @@ class TemplateManager {
                 height: 200px;
             }
 
-            aside {
-                display:none;
-            }
-        
             main {
                 padding-left:1em;
                 padding-right:1em;
+                width: 100%; /* Full width when sidebar is hidden */
             }
 
             article.post-item, article.post-single {
-                padding-top:1em;
-                padding-bottom: 1em;
+                /* padding-top:1em;
+                padding-bottom: 1em; */
             }
-        
+
             header {
                 padding: 1em;
             }

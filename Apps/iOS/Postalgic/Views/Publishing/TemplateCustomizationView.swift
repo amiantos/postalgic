@@ -14,7 +14,7 @@ struct TemplateCustomizationView: View {
     @Query private var blogs: [Blog]
     var blog: Blog
     
-    @State private var selectedTemplateType: String = "layout"
+    @State private var selectedTemplateType: String = "css"
     @State private var templateContent: String = ""
     @State private var isEditing: Bool = false
     @State private var errorMessage: String = ""
