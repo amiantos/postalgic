@@ -83,6 +83,7 @@
 		44362F142DC0989000EA704F /* SidebarManagementView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidebarManagementView.swift; sourceTree = "<group>"; };
 		44362F152DC0989000EA704F /* TextBlockFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextBlockFormView.swift; sourceTree = "<group>"; };
 		44362F4D2DC1C85B00EA704F /* BlogSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlogSettingsView.swift; sourceTree = "<group>"; };
+		44362F4F2DC1DF7700EA704F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		443674762DB3898500F67B00 /* Postalgic.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Postalgic.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		443674852DB3898600F67B00 /* PostalgicTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PostalgicTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		4436748F2DB3898600F67B00 /* PostalgicUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PostalgicUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -256,6 +257,7 @@
 		44C3641F2DB768DB0057567C /* Postalgic */ = {
 			isa = PBXGroup;
 			children = (
+				44362F4F2DC1DF7700EA704F /* Info.plist */,
 				44C3641C2DB768DB0057567C /* Assets.xcassets */,
 				44C3641D2DB768DB0057567C /* Models.swift */,
 				44C3641E2DB768DB0057567C /* PostalgicApp.swift */,
@@ -643,6 +645,7 @@
 				DEVELOPMENT_TEAM = 2Y9M69QJKZ;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Postalgic/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -672,6 +675,7 @@
 				DEVELOPMENT_TEAM = 2Y9M69QJKZ;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Postalgic/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
