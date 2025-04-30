@@ -45,15 +45,14 @@ class TemplateManager {
         </head>
         <body>
             <div class="container">
-                <div class="hamburger-menu">
-                    <div class="hamburger-icon">
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                    </div>
-                </div>
-
                 <header>
+                    <div class="hamburger-menu">
+                        <div class="hamburger-icon">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                    </div>
                     <h1><a href="/">{{blogName}}</a></h1>
                     {{#blogTagline}}<p class="tagline">{{blogTagline}}</p>{{/blogTagline}}
                 </header>
@@ -70,7 +69,19 @@ class TemplateManager {
                 <div class="content-wrapper">
                     <div class="mobile-sidebar-overlay"></div>
                     <aside class="sidebar">
-                        {{{sidebarContent}}}
+                        <div class="mobile-nav">
+                            <nav class="sidebar-nav">
+                                <ul>
+                                    <li><a href="/">Home</a></li>
+                                    <li><a href="/archives/">Archives</a></li>
+                                    <li><a href="/tags/">Tags</a></li>
+                                    <li><a href="/categories/">Categories</a></li>
+                                </ul>
+                            </nav>
+                        </div>
+                        <div class="sidebar-content">
+                            {{{sidebarContent}}}
+                        </div>
                     </aside>
                     
                     <main>
@@ -122,7 +133,7 @@ class TemplateManager {
                 {{#inList}}<h2>{{displayTitle}}</h2>{{/inList}}
                 {{^inList}}<h1>{{displayTitle}}</h1>{{/inList}}
             {{/hasTitle}}
-            
+        
             <div class="post-date"><a href="/{{urlPath}}/index.html">{{formattedDate}}</a></div>
             
             {{#blogAuthor}}
@@ -133,22 +144,24 @@ class TemplateManager {
                 {{{contentHtml}}}
             </div>
 
+            <div>
             {{#hasCategory}}
                 <div class="post-category">
-                    Category: <a href="/categories/{{categoryUrlPath}}/">{{categoryName}}</a>
+                    <a href="/categories/{{categoryUrlPath}}/">{{categoryName}}</a>
                 </div>
             {{/hasCategory}}
         
             {{#hasTags}}
                 <div class="post-tags">
-                    Tags: 
                     {{#tags}}
                         <a href="/tags/{{urlPath}}/" class="tag">{{name}}</a> 
                     {{/tags}}
                 </div>
             {{/hasTags}}
+            </div>
 
         </article>
+        <div class="post-separator"></div>
         """
         
         // Index page template
@@ -288,7 +301,8 @@ class TemplateManager {
 
         /* Header */
         header {
-            padding:1.5em;
+            padding:2em;
+            border-bottom: 1px solid var(--light-gray);
         }
 
         header .tagline {
@@ -299,7 +313,7 @@ class TemplateManager {
 
 
         header h1 {
-
+            
         }
 
         header h1 a {
@@ -308,9 +322,9 @@ class TemplateManager {
         }
 
         nav {
-            border-top: 1px solid var(--light-gray);
             border-bottom: 1px solid var(--light-gray);
-            padding-left:1.5em;
+            padding-left:2em;
+            padding-right:2em;
             padding-top:1em;
             padding-bottom:1em;
         }
@@ -329,12 +343,12 @@ class TemplateManager {
         .hamburger-menu {
             display: none;
         }
-        
+
         .hamburger-icon {
             cursor: pointer;
             padding: 10px;
         }
-        
+
         .hamburger-icon span {
             display: block;
             width: 25px;
@@ -343,7 +357,7 @@ class TemplateManager {
             margin: 5px 0;
             transition: 0.3s;
         }
-        
+
         .mobile-sidebar-overlay {
             display: none;
             position: fixed;
@@ -354,7 +368,7 @@ class TemplateManager {
             background-color: rgba(0, 0, 0, 0.5);
             z-index: 998;
         }
-        
+
         /* Sidebar */
         aside.sidebar {
             width: 100%;
@@ -363,11 +377,44 @@ class TemplateManager {
             background-color: var(--background-color);
         }
 
+        /* Mobile Navigation in Sidebar */
+        .mobile-nav {
+            display: none;
+            margin-bottom: 25px;
+            border-bottom: 1px solid var(--light-gray);
+            padding-bottom: 20px;
+        }
+
+        .sidebar-content {
+            padding-top: 5px;
+        }
+
+        .sidebar-nav ul {
+            display: flex;
+            flex-direction: column;
+            list-style: none;
+            padding: 0;
+            margin-bottom: 15px;
+            font-size: 1rem;
+        }
+
+        .sidebar-nav li {
+            margin-bottom: 10px;
+        }
+
+        .sidebar-nav a {
+            display: block;
+            padding: 8px 0;
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: var(--primary-color);
+        }
+
         aside h2, .sidebar h2 {
             margin-bottom: 0.3em;
             font-size: 1.2em;
         }
-        
+
         aside .sidebar-links ul, .sidebar .sidebar-links ul {
             font-size: 0.8em;
             margin-bottom: 15px;
@@ -390,7 +437,7 @@ class TemplateManager {
             position: relative;
             overflow: hidden;
         }
-        
+
         /* Main */
         main {
             margin-bottom: 30px;
@@ -401,20 +448,14 @@ class TemplateManager {
         main {
             display: flex;
             flex-direction: column;
-            padding-left:1.5em;
-            padding-right:1.5em;
+            padding:2em;
             overflow: hidden; /* Create a new block formatting context */
         }
 
         article.post-item, article.post-single {
-            border-bottom: 1px solid var(--light-gray);
-            padding-top:1.5em;
-            padding-bottom: 1.5em;
+            
         }
 
-        article.post-item h2, article.post-single h2 {
-            margin-bottom: 0.2em;
-        }
 
         .post-date {
             color: var(--medium-gray);
@@ -439,23 +480,40 @@ class TemplateManager {
         }
 
         .post-tags, .post-category {
-            margin: 10px 0;
-            font-size: 0.9em;
+            margin-top: 3em;
+            font-size: 0.6em;
+        }
+
+        .post-tags {
+            display: inline-block;
         }
 
         .post-summary p, .post-content p {
-            margin-top:1em;
+            margin-top:1.5em;
         }
+
+
+        .post-separator {
+            height:20px;
+            width:100%;
+            background-color: var(--accent-color);
+            --mask:
+              radial-gradient(10.96px at 50% calc(100% + 5.6px),#0000 calc(99% - 4px),#000 calc(101% - 4px) 99%,#0000 101%) calc(50% - 14px) calc(50% - 5.5px + .5px)/28px 11px repeat-x,
+              radial-gradient(10.96px at 50% -5.6px,#0000 calc(99% - 4px),#000 calc(101% - 4px) 99%,#0000 101%) 50% calc(50% + 5.5px)/28px 11px repeat-x;
+            -webkit-mask: var(--mask);
+                    mask: var(--mask);
+            margin-top:3em;
+            margin-bottom:3em;
+          }
 
         /* Tags */
         .tag {
             display: inline-block;
             background-color: var(--tag-bg);
             color: var(--tag-color);
+            border: 1px solid var(--tag-color);
             padding: 3px 8px;
             border-radius: 4px;
-            font-size: 0.8rem;
-            margin-right: 5px;
         }
 
         .tag:hover {
@@ -490,9 +548,14 @@ class TemplateManager {
         }
 
         /* Categories */
+        .post-category {
+            display: inline-block;
+        }
         .post-category a {
+            display: inline-block;
             color: var(--category-color);
             background-color: var(--category-bg);
+            border: 1px solid var(--category-color);
             padding: 3px 8px;
             border-radius: 4px;
         }
@@ -510,8 +573,7 @@ class TemplateManager {
 
         /* Article */
         article {
-            padding-left:1.5em;
-            padding-right:1.5em;
+
         }
 
         article.post-single h1 {
@@ -526,9 +588,6 @@ class TemplateManager {
             line-height: 1.8;
         }
 
-        .post-content p, .post-content ul, .post-content ol {
-            margin-bottom: 1.2em;
-        }
 
         /* Archives */
         .archive-year {
@@ -648,7 +707,7 @@ class TemplateManager {
             border-left: 2px solid var(--accent-color);
             padding-left: 1.3em;
         }
-        
+
         /* Clearfix for floated elements */
         .clearfix {
             clear: both;
@@ -712,33 +771,22 @@ class TemplateManager {
                 padding: 1em;
             }
 
-            nav {
-                text-align:center;
-                padding:0px;
-                padding-top: 0.8em;
-                padding-bottom: 0.8em;
-                position: relative;
+            /* Hide desktop nav on mobile */
+            nav:not(.sidebar-nav) {
+                display: none;
             }
             
-            nav ul {
-                display:flex;
-                flex: auto;
-                flex-direction: row;
-                flex-wrap: wrap;
-                gap: 10px;
-            }
-
-            nav ul li {
-                flex: auto;
-                text-align: center;
+            /* Show mobile nav in sidebar */
+            .mobile-nav {
+                display: block;
             }
             
             /* Show hamburger menu on mobile */
             .hamburger-menu {
                 display: block;
                 position: absolute;
-                top: 0px;
-                right: 3px;
+                top: 15px;
+                right: 15px;
                 z-index: 1000;
             }
             
@@ -764,11 +812,12 @@ class TemplateManager {
             aside.sidebar {
                 position: fixed;
                 top: 0;
-                right: -80%; /* Start offscreen */
-                width: 80%;
+                right: -85%; /* Start offscreen */
+                width: 85%;
                 height: 100%;
                 background-color: var(--background-color);
-                padding: 20px;
+                padding: 25px 20px;
+                padding-top: 30px;
                 margin: 0;
                 float: none;
                 border: none;
@@ -804,7 +853,7 @@ class TemplateManager {
             .link-image {
                 height: 200px;
             }
-        
+
             main {
                 padding-left:1em;
                 padding-right:1em;
@@ -812,10 +861,10 @@ class TemplateManager {
             }
 
             article.post-item, article.post-single {
-                padding-top:1em;
-                padding-bottom: 1em;
+                /* padding-top:1em;
+                padding-bottom: 1em; */
             }
-        
+
             header {
                 padding: 1em;
             }
