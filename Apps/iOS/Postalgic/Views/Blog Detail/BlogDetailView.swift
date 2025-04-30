@@ -128,12 +128,12 @@ struct BlogDetailView: View {
                     Label("Settings", systemImage: "gear")
                 }
                 
-                Button {
-                    if let url = URL(string: blog.url) {
+                if let url = URL(string: blog.url) {
+                    Button {
                         UIApplication.shared.open(url)
+                    } label: {
+                        Label("Visit Blog", systemImage: "safari")
                     }
-                } label: {
-                    Label("Visit Blog", systemImage: "safari")
                 }
             }
         }
