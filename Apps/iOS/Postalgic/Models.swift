@@ -331,7 +331,61 @@ final class Post {
     }
 
     var displayTitle: String {
-        return title ?? String(content.prefix(50))
+        if let title = title {
+            return title
+        }
+        
+        // Strip Markdown syntax from content
+        let plainContent = stripMarkdown(from: content)
+        
+        let maxLength = 75
+        if plainContent.count <= maxLength {
+            return plainContent
+        }
+        
+        // Find the last space within the maximum length
+        let truncated = plainContent.prefix(maxLength)
+        if let lastSpace = truncated.lastIndex(of: " ") {
+            let wordBoundaryIndex = plainContent.index(lastSpace, offsetBy: 0)
+            return String(plainContent[..<wordBoundaryIndex]) + "..."
+        } else {
+            return String(truncated) + "..."
+        }
+    }
+    
+    /// Strips common Markdown syntax from text
+    private func stripMarkdown(from text: String) -> String {
+        var result = text
+        
+        // Regular expressions for common Markdown patterns
+        let patterns = [
+            // Links: [text](url) -> text
+            "\\[([^\\]]+)\\]\\([^)]+\\)": "$1",
+            // Bold: **text** or __text__ -> text
+            "\\*\\*([^*]+)\\*\\*|__([^_]+)__": "$1$2",
+            // Italic: *text* or _text_ -> text
+            "\\*([^*]+)\\*|_([^_]+)_": "$1$2",
+            // Headers: #+ text -> text
+            "^#+\\s+(.+)$": "$1",
+            // Code blocks: `text` -> text
+            "`([^`]+)`": "$1",
+            // Strikethrough: ~~text~~ -> text
+            "~~([^~]+)~~": "$1",
+            // Images: ![alt](url) -> alt
+            "!\\[([^\\]]+)\\]\\([^)]+\\)": "$1"
+        ]
+        
+        for (pattern, replacement) in patterns {
+            if let regex = try? NSRegularExpression(pattern: pattern, options: []) {
+                let range = NSRange(location: 0, length: result.utf16.count)
+                result = regex.stringByReplacingMatches(in: result, options: [], range: range, withTemplate: replacement)
+            }
+        }
+        
+        // Remove any remaining Markdown characters
+        result = result.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        return result
     }
 
     var tagNames: [String] {
