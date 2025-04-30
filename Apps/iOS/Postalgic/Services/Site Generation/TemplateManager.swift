@@ -524,7 +524,7 @@ class TemplateManager {
         }
 
         .post-separator {
-            height: 30px;
+            height: 28px;
             width: 100%;
             background-color: var(--accent-color);
             --mask:
