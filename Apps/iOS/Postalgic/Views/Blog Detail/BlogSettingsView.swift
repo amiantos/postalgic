@@ -83,6 +83,18 @@ struct BlogSettingsView: View {
                             Image(systemName: "chevron.right").foregroundColor(.secondary)
                         }
                     }
+                    
+                    Button {
+                        if let url = URL(string: blog.url) {
+                            UIApplication.shared.open(url)
+                        }
+                    } label: {
+                        HStack {
+                            Label("Visit Blog", systemImage: "safari")
+                            Spacer()
+                            Image(systemName: "arrow.up.right").foregroundColor(.secondary)
+                        }
+                    }
                 } header: {
                     Text("Publishing")
                 }

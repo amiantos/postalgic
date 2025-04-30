@@ -114,6 +114,16 @@ struct BlogDetailView: View {
         .navigationTitle(blog.name)
         .toolbar {
             ToolbarItemGroup(placement: .primaryAction) {
+                Button(action: { showingPublishView = true }) {
+                    Label("Publish", systemImage: "paperplane")
+                }
+                
+                Button(action: { showingPostForm = true }) {
+                    Label("New Post", systemImage: "bubble.and.pencil")
+                }
+            }
+            
+            ToolbarItemGroup(placement: .topBarLeading) {
                 Button(action: { showingSettingsView = true }) {
                     Label("Settings", systemImage: "gear")
                 }
@@ -125,15 +135,6 @@ struct BlogDetailView: View {
                 } label: {
                     Label("Visit Blog", systemImage: "safari")
                 }
-                
-                Button(action: { showingPublishView = true }) {
-                    Label("Publish", systemImage: "paperplane")
-                }
-                
-                Button(action: { showingPostForm = true }) {
-                    Label("New Post", systemImage: "bubble.and.pencil")
-                }
-                
             }
         }
         .sheet(isPresented: $showingPostForm) {
