@@ -245,16 +245,16 @@ class TemplateManager {
         :root {
             --primary-color: #4a5568;
             --accent-color: #FFA100;
-            --background-color: #ffffff;
+            --background-color: #efefef;
             --background-outline-color: #515151;
             --text-color: #2d3748;
-            --light-gray: #edf2f7;
+            --light-gray: #dedede;
             --medium-gray: #a0aec0;
             --dark-gray: #4a5568;
-            --tag-bg: #ebf8ff;
-            --tag-color: #2b6cb0;
-            --category-bg: #f0fff4;
-            --category-color: #2f855a;
+            --tag-bg: #f5e5ef;
+            --tag-color: #CB7BAC;
+            --category-bg: #fff2db;
+            --category-color: #FFA100;
         }
 
         * {
@@ -513,7 +513,7 @@ class TemplateManager {
             color: var(--tag-color);
             border: 1px solid var(--tag-color);
             padding: 3px 8px;
-            border-radius: 4px;
+            border-radius: 100px;
         }
 
         .tag:hover {
@@ -557,7 +557,7 @@ class TemplateManager {
             background-color: var(--category-bg);
             border: 1px solid var(--category-color);
             padding: 3px 8px;
-            border-radius: 4px;
+            border-radius: 100px;
         }
 
         .post-category a:hover {
