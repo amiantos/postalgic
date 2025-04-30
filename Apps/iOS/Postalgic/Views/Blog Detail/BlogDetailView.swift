@@ -40,14 +40,7 @@ struct BlogDetailView: View {
         postsByDate.keys.sorted(by: >)
     }
     @State private var showingPublishView = false
-    @State private var showingEditBlogView = false
-    @State private var showingCategoryManagement = false
-    @State private var showingTagManagement = false
-    @State private var showingSidebarManagement = false
-    @State private var showingPublishSettingsView = false
-    @State private var showingTemplateCustomizationView = false
-    @State private var showingDeleteAlert = false
-    @State private var deleteConfirmationText = ""
+    @State private var showingSettingsView = false
     @Environment(\.dismiss) private var dismiss
 
     enum PostFilter: String, CaseIterable, Identifiable {
@@ -121,71 +114,21 @@ struct BlogDetailView: View {
         .navigationTitle(blog.name)
         .toolbar {
             ToolbarItemGroup(placement: .primaryAction) {
-                Menu {
-                    Button(action: { showingEditBlogView = true }) {
-                        Label("Metadata", systemImage: "person")
-                    }
-                    
-                    Button(action: {
-                        showingSidebarManagement = true
-                    }) {
-                        Label("Sidebar", systemImage: "sidebar.right")
-                    }
-
-                    Button(action: {
-                        showingCategoryManagement = true
-                    }) {
-                        Label("Categories", systemImage: "folder")
-                    }
-                    Button(action: {
-                        showingTagManagement = true
-                    }) {
-                        Label("Tags", systemImage: "tag")
-                    }
-
-                    Button(action: { showingTemplateCustomizationView = true })
-                    {
-                        Label("Templates", systemImage: "richtext.page")
-                    }
-                    
-                    Button(action: { showingPublishSettingsView = true }) {
-                        Label("Publishing", systemImage: "paperplane")
-                    }
-
-                    Divider()
-
-                    Button(action: {
-                        showingDeleteAlert = true
-                    }) {
-                        Label("Delete Blog", systemImage: "trash")
-                    }
-                } label: {
-                    Label("Blog Settings", systemImage: "gear")
+                Button(action: { showingSettingsView = true }) {
+                    Label("Settings", systemImage: "gear")
                 }
                 
-
-                Menu {
-                    Button(action: { showingPublishView = true }) {
-                        Label("Publish", systemImage: "paperplane")
-                    }
-                    
-                    Button(action: { showingPublishSettingsView = true }) {
-                        Label("Publish Settings", systemImage: "gear")
-                    }
-                    
-                    Divider()
-                    
-                    Button(action: {
-                        if let url = URL(string: blog.url) {
-                            UIApplication.shared.open(url)
-                        }
-                    }) {
-                        Label("Visit Blog", systemImage: "safari")
+                Button {
+                    if let url = URL(string: blog.url) {
+                        UIApplication.shared.open(url)
                     }
                 } label: {
+                    Label("Visit Blog", systemImage: "safari")
+                }
+                
+                Button(action: { showingPublishView = true }) {
                     Label("Publish", systemImage: "paperplane")
                 }
-                
                 
                 Button(action: { showingPostForm = true }) {
                     Label("New Post", systemImage: "bubble.and.pencil")
@@ -199,44 +142,10 @@ struct BlogDetailView: View {
         .sheet(isPresented: $showingPublishView) {
             PublishBlogView(blog: blog)
         }
-        .sheet(isPresented: $showingEditBlogView) {
-            BlogFormView(blog: blog).interactiveDismissDisabled()
-        }
-        .sheet(isPresented: $showingCategoryManagement) {
-            CategoryManagementView(blog: blog)
-        }
-        .sheet(isPresented: $showingTagManagement) {
-            TagManagementView(blog: blog)
-        }
-        .sheet(isPresented: $showingPublishSettingsView) {
-            PublishSettingsView(blog: blog)
-        }
-        .sheet(isPresented: $showingTemplateCustomizationView) {
-            TemplateCustomizationView(blog: blog).interactiveDismissDisabled()
-        }
-        .sheet(isPresented: $showingSidebarManagement) {
-            SidebarManagementView(blog: blog)
-        }
-        .alert("Delete Blog", isPresented: $showingDeleteAlert) {
-            TextField("Type 'delete' to confirm", text: $deleteConfirmationText)
-                .autocorrectionDisabled()
-                .textInputAutocapitalization(.never)
-
-            Button("Cancel", role: .cancel) {
-                deleteConfirmationText = ""
-            }
-
-            Button("Delete", role: .destructive) {
-                if deleteConfirmationText.lowercased() == "delete" {
-                    deleteBlog()
-                }
-                deleteConfirmationText = ""
-            }
-            .disabled(deleteConfirmationText.lowercased() != "delete")
-        } message: {
-            Text(
-                "This will permanently delete the blog '\(blog.name)' and all its posts.\n\nTo confirm, type 'delete' in the field below."
-            )
+        .sheet(isPresented: $showingSettingsView) {
+            BlogSettingsView(blog: blog, onDelete: {
+                dismiss()
+            })
         }
     }
 
@@ -275,11 +184,6 @@ struct BlogDetailView: View {
         return formatter.string(from: date)
     }
 
-    private func deleteBlog() {
-        modelContext.delete(blog)
-        try? modelContext.save()
-        dismiss()
-    }
 }
 
 #Preview {
