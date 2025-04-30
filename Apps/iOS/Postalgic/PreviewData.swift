@@ -15,7 +15,7 @@ struct PreviewData {
     
     static let blog = Blog(
         name: "Test Blog",
-        url: "https://example.com",
+        url: "",
         authorName: "John Doe",
         authorUrl: "https://johndoe.com",
         tagline: "Thoughts on technology and design"

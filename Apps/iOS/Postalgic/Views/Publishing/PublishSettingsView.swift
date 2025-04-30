@@ -20,15 +20,17 @@ struct PublishSettingsView: View {
         NavigationStack {
             List {
                 // Header section with site URL
-                Section(header: Text("Publishing Details")) {
+                Section(header: Text("Blog URL"), footer: Text("Please enter the canonical URL for your blog, this will be used throughout the generated website for references to your blog.")) {
                     TextField("https://yourblog.com", text: $blog.url)
                         .keyboardType(.URL)
                         .autocapitalization(.none)
                         .disableAutocorrection(true)
                         .textContentType(.URL)
-
+                }
+                
+                Section(header: Text("Publishing Settings")) {
                     Picker(
-                        "Publishing Method",
+                        "Method",
                         selection: Binding(
                             get: {
                                 return blog.currentPublisherType
@@ -63,7 +65,7 @@ struct PublishSettingsView: View {
                 }
             }
             .listStyle(InsetGroupedListStyle())
-            .navigationTitle("Publish Settings")
+            .navigationTitle("Publishing")
             .navigationBarItems(
                 trailing: Button("Done") {
                     dismiss()
@@ -81,9 +83,9 @@ struct PublishSettingsView: View {
     // AWS Settings View
     private var awsSettingsView: some View {
         Section(
-            header: Text("AWS Configuration"),
+            header: Text("Configuration Status"),
             footer: Text(
-                "AWS publishing lets you directly upload your static site to an S3 bucket and automatically create CloudFront invalidations to ensure your content is served fresh."
+                "AWS publishing lets you directly upload your static site to an S3 bucket and automatically creates CloudFront invalidations to ensure your content is served fresh."
             )
         ) {
             if blog.hasAwsConfigured {
@@ -113,7 +115,7 @@ struct PublishSettingsView: View {
     // FTP Settings View
     private var ftpSettingsView: some View {
         Section(
-            header: Text("SFTP Configuration"),
+            header: Text("Configuration Status"),
             footer: Text(
                 "SFTP publishing lets you directly upload your static site to any web hosting service that supports secure file transfer protocol."
             )
@@ -138,7 +140,7 @@ struct PublishSettingsView: View {
 
             Button("Configure SFTP") {
                 showingFtpConfigView.toggle()
-            }.buttonStyle(.automatic).frame(maxWidth: .infinity)
+            }.buttonStyle(.automatic)
 
         }
 
@@ -211,20 +213,16 @@ struct PublishSettingsView: View {
 
     // Manual Download View
     private var manualDownloadView: some View {
-        Section(header: Text("Manual Download Information")) {
+        Section(header: Text("Configuration Status"), footer: Text(
+            "Your site will be generated as a ZIP file that you can download and manually upload to any web host of your choice.\n\nMake sure the Blog URL above matches where you'll be hosting your site, so all internal links and the sitemap work correctly."
+        )) {
             Label {
-                Text("Manual download mode")
+                Text("Zip Export Enabled")
             } icon: {
                 Image(systemName: "checkmark.circle.fill").foregroundStyle(
                     .pGreen
                 )
             }
-
-            Text(
-                "Your site will be generated as a ZIP file that you can download and manually upload to any web host of your choice.\n\nMake sure the Blog URL above matches where you'll be hosting your site, so all internal links and the sitemap work correctly."
-            )
-            .font(.callout)
-            .foregroundColor(.secondary)
         }
     }
 }

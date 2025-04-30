@@ -32,290 +32,309 @@ struct PublishBlogView: View {
     @Environment(\.modelContext) private var modelContext
 
     var body: some View {
-        VStack(spacing: 20) {
-            Text("Publish \(blog.name)")
-                .font(.title)
-                .fontWeight(.bold)
-
-            if blog.hasAwsConfigured && blog.currentPublisherType == .aws {
-                Text(
-                    "Publishing will generate a static website from all your blog posts and securely upload it to your AWS S3 bucket using your AWS access keys. A CloudFront invalidation will be created to ensure your content is served fresh."
-                )
-                .multilineTextAlignment(.center)
-                .padding(.horizontal)
-            } else if blog.hasFtpConfigured && blog.currentPublisherType == .ftp
-            {
-                Text(
-                    "Publishing will generate a static website from all your blog posts and securely upload it to your web host using SFTP."
-                )
-                .multilineTextAlignment(.center)
-                .padding(.horizontal)
-            } else if blog.currentPublisherType == .none {
-                Text(
-                    "Publishing will generate a static website from all your blog posts. The site will be packaged as a ZIP file you can download and upload to any web host."
-                )
-                .multilineTextAlignment(.center)
-                .padding(.horizontal)
-            } else {
-                Text(
-                    "Publishing will generate a static website from all your blog posts for uploading to the host of your choice."
-                )
-                .multilineTextAlignment(.center)
-                .padding(.horizontal)
-            }
-
-            // Publish Settings Button
-            Button(action: {
-                showingPublishSettingsView = true
-            }) {
-                HStack {
-                    Image(systemName: "gear")
-                    Text("Publishing Settings")
-                }
-                .padding()
-                .frame(maxWidth: .infinity)
-                .background(Color.secondary.opacity(0.1))
-                .foregroundColor(.primary)
-                .cornerRadius(10)
-            }
-            .padding(.horizontal)
-
-            if let errorMessage = errorMessage {
-                Text(errorMessage)
-                    .foregroundColor(.red)
+        NavigationStack {
+            VStack(spacing: 20) {
+                Text("Publish \(blog.name)")
+                    .font(.title)
+                    .fontWeight(.bold)
+                
+                if blog.hasAwsConfigured && blog.currentPublisherType == .aws {
+                    Text(
+                        "Publishing will generate a static website from all your blog posts and securely upload it to your AWS S3 bucket using your AWS access keys. A CloudFront invalidation will be created to ensure your content is served fresh."
+                    )
                     .multilineTextAlignment(.center)
-                    .padding()
-            }
-
-            if let successMessage = publishSuccessMessage {
-                Text(successMessage)
-                    .foregroundColor(Color("PGreen"))
-                    .multilineTextAlignment(.center)
-                    .padding()
-            }
-
-            if isGenerating {
-                ProgressView()
-                    .padding()
-                Text(statusMessage)
                     .padding(.horizontal)
+                } else if blog.hasFtpConfigured && blog.currentPublisherType == .ftp
+                {
+                    Text(
+                        "Publishing will generate a static website from all your blog posts and securely upload it to your web host using SFTP."
+                    )
                     .multilineTextAlignment(.center)
-            } else {
-                // Main publishing controls
-                VStack(spacing: 12) {
-                    // AWS Publishing Button
-                    if blog.hasAwsConfigured
-                        && blog.currentPublisherType == .aws
-                    {
-                        VStack(spacing: 12) {
-                            Button(action: {
-                                forceFullUpload = false
-                                generateSite()
-                            }) {
-                                HStack {
-                                    Image(systemName: "arrow.up.to.line")
-                                        .font(.system(size: 16, weight: .bold))
-                                    Text("Smart Publish to AWS")
-                                        .fontWeight(.semibold)
-                                }
-                                .padding()
-                                .frame(maxWidth: .infinity)
-                                .background(Color("PBlue"))
-                                .foregroundColor(.primary)
-                                .cornerRadius(10)
-                            }
-                            .padding(.horizontal)
-                            
-                            Button(action: {
-                                forceFullUpload = true
-                                generateSite()
-                            }) {
-                                HStack {
-                                    Image(systemName: "arrow.up.to.line.square")
-                                        .font(.system(size: 16, weight: .bold))
-                                    Text("Full Publish to AWS")
-                                        .fontWeight(.semibold)
-                                }
-                                .padding()
-                                .frame(maxWidth: .infinity)
-                                .background(Color("PYellow"))
-                                .foregroundColor(.primary)
-                                .cornerRadius(10)
-                            }
-                            .padding(.horizontal)
-                        }
-
-                        // View Published Site Button (shown if success message exists)
-                        if publishSuccessMessage != nil {
-                            Button(action: {
-                                if let url = URL(string: blog.url) {
-                                    UIApplication.shared.open(url)
-                                }
-                            }) {
-                                HStack {
-                                    Image(systemName: "safari")
-                                    Text("View Published Site")
-                                }
-                                .padding()
-                                .frame(maxWidth: .infinity)
-                                .background(Color("PGreen"))
-                                .foregroundColor(.primary)
-                                .cornerRadius(10)
-                            }
-                            .padding(.horizontal)
-                            .disabled(blog.url.isEmpty)
-                        }
+                    .padding(.horizontal)
+                } else if blog.currentPublisherType == .none {
+                    Text(
+                        "Publishing will generate a static website from all your blog posts. The site will be packaged as a ZIP file you can download and upload to any web host."
+                    )
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal)
+                } else {
+                    Text(
+                        "Publishing will generate a static website from all your blog posts for uploading to the host of your choice."
+                    )
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal)
+                }
+                
+                // Publish Settings Button
+                Button(action: {
+                    showingPublishSettingsView = true
+                }) {
+                    HStack {
+                        Image(systemName: "gear")
+                        Text("Publishing Settings")
                     }
-                    // FTP Publishing Button
-                    else if blog.hasFtpConfigured
-                        && blog.currentPublisherType == .ftp
-                    {
-                        VStack(spacing: 12) {
-                            Button(action: {
-                                forceFullUpload = false
-                                generateSite()
-                            }) {
-                                HStack {
-                                    Image(systemName: "arrow.up.to.line")
-                                        .font(.system(size: 16, weight: .bold))
-                                    Text("Smart Publish via SFTP")
-                                        .fontWeight(.semibold)
-                                }
-                                .padding()
-                                .frame(maxWidth: .infinity)
-                                .background(Color("PBlue"))
-                                .foregroundColor(.primary)
-                                .cornerRadius(10)
-                            }
-                            .padding(.horizontal)
-                            
-                            Button(action: {
-                                forceFullUpload = true
-                                generateSite()
-                            }) {
-                                HStack {
-                                    Image(systemName: "arrow.up.to.line.square")
-                                        .font(.system(size: 16, weight: .bold))
-                                    Text("Full Publish via SFTP")
-                                        .fontWeight(.semibold)
-                                }
-                                .padding()
-                                .frame(maxWidth: .infinity)
-                                .background(Color("PYellow"))
-                                .foregroundColor(.primary)
-                                .cornerRadius(10)
-                            }
-                            .padding(.horizontal)
-                        }
-
-                        // View Published Site Button (shown if success message exists)
-                        if publishSuccessMessage != nil {
-                            Button(action: {
-                                if let url = URL(string: blog.url) {
-                                    UIApplication.shared.open(url)
-                                }
-                            }) {
-                                HStack {
-                                    Image(systemName: "safari")
-                                    Text("View Published Site")
-                                }
-                                .padding()
-                                .frame(maxWidth: .infinity)
-                                .background(Color("PGreen"))
-                                .foregroundColor(.primary)
-                                .cornerRadius(10)
-                            }
-                            .padding(.horizontal)
-                            .disabled(blog.url.isEmpty)
-                        }
-                    }
-                    // Local ZIP Generation Option
-                    else if generatedZipURL != nil,
-                        blog.currentPublisherType == .none
-                    {
-                        Button(action: {
-                            showingShareSheet = true
-                        }) {
-                            Label(
-                                "Share ZIP File",
-                                systemImage: "square.and.arrow.up"
-                            )
-                            .padding()
-                            .frame(maxWidth: .infinity)
-                            .background(Color("PBlue"))
-                            .foregroundColor(.primary)
-                            .cornerRadius(10)
-                        }
+                    .padding()
+                    .frame(maxWidth: .infinity)
+                    .background(Color.secondary.opacity(0.1))
+                    .foregroundColor(.primary)
+                    .cornerRadius(10)
+                }
+                .padding(.horizontal)
+                
+                if let errorMessage = errorMessage {
+                    Text(errorMessage)
+                        .foregroundColor(.red)
+                        .multilineTextAlignment(.center)
+                        .padding()
+                }
+                
+                if let successMessage = publishSuccessMessage {
+                    Text(successMessage)
+                        .foregroundColor(Color("PGreen"))
+                        .multilineTextAlignment(.center)
+                        .padding()
+                }
+                
+                if isGenerating {
+                    ProgressView()
+                        .padding()
+                    Text(statusMessage)
                         .padding(.horizontal)
-                    } else if blog.currentPublisherType == .none {
-                        Button(action: {
-                            generateSite()
-                        }) {
-                            Label("Generate Site ZIP", systemImage: "globe")
-                                .padding()
-                                .frame(maxWidth: .infinity)
-                                .background(Color("PBlue"))
-                                .foregroundColor(.primary)
-                                .cornerRadius(10)
-                        }
-                        .padding(.horizontal)
-                    } else {
-                        if blog.currentPublisherType == .aws || blog.currentPublisherType == .ftp {
-                            Label {
-                                Text(
-                                    "Please check that you've fully configured \(blog.currentPublisherType.rawValue) for publication. Once configured, a publish button will appear here."
-                                ).font(.callout)
-                            } icon: {
-                                Image(systemName: "x.circle.fill").foregroundStyle(
-                                    .pYellow
-                                )
-                            }.foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                } else {
+                    // Main publishing controls
+                    VStack(spacing: 12) {
+                        // AWS Publishing Button
+                        if blog.hasAwsConfigured
+                            && blog.currentPublisherType == .aws
+                        {
+                            VStack(spacing: 12) {
+                                Button(action: {
+                                    forceFullUpload = false
+                                    generateSite()
+                                }) {
+                                    HStack {
+                                        Image(systemName: "arrow.up.to.line")
+                                            .font(.system(size: 16, weight: .bold))
+                                        Text("Smart Publish to AWS")
+                                            .fontWeight(.semibold)
+                                    }
+                                    .padding()
+                                    .frame(maxWidth: .infinity)
+                                    .background(Color("PBlue"))
+                                    .foregroundColor(.primary)
+                                    .cornerRadius(10)
+                                }
                                 .padding(.horizontal)
+                                
+                                Button(action: {
+                                    forceFullUpload = true
+                                    generateSite()
+                                }) {
+                                    HStack {
+                                        Image(systemName: "arrow.up.to.line.square")
+                                            .font(.system(size: 16, weight: .bold))
+                                        Text("Full Publish to AWS")
+                                            .fontWeight(.semibold)
+                                    }
+                                    .padding()
+                                    .frame(maxWidth: .infinity)
+                                    .background(Color("PYellow"))
+                                    .foregroundColor(.primary)
+                                    .cornerRadius(10)
+                                }
+                                .padding(.horizontal)
+                            }
+                            
+                            // View Published Site Button (shown if success message exists)
+                            if publishSuccessMessage != nil {
+                                Button(action: {
+                                    if let url = URL(string: blog.url) {
+                                        UIApplication.shared.open(url)
+                                    }
+                                }) {
+                                    HStack {
+                                        Image(systemName: "safari")
+                                        Text("View Published Site")
+                                    }
+                                    .padding()
+                                    .frame(maxWidth: .infinity)
+                                    .background(Color("PGreen"))
+                                    .foregroundColor(.primary)
+                                    .cornerRadius(10)
+                                }
+                                .padding(.horizontal)
+                                .disabled(blog.url.isEmpty)
+                            }
+                        }
+                        // FTP Publishing Button
+                        else if blog.hasFtpConfigured
+                                    && blog.currentPublisherType == .ftp
+                        {
+                            VStack(spacing: 12) {
+                                Button(action: {
+                                    forceFullUpload = false
+                                    generateSite()
+                                }) {
+                                    HStack {
+                                        Image(systemName: "arrow.up.to.line")
+                                            .font(.system(size: 16, weight: .bold))
+                                        Text("Smart Publish via SFTP")
+                                            .fontWeight(.semibold)
+                                    }
+                                    .padding()
+                                    .frame(maxWidth: .infinity)
+                                    .background(Color("PBlue"))
+                                    .foregroundColor(.primary)
+                                    .cornerRadius(10)
+                                }
+                                .padding(.horizontal)
+                                
+                                Button(action: {
+                                    forceFullUpload = true
+                                    generateSite()
+                                }) {
+                                    HStack {
+                                        Image(systemName: "arrow.up.to.line.square")
+                                            .font(.system(size: 16, weight: .bold))
+                                        Text("Full Publish via SFTP")
+                                            .fontWeight(.semibold)
+                                    }
+                                    .padding()
+                                    .frame(maxWidth: .infinity)
+                                    .background(Color("PYellow"))
+                                    .foregroundColor(.primary)
+                                    .cornerRadius(10)
+                                }
+                                .padding(.horizontal)
+                            }
+                            
+                            // View Published Site Button (shown if success message exists)
+                            if publishSuccessMessage != nil {
+                                Button(action: {
+                                    if let url = URL(string: blog.url) {
+                                        UIApplication.shared.open(url)
+                                    }
+                                }) {
+                                    HStack {
+                                        Image(systemName: "safari")
+                                        Text("View Published Site")
+                                    }
+                                    .padding()
+                                    .frame(maxWidth: .infinity)
+                                    .background(Color("PGreen"))
+                                    .foregroundColor(.primary)
+                                    .cornerRadius(10)
+                                }
+                                .padding(.horizontal)
+                                .disabled(blog.url.isEmpty)
+                            }
+                        }
+                        // Local ZIP Generation Option
+                        else if generatedZipURL != nil,
+                                blog.currentPublisherType == .none
+                        {
+                            Button(action: {
+                                showingShareSheet = true
+                            }) {
+                                Label(
+                                    "Share ZIP File",
+                                    systemImage: "square.and.arrow.up"
+                                )
+                                .padding()
+                                .frame(maxWidth: .infinity)
+                                .background(Color("PBlue"))
+                                .foregroundColor(.primary)
+                                .cornerRadius(10)
+                            }
+                            .padding(.horizontal)
+                        } else if blog.currentPublisherType == .none {
+                            Button(action: {
+                                generateSite()
+                            }) {
+                                Label("Generate Site ZIP", systemImage: "globe")
+                                    .padding()
+                                    .frame(maxWidth: .infinity)
+                                    .background(Color("PBlue"))
+                                    .foregroundColor(.primary)
+                                    .cornerRadius(10)
+                            }
+                            .padding(.horizontal)
                         } else {
-                            Label {
-                                Text(
-                                    "\(blog.currentPublisherType.rawValue) support is coming soon, please pick a different publishing method in Publishing Settings in the meantime."
-                                ).font(.callout)
-                            } icon: {
-                                Image(systemName: "x.circle.fill").foregroundStyle(
-                                    .pYellow
-                                )
-                            }.foregroundStyle(.secondary)
-                                .padding(.horizontal)
+                            if blog.currentPublisherType == .aws || blog.currentPublisherType == .ftp {
+                                Label {
+                                    Text(
+                                        "Please check that you've fully configured \(blog.currentPublisherType.rawValue) for publication. Once configured, a publish button will appear here."
+                                    ).font(.callout)
+                                } icon: {
+                                    Image(systemName: "x.circle.fill").foregroundStyle(
+                                        .pYellow
+                                    )
+                                }.foregroundStyle(.secondary)
+                                    .padding(.horizontal)
+                            } else {
+                                Label {
+                                    Text(
+                                        "\(blog.currentPublisherType.rawValue) support is coming soon, please pick a different publishing method in Publishing Settings in the meantime."
+                                    ).font(.callout)
+                                } icon: {
+                                    Image(systemName: "x.circle.fill").foregroundStyle(
+                                        .pYellow
+                                    )
+                                }.foregroundStyle(.secondary)
+                                    .padding(.horizontal)
+                            }
+                        }
+                        
+                        
+                        if blog.url.isEmpty {
+                            Text(
+                                "⚠️ Warning! Please set a canonical URL for your blog in Publishing Settings or portions of your generated site will not work properly."
+                            )
+                            .italic()
+                            .multilineTextAlignment(.center)
+                            .padding()
                         }
                     }
                 }
             }
-        }
-        .padding()
-        .sheet(isPresented: $showingShareSheet) {
-            if let zipURL = generatedZipURL {
-                ShareSheet(items: [zipURL])
-            }
-        }
-        .sheet(isPresented: $showingPublishSettingsView) {
-            PublishSettingsView(blog: blog)
-        }
-        .alert("Site Generated", isPresented: $showingSuccessAlert) {
-            Button("OK", role: .cancel) {
-                if autoPublish {
-                    dismiss()
+            .padding()
+            .sheet(isPresented: $showingShareSheet) {
+                if let zipURL = generatedZipURL {
+                    ShareSheet(items: [zipURL])
                 }
             }
-        } message: {
-            if blog.hasAwsConfigured && blog.currentPublisherType == .aws {
-                Text(
-                    "Your site has been successfully published to AWS using your access keys. The CloudFront invalidation has been created."
-                )
-            } else if blog.hasFtpConfigured && blog.currentPublisherType == .ftp
-            {
-                Text(
-                    "Your site has been successfully published to your web host using SFTP."
-                )
-            } else {
-                Text(
-                    "Your site has been successfully generated. You can now share the ZIP file."
-                )
+            .sheet(isPresented: $showingPublishSettingsView) {
+                PublishSettingsView(blog: blog)
+            }
+            .alert("Site Generated", isPresented: $showingSuccessAlert) {
+                Button("OK", role: .cancel) {
+                    if autoPublish {
+                        dismiss()
+                    }
+                }
+            } message: {
+                if blog.hasAwsConfigured && blog.currentPublisherType == .aws {
+                    Text(
+                        "Your site has been successfully published to AWS using your access keys. The CloudFront invalidation has been created."
+                    )
+                } else if blog.hasFtpConfigured && blog.currentPublisherType == .ftp
+                {
+                    Text(
+                        "Your site has been successfully published to your web host using SFTP."
+                    )
+                } else {
+                    Text(
+                        "Your site has been successfully generated. You can now share the ZIP file."
+                    )
+                }
+            }
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Close") {
+                        dismiss()
+                    }
+                }
             }
         }
         .onAppear {
@@ -329,11 +348,7 @@ struct PublishBlogView: View {
         .onDisappear {
             removeNotificationObservers()
         }
-        .toolbar {
-            Button("Done") {
-                dismiss()
-            }
-        }
+        
     }
 
     private func setupNotificationObservers() {
