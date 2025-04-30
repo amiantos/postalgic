@@ -24,12 +24,19 @@ struct CategoryManagementView: View {
     var body: some View {
         NavigationStack {
             List {
-                ForEach(categories.sorted { $0.name < $1.name }) { category in
-                    NavigationLink(destination: EditCategoryView(category: category, blog: blog)) {
-                        CategoryRowView(category: category)
+                if categories.isEmpty {
+                    Text("No categories yet. Add some to help organize your blog's content.")
+                        .foregroundColor(.secondary)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .padding(.vertical)
+                } else {
+                    ForEach(categories.sorted { $0.name < $1.name }) { category in
+                        NavigationLink(destination: EditCategoryView(category: category, blog: blog)) {
+                            CategoryRowView(category: category)
+                        }
                     }
+                    .onDelete(perform: deleteCategories)
                 }
-                .onDelete(perform: deleteCategories)
             }
             .navigationTitle("Categories")
             .toolbar {

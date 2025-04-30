@@ -25,12 +25,19 @@ struct TagManagementView: View {
     var body: some View {
         NavigationStack {
             List {
-                ForEach(tags.sorted { $0.name < $1.name }) { tag in
-                    NavigationLink(destination: EditTagView(tag: tag, blog: blog)) {
-                        TagRowView(tag: tag)
+                if tags.isEmpty {
+                    Text("No tags yet. Add some to help organize your blog's content.")
+                        .foregroundColor(.secondary)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .padding(.vertical)
+                } else {
+                    ForEach(tags.sorted { $0.name < $1.name }) { tag in
+                        NavigationLink(destination: EditTagView(tag: tag, blog: blog)) {
+                            TagRowView(tag: tag)
+                        }
                     }
+                    .onDelete(perform: deleteTags)
                 }
-                .onDelete(perform: deleteTags)
             }
             .navigationTitle("Tags")
             .toolbar {
