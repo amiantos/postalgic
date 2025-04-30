@@ -154,7 +154,7 @@ class TemplateManager {
             {{#hasTags}}
                 <div class="post-tags">
                     {{#tags}}
-                        <a href="/tags/{{urlPath}}/" class="tag">{{name}}</a> 
+                        <a href="/tags/{{urlPath}}/" class="tag">#{{name}}</a> 
                     {{/tags}}
                 </div>
             {{/hasTags}}
@@ -276,7 +276,7 @@ class TemplateManager {
             /* Tag & Category Colors */
             --tag-bg: #f5e5ef;
             --tag-color: #CB7BAC;
-            --category-bg: #fff2db;
+            --category-bg: #faf4eb;
             --category-color: #FFA100;
         }
 
@@ -552,15 +552,15 @@ class TemplateManager {
 
         .tag {
             display: inline-block;
-            background-color: var(--tag-bg);
-            color: var(--tag-color);
-            border: 1px solid var(--tag-color);
+            background-color: var(--category-bg);
+            color: var(--category-color);
+            border: 1px solid var(--category-color);
             padding: 3px 8px;
-            border-radius: 100px;
+            border-radius: 1em;
         }
 
         .tag:hover {
-            background-color: var(--tag-color);
+            background-color: var(--category-color);
             color: white;
             text-decoration: none;
         }
@@ -601,16 +601,16 @@ class TemplateManager {
 
         .post-category a {
             display: inline-block;
-            color: var(--category-color);
-            background-color: var(--category-bg);
+            color: white;
+            background-color: var(--category-color);
             border: 1px solid var(--category-color);
             padding: 3px 8px;
-            border-radius: 100px;
+            border-radius: 1em;
         }
 
         .post-category a:hover {
-            background-color: var(--category-color);
-            color: white;
+            background-color: var(--category-bg);
+            color: var(--category-color);
             text-decoration: none;
         }
 
