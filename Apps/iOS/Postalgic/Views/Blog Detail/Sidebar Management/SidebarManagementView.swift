@@ -15,7 +15,11 @@ struct SidebarManagementView: View {
     @Bindable var blog: Blog
     
     @State private var isAddingObject = false
-    @State private var sidebarObjectType: SidebarObjectType = .text
+    @State private var sidebarObjectType: SidebarObjectType = .text  {
+        didSet {
+            isAddingObject = true
+        }
+    }
     @State private var showingAlert = false
     
     @ViewBuilder
@@ -107,14 +111,13 @@ struct SidebarManagementView: View {
                     Menu {
                         Button {
                             sidebarObjectType = .text
-                            isAddingObject = true
+                            
                         } label: {
                             Label("Add Text Block", systemImage: "doc.text")
                         }
                         
                         Button {
                             sidebarObjectType = .linkList
-                            isAddingObject = true
                         } label: {
                             Label("Add Link List", systemImage: "link")
                         }
