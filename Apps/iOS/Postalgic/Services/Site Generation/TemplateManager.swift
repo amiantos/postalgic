@@ -55,17 +55,9 @@ class TemplateManager {
                     </div>
                     <h1><a href="/">{{blogName}}</a></h1>
                     {{#blogTagline}}<p class="tagline">{{blogTagline}}</p>{{/blogTagline}}
+                    <div class="header-separator"></div>
                 </header>
-        
-                <nav>
-                    <ul>
-                        <li><a href="/">Home</a></li>
-                        <li><a href="/archives/">Archives</a></li>
-                        <li><a href="/tags/">Tags</a></li>
-                        <li><a href="/categories/">Categories</a></li>
-                    </ul>
-                </nav>
-                
+
                 <div class="content-wrapper">
                     <div class="mobile-sidebar-overlay"></div>
                     <aside class="sidebar">
@@ -346,7 +338,7 @@ class TemplateManager {
            ========================================== */
         header {
             padding: 2em;
-            border-bottom: 1px solid var(--light-gray);
+            padding-bottom: 1em;
         }
 
         header h1 a {
@@ -360,20 +352,16 @@ class TemplateManager {
             font-style: italic;
         }
 
-        /* Main Navigation */
-        nav {
-            border-bottom: 1px solid var(--light-gray);
-            padding: 1em 2em;
-        }
-
-        nav ul {
-            display: flex;
-            list-style: none;
-            gap: 20px;
-        }
-
-        nav a {
-            font-weight: 500;
+        .header-separator {
+            height: 28px;
+            width: 100%;
+            background-color: var(--accent-color);
+            --mask:
+              radial-gradient(10.96px at 50% calc(100% + 5.6px),#0000 calc(99% - 4px),#000 calc(101% - 4px) 99%,#0000 101%) calc(50% - 14px) calc(50% - 5.5px + .5px)/28px 11px repeat-x,
+              radial-gradient(10.96px at 50% -5.6px,#0000 calc(99% - 4px),#000 calc(101% - 4px) 99%,#0000 101%) 50% calc(50% + 5.5px)/28px 11px repeat-x;
+            -webkit-mask: var(--mask);
+            mask: var(--mask);
+            margin-top: 2em;
         }
 
         /* Hamburger Menu (Mobile) */
@@ -415,7 +403,6 @@ class TemplateManager {
 
         /* Mobile Navigation in Sidebar */
         .mobile-nav {
-            display: none;
             margin-bottom: 25px;
             border-bottom: 1px solid var(--light-gray);
             padding-bottom: 20px;
@@ -430,12 +417,11 @@ class TemplateManager {
             flex-direction: column;
             list-style: none;
             padding: 0;
-            margin-bottom: 15px;
-            font-size: 1rem;
+            padding: 0;
         }
 
         .sidebar-nav li {
-            margin-bottom: 10px;
+            
         }
 
         .sidebar-nav a {
@@ -449,13 +435,25 @@ class TemplateManager {
         aside h2, 
         .sidebar h2 {
             margin-bottom: 0.3em;
-            font-size: 1.2em;
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: var(--primary-color);
+        }
+
+        .sidebar-links {
+            margin-bottom: 1.5em;
+        }
+
+        .sidebar-text {
+            margin-bottom: 1.5em;
         }
 
         aside .sidebar-links ul, 
         .sidebar .sidebar-links ul {
             font-size: 0.8em;
             margin-bottom: 15px;
+            padding-left: 1.5em;
+            font-size: 0.8em;
         }
 
         aside .sidebar-text div, 
@@ -464,11 +462,11 @@ class TemplateManager {
             margin-bottom: 15px;
         }
 
-        aside ul, 
-        .sidebar ul {
-            padding-left: 1.5em;
-            font-size: 0.8em;
+        aside .sidebar-text div p, 
+        .sidebar .sidebar-text div p {
+            margin-bottom: 15px;
         }
+
 
         /* ==========================================
            6. Content & Posts
@@ -766,8 +764,6 @@ class TemplateManager {
                 width: 30%;
                 padding: 1.5em;
                 margin-left: 1.5em;
-                border-left: 1px solid var(--light-gray);
-                border-bottom: 1px solid var(--light-gray);
                 position: static;
                 height: auto;
                 right: auto;
@@ -799,7 +795,7 @@ class TemplateManager {
             }
             
             .container {
-                padding: 15px;
+                padding: 0;
                 position: relative;
                 overflow-x: hidden;
             }
@@ -871,6 +867,19 @@ class TemplateManager {
             body.sidebar-open .sidebar {
                 right: 0; /* Slide in from right */
             }
+
+
+            aside .sidebar-text div, 
+            .sidebar .sidebar-text div {
+                font-size: 1em;
+                margin-bottom: 15px;
+            }
+
+            aside .sidebar-links ul, 
+            .sidebar .sidebar-links ul {
+                font-size: 1em;
+            }
+
             
             /* Hide regular aside on mobile */
             aside:not(.sidebar) {
