@@ -119,6 +119,49 @@ final class Blog {
         return PublisherType(rawValue: publisherType ?? "") ?? .none
     }
     
+    // MARK: - Stub Management
+    
+    /// Returns all used post stubs in this blog
+    /// - Returns: Array of post stub strings
+    func usedPostStubs() -> [String] {
+        return posts.compactMap { $0.stub }
+    }
+    
+    /// Returns all used category stubs in this blog
+    /// - Returns: Array of category stub strings
+    func usedCategoryStubs() -> [String] {
+        return categories.compactMap { $0.stub }
+    }
+    
+    /// Returns all used tag stubs in this blog
+    /// - Returns: Array of tag stub strings
+    func usedTagStubs() -> [String] {
+        return tags.compactMap { $0.stub }
+    }
+    
+    /// Ensures a post stub is unique within this blog
+    /// - Parameter stub: The stub to make unique
+    /// - Returns: A unique stub for the post
+    func uniquePostStub(_ stub: String) -> String {
+        return Utils.makeStubUnique(stub: stub, existingStubs: usedPostStubs())
+    }
+    
+    /// Ensures a category stub is unique within this blog
+    /// - Parameter stub: The stub to make unique
+    /// - Returns: A unique stub for the category
+    func uniqueCategoryStub(_ stub: String) -> String {
+        return Utils.makeStubUnique(stub: stub, existingStubs: usedCategoryStubs())
+    }
+    
+    /// Ensures a tag stub is unique within this blog
+    /// - Parameter stub: The stub to make unique
+    /// - Returns: A unique stub for the tag
+    func uniqueTagStub(_ stub: String) -> String {
+        return Utils.makeStubUnique(stub: stub, existingStubs: usedTagStubs())
+    }
+    
+    // MARK: - Template Management
+    
     /// Get a template of a specific type if it exists
     /// - Parameter type: The type of template to retrieve
     /// - Returns: The template if it exists, nil otherwise
@@ -159,18 +202,42 @@ final class Category {
     var name: String
     var categoryDescription: String?
     var createdAt: Date
+    var stub: String?
 
-    var blog: Blog?
+    var blog: Blog? {
+        didSet {
+            // Ensure stub uniqueness when a category is assigned to a blog
+            if let blog = blog, let stub = stub {
+                self.stub = blog.uniqueCategoryStub(stub)
+            }
+        }
+    }
     var posts: [Post] = []
 
     init(
         name: String,
         categoryDescription: String? = nil,
-        createdAt: Date = Date()
+        createdAt: Date = Date(),
+        stub: String? = nil
     ) {
         self.name = name.capitalized
         self.categoryDescription = categoryDescription
         self.createdAt = createdAt
+        self.stub = stub
+        
+        // Generate stub if not provided
+        if self.stub == nil {
+            self.stub = Utils.generateStub(from: name)
+        }
+    }
+    
+    /// Returns the URL path for this category
+    var urlPath: String {
+        if let stub = stub, !stub.isEmpty {
+            return stub
+        }
+        // Fallback to using formatted name
+        return name.urlPathFormatted()
     }
 }
 
@@ -178,13 +245,36 @@ final class Category {
 final class Tag {
     var name: String
     var createdAt: Date
+    var stub: String?
 
-    var blog: Blog?
+    var blog: Blog? {
+        didSet {
+            // Ensure stub uniqueness when a tag is assigned to a blog
+            if let blog = blog, let stub = stub {
+                self.stub = blog.uniqueTagStub(stub)
+            }
+        }
+    }
     var posts: [Post] = []
 
-    init(name: String, createdAt: Date = Date()) {
+    init(name: String, createdAt: Date = Date(), stub: String? = nil) {
         self.name = name.lowercased()
         self.createdAt = createdAt
+        self.stub = stub
+        
+        // Generate stub if not provided
+        if self.stub == nil {
+            self.stub = Utils.generateStub(from: name)
+        }
+    }
+    
+    /// Returns the URL path for this tag
+    var urlPath: String {
+        if let stub = stub, !stub.isEmpty {
+            return stub
+        }
+        // Fallback to using formatted name
+        return name.urlPathFormatted()
     }
 }
 
@@ -291,10 +381,18 @@ final class Post {
     var title: String?
     var content: String
     var createdAt: Date
+    var stub: String?
 
     var isDraft: Bool = false
 
-    var blog: Blog?
+    var blog: Blog? {
+        didSet {
+            // Ensure stub uniqueness when a post is assigned to a blog
+            if let blog = blog, let stub = stub {
+                self.stub = blog.uniquePostStub(stub)
+            }
+        }
+    }
 
     @Relationship(deleteRule: .nullify, inverse: \Category.posts)
     var category: Category?
@@ -309,12 +407,28 @@ final class Post {
         title: String? = nil,
         content: String,
         createdAt: Date = Date(),
-        isDraft: Bool = false
+        isDraft: Bool = false,
+        stub: String? = nil
     ) {
         self.title = title
         self.content = content
         self.createdAt = createdAt
         self.isDraft = isDraft
+        self.stub = stub
+        
+        // Generate stub if not provided
+        if self.stub == nil {
+            let sourceText: String
+            
+            if let title = title, !title.isEmpty {
+                sourceText = title
+            } else {
+                // Use the content, but strip Markdown formatting first
+                sourceText = stripMarkdown(from: content)
+            }
+            
+            self.stub = Utils.generateStub(from: sourceText)
+        }
     }
 
     var formattedDate: String {
@@ -324,10 +438,20 @@ final class Post {
         return formatter.string(from: createdAt)
     }
 
-    var urlPath: String {
+    /// Returns the date-based portion of the URL path (without the stub)
+    var dateUrlPath: String {
         let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy/MM/dd/HHmmss"
+        formatter.dateFormat = "yyyy/MM/dd"
         return formatter.string(from: createdAt)
+    }
+    
+    /// Returns the full URL path including stub if available
+    var urlPath: String {
+        let basePath = dateUrlPath
+        if let stub = stub, !stub.isEmpty {
+            return "\(basePath)/\(stub)"
+        }
+        return basePath
     }
 
     var displayTitle: String {

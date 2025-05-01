@@ -134,7 +134,7 @@ class TemplateManager {
                 {{^inList}}<h1>{{displayTitle}}</h1>{{/inList}}
             {{/hasTitle}}
         
-            <div class="post-date"><a href="/{{urlPath}}/index.html">{{formattedDate}}</a></div>
+            <div class="post-date"><a href="/{{urlPath}}/">{{formattedDate}}</a></div>
             
             {{#blogAuthor}}
                 <div class="post-author"> by {{#blogAuthorUrl}}<a href="{{blogAuthorUrl}}">{{blogAuthor}}</a>{{/blogAuthorUrl}}{{^blogAuthorUrl}}{{blogAuthor}}{{/blogAuthorUrl}}</div>
@@ -182,7 +182,7 @@ class TemplateManager {
                     {{#posts}}
                         <li>
                             <span class="archive-date">{{dayPadded}} {{monthName}}</span>
-                            <a href="/{{urlPath}}/index.html">{{displayTitle}}</a>
+                            <a href="/{{urlPath}}/">{{displayTitle}}</a>
                         </li>
                     {{/posts}}
                 </ul>
@@ -265,7 +265,7 @@ class TemplateManager {
             --primary-color: #4a5568;
             --accent-color: #FFA100;
             --background-color: #efefef;
-            --background-outline-color: #515151;
+            --background-outline-color: #efefef;
             --text-color: #2d3748;
             
             /* Grays */

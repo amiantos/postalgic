@@ -47,7 +47,7 @@ struct PostTemplateData {
             dict["tags"] = post.tags.map { tag in
                 return [
                     "name": tag.name,
-                    "urlPath": tag.name.urlPathFormatted()
+                    "urlPath": tag.urlPath
                 ]
             }
         }
@@ -56,7 +56,7 @@ struct PostTemplateData {
         dict["hasCategory"] = post.category != nil
         if let category = post.category {
             dict["categoryName"] = category.name
-            dict["categoryUrlPath"] = category.name.urlPathFormatted()
+            dict["categoryUrlPath"] = category.urlPath
             
             if let description = category.categoryDescription {
                 dict["categoryDescription"] = description
@@ -105,7 +105,7 @@ struct CategoryTemplateData {
     func toDictionary() -> [String: Any] {
         var dict: [String: Any] = [
             "name": category.name,
-            "urlPath": category.name.urlPathFormatted(),
+            "urlPath": category.urlPath,
             "postCount": posts.count
         ]
         
@@ -132,7 +132,7 @@ struct TagTemplateData {
     func toDictionary() -> [String: Any] {
         var dict: [String: Any] = [
             "name": tag.name,
-            "urlPath": tag.name.urlPathFormatted(),
+            "urlPath": tag.urlPath,
             "postCount": posts.count
         ]
         

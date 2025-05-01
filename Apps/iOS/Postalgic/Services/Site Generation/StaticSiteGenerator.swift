@@ -407,20 +407,21 @@ class StaticSiteGenerator {
 
         let publishedPosts = blog.posts.filter { !$0.isDraft }
         for post in publishedPosts {
-            let postDirectory = siteDirectory.appendingPathComponent(
-                post.urlPath
-            )
+            // Create directory structure based on post's urlPath
+            let postPath = post.urlPath
+            let postDirectory = siteDirectory.appendingPathComponent(postPath)
             try FileManager.default.createDirectory(
                 at: postDirectory,
                 withIntermediateDirectories: true
             )
-
-            let postPath = postDirectory.appendingPathComponent("index.html")
+            
+            // Generate the post content
+            let postFilePath = postDirectory.appendingPathComponent("index.html")
             
             do {
                 let postContent = try templateEngine.renderPostPage(post: post)
                 try postContent.write(
-                    to: postPath,
+                    to: postFilePath,
                     atomically: true,
                     encoding: .utf8
                 )
@@ -503,9 +504,11 @@ class StaticSiteGenerator {
         for tag in sortedTags {
             let tagPosts = publishedPosts.filter { $0.tags.contains(tag) }
                 .sorted { $0.createdAt > $1.createdAt }
-            let tagNameEncoded = tag.name.urlPathFormatted()
+            
+            // Use the tag's urlPath property
+            let tagPathComponent = tag.urlPath
             let tagDirectory = tagsDirectory.appendingPathComponent(
-                tagNameEncoded
+                tagPathComponent
             )
             try FileManager.default.createDirectory(
                 at: tagDirectory,
@@ -576,9 +579,11 @@ class StaticSiteGenerator {
             let categoryPosts = publishedPosts.filter {
                 $0.category?.id == category.id
             }.sorted { $0.createdAt > $1.createdAt }
-            let categoryNameEncoded = category.name.urlPathFormatted()
+            
+            // Use the category's urlPath property
+            let categoryPathComponent = category.urlPath
             let categoryDirectory = categoriesDirectory.appendingPathComponent(
-                categoryNameEncoded
+                categoryPathComponent
             )
             try FileManager.default.createDirectory(
                 at: categoryDirectory,
