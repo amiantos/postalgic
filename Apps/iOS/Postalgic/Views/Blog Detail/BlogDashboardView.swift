@@ -19,7 +19,7 @@ struct BlogDashboardView: View {
     @State private var showingTagManagement = false
 
     // Query for all blog posts, sorted by creation date
-    @Query private var allPosts: [Post]
+    @Query(sort: \Post.createdAt, order: .reverse) private var allPosts: [Post]
 
     // Computed property for draft posts
     private var draftPosts: [Post] {
@@ -28,7 +28,7 @@ struct BlogDashboardView: View {
 
     // Computed property for recent published posts
     private var recentPublishedPosts: [Post] {
-        return allPosts.filter { !$0.isDraft && $0.blog == blog }.prefix(5).map
+        return allPosts.filter { !$0.isDraft && $0.blog == blog }.prefix(20).map
         { $0 }
     }
 
