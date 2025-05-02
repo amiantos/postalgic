@@ -94,7 +94,7 @@ struct BlogDashboardView: View {
                             VStack(spacing: 3) {
                                 Image(systemName: "paperplane")
                                     .font(.system(size: 24))
-                                Text("Publish Now")
+                                Text("Publish")
                                     .font(.caption)
                             }.padding(3).frame(
                                 maxWidth: .infinity,
