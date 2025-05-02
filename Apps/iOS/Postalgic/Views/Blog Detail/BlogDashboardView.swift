@@ -24,12 +24,12 @@ struct BlogDashboardView: View {
     
     // Computed property for draft posts
     private var draftPosts: [Post] {
-        return allPosts.filter { $0.isDraft }
+        return allPosts.filter { $0.isDraft && $0.blog == blog }
     }
     
     // Computed property for recent published posts
     private var recentPublishedPosts: [Post] {
-        return allPosts.filter { !$0.isDraft }.prefix(5).map { $0 }
+        return allPosts.filter { !$0.isDraft  && $0.blog == blog }.prefix(5).map { $0 }
     }
     
     var body: some View {
@@ -106,14 +106,15 @@ struct BlogDashboardView: View {
                             NavigationLink(destination: PostDetailView(post: post)) {
                                 HStack {
                                     VStack(alignment: .leading, spacing: 4) {
-                                        Text(post.displayTitle)
-                                            .font(.headline)
-                                            .foregroundColor(.primary)
-                                            .lineLimit(1)
                                         
                                         Text(formatDate(post.createdAt))
                                             .font(.subheadline)
                                             .foregroundColor(.secondary)
+                                        Text(post.displayTitle)
+                                            .font(.headline)
+                                            .foregroundColor(.primary)
+                                            .lineLimit(2)
+                                        
                                     }
                                     
                                     Spacer()
@@ -170,14 +171,13 @@ struct BlogDashboardView: View {
                             NavigationLink(destination: PostDetailView(post: post)) {
                                 HStack {
                                     VStack(alignment: .leading, spacing: 4) {
-                                        Text(post.displayTitle)
-                                            .font(.headline)
-                                            .foregroundColor(.primary)
-                                            .lineLimit(1)
-                                        
                                         Text(formatDate(post.createdAt))
                                             .font(.subheadline)
                                             .foregroundColor(.secondary)
+                                        Text(post.displayTitle)
+                                            .font(.headline)
+                                            .foregroundColor(.primary)
+                                            .lineLimit(2)
                                     }
                                     
                                     Spacer()
