@@ -44,7 +44,10 @@ struct BlogDashboardView: View {
                                     .system(size: 24)
                                 )
                                 Text("Appearance").font(.caption)
-                            }.padding(3).frame(maxWidth: .infinity, maxHeight: .infinity)
+                            }.padding(3).frame(
+                                maxWidth: .infinity,
+                                maxHeight: .infinity
+                            )
                         }.buttonStyle(.bordered).foregroundStyle(.primary)
 
                         Button(action: { showingCategoryManagement = true }) {
@@ -53,14 +56,20 @@ struct BlogDashboardView: View {
                                     .system(size: 24)
                                 )
                                 Text("Categories").font(.caption)
-                            }.padding(3).frame(maxWidth: .infinity, maxHeight: .infinity)
+                            }.padding(3).frame(
+                                maxWidth: .infinity,
+                                maxHeight: .infinity
+                            )
                         }.buttonStyle(.bordered).foregroundStyle(.primary)
 
                         Button(action: { showingTagManagement = true }) {
                             VStack(spacing: 3) {
                                 Image(systemName: "tag").font(.system(size: 24))
                                 Text("Tags").font(.caption)
-                            }.padding(3).frame(maxWidth: .infinity, maxHeight: .infinity)
+                            }.padding(3).frame(
+                                maxWidth: .infinity,
+                                maxHeight: .infinity
+                            )
                         }.buttonStyle(.bordered).foregroundStyle(.primary)
                     }.padding(.horizontal)
 
@@ -75,7 +84,10 @@ struct BlogDashboardView: View {
                                     .font(.system(size: 24))
                                 Text("Visit Site")
                                     .font(.caption)
-                            }.padding(3).frame(maxWidth: .infinity, maxHeight: .infinity)
+                            }.padding(3).frame(
+                                maxWidth: .infinity,
+                                maxHeight: .infinity
+                            )
                         }.buttonStyle(.bordered).foregroundStyle(.primary)
 
                         Button(action: { showingPublishView = true }) {
@@ -84,7 +96,10 @@ struct BlogDashboardView: View {
                                     .font(.system(size: 24))
                                 Text("Publish Now")
                                     .font(.caption)
-                            }.padding(3).frame(maxWidth: .infinity, maxHeight: .infinity)
+                            }.padding(3).frame(
+                                maxWidth: .infinity,
+                                maxHeight: .infinity
+                            )
                         }.buttonStyle(.bordered).foregroundStyle(.primary)
 
                         Button(action: { showingPostForm = true }) {
@@ -93,7 +108,10 @@ struct BlogDashboardView: View {
                                     .font(.system(size: 24))
                                 Text("New Post")
                                     .font(.caption)
-                            }.padding(3).frame(maxWidth: .infinity, maxHeight: .infinity)
+                            }.padding(3).frame(
+                                maxWidth: .infinity,
+                                maxHeight: .infinity
+                            )
                         }.buttonStyle(.borderedProminent).foregroundStyle(
                             .primary
                         )
@@ -196,79 +214,112 @@ struct PostPreviewView: View {
     let post: Post
 
     var body: some View {
-            NavigationLink(destination: PostDetailView(post: post)) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(formatDate(post.createdAt))
-                        .font(.footnote)
-                        .foregroundColor(.secondary)
-                    Text(post.displayTitle)
-                        .font(.headline)
-                        .foregroundColor(.primary)
-                        .lineLimit(1)
-                        .padding(.vertical, 4)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                    Text(post.plainContent).multilineTextAlignment(
-                        .leading
-                    ).lineLimit(3).font(.subheadline).padding(
-                        .vertical,
-                        4
-                    )
-                    
-
-                    if post.category != nil || !post.tags.isEmpty {
-                        HStack {
-                            if let category = post.category {
-                                Text(category.name)
-                                    .font(.caption)
-                                    .foregroundStyle(.white)
-                                    .padding(.horizontal, 8)
-                                    .padding(.vertical, 3)
-                                    .background(
-                                        RoundedRectangle(
-                                            cornerRadius: 8,
-                                            style: .continuous
-                                        ).fill(.accent)
-                                    )
-                                    .lineLimit(1)
-                            }
-
-                            if !post.tags.isEmpty {
-                                ForEach(post.tags.prefix(2)) { tag in
-                                    Text(tag.name)
-                                        .font(.caption)
-                                        .foregroundStyle(
-                                            Color.accentColor
-                                        )
-                                        .padding(.horizontal, 8)
-                                        .padding(.vertical, 3)
-                                        .background(
-                                            RoundedRectangle(
-                                                cornerRadius: 8,
-                                                style: .circular
-                                            ).fill(Color("LYellow"))
-                                                .stroke(
-                                                    Color.accentColor,
-                                                    lineWidth: 1
-                                                )
-                                        )
-                                        .lineLimit(1)
-                                }
-                                if post.tags.count > 2 {
-                                    Text("+\(post.tags.count - 2)")
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                }
-                            }
-                        }.padding(.top, 8)
+        VStack(alignment: .leading, spacing: 4) {
+            Text(formatDate(post.createdAt))
+                .font(.footnote)
+                .foregroundColor(.secondary)
+            Text(post.displayTitle)
+                .font(.headline)
+                .foregroundColor(.primary)
+                .lineLimit(1)
+                .padding(.vertical, 4)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            Text(post.plainContent).multilineTextAlignment(
+                .leading
+            ).lineLimit(3).font(.subheadline).padding(
+                .vertical,
+                4
+            )
+            if post.category != nil || !post.tags.isEmpty {
+                HStack {
+                    if let category = post.category {
+                        Text(category.name)
+                            .font(.caption)
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 3)
+                            .background(
+                                RoundedRectangle(
+                                    cornerRadius: 8,
+                                    style: .continuous
+                                ).fill(.accent)
+                            )
+                            .lineLimit(1)
                     }
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 10)
-                .padding(.horizontal, 5)
-            }.buttonStyle(.bordered)
-                .foregroundStyle(.primary)
-                .padding(.horizontal)
-        
+
+                    if !post.tags.isEmpty {
+                        ForEach(post.tags.prefix(2)) { tag in
+                            Text(tag.name)
+                                .font(.caption)
+                                .foregroundStyle(
+                                    Color.accentColor
+                                )
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 3)
+                                .background(
+                                    RoundedRectangle(
+                                        cornerRadius: 8,
+                                        style: .circular
+                                    ).fill(Color("LYellow"))
+                                        .stroke(
+                                            Color.accentColor,
+                                            lineWidth: 1
+                                        )
+                                )
+                                .lineLimit(1)
+                        }
+                        if post.tags.count > 2 {
+                            Text("+\(post.tags.count - 2)")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }.padding(.top, 12)
+            }
+
+            HStack {
+                Button {
+
+                } label: {
+                    Label {
+                        Text("Edit")
+                    } icon: {
+                        Image(systemName: "square.and.pencil")
+                    }
+                }.frame(maxWidth: .infinity)
+
+                Divider()
+
+                Button {
+
+                } label: {
+                    Label {
+                        Text("Share")
+                    } icon: {
+                        Image(systemName: "square.and.arrow.up")
+                    }
+                }.frame(maxWidth: .infinity)
+
+                Divider()
+
+                Button {
+
+                } label: {
+                    Label {
+                        Text("Delete")
+                    } icon: {
+                        Image(systemName: "trash")
+                    }
+                }.frame(maxWidth: .infinity)
+            }.font(.subheadline).foregroundStyle(.secondary).padding(.top, 12)
+        }
+        .frame(maxWidth: .infinity)
+        .padding()
+        .background(.background.secondary)
+        .foregroundStyle(.primary)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .padding(.horizontal)
+
     }
 
     func formatDate(_ date: Date) -> String {
