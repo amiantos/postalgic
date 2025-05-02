@@ -104,7 +104,7 @@ struct BlogDetailView: View {
                         }
                     }
                 }
-                .listStyle(.insetGrouped)
+                
             }
         }
         .navigationTitle(blog.name)

@@ -211,7 +211,12 @@ struct BlogDashboardView: View {
 }
 
 struct PostPreviewView: View {
+    @Environment(\.modelContext) private var modelContext
     let post: Post
+
+    @State private var showingEditSheet = false
+    @State private var showingDeleteAlert = false
+    @State private var showingShareSheet = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -279,7 +284,20 @@ struct PostPreviewView: View {
 
             HStack {
                 Button {
+                    showingDeleteAlert = true
+                } label: {
+                    Label {
+                        Text("Delete")
+                    } icon: {
+                        Image(systemName: "trash")
+                    }
+                }
+                .frame(maxWidth: .infinity)
 
+                Divider()
+
+                Button {
+                    showingEditSheet = true
                 } label: {
                     Label {
                         Text("Edit")
@@ -291,7 +309,7 @@ struct PostPreviewView: View {
                 Divider()
 
                 Button {
-
+                    sharePost()
                 } label: {
                     Label {
                         Text("Share")
@@ -300,17 +318,6 @@ struct PostPreviewView: View {
                     }
                 }.frame(maxWidth: .infinity)
 
-                Divider()
-
-                Button {
-
-                } label: {
-                    Label {
-                        Text("Delete")
-                    } icon: {
-                        Image(systemName: "trash")
-                    }
-                }.frame(maxWidth: .infinity)
             }.font(.subheadline).foregroundStyle(.secondary).padding(.top, 12)
         }
         .frame(maxWidth: .infinity)
@@ -319,7 +326,46 @@ struct PostPreviewView: View {
         .foregroundStyle(.primary)
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .padding(.horizontal)
+        .sheet(isPresented: $showingEditSheet) {
+            PostFormView(post: post)
+        }
+        .alert("Delete Post", isPresented: $showingDeleteAlert) {
+            Button("Cancel", role: .cancel) {}
+            Button("Delete", role: .destructive) {
+                deletePost()
+            }
+        } message: {
+            Text(
+                "Are you sure you want to delete this post? This action cannot be undone."
+            )
+        }
+    }
 
+    private func deletePost() {
+        modelContext.delete(post)
+        try? modelContext.save()
+    }
+
+    private func sharePost() {
+        // Create the share URL for the post
+        if let blog = post.blog,
+            let url = URL(string: "\(blog.url)/\(post.urlPath)")
+        {
+            let items: [Any] = [url]
+            let activityVC = UIActivityViewController(
+                activityItems: items,
+                applicationActivities: nil
+            )
+
+            // Find the current key window to present the activity view controller
+            if let windowScene = UIApplication.shared.connectedScenes.first
+                as? UIWindowScene,
+                let rootViewController = windowScene.windows.first?
+                    .rootViewController
+            {
+                rootViewController.present(activityVC, animated: true)
+            }
+        }
     }
 
     func formatDate(_ date: Date) -> String {
