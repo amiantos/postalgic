@@ -198,18 +198,6 @@ struct BlogDashboardView: View {
 
 }
 
-#Preview {
-    let modelContainer = PreviewData.previewContainer
-
-    return NavigationStack {
-        BlogDashboardView(
-            blog: try! modelContainer.mainContext.fetch(FetchDescriptor<Blog>())
-                .first!
-        )
-    }
-    .modelContainer(modelContainer)
-}
-
 struct PostPreviewView: View {
     @Environment(\.modelContext) private var modelContext
     let post: Post
@@ -219,22 +207,22 @@ struct PostPreviewView: View {
     @State private var showingShareSheet = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading) {
             Text(formatDate(post.createdAt))
                 .font(.footnote)
                 .foregroundColor(.secondary)
+
             Text(post.displayTitle)
                 .font(.headline)
                 .foregroundColor(.primary)
                 .lineLimit(1)
-                .padding(.vertical, 4)
                 .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.top, 6)
+
             Text(post.plainContent).multilineTextAlignment(
                 .leading
-            ).lineLimit(3).font(.subheadline).padding(
-                .vertical,
-                4
-            )
+            ).lineLimit(3).font(.subheadline).padding(.top, 6)
+
             if post.category != nil || !post.tags.isEmpty {
                 HStack {
                     if let category = post.category {
@@ -385,4 +373,16 @@ struct PostPreviewView: View {
         formatter.dateFormat = "MMM d, yyyy"
         return formatter.string(from: date)
     }
+}
+
+#Preview {
+    let modelContainer = PreviewData.previewContainer
+
+    return NavigationStack {
+        BlogDashboardView(
+            blog: try! modelContainer.mainContext.fetch(FetchDescriptor<Blog>())
+                .first!
+        )
+    }
+    .modelContainer(modelContainer)
 }
