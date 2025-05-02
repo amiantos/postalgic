@@ -20,7 +20,7 @@ struct BlogsView: View {
                 ForEach(blogs.sorted(by: { $0.createdAt > $1.createdAt })) {
                     blog in
                     NavigationLink {
-                        BlogDetailView(blog: blog)
+                        BlogDashboardView(blog: blog)
                     } label: {
                         VStack(alignment: .leading) {
                             Text(blog.name)

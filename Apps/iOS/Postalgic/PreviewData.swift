@@ -242,6 +242,8 @@ struct PreviewData {
                 }
             }
             
+            try? context.save()
+            
             return container
         } catch {
             fatalError("Failed to create model container: \(error.localizedDescription)")

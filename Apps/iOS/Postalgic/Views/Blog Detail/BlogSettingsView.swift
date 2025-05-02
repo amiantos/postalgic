@@ -46,39 +46,7 @@ struct BlogSettingsView: View {
                             Image(systemName: "chevron.right").foregroundColor(.secondary)
                         }
                     }
-                } header: {
-                    Text("General")
-                }
-                
-                Section {
-                    Button(action: { showingCategoryManagement = true }) {
-                        HStack {
-                            Label("Categories", systemImage: "folder")
-                            Spacer()
-                            Image(systemName: "chevron.right").foregroundColor(.secondary)
-                        }
-                    }
                     
-                    Button(action: { showingTagManagement = true }) {
-                        HStack {
-                            Label("Tags", systemImage: "tag")
-                            Spacer()
-                            Image(systemName: "chevron.right").foregroundColor(.secondary)
-                        }
-                    }
-                    
-                    Button(action: { showingStubMigrationAlert = true }) {
-                        HStack {
-                            Label("Generate URL Stubs", systemImage: "link")
-                            Spacer()
-                            Image(systemName: "chevron.right").foregroundColor(.secondary)
-                        }
-                    }
-                } header: {
-                    Text("Content Organization")
-                }
-                
-                Section {
                     Button(action: { showingTemplateCustomizationView = true }) {
                         HStack {
                             Label("Templates", systemImage: "richtext.page")
@@ -86,30 +54,10 @@ struct BlogSettingsView: View {
                             Image(systemName: "chevron.right").foregroundColor(.secondary)
                         }
                     }
-                    
-                    Button(action: { showingPublishSettingsView = true }) {
-                        HStack {
-                            Label("Publishing Settings", systemImage: "paperplane")
-                            Spacer()
-                            Image(systemName: "chevron.right").foregroundColor(.secondary)
-                        }
-                    }
-                    
-                    Button {
-                        if let url = URL(string: blog.url) {
-                            UIApplication.shared.open(url)
-                        }
-                    } label: {
-                        HStack {
-                            Label("Visit Blog", systemImage: "safari")
-                            Spacer()
-                            Image(systemName: "arrow.up.right").foregroundColor(.secondary)
-                        }
-                    }
                 } header: {
-                    Text("Publishing")
+                    Text("General")
                 }
-                
+
                 Section {
                     Button(action: { showingDeleteAlert = true }) {
                         Label("Delete Blog", systemImage: "trash")
@@ -120,7 +68,7 @@ struct BlogSettingsView: View {
                 }
             }
             .foregroundColor(.primary)
-            .navigationTitle("Blog Settings")
+            .navigationTitle("Appearance")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
