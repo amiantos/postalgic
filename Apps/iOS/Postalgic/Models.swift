@@ -453,6 +453,10 @@ final class Post {
         }
         return basePath
     }
+    
+    var plainContent: String {
+        return stripMarkdown(from: content)
+    }
 
     var displayTitle: String {
         if let title = title {

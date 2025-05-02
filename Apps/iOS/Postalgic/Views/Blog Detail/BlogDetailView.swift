@@ -99,11 +99,7 @@ struct BlogDetailView: View {
                     ForEach(sortedDates, id: \.self) { date in
                         Section(header: Text(formatDate(date))) {
                             ForEach(postsByDate[date]!) { post in
-                                NavigationLink {
-                                    PostDetailView(post: post)
-                                } label: {
-                                    PostRowView(post: post, showDate: true)
-                                }
+                                PostPreviewView(post: post)
                             }
                         }
                     }
