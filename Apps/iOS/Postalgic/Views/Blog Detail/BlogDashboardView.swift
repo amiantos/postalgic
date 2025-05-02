@@ -198,80 +198,71 @@ struct PostPreviewView: View {
     var body: some View {
         VStack {
             NavigationLink(destination: PostDetailView(post: post)) {
-                VStack(alignment: .leading) {
-                    HStack {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(formatDate(post.createdAt))
-                                .font(.footnote)
-                                .foregroundColor(.secondary)
-                            Text(post.displayTitle)
-                                .font(.headline)
-                                .foregroundColor(.primary)
-                                .lineLimit(1)
-                                .padding(.vertical, 4)
-                            Text(post.plainContent).multilineTextAlignment(
-                                .leading
-                            ).lineLimit(3).font(.subheadline).padding(
-                                .vertical,
-                                4
-                            )
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(formatDate(post.createdAt))
+                        .font(.footnote)
+                        .foregroundColor(.secondary)
+                    Text(post.displayTitle)
+                        .font(.headline)
+                        .foregroundColor(.primary)
+                        .lineLimit(1)
+                        .padding(.vertical, 4)
+                    Text(post.plainContent).multilineTextAlignment(
+                        .leading
+                    ).lineLimit(3).font(.subheadline).padding(
+                        .vertical,
+                        4
+                    )
 
-                            if post.category != nil || !post.tags.isEmpty {
-                                HStack {
-                                    if let category = post.category {
-                                        Text(category.name)
-                                            .font(.caption)
-                                            .foregroundStyle(.white)
-                                            .padding(.horizontal, 8)
-                                            .padding(.vertical, 3)
-                                            .background(
-                                                RoundedRectangle(
-                                                    cornerRadius: 8,
-                                                    style: .continuous
-                                                ).fill(.accent)
-                                            )
-                                            .lineLimit(1)
-                                    }
-
-                                    if !post.tags.isEmpty {
-                                        ForEach(post.tags.prefix(3)) { tag in
-                                            Text(tag.name)
-                                                .font(.caption)
-                                                .foregroundStyle(
-                                                    Color.accentColor
-                                                )
-                                                .padding(.horizontal, 8)
-                                                .padding(.vertical, 3)
-                                                .background(
-                                                    RoundedRectangle(
-                                                        cornerRadius: 8,
-                                                        style: .circular
-                                                    ).fill(Color("LYellow"))
-                                                        .stroke(
-                                                            Color.accentColor,
-                                                            lineWidth: 1
-                                                        )
-                                                )
-                                                .lineLimit(1)
-                                        }
-                                        if post.tags.count > 3 {
-                                            Text("+\(post.tags.count - 3)")
-                                                .font(.caption)
-                                                .foregroundStyle(.secondary)
-                                        }
-                                    }
-                                }.padding(.top, 8)
+                    if post.category != nil || !post.tags.isEmpty {
+                        HStack {
+                            if let category = post.category {
+                                Text(category.name)
+                                    .font(.caption)
+                                    .foregroundStyle(.white)
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 3)
+                                    .background(
+                                        RoundedRectangle(
+                                            cornerRadius: 8,
+                                            style: .continuous
+                                        ).fill(.accent)
+                                    )
+                                    .lineLimit(1)
                             }
-                        }
 
-                        Spacer()
-
-                        Image(systemName: "chevron.right")
-                            .foregroundColor(.secondary)
+                            if !post.tags.isEmpty {
+                                ForEach(post.tags.prefix(2)) { tag in
+                                    Text(tag.name)
+                                        .font(.caption)
+                                        .foregroundStyle(
+                                            Color.accentColor
+                                        )
+                                        .padding(.horizontal, 8)
+                                        .padding(.vertical, 3)
+                                        .background(
+                                            RoundedRectangle(
+                                                cornerRadius: 8,
+                                                style: .circular
+                                            ).fill(Color("LYellow"))
+                                                .stroke(
+                                                    Color.accentColor,
+                                                    lineWidth: 1
+                                                )
+                                        )
+                                        .lineLimit(1)
+                                }
+                                if post.tags.count > 2 {
+                                    Text("+\(post.tags.count - 2)")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                        }.padding(.top, 8)
                     }
                 }
                 .padding(.vertical, 10)
-                .padding(.leading, 5)
+                .padding(.horizontal, 5)
             }.buttonStyle(.bordered)
                 .foregroundStyle(.primary)
                 .padding(.horizontal)
