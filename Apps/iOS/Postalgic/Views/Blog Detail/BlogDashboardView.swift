@@ -142,7 +142,7 @@ struct BlogDashboardView: View {
 
                         Spacer()
 
-                        NavigationLink(destination: BlogDetailView(blog: blog))
+                        NavigationLink(destination: PostsView(blog: blog))
                         {
                             Text("View All")
                                 .font(.subheadline)
