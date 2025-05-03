@@ -29,10 +29,20 @@ struct PostPreviewView: View {
                 .lineLimit(1)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.top, 6)
+            
+            if let embed = post.embed, embed.embedPosition == .above {
+                EmbedView(embed: embed)
+                    .padding(.top, 6)
+            }
 
             Text(post.plainContent).multilineTextAlignment(
                 .leading
             ).lineLimit(3).font(.subheadline).padding(.top, 6)
+            
+            if let embed = post.embed, embed.embedPosition == .below {
+                EmbedView(embed: embed)
+                    .padding(.top, 12)
+            }
 
             if post.category != nil || !post.tags.isEmpty {
                 HStack {

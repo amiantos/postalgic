@@ -10,7 +10,6 @@
 		44362E792DBC0AEE00EA704F /* FTPPublisher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44362E782DBC0AE900EA704F /* FTPPublisher.swift */; };
 		44362E7B2DBC0B0E00EA704F /* Publisher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44362E7A2DBC0B0B00EA704F /* Publisher.swift */; };
 		44362E7F2DBC10F700EA704F /* Citadel in Frameworks */ = {isa = PBXBuildFile; productRef = 44362E7E2DBC10F700EA704F /* Citadel */; };
-		44362E9F2DBCD04800EA704F /* PostRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44362E9E2DBCD04800EA704F /* PostRowView.swift */; };
 		44362ED82DBD815F00EA704F /* Mustache in Frameworks */ = {isa = PBXBuildFile; productRef = 44362ED72DBD815F00EA704F /* Mustache */; };
 		44362EDB2DBD826B00EA704F /* TemplateManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44362ED92DBD826B00EA704F /* TemplateManager.swift */; };
 		44362EDD2DBD829000EA704F /* TemplateModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44362EDC2DBD829000EA704F /* TemplateModels.swift */; };
@@ -73,7 +72,6 @@
 /* Begin PBXFileReference section */
 		44362E782DBC0AE900EA704F /* FTPPublisher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FTPPublisher.swift; sourceTree = "<group>"; };
 		44362E7A2DBC0B0B00EA704F /* Publisher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Publisher.swift; sourceTree = "<group>"; };
-		44362E9E2DBCD04800EA704F /* PostRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostRowView.swift; sourceTree = "<group>"; };
 		44362ED92DBD826B00EA704F /* TemplateManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TemplateManager.swift; sourceTree = "<group>"; };
 		44362EDC2DBD829000EA704F /* TemplateModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TemplateModels.swift; sourceTree = "<group>"; };
 		44362EDE2DBD82B700EA704F /* TemplateEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TemplateEngine.swift; sourceTree = "<group>"; };
@@ -173,8 +171,8 @@
 		44362E802DBC2A7600EA704F /* Publishing */ = {
 			isa = PBXGroup;
 			children = (
-				44C364112DB768DB0057567C /* BlogAwsConfigView.swift */,
 				44C3641A2DB768DB0057567C /* PublishBlogView.swift */,
+				44C364112DB768DB0057567C /* BlogAwsConfigView.swift */,
 				443F0B642DBB779200034EF1 /* PublishSettingsView.swift */,
 				443F0B662DBB7A7000034EF1 /* BlogFtpConfigView.swift */,
 				44362EE22DBD833600EA704F /* TemplateCustomizationView.swift */,
@@ -192,16 +190,6 @@
 				44362ED92DBD826B00EA704F /* TemplateManager.swift */,
 			);
 			path = "Site Generation";
-			sourceTree = "<group>";
-		};
-		44362F3A2DC152C800EA704F /* Sidebar Management */ = {
-			isa = PBXGroup;
-			children = (
-				44362F142DC0989000EA704F /* SidebarManagementView.swift */,
-				44362F132DC0989000EA704F /* LinkListFormView.swift */,
-				44362F152DC0989000EA704F /* TextBlockFormView.swift */,
-			);
-			path = "Sidebar Management";
 			sourceTree = "<group>";
 		};
 		4436746D2DB3898500F67B00 = {
@@ -227,6 +215,7 @@
 		443F0B312DB8DFDB00034EF1 /* Posts */ = {
 			isa = PBXGroup;
 			children = (
+				44499DE12DC5CBC500A9624B /* PostPreviewView.swift */,
 				44499DE32DC5CD1E00A9624B /* PostsView.swift */,
 				44C364172DB768DB0057567C /* PostDetailView.swift */,
 				44C364192DB768DB0057567C /* PostFormView.swift */,
@@ -251,7 +240,7 @@
 		44C3641B2DB768DB0057567C /* Views */ = {
 			isa = PBXGroup;
 			children = (
-				44C3642F2DB768F90057567C /* Blog List */,
+				44C3642F2DB768F90057567C /* Blogs List */,
 				44C364302DB769260057567C /* Blog Detail */,
 				44362E802DBC2A7600EA704F /* Publishing */,
 				443F0B312DB8DFDB00034EF1 /* Posts */,
@@ -273,26 +262,26 @@
 			path = Postalgic;
 			sourceTree = "<group>";
 		};
-		44C3642F2DB768F90057567C /* Blog List */ = {
+		44C3642F2DB768F90057567C /* Blogs List */ = {
 			isa = PBXGroup;
 			children = (
+				44C364132DB768DB0057567C /* BlogFormView.swift */,
 				44C364142DB768DB0057567C /* BlogsView.swift */,
 				443F0B602DBB696600034EF1 /* HelpView.swift */,
-				44C364132DB768DB0057567C /* BlogFormView.swift */,
 			);
-			path = "Blog List";
+			path = "Blogs List";
 			sourceTree = "<group>";
 		};
 		44C364302DB769260057567C /* Blog Detail */ = {
 			isa = PBXGroup;
 			children = (
 				44F858B72DC43FAD00B8179B /* BlogDashboardView.swift */,
-				44499DE12DC5CBC500A9624B /* PostPreviewView.swift */,
-				44362F3A2DC152C800EA704F /* Sidebar Management */,
 				44362F4D2DC1C85B00EA704F /* BlogSettingsView.swift */,
-				44362E9E2DBCD04800EA704F /* PostRowView.swift */,
 				44C364152DB768DB0057567C /* CategoryManagementView.swift */,
 				443F0B622DBB6B9600034EF1 /* TagManagementView.swift */,
+				44362F142DC0989000EA704F /* SidebarManagementView.swift */,
+				44362F132DC0989000EA704F /* LinkListFormView.swift */,
+				44362F152DC0989000EA704F /* TextBlockFormView.swift */,
 			);
 			path = "Blog Detail";
 			sourceTree = "<group>";
@@ -486,7 +475,6 @@
 				44362EFE2DBF3D7500EA704F /* PublishedFiles.swift in Sources */,
 				44C3642B2DB768DB0057567C /* PublishBlogView.swift in Sources */,
 				44C3642C2DB768DB0057567C /* Models.swift in Sources */,
-				44362E9F2DBCD04800EA704F /* PostRowView.swift in Sources */,
 				44C3642D2DB768DB0057567C /* PostalgicApp.swift in Sources */,
 				443F0B302DB8D48B00034EF1 /* LinkMetadataService.swift in Sources */,
 			);
