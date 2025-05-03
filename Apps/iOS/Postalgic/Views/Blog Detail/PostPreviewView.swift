@@ -21,6 +21,7 @@ struct PostPreviewView: View {
             Text(formatDate(post.createdAt))
                 .font(.footnote)
                 .foregroundColor(.secondary)
+                .padding(.top, 3)
 
             Text(post.displayTitle)
                 .font(.headline)
