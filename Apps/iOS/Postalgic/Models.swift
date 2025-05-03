@@ -378,8 +378,16 @@ final class Embed {
 
 @Model
 final class Post {
-    var title: String?
-    var content: String
+    var title: String? {
+        didSet {
+            updateStub()
+        }
+    }
+    var content: String {
+        didSet {
+            updateStub()
+        }
+    }
     var createdAt: Date
     var stub: String?
 
@@ -392,6 +400,36 @@ final class Post {
                 self.stub = blog.uniquePostStub(stub)
             }
         }
+    }
+    
+    /// Updates the stub based on current title or content
+    private func updateStub() {
+        // Don't regenerate stub if we're in the middle of being initialized
+        // This is a workaround for when SwiftData is restoring objects from persistence
+        guard !content.isEmpty else { return }
+        
+        let sourceText: String
+        
+        if let title = title, !title.isEmpty {
+            sourceText = title
+        } else {
+            // Use the content, but strip Markdown formatting first
+            sourceText = stripMarkdown(from: content)
+        }
+        
+        let newStub = Utils.generateStub(from: sourceText)
+        
+        // Always generate a new stub, even if the current one is nil
+        if let blog = blog {
+            self.stub = blog.uniquePostStub(newStub)
+        } else {
+            self.stub = newStub
+        }
+    }
+    
+    /// Public method to force regeneration of the post's stub
+    public func regenerateStub() {
+        updateStub()
     }
 
     @Relationship(deleteRule: .nullify, inverse: \Category.posts)
@@ -414,10 +452,11 @@ final class Post {
         self.content = content
         self.createdAt = createdAt
         self.isDraft = isDraft
-        self.stub = stub
         
         // Generate stub if not provided
-        if self.stub == nil {
+        if let providedStub = stub, !providedStub.isEmpty {
+            self.stub = providedStub
+        } else {
             let sourceText: String
             
             if let title = title, !title.isEmpty {

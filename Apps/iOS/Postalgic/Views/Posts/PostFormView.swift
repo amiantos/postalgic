@@ -364,10 +364,13 @@ struct PostFormView: View {
     private func updatePost() {
         guard let post = post else { return }
         
-        // Update post properties
+        // Update post properties (will trigger didSet observers that update the stub)
         post.title = title.isEmpty ? nil : title
         post.content = content
         post.isDraft = isDraft
+        
+        // Explicitly regenerate the stub to ensure it's updated properly
+        post.regenerateStub()
         
         // Handle category changes
         if post.category != selectedCategory {
@@ -403,6 +406,20 @@ struct PostFormView: View {
             post.tags.append(tag)
             tag.posts.append(post)
         }
+        
+        // Force-update the stub to ensure it's properly set
+        if post.stub == nil || post.stub!.isEmpty {
+            // Generate a new stub based on current content
+            let sourceText = post.title ?? post.plainContent
+            let generatedStub = Utils.generateStub(from: sourceText)
+            
+            // Make it unique within the blog
+            if let blog = post.blog {
+                post.stub = blog.uniquePostStub(generatedStub)
+            } else {
+                post.stub = generatedStub
+            }
+        }
     }
     
     private func addPost() {
@@ -411,7 +428,7 @@ struct PostFormView: View {
         var postToSave: Post
         
         if let existingPost = newPost {
-            // Update the temporary post
+            // Update the temporary post (will trigger didSet observers that update the stub)
             existingPost.title = title.isEmpty ? nil : title
             existingPost.content = content
             existingPost.isDraft = isDraft
@@ -438,8 +455,18 @@ struct PostFormView: View {
             tag.posts.append(postToSave)
         }
         
-        // Add to blog
+        // Add to blog (will ensure stub uniqueness)
         blog.posts.append(postToSave)
+        
+        // Force-update the stub to ensure it's properly set
+        if postToSave.stub == nil || postToSave.stub!.isEmpty {
+            // Generate a new stub based on current content
+            let sourceText = postToSave.title ?? postToSave.plainContent
+            let generatedStub = Utils.generateStub(from: sourceText)
+            
+            // Make it unique within the blog
+            postToSave.stub = blog.uniquePostStub(generatedStub)
+        }
         
         // Save reference to the post for publishing
         savedPost = postToSave
