@@ -38,18 +38,6 @@ struct BlogDashboardView: View {
                 // Quick Actions Section
                 VStack(spacing: 12) {
                     HStack(spacing: 12) {
-                        Button(action: { showingSettingsView = true }) {
-                            VStack(spacing: 3) {
-                                Image(systemName: "richtext.page").font(
-                                    .system(size: 24)
-                                )
-                                Text("Appearance").font(.caption)
-                            }.padding(3).frame(
-                                maxWidth: .infinity,
-                                maxHeight: .infinity
-                            )
-                        }.buttonStyle(.bordered).foregroundStyle(.primary)
-
                         Button(action: { showingCategoryManagement = true }) {
                             VStack(spacing: 3) {
                                 Image(systemName: "folder").font(
@@ -61,19 +49,7 @@ struct BlogDashboardView: View {
                                 maxHeight: .infinity
                             )
                         }.buttonStyle(.bordered).foregroundStyle(.primary)
-
-                        Button(action: { showingTagManagement = true }) {
-                            VStack(spacing: 3) {
-                                Image(systemName: "tag").font(.system(size: 24))
-                                Text("Tags").font(.caption)
-                            }.padding(3).frame(
-                                maxWidth: .infinity,
-                                maxHeight: .infinity
-                            )
-                        }.buttonStyle(.bordered).foregroundStyle(.primary)
-                    }.padding(.horizontal)
-
-                    HStack(spacing: 12) {
+                        
                         Button(action: {
                             if let url = URL(string: blog.url) {
                                 UIApplication.shared.open(url)
@@ -89,7 +65,8 @@ struct BlogDashboardView: View {
                                 maxHeight: .infinity
                             )
                         }.buttonStyle(.bordered).foregroundStyle(.primary)
-
+                        
+                        
                         Button(action: { showingPublishView = true }) {
                             VStack(spacing: 3) {
                                 Image(systemName: "paperplane")
@@ -101,6 +78,34 @@ struct BlogDashboardView: View {
                                 maxHeight: .infinity
                             )
                         }.buttonStyle(.bordered).foregroundStyle(.primary)
+                        
+                      
+                    }.padding(.horizontal)
+
+                    HStack(spacing: 12) {
+                        
+                        Button(action: { showingTagManagement = true }) {
+                            VStack(spacing: 3) {
+                                Image(systemName: "tag").font(.system(size: 24))
+                                Text("Tags").font(.caption)
+                            }.padding(3).frame(
+                                maxWidth: .infinity,
+                                maxHeight: .infinity
+                            )
+                        }.buttonStyle(.bordered).foregroundStyle(.primary)
+                        
+                        Button(action: { showingSettingsView = true }) {
+                            VStack(spacing: 3) {
+                                Image(systemName: "richtext.page").font(
+                                    .system(size: 24)
+                                )
+                                Text("Appearance").font(.caption)
+                            }.padding(3).frame(
+                                maxWidth: .infinity,
+                                maxHeight: .infinity
+                            )
+                        }.buttonStyle(.bordered).foregroundStyle(.primary)
+
 
                         Button(action: { showingPostForm = true }) {
                             VStack(spacing: 3) {
