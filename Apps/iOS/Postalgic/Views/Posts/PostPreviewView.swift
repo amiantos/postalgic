@@ -26,7 +26,7 @@ struct PostPreviewView: View {
             Text(post.displayTitle)
                 .font(.headline)
                 .foregroundColor(.primary)
-                .lineLimit(1)
+                .lineLimit(3)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.top, 6)
             
