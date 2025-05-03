@@ -32,6 +32,7 @@
 		443F0B632DBB6B9600034EF1 /* TagManagementView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 443F0B622DBB6B9600034EF1 /* TagManagementView.swift */; };
 		443F0B652DBB779200034EF1 /* PublishSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 443F0B642DBB779200034EF1 /* PublishSettingsView.swift */; };
 		443F0B672DBB7A7000034EF1 /* BlogFtpConfigView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 443F0B662DBB7A7000034EF1 /* BlogFtpConfigView.swift */; };
+		44499DE22DC5CBC500A9624B /* PostPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44499DE12DC5CBC500A9624B /* PostPreviewView.swift */; };
 		448E851D2DB3984200772502 /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = 448E851C2DB3984200772502 /* ZIPFoundation */; };
 		449CAF852DB47E2900558395 /* AWSCore in Frameworks */ = {isa = PBXBuildFile; productRef = 449CAF842DB47E2900558395 /* AWSCore */; };
 		449CAF872DB47E2900558395 /* AWSS3 in Frameworks */ = {isa = PBXBuildFile; productRef = 449CAF862DB47E2900558395 /* AWSS3 */; };
@@ -97,6 +98,7 @@
 		443F0B622DBB6B9600034EF1 /* TagManagementView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagManagementView.swift; sourceTree = "<group>"; };
 		443F0B642DBB779200034EF1 /* PublishSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PublishSettingsView.swift; sourceTree = "<group>"; };
 		443F0B662DBB7A7000034EF1 /* BlogFtpConfigView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlogFtpConfigView.swift; sourceTree = "<group>"; };
+		44499DE12DC5CBC500A9624B /* PostPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostPreviewView.swift; sourceTree = "<group>"; };
 		44C3640E2DB768DB0057567C /* AWSPublisher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AWSPublisher.swift; sourceTree = "<group>"; };
 		44C3640F2DB768DB0057567C /* StaticSiteGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StaticSiteGenerator.swift; sourceTree = "<group>"; };
 		44C364112DB768DB0057567C /* BlogAwsConfigView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlogAwsConfigView.swift; sourceTree = "<group>"; };
@@ -284,6 +286,7 @@
 			isa = PBXGroup;
 			children = (
 				44F858B72DC43FAD00B8179B /* BlogDashboardView.swift */,
+				44499DE12DC5CBC500A9624B /* PostPreviewView.swift */,
 				44362F3A2DC152C800EA704F /* Sidebar Management */,
 				44C364122DB768DB0057567C /* BlogDetailView.swift */,
 				44362F4D2DC1C85B00EA704F /* BlogSettingsView.swift */,
@@ -468,6 +471,7 @@
 				44362EDF2DBD82B700EA704F /* TemplateEngine.swift in Sources */,
 				443F0B512DBAD7AC00034EF1 /* PreviewData.swift in Sources */,
 				44362EDD2DBD829000EA704F /* TemplateModels.swift in Sources */,
+				44499DE22DC5CBC500A9624B /* PostPreviewView.swift in Sources */,
 				443F0B532DBB5B7900034EF1 /* Utils.swift in Sources */,
 				44C364262DB768DB0057567C /* CategoryManagementView.swift in Sources */,
 				44362E7B2DBC0B0E00EA704F /* Publisher.swift in Sources */,
