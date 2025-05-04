@@ -7,35 +7,44 @@
 
 import SwiftData
 import SwiftUI
-
 struct PostFormView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @Query private var allTags: [Tag]
     @Query private var allCategories: [Category]
     
-    var post: Post
+    // Either blog (for new post) or post (for editing) will be set
+    var blog: Blog?
+    var post: Post?
+    var isEditing: Bool
     
-    private var blog: Blog? {
-        return post.blog
+    private var currentBlog: Blog? {
+        return isEditing ? post?.blog : blog
     }
     
     private var blogTags: [Tag] {
-        guard let blogId = blog?.id else { return [] }
+        guard let blogId = currentBlog?.id else { return [] }
         return allTags.filter { $0.blog?.id == blogId }
     }
     
     private var blogCategories: [Category] {
-        guard let blogId = blog?.id else { return [] }
+        guard let blogId = currentBlog?.id else { return [] }
         return allCategories.filter { $0.blog?.id == blogId }
     }
     
+    @State private var title: String
+    @State private var content: String
     @State private var tagInput = ""
     @State private var selectedTags: [Tag] = []
     @State private var selectedCategory: Category?
+    @State private var isDraft: Bool
     @State private var showingCategoryManagement = false
     @State private var showingSuggestions = false
     @State private var showingEmbedForm = false
+    @State private var newPost: Post? = nil
+    @State private var showingPublishAlert = false
+    @State private var showingPublishView = false
+    @State private var savedPost: Post? = nil
     
     private var existingTagNames: [String] {
         return blogTags.map { $0.name }
@@ -55,11 +64,26 @@ struct PostFormView: View {
         }
     }
     
-    init(post: Post) {
-        self.post = post
+    // Initialize for new post
+    init(blog: Blog) {
+        self.blog = blog
+        self.post = nil
+        self.isEditing = false
         
-        // Initialize with the post's current values
-        // We'll add safety checks in the view itself
+        _title = State(initialValue: "")
+        _content = State(initialValue: "")
+        _isDraft = State(initialValue: false)
+    }
+    
+    // Initialize for editing post
+    init(post: Post) {
+        self.blog = nil
+        self.post = post
+        self.isEditing = true
+        
+        _title = State(initialValue: post.title ?? "")
+        _content = State(initialValue: post.content)
+        _isDraft = State(initialValue: post.isDraft)
         _selectedTags = State(initialValue: post.tags)
         _selectedCategory = State(initialValue: post.category)
     }
@@ -67,21 +91,15 @@ struct PostFormView: View {
     var body: some View {
         NavigationStack {
             Form {
-                // Post Metadata
-                Section("Post URL") {
-                    HStack {
-                        Text("Permalink:")
-                            .foregroundColor(.secondary)
-                        
-                        TextField("", text: .constant(post.stub ?? ""))
-                            .disabled(true)
-                            .foregroundColor(.primary)
-                    }
+                Section("Post Content") {
+                    TextField("Title (optional)", text: $title)
+                    TextEditor(text: $content)
+                        .frame(minHeight: 200)
+                    Toggle("Save as Draft", isOn: $isDraft)
                 }
                 
-                // Embed Section
                 Section("Embed") {
-                    if let embed = post.embed {
+                    if let postToUse = isEditing ? post : newPost, let embed = postToUse.embed {
                         VStack(alignment: .leading, spacing: 12) {
                             // Embed info row
                             HStack {
@@ -117,9 +135,9 @@ struct PostFormView: View {
                             .tint(.blue)
                             
                             Button(action: {
-                                if let embed = post.embed {
+                                if let embed = postToUse.embed {
                                     modelContext.delete(embed)
-                                    post.embed = nil
+                                    postToUse.embed = nil
                                 }
                             }) {
                                 HStack {
@@ -133,6 +151,15 @@ struct PostFormView: View {
                         }
                     } else {
                         Button(action: {
+                            // Create a temporary post if needed for new posts
+                            if !isEditing && newPost == nil {
+                                newPost = Post(
+                                    title: title.isEmpty ? nil : title,
+                                    content: content,
+                                    isDraft: isDraft
+                                )
+                                modelContext.insert(newPost!)
+                            }
                             showingEmbedForm = true
                         }) {
                             Label("Add Embed", systemImage: "plus")
@@ -143,7 +170,6 @@ struct PostFormView: View {
                     }
                 }
                 
-                // Category section
                 Section("Category") {
                     Picker("Category", selection: $selectedCategory) {
                         Text("None").tag(Category?.none)
@@ -167,7 +193,6 @@ struct PostFormView: View {
                     }
                 }
                 
-                // Tags section
                 Section("Tags") {
                     HStack {
                         TextField("Add tags...", text: $tagInput)
@@ -246,35 +271,69 @@ struct PostFormView: View {
                     }
                 }
             }
-            .navigationTitle("Post Settings")
+            .navigationTitle(isEditing ? "Edit Post" : "Create New Post")
             .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") {
-                        updatePost()
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
                         dismiss()
                     }
                 }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        if isEditing {
+                            updatePost()
+                            if !isDraft {
+                                savedPost = post
+                                showingPublishAlert = true
+                            } else {
+                                dismiss()
+                            }
+                        } else {
+                            addPost()
+                            if !isDraft {
+                                showingPublishAlert = true
+                            } else {
+                                dismiss()
+                            }
+                        }
+                    }
+                    .disabled(content.isEmpty)
+                }
             }
             .sheet(isPresented: $showingCategoryManagement) {
-                if let blog = blog {
+                if let blog = currentBlog {
                     CategoryManagementView(blog: blog)
                 }
             }
             .sheet(isPresented: $showingEmbedForm) {
-                EmbedFormView(post: post) { _ in 
-                    // No title update since we don't manage title in this view
+                if isEditing, let post = post {
+                    EmbedFormView(post: post) { embedTitle in
+                        // Update the post title with the embed title
+                        title = embedTitle
+                    }
+                } else if let post = newPost {
+                    EmbedFormView(post: post) { embedTitle in
+                        // Update the post title with the embed title
+                        title = embedTitle
+                    }
                 }
             }
-            .onAppear {
-                // Initialize selected tags and category from post if they're empty
-                // This helps avoid timing issues with SwiftData
-                if selectedTags.isEmpty && !post.tags.isEmpty {
-                    selectedTags = post.tags
+            .sheet(isPresented: $showingPublishView, onDismiss: {
+                dismiss()
+            }) {
+                if let post = savedPost, let blog = post.blog {
+                    PublishBlogView(blog: blog, autoPublish: true)
                 }
-                
-                if selectedCategory == nil && post.category != nil {
-                    selectedCategory = post.category
+            }
+            .alert("Publish Now?", isPresented: $showingPublishAlert) {
+                Button("No", role: .cancel) {
+                    dismiss()
                 }
+                Button("Yes") {
+                    showingPublishView = true
+                }
+            } message: {
+                Text("Would you like to publish the blog now?")
             }
         }
     }
@@ -282,7 +341,7 @@ struct PostFormView: View {
     private func addTag() {
         let trimmed = tagInput.trimmingCharacters(in: .whitespacesAndNewlines)
             .lowercased()
-        if !trimmed.isEmpty, let blog = blog {
+        if !trimmed.isEmpty, let blog = currentBlog {
             // Check if tag already exists for this blog (case insensitive)
             if let existingTag = blogTags.first(where: {
                 $0.name.lowercased() == trimmed
@@ -303,6 +362,16 @@ struct PostFormView: View {
     }
     
     private func updatePost() {
+        guard let post = post else { return }
+        
+        // Update post properties (will trigger didSet observers that update the stub)
+        post.title = title.isEmpty ? nil : title
+        post.content = content
+        post.isDraft = isDraft
+        
+        // Explicitly regenerate the stub to ensure it's updated properly
+        post.regenerateStub()
+        
         // Handle category changes
         if post.category != selectedCategory {
             // Remove post from previous category
@@ -337,10 +406,84 @@ struct PostFormView: View {
             post.tags.append(tag)
             tag.posts.append(post)
         }
+        
+        // Force-update the stub to ensure it's properly set
+        if post.stub == nil || post.stub!.isEmpty {
+            // Generate a new stub based on current content
+            let sourceText = post.title ?? post.plainContent
+            let generatedStub = Utils.generateStub(from: sourceText)
+            
+            // Make it unique within the blog
+            if let blog = post.blog {
+                post.stub = blog.uniquePostStub(generatedStub)
+            } else {
+                post.stub = generatedStub
+            }
+        }
+    }
+    
+    private func addPost() {
+        guard let blog = blog else { return }
+        
+        var postToSave: Post
+        
+        if let existingPost = newPost {
+            // Update the temporary post (will trigger didSet observers that update the stub)
+            existingPost.title = title.isEmpty ? nil : title
+            existingPost.content = content
+            existingPost.isDraft = isDraft
+            postToSave = existingPost
+        } else {
+            // Create a new post
+            postToSave = Post(
+                title: title.isEmpty ? nil : title,
+                content: content,
+                isDraft: isDraft
+            )
+            modelContext.insert(postToSave)
+        }
+        
+        // Add category to post if selected
+        if let category = selectedCategory {
+            postToSave.category = category
+            category.posts.append(postToSave)
+        }
+        
+        // Add tags to post
+        for tag in selectedTags {
+            postToSave.tags.append(tag)
+            tag.posts.append(postToSave)
+        }
+        
+        // Add to blog (will ensure stub uniqueness)
+        blog.posts.append(postToSave)
+        
+        // Force-update the stub to ensure it's properly set
+        if postToSave.stub == nil || postToSave.stub!.isEmpty {
+            // Generate a new stub based on current content
+            let sourceText = postToSave.title ?? postToSave.plainContent
+            let generatedStub = Utils.generateStub(from: sourceText)
+            
+            // Make it unique within the blog
+            postToSave.stub = blog.uniquePostStub(generatedStub)
+        }
+        
+        // Save reference to the post for publishing
+        savedPost = postToSave
     }
 }
 
-#Preview {
+#Preview("New Post") {
+    let modelContainer = PreviewData.previewContainer
+    
+    return NavigationStack {
+        // Fetch the first blog from the container to ensure it's properly in the context
+        PostFormView(blog: try! modelContainer.mainContext.fetch(FetchDescriptor<Blog>()).first!)
+    }
+    .modelContainer(modelContainer)
+}
+
+#Preview("Edit Post") {
     let modelContainer = PreviewData.previewContainer
     let blog = try! modelContainer.mainContext.fetch(FetchDescriptor<Blog>()).first!
     
@@ -350,3 +493,4 @@ struct PostFormView: View {
     }
     .modelContainer(modelContainer)
 }
+
