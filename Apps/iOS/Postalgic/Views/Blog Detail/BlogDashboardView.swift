@@ -185,7 +185,8 @@ struct BlogDashboardView: View {
         }
         .navigationTitle(blog.name)
         .sheet(isPresented: $showingPostForm) {
-            PostFormView(blog: blog).interactiveDismissDisabled()
+//            PostFormView(blog: blog).interactiveDismissDisabled()
+            NewPostView()
         }
         .sheet(isPresented: $showingPublishView) {
             PublishBlogView(blog: blog)
