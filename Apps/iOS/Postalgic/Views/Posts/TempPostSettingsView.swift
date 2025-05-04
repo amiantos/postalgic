@@ -1,44 +1,41 @@
-//
-//  PostFormView.swift
-//  Postalgic
-//
-//  Created by Brad Root on 4/23/25.
-//
-
-import SwiftData
 import SwiftUI
+import SwiftData
 
-struct PostFormView: View {
+/// A simplified settings view specific for use with AddPostView
+/// Creates its own post instance to avoid SwiftData synchronization issues
+struct TempPostSettingsView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @Query private var allTags: [Tag]
     @Query private var allCategories: [Category]
     
-    var post: Post
+    // Pass this back to the parent view to update
+    var onSave: ([Tag], Category?) -> Void
     
-    private var blog: Blog? {
-        return post.blog
-    }
+    // Blog reference
+    let blog: Blog
     
-    private var blogTags: [Tag] {
-        guard let blogId = blog?.id else { return [] }
-        return allTags.filter { $0.blog?.id == blogId }
-    }
+    // Post content to initialize
+    let title: String
+    let content: String
     
-    private var blogCategories: [Category] {
-        guard let blogId = blog?.id else { return [] }
-        return allCategories.filter { $0.blog?.id == blogId }
-    }
+    // Initial values to display
+    let initialTags: [Tag]
+    let initialCategory: Category?
     
+    // State
     @State private var tagInput = ""
     @State private var selectedTags: [Tag] = []
     @State private var selectedCategory: Category?
     @State private var showingCategoryManagement = false
     @State private var showingSuggestions = false
-    @State private var showingEmbedForm = false
     
-    private var existingTagNames: [String] {
-        return blogTags.map { $0.name }
+    private var blogTags: [Tag] {
+        return allTags.filter { $0.blog?.id == blog.id }
+    }
+    
+    private var blogCategories: [Category] {
+        return allCategories.filter { $0.blog?.id == blog.id }
     }
     
     private var filteredTags: [Tag] {
@@ -55,92 +52,49 @@ struct PostFormView: View {
         }
     }
     
-    init(post: Post) {
-        self.post = post
+    init(
+        blog: Blog,
+        title: String,
+        content: String,
+        initialTags: [Tag] = [],
+        initialCategory: Category? = nil,
+        onSave: @escaping ([Tag], Category?) -> Void
+    ) {
+        self.blog = blog
+        self.title = title
+        self.content = content
+        self.initialTags = initialTags
+        self.initialCategory = initialCategory
+        self.onSave = onSave
         
-        // Initialize with the post's current values
-        // We'll add safety checks in the view itself
-        _selectedTags = State(initialValue: post.tags)
-        _selectedCategory = State(initialValue: post.category)
+        // Initialize state
+        _selectedTags = State(initialValue: initialTags)
+        _selectedCategory = State(initialValue: initialCategory)
     }
     
     var body: some View {
         NavigationStack {
             Form {
-                // Post Metadata
-                Section("Post URL") {
-                    HStack {
-                        Text("Permalink:")
-                            .foregroundColor(.secondary)
+                // Post Preview
+                Section("Post Preview") {
+                    VStack(alignment: .leading, spacing: 8) {
+                        if !title.isEmpty {
+                            Text(title)
+                                .font(.headline)
+                        }
                         
-                        TextField("", text: .constant(post.stub ?? ""))
-                            .disabled(true)
-                            .foregroundColor(.primary)
-                    }
-                }
-                
-                // Embed Section
-                Section("Embed") {
-                    if let embed = post.embed {
-                        VStack(alignment: .leading, spacing: 12) {
-                            // Embed info row
-                            HStack {
-                                Text("Type:").bold()
-                                Text(embed.embedType.rawValue)
-                                    .foregroundColor(.secondary)
-                            }
-                            
-                            HStack {
-                                Text("Position:").bold()
-                                Text(embed.embedPosition.rawValue)
-                                    .foregroundColor(.secondary)
-                            }
-                            
-                            HStack {
-                                Text("URL:").bold()
-                                Text(embed.url)
-                                    .foregroundColor(.secondary)
-                                    .lineLimit(1)
-                            }
-                            
-                            // Buttons in separate rows for clarity
-                            Button(action: {
-                                showingEmbedForm = true
-                            }) {
-                                HStack {
-                                    Image(systemName: "pencil")
-                                    Text("Edit Embed")
-                                }
-                                .frame(maxWidth: .infinity)
-                            }
-                            .buttonStyle(.bordered)
-                            .tint(.blue)
-                            
-                            Button(action: {
-                                if let embed = post.embed {
-                                    modelContext.delete(embed)
-                                    post.embed = nil
-                                }
-                            }) {
-                                HStack {
-                                    Image(systemName: "trash")
-                                    Text("Remove Embed")
-                                }
-                                .frame(maxWidth: .infinity)
-                            }
-                            .buttonStyle(.bordered)
-                            .tint(.red)
+                        if !content.isEmpty {
+                            Text(content)
+                                .lineLimit(3)
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                        } else {
+                            Text("Empty post")
+                                .italic()
+                                .foregroundColor(.secondary)
                         }
-                    } else {
-                        Button(action: {
-                            showingEmbedForm = true
-                        }) {
-                            Label("Add Embed", systemImage: "plus")
-                                .frame(maxWidth: .infinity)
-                        }
-                        .buttonStyle(.bordered)
-                        .tint(.blue)
                     }
+                    .padding(.vertical, 8)
                 }
                 
                 // Category section
@@ -250,31 +204,14 @@ struct PostFormView: View {
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") {
-                        updatePost()
+                        // Call the callback with the selected tags and category
+                        onSave(selectedTags, selectedCategory)
                         dismiss()
                     }
                 }
             }
             .sheet(isPresented: $showingCategoryManagement) {
-                if let blog = blog {
-                    CategoryManagementView(blog: blog)
-                }
-            }
-            .sheet(isPresented: $showingEmbedForm) {
-                EmbedFormView(post: post) { _ in 
-                    // No title update since we don't manage title in this view
-                }
-            }
-            .onAppear {
-                // Initialize selected tags and category from post if they're empty
-                // This helps avoid timing issues with SwiftData
-                if selectedTags.isEmpty && !post.tags.isEmpty {
-                    selectedTags = post.tags
-                }
-                
-                if selectedCategory == nil && post.category != nil {
-                    selectedCategory = post.category
-                }
+                CategoryManagementView(blog: blog)
             }
         }
     }
@@ -282,7 +219,7 @@ struct PostFormView: View {
     private func addTag() {
         let trimmed = tagInput.trimmingCharacters(in: .whitespacesAndNewlines)
             .lowercased()
-        if !trimmed.isEmpty, let blog = blog {
+        if !trimmed.isEmpty {
             // Check if tag already exists for this blog (case insensitive)
             if let existingTag = blogTags.first(where: {
                 $0.name.lowercased() == trimmed
@@ -301,43 +238,6 @@ struct PostFormView: View {
             tagInput = ""
         }
     }
-    
-    private func updatePost() {
-        // Handle category changes
-        if post.category != selectedCategory {
-            // Remove post from previous category
-            if let oldCategory = post.category {
-                if let index = oldCategory.posts.firstIndex(where: {
-                    $0.id == post.id
-                }) {
-                    oldCategory.posts.remove(at: index)
-                }
-            }
-            
-            // Add post to new category
-            post.category = selectedCategory
-            if let newCategory = selectedCategory {
-                newCategory.posts.append(post)
-            }
-        }
-        
-        // Handle tag changes
-        // First, remove all existing tag relationships
-        for tag in post.tags {
-            if let index = tag.posts.firstIndex(where: { $0.id == post.id }) {
-                tag.posts.remove(at: index)
-            }
-        }
-        
-        // Clear post's tags array
-        post.tags.removeAll()
-        
-        // Now add all selected tags
-        for tag in selectedTags {
-            post.tags.append(tag)
-            tag.posts.append(post)
-        }
-    }
 }
 
 #Preview {
@@ -345,8 +245,12 @@ struct PostFormView: View {
     let blog = try! modelContainer.mainContext.fetch(FetchDescriptor<Blog>()).first!
     
     return NavigationStack {
-        // Use the first post from the blog that's in the context
-        PostFormView(post: blog.posts.first!)
+        TempPostSettingsView(
+            blog: blog,
+            title: "Sample Post",
+            content: "This is some sample content for the post.",
+            onSave: { _, _ in }
+        )
     }
     .modelContainer(modelContainer)
 }

@@ -5,21 +5,51 @@ import SwiftData
 struct NewPostView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
+    
+    // The blog the post belongs to
+    private var blog: Blog
+    
+    // Whether we're creating a new post or editing an existing one
+    private var isNewPost: Bool
+    
+    // For editing an existing post
+    @State private var existingPost: Post?
+    
+    // UI State
     @State private var title: String = ""
     @State private var content: String = ""
     @State private var showURLPrompt: Bool = false
     @State private var urlText: String = ""
     @State private var urlLink: String = ""
-    @State private var showDiscardAlert: Bool = false
     @State private var showingPostSettings: Bool = false
-    @State private var showPublishAlert: Bool = false
     @State private var showPublishView: Bool = false
-    @State private var savedPost: Post? = nil
     
-    var blog: Blog
+    // For creating a new post
+    init(blog: Blog) {
+        self.blog = blog
+        self.isNewPost = true
+        self.existingPost = nil
+    }
     
-    private var hasContent: Bool {
-        return !content.isEmpty || !title.isEmpty
+    // For editing an existing post
+    init(post: Post) {
+        self.blog = post.blog!
+        self.isNewPost = false
+        self.existingPost = post
+        self._title = State(initialValue: post.title ?? "")
+        self._content = State(initialValue: post.content)
+    }
+    
+    private var post: Post {
+        if let existingPost = existingPost {
+            return existingPost
+        } else {
+            // Create a temporary post if needed for PostFormView
+            // This won't be used directly for editing, just as a reference
+            let temp = Post(title: title.isEmpty ? nil : title, content: content, isDraft: true)
+            temp.blog = blog
+            return temp
+        }
     }
     
     var body: some View {
@@ -31,23 +61,23 @@ struct NewPostView: View {
                 
                 Divider()
                 
-                MarkdownTextEditor(text: $content, 
-                                  onShowLinkPrompt: {
-                                      selectedText, selectedRange in
-                                      self.handleShowLinkPrompt(selectedText: selectedText, selectedRange: selectedRange)
-                                  })
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                MarkdownTextEditor(text: $content, onShowLinkPrompt: { selectedText, selectedRange in
+                    self.handleShowLinkPrompt(selectedText: selectedText, selectedRange: selectedRange)
+                })
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
-//            .ignoresSafeArea(.keyboard, edges: .bottom)
-            .navigationTitle("New Post")
+            .navigationTitle(isNewPost ? "New Post" : "Edit Post")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 // Leading toolbar items
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel") {
-                        if hasContent {
-                            showDiscardAlert = true
-                        } else {
+                    if isNewPost {
+                        Button("Delete") {
+                            dismiss()
+                        }
+                    } else {
+                        Button("Done") {
+                            saveChanges(asDraft: existingPost?.isDraft ?? true)
                             dismiss()
                         }
                     }
@@ -57,13 +87,19 @@ struct NewPostView: View {
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {
                         Button(action: {
+                            if isNewPost {
+                                // Create and save the post first before showing settings
+                                let newPost = createNewPost(isDraft: true)
+                                existingPost = newPost
+                            }
                             showingPostSettings = true
                         }) {
                             Label("Post Settings", systemImage: "gear")
                         }
                         
                         Button(action: {
-                            saveAsDraft()
+                            saveChanges(asDraft: true)
+                            dismiss()
                         }) {
                             Label("Save as Draft", systemImage: "square.and.arrow.down")
                         }
@@ -74,7 +110,8 @@ struct NewPostView: View {
                 
                 ToolbarItem(placement: .primaryAction) {
                     Button("Publish") {
-                        saveAndPublish()
+                        saveChanges(asDraft: false)
+                        showPublishView = true
                     }
                     .disabled(content.isEmpty)
                 }
@@ -89,41 +126,50 @@ struct NewPostView: View {
             } message: {
                 Text("Enter link details")
             }
-            .confirmationDialog(
-                "What would you like to do with this post?",
-                isPresented: $showDiscardAlert,
-                titleVisibility: .visible
-            ) {
-                Button("Discard Post", role: .destructive) {
-                    dismiss()
-                }
-                Button("Save as Draft") {
-                    saveAsDraft()
-                }
-                Button("Continue Editing", role: .cancel) {}
-            }
             .sheet(isPresented: $showingPostSettings) {
-                if let post = savedPost {
-                    PostFormView(post: post)
+                if let existingPost = existingPost {
+                    PostFormView(post: existingPost)
                 }
             }
             .sheet(isPresented: $showPublishView, onDismiss: {
                 dismiss()
             }) {
-                if let post = savedPost {
-                    PublishBlogView(blog: blog, autoPublish: true)
-                }
+                PublishBlogView(blog: blog, autoPublish: true)
             }
-            .alert("Publish Now?", isPresented: $showPublishAlert) {
-                Button("No", role: .cancel) {
-                    dismiss()
-                }
-                Button("Yes") {
-                    showPublishView = true
-                }
-            } message: {
-                Text("Would you like to publish the blog now?")
-            }
+        }
+    }
+    
+    private func createNewPost(isDraft: Bool) -> Post {
+        // Create a new post
+        let newPost = Post(
+            title: title.isEmpty ? nil : title,
+            content: content,
+            isDraft: isDraft
+        )
+        
+        // Set the blog reference and add to blog's posts
+        newPost.blog = blog
+        blog.posts.append(newPost)
+        
+        // Insert into model context
+        modelContext.insert(newPost)
+        
+        // Generate stub
+        newPost.regenerateStub()
+        
+        return newPost
+    }
+    
+    private func saveChanges(asDraft: Bool) {
+        if isNewPost {
+            // Create a new post
+            _ = createNewPost(isDraft: asDraft)
+        } else if let existingPost = existingPost {
+            // Update existing post
+            existingPost.title = title.isEmpty ? nil : title
+            existingPost.content = content
+            existingPost.isDraft = asDraft
+            existingPost.regenerateStub()
         }
     }
     
@@ -162,33 +208,6 @@ struct NewPostView: View {
                                         userInfo: ["text": markdownLink])
         NotificationCenter.default.post(notification)
     }
-    
-    func savePost(isDraft: Bool) -> Post {
-        // Create a new post
-        let post = Post(
-            title: title.isEmpty ? nil : title,
-            content: content,
-            isDraft: isDraft
-        )
-        
-        // Add the post to the model context
-        modelContext.insert(post)
-        
-        // Add to blog (this will ensure stub uniqueness)
-        blog.posts.append(post)
-        
-        return post
-    }
-    
-    func saveAsDraft() {
-        savedPost = savePost(isDraft: true)
-        dismiss()
-    }
-    
-    func saveAndPublish() {
-        savedPost = savePost(isDraft: false)
-        showPublishAlert = true
-    }
 }
 
 struct MarkdownTextEditor: UIViewRepresentable {
@@ -201,6 +220,7 @@ struct MarkdownTextEditor: UIViewRepresentable {
         textView.isScrollEnabled = true
         textView.isEditable = true
         textView.text = text
+        textView.contentInset = UIEdgeInsets(top: 12, left: 12, bottom: 12, right: 12)
         textView.delegate = context.coordinator
         
         // Create and configure toolbar
@@ -353,11 +373,22 @@ struct MarkdownTextEditor: UIViewRepresentable {
     }
 }
 
-#Preview {
+#Preview("New Post") {
     let modelContainer = PreviewData.previewContainer
+    let blog = try! modelContainer.mainContext.fetch(FetchDescriptor<Blog>()).first!
     
     return NavigationStack {
-        NewPostView(blog: try! modelContainer.mainContext.fetch(FetchDescriptor<Blog>()).first!)
+        NewPostView(blog: blog)
+    }
+    .modelContainer(modelContainer)
+}
+
+#Preview("Edit Post") {
+    let modelContainer = PreviewData.previewContainer
+    let blog = try! modelContainer.mainContext.fetch(FetchDescriptor<Blog>()).first!
+    
+    return NavigationStack {
+        NewPostView(post: blog.posts.first!)
     }
     .modelContainer(modelContainer)
 }
