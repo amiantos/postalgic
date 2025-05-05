@@ -16,7 +16,6 @@
 		44362EDF2DBD82B700EA704F /* TemplateEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44362EDE2DBD82B700EA704F /* TemplateEngine.swift */; };
 		44362EE12DBD82EB00EA704F /* ManualPublisher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44362EE02DBD82EB00EA704F /* ManualPublisher.swift */; };
 		44362EE32DBD833600EA704F /* TemplateCustomizationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44362EE22DBD833600EA704F /* TemplateCustomizationView.swift */; };
-		44362EFE2DBF3D7500EA704F /* PublishedFiles.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44362EFD2DBF3D7500EA704F /* PublishedFiles.swift */; };
 		44362F002DBF3D8200EA704F /* Utils+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44362EFF2DBF3D8200EA704F /* Utils+Extensions.swift */; };
 		44362F162DC0989000EA704F /* LinkListFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44362F132DC0989000EA704F /* LinkListFormView.swift */; };
 		44362F172DC0989000EA704F /* SidebarManagementView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44362F142DC0989000EA704F /* SidebarManagementView.swift */; };
@@ -26,7 +25,6 @@
 		443F0B2E2DB8D47500034EF1 /* EmbedFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 443F0B2B2DB8D47500034EF1 /* EmbedFormView.swift */; };
 		443F0B302DB8D48B00034EF1 /* LinkMetadataService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 443F0B2F2DB8D48B00034EF1 /* LinkMetadataService.swift */; };
 		443F0B512DBAD7AC00034EF1 /* PreviewData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 443F0B502DBAD7AC00034EF1 /* PreviewData.swift */; };
-		443F0B532DBB5B7900034EF1 /* Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 443F0B522DBB5B7900034EF1 /* Utils.swift */; };
 		443F0B612DBB696600034EF1 /* HelpView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 443F0B602DBB696600034EF1 /* HelpView.swift */; };
 		443F0B632DBB6B9600034EF1 /* TagManagementView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 443F0B622DBB6B9600034EF1 /* TagManagementView.swift */; };
 		443F0B652DBB779200034EF1 /* PublishSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 443F0B642DBB779200034EF1 /* PublishSettingsView.swift */; };
@@ -77,7 +75,6 @@
 		44362EDE2DBD82B700EA704F /* TemplateEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TemplateEngine.swift; sourceTree = "<group>"; };
 		44362EE02DBD82EB00EA704F /* ManualPublisher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManualPublisher.swift; sourceTree = "<group>"; };
 		44362EE22DBD833600EA704F /* TemplateCustomizationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TemplateCustomizationView.swift; sourceTree = "<group>"; };
-		44362EFD2DBF3D7500EA704F /* PublishedFiles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PublishedFiles.swift; sourceTree = "<group>"; };
 		44362EFF2DBF3D8200EA704F /* Utils+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Utils+Extensions.swift"; sourceTree = "<group>"; };
 		44362F132DC0989000EA704F /* LinkListFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LinkListFormView.swift; sourceTree = "<group>"; };
 		44362F142DC0989000EA704F /* SidebarManagementView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidebarManagementView.swift; sourceTree = "<group>"; };
@@ -91,7 +88,6 @@
 		443F0B2C2DB8D47500034EF1 /* EmbedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmbedView.swift; sourceTree = "<group>"; };
 		443F0B2F2DB8D48B00034EF1 /* LinkMetadataService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LinkMetadataService.swift; sourceTree = "<group>"; };
 		443F0B502DBAD7AC00034EF1 /* PreviewData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewData.swift; sourceTree = "<group>"; };
-		443F0B522DBB5B7900034EF1 /* Utils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utils.swift; sourceTree = "<group>"; };
 		443F0B602DBB696600034EF1 /* HelpView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelpView.swift; sourceTree = "<group>"; };
 		443F0B622DBB6B9600034EF1 /* TagManagementView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagManagementView.swift; sourceTree = "<group>"; };
 		443F0B642DBB779200034EF1 /* PublishSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PublishSettingsView.swift; sourceTree = "<group>"; };
@@ -168,7 +164,7 @@
 			path = Publishers;
 			sourceTree = "<group>";
 		};
-		44362E802DBC2A7600EA704F /* Publishing */ = {
+		44362E802DBC2A7600EA704F /* Blog Publishing */ = {
 			isa = PBXGroup;
 			children = (
 				44C3641A2DB768DB0057567C /* PublishBlogView.swift */,
@@ -177,13 +173,12 @@
 				443F0B662DBB7A7000034EF1 /* BlogFtpConfigView.swift */,
 				44362EE22DBD833600EA704F /* TemplateCustomizationView.swift */,
 			);
-			path = Publishing;
+			path = "Blog Publishing";
 			sourceTree = "<group>";
 		};
 		44362EF62DBDE7BF00EA704F /* Site Generation */ = {
 			isa = PBXGroup;
 			children = (
-				44362EFD2DBF3D7500EA704F /* PublishedFiles.swift */,
 				44C3640F2DB768DB0057567C /* StaticSiteGenerator.swift */,
 				44362EDE2DBD82B700EA704F /* TemplateEngine.swift */,
 				44362EDC2DBD829000EA704F /* TemplateModels.swift */,
@@ -212,17 +207,37 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		443F0B312DB8DFDB00034EF1 /* Posts */ = {
+		4437E9C22DC88F0300931230 /* Post Editing */ = {
 			isa = PBXGroup;
 			children = (
 				44499E032DC80B3F00A9624B /* PostView.swift */,
 				44C364192DB768DB0057567C /* PostSettingsView.swift */,
-				44499DE12DC5CBC500A9624B /* PostPreviewView.swift */,
-				44499DE32DC5CD1E00A9624B /* PostsView.swift */,
 				443F0B2B2DB8D47500034EF1 /* EmbedFormView.swift */,
 				443F0B2C2DB8D47500034EF1 /* EmbedView.swift */,
 			);
-			path = Posts;
+			path = "Post Editing";
+			sourceTree = "<group>";
+		};
+		4437E9C32DC88F3A00931230 /* Blog Settings */ = {
+			isa = PBXGroup;
+			children = (
+				44362F4D2DC1C85B00EA704F /* BlogSettingsView.swift */,
+				44C364152DB768DB0057567C /* CategoryManagementView.swift */,
+				443F0B622DBB6B9600034EF1 /* TagManagementView.swift */,
+				44362F142DC0989000EA704F /* SidebarManagementView.swift */,
+				44362F132DC0989000EA704F /* LinkListFormView.swift */,
+				44362F152DC0989000EA704F /* TextBlockFormView.swift */,
+			);
+			path = "Blog Settings";
+			sourceTree = "<group>";
+		};
+		443F0B312DB8DFDB00034EF1 /* Posts List */ = {
+			isa = PBXGroup;
+			children = (
+				44499DE32DC5CD1E00A9624B /* PostsView.swift */,
+				44499DE12DC5CBC500A9624B /* PostPreviewView.swift */,
+			);
+			path = "Posts List";
 			sourceTree = "<group>";
 		};
 		44C364102DB768DB0057567C /* Services */ = {
@@ -231,7 +246,6 @@
 				44362EF62DBDE7BF00EA704F /* Site Generation */,
 				44362E7C2DBC0B1A00EA704F /* Publishers */,
 				443F0B2F2DB8D48B00034EF1 /* LinkMetadataService.swift */,
-				443F0B522DBB5B7900034EF1 /* Utils.swift */,
 				44362EFF2DBF3D8200EA704F /* Utils+Extensions.swift */,
 			);
 			path = Services;
@@ -241,9 +255,11 @@
 			isa = PBXGroup;
 			children = (
 				44C3642F2DB768F90057567C /* Blogs List */,
-				44C364302DB769260057567C /* Blog Detail */,
-				44362E802DBC2A7600EA704F /* Publishing */,
-				443F0B312DB8DFDB00034EF1 /* Posts */,
+				44C364302DB769260057567C /* Blog Dashboard */,
+				4437E9C32DC88F3A00931230 /* Blog Settings */,
+				44362E802DBC2A7600EA704F /* Blog Publishing */,
+				443F0B312DB8DFDB00034EF1 /* Posts List */,
+				4437E9C22DC88F0300931230 /* Post Editing */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -272,18 +288,12 @@
 			path = "Blogs List";
 			sourceTree = "<group>";
 		};
-		44C364302DB769260057567C /* Blog Detail */ = {
+		44C364302DB769260057567C /* Blog Dashboard */ = {
 			isa = PBXGroup;
 			children = (
 				44F858B72DC43FAD00B8179B /* BlogDashboardView.swift */,
-				44362F4D2DC1C85B00EA704F /* BlogSettingsView.swift */,
-				44C364152DB768DB0057567C /* CategoryManagementView.swift */,
-				443F0B622DBB6B9600034EF1 /* TagManagementView.swift */,
-				44362F142DC0989000EA704F /* SidebarManagementView.swift */,
-				44362F132DC0989000EA704F /* LinkListFormView.swift */,
-				44362F152DC0989000EA704F /* TextBlockFormView.swift */,
 			);
-			path = "Blog Detail";
+			path = "Blog Dashboard";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -462,7 +472,6 @@
 				44499DE42DC5CD1E00A9624B /* PostsView.swift in Sources */,
 				44362EDD2DBD829000EA704F /* TemplateModels.swift in Sources */,
 				44499DE22DC5CBC500A9624B /* PostPreviewView.swift in Sources */,
-				443F0B532DBB5B7900034EF1 /* Utils.swift in Sources */,
 				44C364262DB768DB0057567C /* CategoryManagementView.swift in Sources */,
 				44362E7B2DBC0B0E00EA704F /* Publisher.swift in Sources */,
 				44362EE12DBD82EB00EA704F /* ManualPublisher.swift in Sources */,
@@ -472,7 +481,6 @@
 				44362E792DBC0AEE00EA704F /* FTPPublisher.swift in Sources */,
 				44C3642A2DB768DB0057567C /* PostSettingsView.swift in Sources */,
 				443F0B612DBB696600034EF1 /* HelpView.swift in Sources */,
-				44362EFE2DBF3D7500EA704F /* PublishedFiles.swift in Sources */,
 				44C3642B2DB768DB0057567C /* PublishBlogView.swift in Sources */,
 				44C3642C2DB768DB0057567C /* Models.swift in Sources */,
 				44C3642D2DB768DB0057567C /* PostalgicApp.swift in Sources */,
