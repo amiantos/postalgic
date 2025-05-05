@@ -48,7 +48,6 @@ struct PostView: View {
                 })
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
-            .ignoresSafeArea(.keyboard, edges: .bottom)
             .alert("Add Link", isPresented: $showURLPrompt) {
                 TextField("Text", text: $urlText)
                 TextField("URL", text: $urlLink)
