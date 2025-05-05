@@ -2,7 +2,7 @@ import SwiftUI
 import UIKit
 import SwiftData
 
-struct NewPostView: View {
+struct PostView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     
@@ -15,8 +15,13 @@ struct NewPostView: View {
     
     init(blog: Blog) {
         self.blog = blog
-        // Create a new post but don't assign it to the blog yet
-        self._post = State(initialValue: Post(content: "", isDraft: true))
+        self.post = Post(content: "", isDraft: true)
+    }
+    
+    init(post: Post) {
+        guard let blog = post.blog else { fatalError("Cannot init this view with a post with no blog associated with it")}
+        self.blog = blog
+        self.post = post
     }
     
     var body: some View {
@@ -52,24 +57,47 @@ struct NewPostView: View {
             } message: {
                 Text("Enter link details")
             }
+            .navigationTitle(post.blog == nil ? "New Post" : "Edit Post")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel", role: .destructive) {
-                        modelContext.delete(post)
-                        dismiss()
-                    }
-                }
-                
-                ToolbarItemGroup(placement: .confirmationAction) {
-                    Button("Save") {
-                        post.blog = blog
-                        dismiss()
+                if post.blog == nil {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Cancel", role: .destructive) {
+                            modelContext.delete(post)
+                            dismiss()
+                        }
                     }
                     
-                    Button("Publish") {
-                        post.blog = blog
-                        post.isDraft = false
-                        dismiss()
+                    ToolbarItemGroup(placement: .confirmationAction) {
+                        Button("Save Draft") {
+                            post.blog = blog
+                            post.isDraft = true
+                            dismiss()
+                        }
+                        
+                        Button("Publish") {
+                            post.blog = blog
+                            post.isDraft = false
+                            dismiss()
+                        }
+                    }
+                } else {
+                    ToolbarItemGroup(placement: .confirmationAction) {
+                        if post.isDraft {
+                            Button("Save Draft") {
+                                post.isDraft = true
+                                dismiss()
+                            }
+                            
+                            Button("Publish") {
+                                post.isDraft = false
+                                dismiss()
+                            }
+                        } else {
+                            Button("Close") {
+                                dismiss()
+                            }
+                        }
                     }
                 }
             }
@@ -277,5 +305,5 @@ struct MarkdownTextEditor: UIViewRepresentable {
 }
 
 #Preview {
-    NewPostView(blog: PreviewData.blog)
+    PostView(blog: PreviewData.blog)
 }
