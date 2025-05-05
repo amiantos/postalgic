@@ -96,6 +96,7 @@ struct PreviewData {
             // Add embed to first post
             if index == 0 {
                 let embed = Embed(
+                    post: post,
                     url: "https://www.youtube.com/watch?v=RoSQqtgCZss",
                     type: .youtube,
                     position: .below
@@ -107,6 +108,7 @@ struct PreviewData {
             // Add embed to second post
             if index == 1 {
                 let embed = Embed(
+                    post: post,
                     url: "https://apple.com",
                     type: .link,
                     position: .above,
@@ -144,12 +146,14 @@ struct PreviewData {
     static let tag = Tag(name: "swift")
     
     static let youtubeEmbed = Embed(
+        post: post,
         url: "https://www.youtube.com/watch?v=RoSQqtgCZss",
         type: .youtube,
         position: .above
     )
     
     static let linkEmbed = Embed(
+        post: post,
         url: "https://apple.com",
         type: .link,
         position: .below,

@@ -137,7 +137,6 @@ struct PostFormView: View {
                             Button(action: {
                                 if let embed = postToUse.embed {
                                     modelContext.delete(embed)
-                                    postToUse.embed = nil
                                 }
                             }) {
                                 HStack {

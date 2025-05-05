@@ -301,9 +301,10 @@ final class Embed {
     var imageUrl: String? // Remote URL for the image
     var imageData: Data? // Actual image data stored in the database
     
-    var post: Post?
+    var post: Post
     
     init(
+        post: Post,
         url: String,
         type: EmbedType,
         position: EmbedPosition,
@@ -313,6 +314,7 @@ final class Embed {
         imageData: Data? = nil,
         createdAt: Date = Date()
     ) {
+        self.post = post
         self.url = url
         self.type = type.rawValue
         self.position = position.rawValue
@@ -438,7 +440,7 @@ final class Post {
     @Relationship(deleteRule: .nullify, inverse: \Tag.posts)
     var tags: [Tag] = []
     
-    @Relationship(deleteRule: .cascade)
+    @Relationship(deleteRule: .cascade, inverse: \Embed.post)
     var embed: Embed?
 
     init(

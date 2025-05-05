@@ -277,8 +277,14 @@ struct EmbedFormView: View {
     }
     
     private func addEmbed() {
+        // Remove any existing embed
+        if let oldEmbed = post.embed {
+            modelContext.delete(oldEmbed)
+        }
+        
         // Create new embed
         let embed = Embed(
+            post: post,
             url: url,
             type: embedType,
             position: position,
@@ -290,15 +296,6 @@ struct EmbedFormView: View {
         
         // Insert embed into model context
         modelContext.insert(embed)
-        
-        // Remove any existing embed
-        if let oldEmbed = post.embed {
-            modelContext.delete(oldEmbed)
-        }
-        
-        // Associate with post
-        post.embed = embed
-        embed.post = post
     }
     
     private func updateEmbed() {
@@ -319,6 +316,7 @@ struct EmbedFormView: View {
             
             // Create a new embed with the new type
             let newEmbed = Embed(
+                post: post,
                 url: url,
                 type: embedType,
                 position: position,
@@ -326,8 +324,6 @@ struct EmbedFormView: View {
             )
             
             modelContext.insert(newEmbed)
-            post.embed = newEmbed
-            newEmbed.post = post
             
             // If changing to Link type and we have metadata, add it
             if embedType == .link && linkMetadata != (nil, nil, nil, nil) {
