@@ -1,129 +1,38 @@
 import SwiftUI
 import UIKit
-import SwiftData
 
 struct NewPostView: View {
-    @Environment(\.modelContext) private var modelContext
-    @Environment(\.dismiss) private var dismiss
     @State private var title: String = ""
     @State private var content: String = ""
     @State private var showURLPrompt: Bool = false
     @State private var urlText: String = ""
     @State private var urlLink: String = ""
-    @State private var showDiscardAlert: Bool = false
-    @State private var showingPostSettings: Bool = false
-    @State private var showPublishAlert: Bool = false
-    @State private var showPublishView: Bool = false
-    @State private var savedPost: Post? = nil
-    
-    var blog: Blog
-    
-    private var hasContent: Bool {
-        return !content.isEmpty || !title.isEmpty
-    }
     
     var body: some View {
-        NavigationStack {
-            VStack(spacing: 0) {
-                TextField("Title (optional)", text: $title)
-                    .font(.title)
-                    .padding()
-                
-                Divider()
-                
-                MarkdownTextEditor(text: $content, 
-                                  onShowLinkPrompt: {
-                                      selectedText, selectedRange in
-                                      self.handleShowLinkPrompt(selectedText: selectedText, selectedRange: selectedRange)
-                                  })
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+        VStack(spacing: 0) {
+            TextField("Title (optional)", text: $title)
+                .font(.title)
+                .padding()
+            
+            Divider()
+            
+            MarkdownTextEditor(text: $content, 
+                              onShowLinkPrompt: {
+                                  selectedText, selectedRange in
+                                  self.handleShowLinkPrompt(selectedText: selectedText, selectedRange: selectedRange)
+                              })
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+        .ignoresSafeArea(.keyboard, edges: .bottom)
+        .alert("Add Link", isPresented: $showURLPrompt) {
+            TextField("Text", text: $urlText)
+            TextField("URL", text: $urlLink)
+            Button("Cancel", role: .cancel) {}
+            Button("Add") {
+                insertLink()
             }
-//            .ignoresSafeArea(.keyboard, edges: .bottom)
-            .navigationTitle("New Post")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                // Leading toolbar items
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel") {
-                        if hasContent {
-                            showDiscardAlert = true
-                        } else {
-                            dismiss()
-                        }
-                    }
-                }
-                
-                // Trailing toolbar items
-                ToolbarItem(placement: .topBarTrailing) {
-                    Menu {
-                        Button(action: {
-                            showingPostSettings = true
-                        }) {
-                            Label("Post Settings", systemImage: "gear")
-                        }
-                        
-                        Button(action: {
-                            saveAsDraft()
-                        }) {
-                            Label("Save as Draft", systemImage: "square.and.arrow.down")
-                        }
-                    } label: {
-                        Image(systemName: "ellipsis.circle")
-                    }
-                }
-                
-                ToolbarItem(placement: .primaryAction) {
-                    Button("Publish") {
-                        saveAndPublish()
-                    }
-                    .disabled(content.isEmpty)
-                }
-            }
-            .alert("Add Link", isPresented: $showURLPrompt) {
-                TextField("Text", text: $urlText)
-                TextField("URL", text: $urlLink)
-                Button("Cancel", role: .cancel) {}
-                Button("Add") {
-                    insertLink()
-                }
-            } message: {
-                Text("Enter link details")
-            }
-            .confirmationDialog(
-                "What would you like to do with this post?",
-                isPresented: $showDiscardAlert,
-                titleVisibility: .visible
-            ) {
-                Button("Discard Post", role: .destructive) {
-                    dismiss()
-                }
-                Button("Save as Draft") {
-                    saveAsDraft()
-                }
-                Button("Continue Editing", role: .cancel) {}
-            }
-            .sheet(isPresented: $showingPostSettings) {
-                if let post = savedPost {
-                    PostFormView(post: post)
-                }
-            }
-            .sheet(isPresented: $showPublishView, onDismiss: {
-                dismiss()
-            }) {
-                if let post = savedPost {
-                    PublishBlogView(blog: blog, autoPublish: true)
-                }
-            }
-            .alert("Publish Now?", isPresented: $showPublishAlert) {
-                Button("No", role: .cancel) {
-                    dismiss()
-                }
-                Button("Yes") {
-                    showPublishView = true
-                }
-            } message: {
-                Text("Would you like to publish the blog now?")
-            }
+        } message: {
+            Text("Enter link details")
         }
     }
     
@@ -161,33 +70,6 @@ struct NewPostView: View {
                                         object: nil, 
                                         userInfo: ["text": markdownLink])
         NotificationCenter.default.post(notification)
-    }
-    
-    func savePost(isDraft: Bool) -> Post {
-        // Create a new post
-        let post = Post(
-            title: title.isEmpty ? nil : title,
-            content: content,
-            isDraft: isDraft
-        )
-        
-        // Add the post to the model context
-        modelContext.insert(post)
-        
-        // Add to blog (this will ensure stub uniqueness)
-        blog.posts.append(post)
-        
-        return post
-    }
-    
-    func saveAsDraft() {
-        savedPost = savePost(isDraft: true)
-        dismiss()
-    }
-    
-    func saveAndPublish() {
-        savedPost = savePost(isDraft: false)
-        showPublishAlert = true
     }
 }
 
@@ -354,10 +236,5 @@ struct MarkdownTextEditor: UIViewRepresentable {
 }
 
 #Preview {
-    let modelContainer = PreviewData.previewContainer
-    
-    return NavigationStack {
-        NewPostView(blog: try! modelContainer.mainContext.fetch(FetchDescriptor<Blog>()).first!)
-    }
-    .modelContainer(modelContainer)
+    NewPostView()
 }
