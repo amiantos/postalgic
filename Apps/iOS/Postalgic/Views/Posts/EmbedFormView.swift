@@ -7,6 +7,7 @@
 
 import SwiftData
 import SwiftUI
+
 // Define a struct to pass back to parent view
 struct EmbedTitleUpdate {
     let title: String
@@ -16,8 +17,12 @@ struct EmbedFormView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     
-    var post: Post // Direct reference to the post
+    // One of these two will be set
+    var post: Post?
+    var embed: Embed?
+    
     var onTitleUpdate: ((String) -> Void)? // Callback for updating post title
+    var onEmbedUpdate: ((String, Embed?) -> Void)? // Callback for the temporary embed case
     
     @State private var url: String = ""
     @State private var embedType: EmbedType = .youtube
@@ -28,9 +33,12 @@ struct EmbedFormView: View {
     @State private var linkMetadata: (title: String?, description: String?, imageUrl: String?, imageData: Data?) = (nil, nil, nil, nil)
     @State private var youtubeTitle: String? = nil
     
+    // Initialize for SwiftData Post
     init(post: Post, onTitleUpdate: ((String) -> Void)? = nil) {
         self.post = post
+        self.embed = nil
         self.onTitleUpdate = onTitleUpdate
+        self.onEmbedUpdate = nil
         
         if let embed = post.embed {
             // Initialize with existing embed values for editing
@@ -39,6 +47,20 @@ struct EmbedFormView: View {
             _position = State(initialValue: embed.embedPosition)
             _isEditing = State(initialValue: true)
         }
+    }
+    
+    // Initialize for temporary Embed
+    init(embed: Embed, onEmbedUpdate: ((String, Embed?) -> Void)? = nil) {
+        self.post = nil
+        self.embed = embed
+        self.onTitleUpdate = nil
+        self.onEmbedUpdate = onEmbedUpdate
+        
+        // Initialize with existing embed values
+        _url = State(initialValue: embed.url)
+        _embedType = State(initialValue: embed.embedType)
+        _position = State(initialValue: embed.embedPosition)
+        _isEditing = State(initialValue: !embed.url.isEmpty)
     }
     
     var body: some View {
@@ -51,7 +73,7 @@ struct EmbedFormView: View {
                         }
                     }
                     .pickerStyle(.segmented)
-                    .disabled(isEditing && post.embed?.embedType != embedType)
+                    .disabled(isEditing && ((post?.embed?.embedType != embedType) || (embed?.embedType != embedType)))
                 }
                 
                 Section(header: Text("URL")) {
@@ -65,7 +87,9 @@ struct EmbedFormView: View {
                         // Show fetch button if:
                         // 1. New embed or
                         // 2. Editing and URL changed from original
-                        let shouldShowFetchButton = !isEditing || (isEditing && post.embed?.url != url)
+                        let shouldShowFetchButton = !isEditing || 
+                                                    (isEditing && post?.embed?.url != url) || 
+                                                    (isEditing && embed?.url != url)
                         
                         if shouldShowFetchButton {
                             Button("Fetch Link Metadata") {
@@ -126,12 +150,14 @@ struct EmbedFormView: View {
                 Section(header: Text("Post Title")) {
                     let currentEmbedTitle: String? = {
                         if embedType == .youtube {
-                            return youtubeTitle ?? (isEditing ? post.embed?.title : nil)
+                            return youtubeTitle ?? (isEditing ? post?.embed?.title ?? embed?.title : nil)
                         } else if embedType == .link {
                             if linkMetadata.title != nil {
                                 return linkMetadata.title
-                            } else if isEditing, let embed = post.embed {
-                                return embed.title
+                            } else if isEditing, let postEmbed = post?.embed {
+                                return postEmbed.title
+                            } else if isEditing, let tempEmbed = embed {
+                                return tempEmbed.title
                             }
                         }
                         return nil
@@ -139,12 +165,21 @@ struct EmbedFormView: View {
                     
                     if let title = currentEmbedTitle, !title.isEmpty {
                         Button("Set as Post Title") {
-                            // Call the callback to update the title in the parent view
-                            onTitleUpdate?(title)
-                            if isEditing {
-                                updateEmbed()
-                            } else {
-                                addEmbed()
+                            // Call the appropriate callback
+                            if let onTitleUpdate = onTitleUpdate {
+                                onTitleUpdate(title)
+                                if isEditing {
+                                    updateEmbed()
+                                } else {
+                                    addEmbed()
+                                }
+                            } else if let onEmbedUpdate = onEmbedUpdate {
+                                if isEditing {
+                                    updateTempEmbed()
+                                } else {
+                                    createTempEmbed()
+                                }
+                                onEmbedUpdate(title, createNewEmbed())
                             }
                             dismiss()
                         }
@@ -195,32 +230,80 @@ struct EmbedFormView: View {
                             }
                         }
                     }
-                    // For existing embed that we're editing
+                    // For existing embed in Post that we're editing
                     else if isEditing, 
-                            let embed = post.embed, 
-                            embed.embedType == .link,
+                            let postEmbed = post?.embed, 
+                            postEmbed.embedType == .link,
                             linkMetadata == (nil, nil, nil, nil) { // Only if we haven't fetched new metadata
                         
                         Section(header: Text("Current Link Preview")) {
                             VStack(alignment: .leading) {
-                                if let title = embed.title {
+                                if let title = postEmbed.title {
                                     Text(title)
                                         .font(.headline)
                                 }
                                 
-                                if let description = embed.embedDescription {
+                                if let description = postEmbed.embedDescription {
                                     Text(description)
                                         .font(.subheadline)
                                         .foregroundColor(.secondary)
                                 }
                                 
-                                if let imageData = embed.imageData, let uiImage = UIImage(data: imageData) {
+                                if let imageData = postEmbed.imageData, let uiImage = UIImage(data: imageData) {
                                     Image(uiImage: uiImage)
                                         .resizable()
                                         .aspectRatio(contentMode: .fit)
                                         .frame(maxHeight: 200)
                                         .padding(.top, 8)
-                                } else if let imageUrl = embed.imageUrl, let url = URL(string: imageUrl) {
+                                } else if let imageUrl = postEmbed.imageUrl, let url = URL(string: imageUrl) {
+                                    AsyncImage(url: url) { phase in
+                                        switch phase {
+                                        case .empty:
+                                            ProgressView()
+                                        case .success(let image):
+                                            image
+                                                .resizable()
+                                                .aspectRatio(contentMode: .fit)
+                                                .frame(maxHeight: 200)
+                                        case .failure:
+                                            Image(systemName: "photo")
+                                                .imageScale(.large)
+                                        @unknown default:
+                                            EmptyView()
+                                        }
+                                    }
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.top, 8)
+                                }
+                            }
+                        }
+                    }
+                    // For existing temporary embed that we're editing
+                    else if isEditing,
+                            let tempEmbed = embed,
+                            tempEmbed.embedType == .link,
+                            linkMetadata == (nil, nil, nil, nil) { // Only if we haven't fetched new metadata
+                        
+                        Section(header: Text("Current Link Preview")) {
+                            VStack(alignment: .leading) {
+                                if let title = tempEmbed.title {
+                                    Text(title)
+                                        .font(.headline)
+                                }
+                                
+                                if let description = tempEmbed.embedDescription {
+                                    Text(description)
+                                        .font(.subheadline)
+                                        .foregroundColor(.secondary)
+                                }
+                                
+                                if let imageData = tempEmbed.imageData, let uiImage = UIImage(data: imageData) {
+                                    Image(uiImage: uiImage)
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fit)
+                                        .frame(maxHeight: 200)
+                                        .padding(.top, 8)
+                                } else if let imageUrl = tempEmbed.imageUrl, let url = URL(string: imageUrl) {
                                     AsyncImage(url: url) { phase in
                                         switch phase {
                                         case .empty:
@@ -263,10 +346,16 @@ struct EmbedFormView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button(isEditing ? "Update" : "Add") {
-                        if isEditing {
-                            updateEmbed()
+                        if let post = post {
+                            if isEditing {
+                                updateEmbed()
+                            } else {
+                                addEmbed()
+                            }
                         } else {
-                            addEmbed()
+                            // Handling the temporary embed case
+                            let updatedEmbed = createNewEmbed()
+                            onEmbedUpdate?("", updatedEmbed)
                         }
                         dismiss()
                     }
@@ -276,7 +365,59 @@ struct EmbedFormView: View {
         }
     }
     
+    // Create a new embed based on current form state
+    private func createNewEmbed() -> Embed {
+        return Embed(
+            url: url,
+            type: embedType,
+            position: position,
+            title: embedType == .youtube ? youtubeTitle : linkMetadata.title,
+            embedDescription: linkMetadata.description,
+            imageUrl: linkMetadata.imageUrl,
+            imageData: linkMetadata.imageData
+        )
+    }
+    
+    // Update an existing temporary embed
+    private func updateTempEmbed() {
+        guard let existingEmbed = embed else { return }
+        
+        existingEmbed.url = url
+        existingEmbed.type = embedType.rawValue
+        existingEmbed.position = position.rawValue
+        
+        if embedType == .youtube && youtubeTitle != nil {
+            existingEmbed.title = youtubeTitle
+        } else if embedType == .link && linkMetadata.title != nil {
+            existingEmbed.title = linkMetadata.title
+            existingEmbed.embedDescription = linkMetadata.description
+            existingEmbed.imageUrl = linkMetadata.imageUrl
+            existingEmbed.imageData = linkMetadata.imageData
+        }
+    }
+    
+    // Create a new temporary embed
+    private func createTempEmbed() {
+        guard let existingEmbed = embed else { return }
+        
+        existingEmbed.url = url
+        existingEmbed.type = embedType.rawValue
+        existingEmbed.position = position.rawValue
+        
+        if embedType == .youtube {
+            existingEmbed.title = youtubeTitle
+        } else if embedType == .link {
+            existingEmbed.title = linkMetadata.title
+            existingEmbed.embedDescription = linkMetadata.description
+            existingEmbed.imageUrl = linkMetadata.imageUrl
+            existingEmbed.imageData = linkMetadata.imageData
+        }
+    }
+    
+    // Methods for working with SwiftData Post
     private func addEmbed() {
+        guard let post = post else { return }
+        
         // Create new embed
         let embed = Embed(
             url: url,
@@ -302,11 +443,7 @@ struct EmbedFormView: View {
     }
     
     private func updateEmbed() {
-        guard let existingEmbed = post.embed else { 
-            // If for some reason the embed is gone, create a new one instead
-            addEmbed()
-            return 
-        }
+        guard let post = post, let existingEmbed = post.embed else { return }
         
         // Check if this is a change in embed type or URL
         let isTypeChange = existingEmbed.embedType != embedType
@@ -383,6 +520,21 @@ struct EmbedFormView: View {
         let post = PreviewData.blogWithContent().posts[1]
         return EmbedFormView(post: post) { title in
             print("Update post title to: \(title)")
+        }
+    }
+    .modelContainer(PreviewData.previewContainer)
+}
+
+#Preview("New Temp Embed") {
+    let tempEmbed = Embed(
+        url: "",
+        type: .youtube,
+        position: .below
+    )
+    
+    return NavigationStack {
+        EmbedFormView(embed: tempEmbed) { title, updatedEmbed in
+            print("Title: \(title), Embed URL: \(updatedEmbed?.url ?? "none")")
         }
     }
     .modelContainer(PreviewData.previewContainer)

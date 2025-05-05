@@ -134,6 +134,32 @@ struct PreviewData {
         isDraft: true
     )
     
+    // PostDraft examples for previews with non-persistent data
+    static let postDraft = PostDraft(
+        title: "Draft Post Title",
+        content: "This is a draft post with **bold** and *italic* text that hasn't been saved yet.",
+        isDraft: false
+    )
+    
+    static let emptyPostDraft = PostDraft()
+    
+    // EmbedDraft examples for previews
+    static let embedDraft = EmbedDraft(
+        url: "https://www.youtube.com/watch?v=1234567890",
+        type: .youtube,
+        position: .below,
+        title: "Sample YouTube Video"
+    )
+    
+    static let linkEmbedDraft = EmbedDraft(
+        url: "https://apple.com",
+        type: .link,
+        position: .above,
+        title: "Apple",
+        embedDescription: "Apple Inc. is an American multinational technology company that designs, develops, and sells consumer electronics, computer software, and online services.",
+        imageUrl: "https://www.apple.com/ac/structured-data/images/open_graph_logo.png"
+    )
+    
     static let categoryWithDescription = Category(
         name: "Technology",
         categoryDescription: "Posts about technology and innovation"
