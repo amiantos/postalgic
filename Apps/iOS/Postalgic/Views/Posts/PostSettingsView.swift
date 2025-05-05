@@ -227,16 +227,12 @@ struct PostSettingsView: View {
                     }
                 }
             }
-            .navigationTitle(post.blog != nil ? "Edit Post" : "Create New Post")
+            .navigationTitle("Post Settings")
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
-                }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") {
+                    Button("Close") {
                         updatePost()
+                        dismiss()
                     }
                 }
             }
@@ -310,25 +306,4 @@ struct PostSettingsView: View {
         }
     }
 }
-//
-//#Preview("New Post") {
-//    let modelContainer = PreviewData.previewContainer
-//    
-//    return NavigationStack {
-//        // Fetch the first blog from the container to ensure it's properly in the context
-//        PostSettingsView(blog: try! modelContainer.mainContext.fetch(FetchDescriptor<Blog>()).first!)
-//    }
-//    .modelContainer(modelContainer)
-//}
-//
-//#Preview("Edit Post") {
-//    let modelContainer = PreviewData.previewContainer
-//    let blog = try! modelContainer.mainContext.fetch(FetchDescriptor<Blog>()).first!
-//    
-//    return NavigationStack {
-//        // Use the first post from the blog that's in the context
-//        PostSettingsView(post: blog.posts.first!)
-//    }
-//    .modelContainer(modelContainer)
-//}
-//
+

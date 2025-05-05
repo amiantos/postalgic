@@ -13,6 +13,8 @@ struct PostView: View {
     @State private var urlText: String = ""
     @State private var urlLink: String = ""
     
+    @State private var showingSettings: Bool = false
+    
     init(blog: Blog) {
         self.blog = blog
         self.post = Post(content: "", isDraft: true)
@@ -67,39 +69,39 @@ struct PostView: View {
                             dismiss()
                         }
                     }
-                    
-                    ToolbarItemGroup(placement: .confirmationAction) {
-                        Button("Save Draft") {
+                }
+                
+                ToolbarItemGroup(placement: .topBarTrailing) {
+                    Menu {
+                        Button {
+                            showingSettings = true
+                        } label: {
+                            Label("Post Settings", systemImage: "gear")
+                        }
+                        
+                        Divider()
+                        
+                        Button {
                             post.blog = blog
                             post.isDraft = true
                             dismiss()
+                        } label: {
+                            Label("Save Draft", systemImage: "text.page")
                         }
                         
-                        Button("Publish") {
-                            post.blog = blog
-                            post.isDraft = false
-                            dismiss()
-                        }
+                    } label: {
+                        Label("More", systemImage: "ellipsis.circle")
                     }
-                } else {
-                    ToolbarItemGroup(placement: .confirmationAction) {
-                        if post.isDraft {
-                            Button("Save Draft") {
-                                post.isDraft = true
-                                dismiss()
-                            }
-                            
-                            Button("Publish") {
-                                post.isDraft = false
-                                dismiss()
-                            }
-                        } else {
-                            Button("Close") {
-                                dismiss()
-                            }
-                        }
+                    
+                    Button("Publish") {
+                        post.blog = blog
+                        post.isDraft = false
+                        dismiss()
                     }
                 }
+            }
+            .sheet(isPresented: $showingSettings) {
+                PostSettingsView(post: post, blog: blog).interactiveDismissDisabled()
             }
         }
     }
