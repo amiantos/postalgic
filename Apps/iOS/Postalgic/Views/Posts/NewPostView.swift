@@ -5,7 +5,8 @@ import SwiftData
 struct NewPostView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
-    @State private var draft: PostDraft = PostDraft()
+    @State private var title: String = ""
+    @State private var content: String = ""
     @State private var showURLPrompt: Bool = false
     @State private var urlText: String = ""
     @State private var urlLink: String = ""
@@ -18,28 +19,26 @@ struct NewPostView: View {
     var blog: Blog
     
     private var hasContent: Bool {
-        return !draft.content.isEmpty || !(draft.title?.isEmpty ?? true)
+        return !content.isEmpty || !title.isEmpty
     }
     
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                TextField("Title (optional)", text: Binding(
-                    get: { draft.title ?? "" },
-                    set: { draft.title = $0.isEmpty ? nil : $0 }
-                ))
-                .font(.title)
-                .padding()
+                TextField("Title (optional)", text: $title)
+                    .font(.title)
+                    .padding()
                 
                 Divider()
                 
-                MarkdownTextEditor(text: $draft.content, 
+                MarkdownTextEditor(text: $content, 
                                   onShowLinkPrompt: {
                                       selectedText, selectedRange in
                                       self.handleShowLinkPrompt(selectedText: selectedText, selectedRange: selectedRange)
                                   })
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
+//            .ignoresSafeArea(.keyboard, edges: .bottom)
             .navigationTitle("New Post")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -77,7 +76,7 @@ struct NewPostView: View {
                     Button("Publish") {
                         saveAndPublish()
                     }
-                    .disabled(draft.content.isEmpty)
+                    .disabled(content.isEmpty)
                 }
             }
             .alert("Add Link", isPresented: $showURLPrompt) {
@@ -104,7 +103,9 @@ struct NewPostView: View {
                 Button("Continue Editing", role: .cancel) {}
             }
             .sheet(isPresented: $showingPostSettings) {
-                NewPostSettingsView(blog: blog, draft: $draft)
+                if let post = savedPost {
+                    PostFormView(post: post)
+                }
             }
             .sheet(isPresented: $showPublishView, onDismiss: {
                 dismiss()
@@ -163,20 +164,19 @@ struct NewPostView: View {
     }
     
     func savePost(isDraft: Bool) -> Post {
-        // Set the isDraft flag on our draft
-        draft.isDraft = isDraft
+        // Create a new post
+        let post = Post(
+            title: title.isEmpty ? nil : title,
+            content: content,
+            isDraft: isDraft
+        )
         
-        // Convert draft to a Post and save it
-        let post = draft.toPost()
-        
-        // Add to model context
+        // Add the post to the model context
         modelContext.insert(post)
         
         // Add to blog (this will ensure stub uniqueness)
         blog.posts.append(post)
-        post.blog = blog
         
-        // Return the created post
         return post
     }
     
@@ -201,7 +201,6 @@ struct MarkdownTextEditor: UIViewRepresentable {
         textView.isScrollEnabled = true
         textView.isEditable = true
         textView.text = text
-        textView.contentInset = UIEdgeInsets(top: 12, left: 12, bottom: 12, right: 12)
         textView.delegate = context.coordinator
         
         // Create and configure toolbar
