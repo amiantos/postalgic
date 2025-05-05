@@ -136,7 +136,7 @@ struct PostPreviewView: View {
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .padding(.horizontal)
         .sheet(isPresented: $showingEditSheet) {
-            PostView(post: post)
+            PostView(post: post).interactiveDismissDisabled()
         }
         .alert("Delete Post", isPresented: $showingDeleteAlert) {
             Button("Cancel", role: .cancel) {}
