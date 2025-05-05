@@ -575,7 +575,7 @@ final class SidebarObject {
     var content: String?
     
     // For link lists
-    @Relationship(deleteRule: .cascade)
+    @Relationship(deleteRule: .cascade, inverse: \LinkItem.sidebarObject)
     var links: [LinkItem] = []
     
     init(blog: Blog, title: String, type: SidebarObjectType, order: Int, createdAt: Date = Date()) {

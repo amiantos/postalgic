@@ -56,6 +56,7 @@ struct AddLinkListView: View {
         // Create a new link list with the next available order
         let nextOrder = blog.sidebarObjects.count
         let newSidebarObject = SidebarObject(blog: blog, title: title, type: .linkList, order: nextOrder)
+        modelContext.insert(newSidebarObject)
     }
 }
 
@@ -123,14 +124,15 @@ struct EditLinkListView: View {
                         for (offset, link) in itemsToMove.enumerated() {
                             link.order = newOffset + offset
                         }
+                        try? modelContext.save()
                     }
                     .onDelete { indexSet in
                         let sortedLinks = sidebarObject.links.sorted(by: { $0.order < $1.order })
                         let linksToDelete = indexSet.map { sortedLinks[$0] }
                         
                         for link in linksToDelete {
-                            sidebarObject.links.removeAll { $0.id == link.id }
                             modelContext.delete(link)
+                            try? modelContext.save()
                         }
                         
                         // Reorder remaining links
@@ -192,6 +194,8 @@ struct EditLinkListView: View {
     private func addNewLink(title: String, url: String) {
         let nextOrder = sidebarObject.links.count
         let newLink = LinkItem(sidebarObject: sidebarObject, title: title, url: url, order: nextOrder)
+        modelContext.insert(newLink)
+        try? modelContext.save()
     }
     
     private func saveLinkList() {
