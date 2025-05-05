@@ -82,7 +82,6 @@ struct SidebarManagementView: View {
                             let objectsToDelete = indexSet.map { sortedObjects[$0] }
                             
                             for object in objectsToDelete {
-                                blog.sidebarObjects.removeAll { $0.id == object.id }
                                 modelContext.delete(object)
                             }
                             

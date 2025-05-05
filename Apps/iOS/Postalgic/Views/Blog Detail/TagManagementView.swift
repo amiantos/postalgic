@@ -14,13 +14,22 @@ struct TagManagementView: View {
     
     var blog: Blog
     
-    @Query private var allTags: [Tag]
-    
-    private var tags: [Tag] {
-        return allTags.filter { $0.blog?.id == blog.id }
-    }
+    @Query(sort: \Tag.name) private var tags: [Tag]
     
     @State private var showingAddTag = false
+    
+    init(blog: Blog) {
+        self.blog = blog
+        
+        // Configure the query to fetch all tags for this blog (without sorting)
+        let id = blog.persistentModelID
+        let catPredicate = #Predicate<Tag> { tag in
+            tag.blog?.persistentModelID == id
+        }
+        
+        // Use a simple query without specific sorting
+        self._tags = Query(filter: catPredicate)
+    }
     
     var body: some View {
         NavigationStack {
@@ -64,12 +73,6 @@ struct TagManagementView: View {
         let sortedTags = tags.sorted { $0.name < $1.name }
         for index in offsets {
             let tagToDelete = sortedTags[index]
-            
-            // Remove this tag from any posts that use it
-            for post in tagToDelete.posts {
-                post.tags.removeAll { $0.id == tagToDelete.id }
-            }
-            
             modelContext.delete(tagToDelete)
         }
     }
@@ -129,9 +132,8 @@ struct AddTagView: View {
     
     private func saveTag() {
         let newTag = Tag(name: name)
-        modelContext.insert(newTag)
         newTag.blog = blog
-        blog.tags.append(newTag)
+        modelContext.insert(newTag)
     }
 }
 
@@ -190,7 +192,6 @@ struct EditTagView: View {
         // Ensure tag is associated with blog
         if tag.blog == nil {
             tag.blog = blog
-            blog.tags.append(tag)
         }
     }
 }

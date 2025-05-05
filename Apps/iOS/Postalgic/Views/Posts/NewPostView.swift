@@ -1,38 +1,78 @@
 import SwiftUI
 import UIKit
+import SwiftData
 
 struct NewPostView: View {
-    @State private var title: String = ""
-    @State private var content: String = ""
+    @Environment(\.modelContext) private var modelContext
+    @Environment(\.dismiss) private var dismiss
+    
+    let blog: Blog
+    @State private var post: Post
+    
     @State private var showURLPrompt: Bool = false
     @State private var urlText: String = ""
     @State private var urlLink: String = ""
     
+    init(blog: Blog) {
+        self.blog = blog
+        // Create a new post but don't assign it to the blog yet
+        self._post = State(initialValue: Post(content: "", isDraft: true))
+    }
+    
     var body: some View {
-        VStack(spacing: 0) {
-            TextField("Title (optional)", text: $title)
+        NavigationStack {
+            VStack(spacing: 0) {
+                TextField("Title (optional)", text: Binding(
+                    get: { post.title ?? "" },
+                    set: { post.title = $0.isEmpty ? nil : $0 }
+                ))
                 .font(.title)
                 .padding()
-            
-            Divider()
-            
-            MarkdownTextEditor(text: $content, 
-                              onShowLinkPrompt: {
-                                  selectedText, selectedRange in
-                                  self.handleShowLinkPrompt(selectedText: selectedText, selectedRange: selectedRange)
-                              })
+                
+                Divider()
+                
+                MarkdownTextEditor(text: Binding(
+                    get: { post.content },
+                    set: { post.content = $0 }
+                ), 
+                onShowLinkPrompt: {
+                    selectedText, selectedRange in
+                    self.handleShowLinkPrompt(selectedText: selectedText, selectedRange: selectedRange)
+                })
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-        }
-        .ignoresSafeArea(.keyboard, edges: .bottom)
-        .alert("Add Link", isPresented: $showURLPrompt) {
-            TextField("Text", text: $urlText)
-            TextField("URL", text: $urlLink)
-            Button("Cancel", role: .cancel) {}
-            Button("Add") {
-                insertLink()
             }
-        } message: {
-            Text("Enter link details")
+            .ignoresSafeArea(.keyboard, edges: .bottom)
+            .alert("Add Link", isPresented: $showURLPrompt) {
+                TextField("Text", text: $urlText)
+                TextField("URL", text: $urlLink)
+                Button("Cancel", role: .cancel) {}
+                Button("Add") {
+                    insertLink()
+                }
+            } message: {
+                Text("Enter link details")
+            }
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel", role: .destructive) {
+                        modelContext.delete(post)
+                        dismiss()
+                    }
+                }
+                
+                ToolbarItemGroup(placement: .confirmationAction) {
+                    Button("Save") {
+                        post.blog = blog
+                        dismiss()
+                    }
+                    
+                    Button("Publish") {
+                        post.blog = blog
+                        post.isDraft = false
+                        dismiss()
+                    }
+                }
+            }
         }
     }
     
@@ -237,5 +277,5 @@ struct MarkdownTextEditor: UIViewRepresentable {
 }
 
 #Preview {
-    NewPostView()
+    NewPostView(blog: PreviewData.blog)
 }

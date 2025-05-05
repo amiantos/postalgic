@@ -13,13 +13,21 @@ struct CategoryManagementView: View {
 
     var blog: Blog
 
-    @Query private var allCategories: [Category]
-
-    private var categories: [Category] {
-        return allCategories.filter { $0.blog?.id == blog.id }
-    }
-
+    @Query(sort: \Category.name) private var categories: [Category]
+    
     @State private var showingAddCategory = false
+    
+    init(blog: Blog) {
+        self.blog = blog
+        // Configure the query to fetch all categories for this blog (without sorting)
+        let id = blog.persistentModelID
+        let catPredicate = #Predicate<Category> { category in
+            category.blog?.persistentModelID == id
+        }
+        
+        // Use a simple query without specific sorting
+        self._categories = Query(filter: catPredicate)
+    }
 
     var body: some View {
         NavigationStack {
@@ -63,12 +71,6 @@ struct CategoryManagementView: View {
         let sortedCategories = categories.sorted { $0.name < $1.name }
         for index in offsets {
             let categoryToDelete = sortedCategories[index]
-
-            // Nullify category for any post that uses it
-            for post in categoryToDelete.posts {
-                post.category = nil
-            }
-
             modelContext.delete(categoryToDelete)
         }
     }
@@ -149,9 +151,8 @@ struct AddCategoryView: View {
             name: name,
             categoryDescription: description.isEmpty ? nil : description
         )
-        modelContext.insert(newCategory)
         newCategory.blog = blog
-        blog.categories.append(newCategory)
+        modelContext.insert(newCategory)
     }
 }
 
@@ -224,7 +225,6 @@ struct EditCategoryView: View {
         // Ensure category is associated with blog
         if category.blog == nil {
             category.blog = blog
-            blog.categories.append(category)
         }
     }
 }
