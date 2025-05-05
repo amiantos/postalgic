@@ -44,7 +44,6 @@
 		44C364242DB768DB0057567C /* BlogFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44C364132DB768DB0057567C /* BlogFormView.swift */; };
 		44C364252DB768DB0057567C /* BlogsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44C364142DB768DB0057567C /* BlogsView.swift */; };
 		44C364262DB768DB0057567C /* CategoryManagementView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44C364152DB768DB0057567C /* CategoryManagementView.swift */; };
-		44C364282DB768DB0057567C /* PostDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44C364172DB768DB0057567C /* PostDetailView.swift */; };
 		44C3642A2DB768DB0057567C /* PostFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44C364192DB768DB0057567C /* PostFormView.swift */; };
 		44C3642B2DB768DB0057567C /* PublishBlogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44C3641A2DB768DB0057567C /* PublishBlogView.swift */; };
 		44C3642C2DB768DB0057567C /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44C3641D2DB768DB0057567C /* Models.swift */; };
@@ -106,7 +105,6 @@
 		44C364132DB768DB0057567C /* BlogFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlogFormView.swift; sourceTree = "<group>"; };
 		44C364142DB768DB0057567C /* BlogsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlogsView.swift; sourceTree = "<group>"; };
 		44C364152DB768DB0057567C /* CategoryManagementView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CategoryManagementView.swift; sourceTree = "<group>"; };
-		44C364172DB768DB0057567C /* PostDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostDetailView.swift; sourceTree = "<group>"; };
 		44C364192DB768DB0057567C /* PostFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostFormView.swift; sourceTree = "<group>"; };
 		44C3641A2DB768DB0057567C /* PublishBlogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PublishBlogView.swift; sourceTree = "<group>"; };
 		44C3641C2DB768DB0057567C /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -220,7 +218,6 @@
 				44499E032DC80B3F00A9624B /* NewPostView.swift */,
 				44499DE12DC5CBC500A9624B /* PostPreviewView.swift */,
 				44499DE32DC5CD1E00A9624B /* PostsView.swift */,
-				44C364172DB768DB0057567C /* PostDetailView.swift */,
 				44C364192DB768DB0057567C /* PostFormView.swift */,
 				443F0B2B2DB8D47500034EF1 /* EmbedFormView.swift */,
 				443F0B2C2DB8D47500034EF1 /* EmbedView.swift */,
@@ -472,7 +469,6 @@
 				443F0B632DBB6B9600034EF1 /* TagManagementView.swift in Sources */,
 				44362F002DBF3D8200EA704F /* Utils+Extensions.swift in Sources */,
 				44362EDB2DBD826B00EA704F /* TemplateManager.swift in Sources */,
-				44C364282DB768DB0057567C /* PostDetailView.swift in Sources */,
 				44362E792DBC0AEE00EA704F /* FTPPublisher.swift in Sources */,
 				44C3642A2DB768DB0057567C /* PostFormView.swift in Sources */,
 				443F0B612DBB696600034EF1 /* HelpView.swift in Sources */,
