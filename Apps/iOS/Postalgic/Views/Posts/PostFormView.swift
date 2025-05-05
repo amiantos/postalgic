@@ -24,12 +24,12 @@ struct PostFormView: View {
     
     private var blogTags: [Tag] {
         guard let blogId = currentBlog?.id else { return [] }
-        return allTags.filter { $0.blog?.id == blogId }
+        return allTags.filter { $0.blog.id == blogId }
     }
     
     private var blogCategories: [Category] {
         guard let blogId = currentBlog?.id else { return [] }
-        return allCategories.filter { $0.blog?.id == blogId }
+        return allCategories.filter { $0.blog.id == blogId }
     }
     
     @State private var title: String
@@ -350,10 +350,8 @@ struct PostFormView: View {
                 }
             } else {
                 // Create new tag (always lowercase)
-                let newTag = Tag(name: trimmed)
+                let newTag = Tag(blog: blog, name: trimmed)
                 modelContext.insert(newTag)
-                newTag.blog = blog
-                blog.tags.append(newTag)
                 selectedTags.append(newTag)
             }
             tagInput = ""

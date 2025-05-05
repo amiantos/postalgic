@@ -55,8 +55,7 @@ struct AddLinkListView: View {
     private func saveLinkList() {
         // Create a new link list with the next available order
         let nextOrder = blog.sidebarObjects.count
-        let newSidebarObject = SidebarObject(title: title, type: .linkList, order: nextOrder)
-        newSidebarObject.blog = blog
+        let newSidebarObject = SidebarObject(blog: blog, title: title, type: .linkList, order: nextOrder)
     }
 }
 
@@ -192,8 +191,7 @@ struct EditLinkListView: View {
     
     private func addNewLink(title: String, url: String) {
         let nextOrder = sidebarObject.links.count
-        let newLink = LinkItem(title: title, url: url, order: nextOrder)
-        newLink.sidebarObject = sidebarObject
+        let newLink = LinkItem(sidebarObject: sidebarObject, title: title, url: url, order: nextOrder)
     }
     
     private func saveLinkList() {

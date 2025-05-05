@@ -52,9 +52,8 @@ struct AddTextBlockView: View {
     private func saveTextBlock() {
         // Create a new text block with the next available order
         let nextOrder = blog.sidebarObjects.count
-        let newSidebarObject = SidebarObject(title: title, type: .text, order: nextOrder)
+        let newSidebarObject = SidebarObject(blog: blog, title: title, type: .text, order: nextOrder)
         newSidebarObject.content = content
-        newSidebarObject.blog = blog
         blog.sidebarObjects.append(newSidebarObject)
     }
 }

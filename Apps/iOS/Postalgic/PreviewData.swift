@@ -40,23 +40,15 @@ struct PreviewData {
         
         // Add categories
         let categories = [
-            Category(name: "Technology", categoryDescription: "Latest tech news and reviews"),
-            Category(name: "Programming", categoryDescription: "Coding tutorials and tips"),
-            Category(name: "Design", categoryDescription: "UI/UX design principles")
+            Category(blog: blog, name: "Technology", categoryDescription: "Latest tech news and reviews"),
+            Category(blog: blog, name: "Programming", categoryDescription: "Coding tutorials and tips"),
+            Category(blog: blog, name: "Design", categoryDescription: "UI/UX design principles")
         ]
-        categories.forEach { category in
-            category.blog = blog
-            blog.categories.append(category)
-        }
         
         // Add tags
         let tags = ["swift", "ios", "swiftui", "development", "mobile"].map { tagName in
-            let tag = Tag(name: tagName)
-            tag.blog = blog
-            return tag
+            return Tag(blog: blog, name: tagName)
         }
-        
-        tags.forEach { blog.tags.append($0) }
         
         // Add posts
         let posts = [
@@ -78,19 +70,16 @@ struct PreviewData {
         // Add post relationships
         for (index, post) in posts.enumerated() {
             post.blog = blog
-            blog.posts.append(post)
             
             // Add category to some posts
             if index < categories.count {
                 post.category = categories[index]
-                categories[index].posts.append(post)
             }
             
             // Add some tags to each post
             for i in 0..<min(3, tags.count) {
                 let tagIndex = (index + i) % tags.count
                 post.tags.append(tags[tagIndex])
-                tags[tagIndex].posts.append(post)
             }
             
             // Add embed to first post
@@ -101,8 +90,6 @@ struct PreviewData {
                     type: .youtube,
                     position: .below
                 )
-                embed.post = post
-                post.embed = embed
             }
             
             // Add embed to second post
@@ -115,8 +102,6 @@ struct PreviewData {
                     title: "Apple",
                     embedDescription: "Apple Inc. is an American multinational technology company that designs, develops, and sells consumer electronics, computer software, and online services."
                 )
-                embed.post = post
-                post.embed = embed
             }
         }
         
@@ -137,13 +122,14 @@ struct PreviewData {
     )
     
     static let categoryWithDescription = Category(
+        blog: blog,
         name: "Technology",
         categoryDescription: "Posts about technology and innovation"
     )
     
-    static let category = Category(name: "Programming")
+    static let category = Category(blog: blog, name: "Programming")
     
-    static let tag = Tag(name: "swift")
+    static let tag = Tag(blog: blog, name: "swift")
     
     static let youtubeEmbed = Embed(
         post: post,
@@ -197,12 +183,8 @@ struct PreviewData {
             // Add 3 categories with proper relationships
             let categoryNames = ["Technology", "Programming", "Design"]
             let categories = categoryNames.map { name -> Category in
-                let category = Category(name: name, categoryDescription: "Description for \(name.lowercased())")
+                let category = Category(blog: blog, name: name, categoryDescription: "Description for \(name.lowercased())")
                 context.insert(category)
-                
-                // Set up bi-directional relationship
-                category.blog = blog
-                blog.categories.append(category)
                 
                 return category
             }
@@ -210,13 +192,8 @@ struct PreviewData {
             // Add tags
             let tagNames = ["swift", "ios", "swiftui"]
             let tags = tagNames.map { name -> Tag in
-                let tag = Tag(name: name)
+                let tag = Tag(blog: blog, name: name)
                 context.insert(tag)
-                
-                // Set up bi-directional relationship
-                tag.blog = blog
-                blog.tags.append(tag)
-                
                 return tag
             }
             

@@ -204,22 +204,17 @@ final class Category {
     var createdAt: Date
     var stub: String?
 
-    var blog: Blog? {
-        didSet {
-            // Ensure stub uniqueness when a category is assigned to a blog
-            if let blog = blog, let stub = stub {
-                self.stub = blog.uniqueCategoryStub(stub)
-            }
-        }
-    }
+    var blog: Blog
     var posts: [Post] = []
 
     init(
+        blog: Blog,
         name: String,
         categoryDescription: String? = nil,
         createdAt: Date = Date(),
         stub: String? = nil
     ) {
+        self.blog = blog
         self.name = name.capitalized
         self.categoryDescription = categoryDescription
         self.createdAt = createdAt
@@ -247,17 +242,11 @@ final class Tag {
     var createdAt: Date
     var stub: String?
 
-    var blog: Blog? {
-        didSet {
-            // Ensure stub uniqueness when a tag is assigned to a blog
-            if let blog = blog, let stub = stub {
-                self.stub = blog.uniqueTagStub(stub)
-            }
-        }
-    }
+    var blog: Blog
     var posts: [Post] = []
 
-    init(name: String, createdAt: Date = Date(), stub: String? = nil) {
+    init(blog: Blog, name: String, createdAt: Date = Date(), stub: String? = nil) {
+        self.blog = blog
         self.name = name.lowercased()
         self.createdAt = createdAt
         self.stub = stub
@@ -290,6 +279,8 @@ enum EmbedPosition: String, Codable {
 
 @Model
 final class Embed {
+    var post: Post
+    
     var url: String
     var type: String // EmbedType.rawValue
     var position: String // EmbedPosition.rawValue
@@ -300,8 +291,6 @@ final class Embed {
     var embedDescription: String?
     var imageUrl: String? // Remote URL for the image
     var imageData: Data? // Actual image data stored in the database
-    
-    var post: Post
     
     init(
         post: Post,
@@ -380,6 +369,15 @@ final class Embed {
 
 @Model
 final class Post {
+    var blog: Blog? {
+        didSet {
+            // Ensure stub uniqueness when a post is assigned to a blog
+            if let blog = blog, let stub = stub {
+                self.stub = blog.uniquePostStub(stub)
+            }
+        }
+    }
+    
     var title: String? {
         didSet {
             updateStub()
@@ -394,15 +392,6 @@ final class Post {
     var stub: String?
 
     var isDraft: Bool = false
-
-    var blog: Blog? {
-        didSet {
-            // Ensure stub uniqueness when a post is assigned to a blog
-            if let blog = blog, let stub = stub {
-                self.stub = blog.uniquePostStub(stub)
-            }
-        }
-    }
     
     /// Updates the stub based on current title or content
     private func updateStub() {
@@ -575,6 +564,8 @@ enum SidebarObjectType: String, Codable {
 
 @Model
 final class SidebarObject {
+    var blog: Blog
+    
     var title: String
     var type: String // SidebarObjectType.rawValue
     var order: Int
@@ -587,9 +578,8 @@ final class SidebarObject {
     @Relationship(deleteRule: .cascade)
     var links: [LinkItem] = []
     
-    var blog: Blog?
-    
-    init(title: String, type: SidebarObjectType, order: Int, createdAt: Date = Date()) {
+    init(blog: Blog, title: String, type: SidebarObjectType, order: Int, createdAt: Date = Date()) {
+        self.blog = blog
         self.title = title
         self.type = type.rawValue
         self.order = order
@@ -641,14 +631,15 @@ final class SidebarObject {
 
 @Model
 final class LinkItem {
+    var sidebarObject: SidebarObject
+    
     var title: String
     var url: String
     var order: Int
     var createdAt: Date
     
-    var sidebarObject: SidebarObject?
-    
-    init(title: String, url: String, order: Int, createdAt: Date = Date()) {
+    init(sidebarObject: SidebarObject, title: String, url: String, order: Int, createdAt: Date = Date()) {
+        self.sidebarObject = sidebarObject
         self.title = title
         self.url = url
         self.order = order
