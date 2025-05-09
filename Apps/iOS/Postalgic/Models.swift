@@ -204,7 +204,7 @@ final class Category {
     var createdAt: Date
     var stub: String?
 
-    var blog: Blog
+    var blog: Blog?
     var posts: [Post] = []
 
     init(
@@ -242,7 +242,7 @@ final class Tag {
     var createdAt: Date
     var stub: String?
 
-    var blog: Blog
+    var blog: Blog?
     var posts: [Post] = []
 
     init(blog: Blog, name: String, createdAt: Date = Date(), stub: String? = nil) {
@@ -279,7 +279,7 @@ enum EmbedPosition: String, Codable {
 
 @Model
 final class Embed {
-    var post: Post
+    var post: Post?
     
     var url: String
     var type: String // EmbedType.rawValue
@@ -564,7 +564,7 @@ enum SidebarObjectType: String, Codable {
 
 @Model
 final class SidebarObject {
-    var blog: Blog
+    var blog: Blog?
     
     var title: String
     var type: String // SidebarObjectType.rawValue
@@ -631,7 +631,7 @@ final class SidebarObject {
 
 @Model
 final class LinkItem {
-    var sidebarObject: SidebarObject
+    var sidebarObject: SidebarObject?
     
     var title: String
     var url: String

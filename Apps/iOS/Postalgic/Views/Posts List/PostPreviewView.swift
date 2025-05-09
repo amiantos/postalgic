@@ -152,7 +152,6 @@ struct PostPreviewView: View {
 
     private func deletePost() {
         modelContext.delete(post)
-        try? modelContext.save()
     }
 
     private func sharePost() {

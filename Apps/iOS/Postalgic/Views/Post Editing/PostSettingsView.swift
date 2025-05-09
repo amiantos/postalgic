@@ -17,11 +17,11 @@ struct PostSettingsView: View {
     var post: Post
     
     private var blogTags: [Tag] {
-        return allTags.filter { $0.blog.id == blog.id }
+        return allTags.filter { $0.blog?.id == blog.id }
     }
     
     private var blogCategories: [Category] {
-        return allCategories.filter { $0.blog.id == blog.id }
+        return allCategories.filter { $0.blog?.id == blog.id }
     }
     
     @State private var tagInput = ""
@@ -263,6 +263,7 @@ struct PostSettingsView: View {
                 // Create new tag (always lowercase)
                 let newTag = Tag(blog: blog, name: trimmed)
                 modelContext.insert(newTag)
+                blog.tags.append(newTag)
                 selectedTags.append(newTag)
             }
             tagInput = ""

@@ -296,6 +296,7 @@ struct EmbedFormView: View {
         
         // Insert embed into model context
         modelContext.insert(embed)
+        post.embed = embed
     }
     
     private func updateEmbed() {
@@ -324,6 +325,7 @@ struct EmbedFormView: View {
             )
             
             modelContext.insert(newEmbed)
+            post.embed = newEmbed
             
             // If changing to Link type and we have metadata, add it
             if embedType == .link && linkMetadata != (nil, nil, nil, nil) {

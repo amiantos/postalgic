@@ -81,7 +81,11 @@ struct PostView: View {
                         Divider()
                         
                         Button {
-                            post.blog = blog
+                            if post.blog == nil {
+                                post.blog = blog
+                                modelContext.insert(post)
+                                blog.posts.append(post)
+                            }
                             post.isDraft = true
                             dismiss()
                         } label: {
@@ -93,7 +97,11 @@ struct PostView: View {
                     }
                     
                     Button("Publish") {
-                        post.blog = blog
+                        if post.blog == nil {
+                            post.blog = blog
+                            modelContext.insert(post)
+                            blog.posts.append(post)
+                        }
                         post.isDraft = false
                         dismiss()
                     }

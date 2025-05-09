@@ -22,7 +22,7 @@ struct CategoryManagementView: View {
         // Configure the query to fetch all categories for this blog (without sorting)
         let id = blog.persistentModelID
         let catPredicate = #Predicate<Category> { category in
-            category.blog.persistentModelID == id
+            category.blog?.persistentModelID == id
         }
         
         // Use a simple query without specific sorting

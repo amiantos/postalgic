@@ -24,7 +24,7 @@ struct TagManagementView: View {
         // Configure the query to fetch all tags for this blog (without sorting)
         let id = blog.persistentModelID
         let catPredicate = #Predicate<Tag> { tag in
-            tag.blog.persistentModelID == id
+            tag.blog?.persistentModelID == id
         }
         
         // Use a simple query without specific sorting
