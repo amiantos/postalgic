@@ -11,17 +11,13 @@ import SwiftData
 struct SidebarManagementView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
-    
+
     @Bindable var blog: Blog
-    
-    @State private var isAddingObject = false
-    @State private var sidebarObjectType: SidebarObjectType = .text  {
-        didSet {
-            isAddingObject = true
-        }
-    }
+
+    @State private var isAddingTextBlock = false
+    @State private var isAddingLinkList = false
     @State private var showingAlert = false
-    
+
     @ViewBuilder
     private func objectDestination(for object: SidebarObject) -> some View {
         if object.objectType == .text {
@@ -30,7 +26,7 @@ struct SidebarManagementView: View {
             EditLinkListView(sidebarObject: object, blog: blog)
         }
     }
-    
+
     var body: some View {
         NavigationStack {
             List {
@@ -49,20 +45,20 @@ struct SidebarManagementView: View {
                         .onMove { indices, newOffset in
                             let sortedObjects = blog.sidebarObjects.sorted(by: { $0.order < $1.order })
                             let objects = Array(sortedObjects)
-                            
+
                             // Get the items to move
                             var itemsToMove = [SidebarObject]()
                             for index in indices {
                                 itemsToMove.append(objects[index])
                             }
-                            
+
                             // Update the order property of each item
                             for (i, object) in objects.enumerated() {
                                 if indices.contains(i) {
                                     // Skip the items we're moving
                                     continue
                                 }
-                                
+
                                 if i < newOffset {
                                     // Items before the insertion point
                                     object.order = i
@@ -71,7 +67,7 @@ struct SidebarManagementView: View {
                                     object.order = i + itemsToMove.count
                                 }
                             }
-                            
+
                             // Update the order of the moved items
                             for (offset, object) in itemsToMove.enumerated() {
                                 object.order = newOffset + offset
@@ -80,11 +76,11 @@ struct SidebarManagementView: View {
                         .onDelete { indexSet in
                             let sortedObjects = blog.sidebarObjects.sorted(by: { $0.order < $1.order })
                             let objectsToDelete = indexSet.map { sortedObjects[$0] }
-                            
+
                             for object in objectsToDelete {
                                 modelContext.delete(object)
                             }
-                            
+
                             // Reorder remaining objects
                             let remainingObjects = blog.sidebarObjects.sorted(by: { $0.order < $1.order })
                             for (i, object) in remainingObjects.enumerated() {
@@ -109,14 +105,13 @@ struct SidebarManagementView: View {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Menu {
                         Button {
-                            sidebarObjectType = .text
-                            
+                            isAddingTextBlock = true
                         } label: {
                             Label("Add Text Block", systemImage: "doc.text")
                         }
-                        
+
                         Button {
-                            sidebarObjectType = .linkList
+                            isAddingLinkList = true
                         } label: {
                             Label("Add Link List", systemImage: "link")
                         }
@@ -125,12 +120,11 @@ struct SidebarManagementView: View {
                     }
                 }
             }
-            .sheet(isPresented: $isAddingObject) {
-                if sidebarObjectType == .text {
-                    AddTextBlockView(blog: blog).interactiveDismissDisabled()
-                } else {
-                    AddLinkListView(blog: blog).interactiveDismissDisabled()
-                }
+            .sheet(isPresented: $isAddingTextBlock) {
+                AddTextBlockView(blog: blog).interactiveDismissDisabled()
+            }
+            .sheet(isPresented: $isAddingLinkList) {
+                AddLinkListView(blog: blog).interactiveDismissDisabled()
             }
         }
     }
