@@ -153,6 +153,7 @@ struct AddCategoryView: View {
             categoryDescription: description.isEmpty ? nil : description
         )
         modelContext.insert(newCategory)
+        blog.categories.append(newCategory)
     }
 }
 

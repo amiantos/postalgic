@@ -133,6 +133,7 @@ struct AddTagView: View {
     private func saveTag() {
         let newTag = Tag(blog: blog, name: name)
         modelContext.insert(newTag)
+        blog.tags.append(newTag)
     }
 }
 
@@ -187,11 +188,6 @@ struct EditTagView: View {
     
     private func saveTag() {
         tag.name = name.lowercased()
-        
-        // Ensure tag is associated with blog
-        if tag.blog == nil {
-            tag.blog = blog
-        }
     }
 }
 
