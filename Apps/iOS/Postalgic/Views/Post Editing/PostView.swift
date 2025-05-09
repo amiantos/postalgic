@@ -69,10 +69,8 @@ struct PostView: View {
                         }
                     }
                     
-                    Button {
+                    Button("Settings") {
                         showingSettings = true
-                    } label: {
-                        Label("Post Settings", systemImage: "gear")
                     }
                 }
                 
