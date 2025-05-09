@@ -58,45 +58,37 @@ struct PostView: View {
             } message: {
                 Text("Enter link details")
             }
-            .navigationTitle(post.blog == nil ? "New Post" : "Edit Post")
+//            .navigationTitle(post.blog == nil ? "New Post" : "Edit Post")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                if post.blog == nil {
-                    ToolbarItem(placement: .cancellationAction) {
+                ToolbarItemGroup(placement: .topBarLeading) {
+                    if post.blog == nil {
                         Button("Cancel", role: .destructive) {
                             modelContext.delete(post)
                             dismiss()
                         }
                     }
+                    
+                    Button {
+                        showingSettings = true
+                    } label: {
+                        Label("Post Settings", systemImage: "gear")
+                    }
                 }
                 
                 ToolbarItemGroup(placement: .topBarTrailing) {
-                    Menu {
-                        Button {
-                            showingSettings = true
-                        } label: {
-                            Label("Post Settings", systemImage: "gear")
+                    Button(post.isDraft ? post.blog == nil ? "Save" : "Close" : "Save as Draft") {
+                        if post.blog == nil {
+                            post.blog = blog
+                            modelContext.insert(post)
+                            blog.posts.append(post)
                         }
-                        
-                        Divider()
-                        
-                        Button {
-                            if post.blog == nil {
-                                post.blog = blog
-                                modelContext.insert(post)
-                                blog.posts.append(post)
-                            }
-                            post.isDraft = true
-                            dismiss()
-                        } label: {
-                            Label("Save Draft", systemImage: "text.page")
-                        }
-                        
-                    } label: {
-                        Label("More", systemImage: "ellipsis.circle")
+                        post.isDraft = true
+                        dismiss()
                     }
                     
-                    Button("Publish") {
+                    
+                    Button(post.isDraft ? "Publish" : "Close") {
                         if post.blog == nil {
                             post.blog = blog
                             modelContext.insert(post)
