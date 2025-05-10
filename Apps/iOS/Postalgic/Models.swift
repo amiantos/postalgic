@@ -542,13 +542,18 @@ final class Post {
         return formatter.string(from: createdAt)
     }
     
+    var dateTimeUrlPath: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy/MM/dd/HHmmss"
+        return formatter.string(from: createdAt)
+    }
+    
     /// Returns the full URL path including stub if available
     var urlPath: String {
-        let basePath = dateUrlPath
         if let stub = stub, !stub.isEmpty {
-            return "\(basePath)/\(stub)"
+            return "\(dateUrlPath)/\(stub)"
         }
-        return basePath
+        return dateTimeUrlPath
     }
     
     var plainContent: String {
