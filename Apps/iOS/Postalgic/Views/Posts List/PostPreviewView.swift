@@ -22,22 +22,24 @@ struct PostPreviewView: View {
                 .font(.footnote)
                 .foregroundColor(.secondary)
                 .padding(.top, 3)
-
-            Text(post.displayTitle)
-                .font(.headline)
-                .foregroundColor(.primary)
-                .lineLimit(3)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.top, 6)
+            
+            if post.title != nil {
+                Text(post.displayTitle)
+                    .font(.headline)
+                    .foregroundColor(.primary)
+                    .lineLimit(3)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.top, 6)
+            }
             
             if let embed = post.embed, embed.embedPosition == .above {
                 EmbedView(embed: embed)
                     .padding(.top, 6)
             }
 
-            Text(post.plainContent).multilineTextAlignment(
+            Text(LocalizedStringKey(post.content)).multilineTextAlignment(
                 .leading
-            ).lineLimit(3).font(.subheadline).padding(.top, 6)
+            ).font(.subheadline).padding(.top, 6)
             
             if let embed = post.embed, embed.embedPosition == .below {
                 EmbedView(embed: embed)
