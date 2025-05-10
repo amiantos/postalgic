@@ -37,9 +37,11 @@ struct PostPreviewView: View {
                     .padding(.top, 6)
             }
 
-            Text(LocalizedStringKey(post.content)).multilineTextAlignment(
-                .leading
-            ).font(.subheadline).padding(.top, 6)
+            if !post.content.isEmpty {
+                Text(LocalizedStringKey(post.content)).multilineTextAlignment(
+                    .leading
+                ).font(.subheadline).padding(.top, 6)
+            }
             
             if let embed = post.embed, embed.embedPosition == .below {
                 EmbedView(embed: embed)
