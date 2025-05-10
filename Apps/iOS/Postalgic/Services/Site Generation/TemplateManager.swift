@@ -1014,20 +1014,54 @@ class TemplateManager {
             border-radius: 8px;
         }
 
+        /* Style for the single image display to keep consistency with galleries */
+        .embed.image-embed.single-image {
+            position: relative;
+            width: 100%;
+            padding-bottom: 75%; /* 4:3 aspect ratio to match gallery */
+            overflow: hidden;
+        }
+
+        .embed.image-embed.single-image a {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .embed.image-embed.single-image img.embed-image {
+            max-height: 100%;
+            max-width: 100%;
+            object-fit: contain;
+        }
+
         .gallery-container {
             position: relative;
             width: 100%;
+            /* Create fixed aspect ratio container using padding-bottom technique */
+            padding-bottom: 75%; /* 4:3 aspect ratio (75% = 3/4) */
+            overflow: hidden;
         }
 
         .gallery-slide {
             display: none;
             text-align: center;
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
         }
 
         .gallery-slide img {
-            max-width: 100%;
-            max-height: 500px;
-            object-fit: contain;
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            object-fit: contain; /* Maintains aspect ratio while fitting in the container */
+            top: 0;
+            left: 0;
         }
 
         .gallery-nav {
