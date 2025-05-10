@@ -7,28 +7,27 @@
 
 import SwiftData
 import SwiftUI
+import WebKit
 
 struct AccentColorCustomizationView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
-    
+
     var blog: Blog
-    
+
     @State private var accentColor: Color
     @State private var colorHex: String
-    
-    // Sample text for previewing
-    private let sampleText = "This is what text looks like on your blog, and this is a link to demonstrate how it looks."
-    
+    @State private var htmlPreview: String = ""
+
     init(blog: Blog) {
         self.blog = blog
-        
+
         // Initialize with the blog's accent color or the default
         let colorString = blog.accentColor ?? "#FFA100"
         _colorHex = State(initialValue: colorString)
         _accentColor = State(initialValue: Color(hex: colorString) ?? .orange)
     }
-    
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 20) {
@@ -37,8 +36,9 @@ struct AccentColorCustomizationView: View {
                     .padding()
                     .onChange(of: accentColor) { _, newValue in
                         colorHex = newValue.toHex() ?? "#FFA100"
+                        updatePreviewHTML()
                     }
-                
+
                 // Hex code input
                 HStack {
                     Text("Hex Color: ")
@@ -49,42 +49,32 @@ struct AccentColorCustomizationView: View {
                             // Only update the color picker if the hex is valid
                             if let color = Color(hex: newValue) {
                                 accentColor = color
+                                updatePreviewHTML()
                             }
                         }
                 }
                 .padding()
-                
+
                 Divider()
-                
-                // Preview section
-                VStack(alignment: .leading, spacing: 15) {
+
+                // Preview section with WebView
+                VStack(alignment: .leading) {
                     Text("Preview")
                         .font(.headline)
-                    
-                    // Header separator preview
-                    Text("Header Separator:")
-                        .font(.subheadline)
-                    
-                    headerSeparatorPreview
-                        .frame(height: 28)
-                        .padding(.vertical, 5)
-                    
-                    // Link preview
-                    Text("Link Style:")
-                        .font(.subheadline)
-                    
-                    Text(sampleText)
-                        .environment(\.openURL, OpenURLAction { url in
-                            return .handled
-                        })
+                        .padding(.horizontal)
+
+                    WebView(htmlString: htmlPreview)
+                        .frame(height: 400)
+                        .cornerRadius(10)
+                        .padding(.horizontal)
                 }
-                .padding()
-                .background(Color(hex: "#efefef") ?? .gray.opacity(0.1))
-                .cornerRadius(10)
-                
+
                 Spacer()
             }
-            .padding()
+            .padding(.vertical)
+            .onAppear {
+                updatePreviewHTML()
+            }
             .navigationTitle("Customize Accent Color")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -93,7 +83,7 @@ struct AccentColorCustomizationView: View {
                         dismiss()
                     }
                 }
-                
+
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
                         saveAccentColor()
@@ -102,30 +92,86 @@ struct AccentColorCustomizationView: View {
             }
         }
     }
-    
-    // Custom view for the wavy header separator preview
-    private var headerSeparatorPreview: some View {
-        GeometryReader { geometry in
-            ZStack {
-                // Wavy line pattern background
-                Rectangle()
-                    .fill(Color(hex: "#efefef") ?? Color.gray.opacity(0.1))
-                    .frame(height: 28)
-                
-                // This represents the wavy line but with accent color
-                Rectangle()
-                    .fill(accentColor)
-                    .frame(height: 28)
-                    .mask(
-                        Image(systemName: "waveform")
-                            .resizable()
-                            .scaledToFit()
-                            .padding(.horizontal)
-                    )
-            }
-        }
+
+    // Generate HTML preview with current accent color
+    private func updatePreviewHTML() {
+        htmlPreview = """
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <style>
+                :root {
+                    --primary-color: #4a5568;
+                    --accent-color: \(colorHex);
+                    --background-color: #efefef;
+                    --text-color: #2d3748;
+                    --light-gray: #dedede;
+                    --medium-gray: #a0aec0;
+                    --category-color: \(colorHex);
+                }
+
+                body {
+                    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+                    background-color: var(--background-color);
+                    color: var(--text-color);
+                    padding: 20px;
+                    line-height: 1.6;
+                }
+
+                a {
+                    color: var(--accent-color);
+                    text-decoration: none;
+                }
+
+                .header-separator {
+                    height: 28px;
+                    width: 100%;
+                    background-color: var(--accent-color);
+                    --mask:
+                      radial-gradient(10.96px at 50% calc(100% + 5.6px),#0000 calc(99% - 4px),#000 calc(101% - 4px) 99%,#0000 101%) calc(50% - 14px) calc(50% - 5.5px + .5px)/28px 11px repeat-x,
+                      radial-gradient(10.96px at 50% -5.6px,#0000 calc(99% - 4px),#000 calc(101% - 4px) 99%,#0000 101%) 50% calc(50% + 5.5px)/28px 11px repeat-x;
+                    -webkit-mask: var(--mask);
+                    mask: var(--mask);
+                    margin: 15px 0;
+                }
+
+                .category a {
+                    display: inline-block;
+                    color: white;
+                    background-color: var(--category-color);
+                    border: 1px solid var(--category-color);
+                    padding: 3px 8px;
+                    border-radius: 1em;
+                    font-size: 0.8em;
+                }
+
+                .section {
+                    margin-bottom: 20px;
+                }
+
+                h3 {
+                    margin-bottom: 8px;
+                    color: var(--primary-color);
+                }
+            </style>
+        </head>
+        <body>
+            <div class="section">
+                <h3>Separator</h3>
+                <div class="header-separator"></div>
+            </div>
+
+            <div class="section">
+                <h3>Text with Link</h3>
+                <p>This is regular text on your blog, and <a href="#">this is a link</a> to demonstrate how the accent color looks.</p>
+                    <div class="category"><a href="#">Category Name</a></div>
+            </div>
+        </body>
+        </html>
+        """
     }
-    
+
     // Save the selected accent color to the blog model
     private func saveAccentColor() {
         blog.accentColor = colorHex
@@ -134,34 +180,51 @@ struct AccentColorCustomizationView: View {
     }
 }
 
+// WebView for rendering HTML preview
+struct WebView: UIViewRepresentable {
+    let htmlString: String
+
+    func makeUIView(context: Context) -> WKWebView {
+        let webView = WKWebView()
+        webView.isOpaque = false
+        webView.backgroundColor = UIColor.clear
+        webView.scrollView.backgroundColor = UIColor.clear
+        return webView
+    }
+
+    func updateUIView(_ webView: WKWebView, context: Context) {
+        webView.loadHTMLString(htmlString, baseURL: nil)
+    }
+}
+
 // Helper extensions for color conversion
 extension Color {
     init?(hex: String) {
         var hexString = hex.trimmingCharacters(in: .whitespacesAndNewlines)
         hexString = hexString.replacingOccurrences(of: "#", with: "")
-        
+
         var rgb: UInt64 = 0
-        
+
         guard Scanner(string: hexString).scanHexInt64(&rgb) else {
             return nil
         }
-        
+
         let r = Double((rgb & 0xFF0000) >> 16) / 255.0
         let g = Double((rgb & 0x00FF00) >> 8) / 255.0
         let b = Double(rgb & 0x0000FF) / 255.0
-        
+
         self.init(red: r, green: g, blue: b)
     }
-    
+
     func toHex() -> String? {
         guard let components = UIColor(self).cgColor.components else {
             return nil
         }
-        
+
         let r = Float(components[0])
         let g = Float(components[1])
         let b = Float(components[2])
-        
+
         return String(format: "#%02lX%02lX%02lX", lroundf(r * 255), lroundf(g * 255), lroundf(b * 255))
     }
 }
