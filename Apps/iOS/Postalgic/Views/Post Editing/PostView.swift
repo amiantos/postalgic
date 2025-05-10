@@ -85,6 +85,10 @@ struct PostView: View {
                             blog.posts.append(post)
                         }
                         post.isDraft = true
+                        // Ensure stub is generated even for drafts
+                        if !post.content.isEmpty || (post.title != nil && !post.title!.isEmpty) {
+                            post.regenerateStub()
+                        }
                         dismiss()
                     }
                     

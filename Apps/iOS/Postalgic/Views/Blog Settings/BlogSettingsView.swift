@@ -38,7 +38,7 @@ struct BlogSettingsView: View {
                             Image(systemName: "chevron.right").foregroundColor(.secondary)
                         }
                     }
-                    
+
                     Button(action: { showingSidebarManagement = true }) {
                         HStack {
                             Label("Sidebar Management", systemImage: "sidebar.right")
@@ -46,7 +46,7 @@ struct BlogSettingsView: View {
                             Image(systemName: "chevron.right").foregroundColor(.secondary)
                         }
                     }
-                    
+
                     Button(action: { showingTemplateCustomizationView = true }) {
                         HStack {
                             Label("Templates", systemImage: "richtext.page")
@@ -56,6 +56,19 @@ struct BlogSettingsView: View {
                     }
                 } header: {
                     Text("General")
+                }
+
+                Section {
+                    Button(action: { showingStubMigrationAlert = true }) {
+                        HStack {
+                            Label("Regenerate URL Stubs", systemImage: "link.badge.plus")
+                            Spacer()
+                        }
+                    }
+                } header: {
+                    Text("Maintenance")
+                } footer: {
+                    Text("If some posts are not getting proper URL stubs when generating your site, use this option to regenerate all URL stubs.")
                 }
 
                 Section {
@@ -117,24 +130,24 @@ struct BlogSettingsView: View {
                 "This will permanently delete the blog '\(blog.name)' and all its posts.\n\nTo confirm, type 'delete' in the field below."
             )
         }
-        .alert("Generate URL Stubs", isPresented: $showingStubMigrationAlert) {
+        .alert("Regenerate URL Stubs", isPresented: $showingStubMigrationAlert) {
             Button("Cancel", role: .cancel) {}
-            
-            Button("Generate") {
+
+            Button("Regenerate") {
                 migrateStubs()
             }
         } message: {
-            Text("This will generate URL-friendly stubs for all posts, categories, and tags that don't have them yet. These stubs will be used in URLs for your blog posts and navigation.")
+            Text("This will regenerate URL-friendly stubs for all posts and create stubs for any categories or tags that don't have them. This is useful if you're having issues with posts not having proper URLs when generating your site.")
         }
         .alert("Stubs Generated", isPresented: $showingStubMigrationSuccessAlert) {
             Button("OK", role: .cancel) {}
         } message: {
             let total = migratedStubCounts.posts + migratedStubCounts.categories + migratedStubCounts.tags
-            
+
             if total > 0 {
-                return Text("Successfully generated \(total) URL stubs:\n• \(migratedStubCounts.posts) post stubs\n• \(migratedStubCounts.categories) category stubs\n• \(migratedStubCounts.tags) tag stubs")
+                return Text("Successfully processed \(total) URL stubs:\n• Regenerated \(migratedStubCounts.posts) post stubs\n• Generated \(migratedStubCounts.categories) missing category stubs\n• Generated \(migratedStubCounts.tags) missing tag stubs")
             } else {
-                return Text("No stubs needed to be generated. All content already has URL stubs.")
+                return Text("No content found requiring URL stubs.")
             }
         }
     }
@@ -155,27 +168,14 @@ struct BlogSettingsView: View {
         var postsUpdated = 0
         var categoriesUpdated = 0
         var tagsUpdated = 0
-        
-        // Generate stubs for posts
+
+        // Force regenerate stubs for all posts (not just the ones without stubs)
         for post in blog.posts {
-            if post.stub == nil || post.stub!.isEmpty {
-                // Determine source text for stub
-                let sourceText: String
-                if let title = post.title, !title.isEmpty {
-                    sourceText = title
-                } else {
-                    // Use content with markdown stripped
-                    // Access the private method using the existing function on Post
-                    sourceText = post.displayTitle
-                }
-                
-                // Generate stub and ensure uniqueness
-                let generatedStub = Utils.generateStub(from: sourceText)
-                post.stub = blog.uniquePostStub(generatedStub)
-                postsUpdated += 1
-            }
+            // Force regeneration of stub regardless of current status
+            post.regenerateStub()
+            postsUpdated += 1
         }
-        
+
         // Generate stubs for categories
         for category in blog.categories {
             if category.stub == nil || category.stub!.isEmpty {
@@ -184,7 +184,7 @@ struct BlogSettingsView: View {
                 categoriesUpdated += 1
             }
         }
-        
+
         // Generate stubs for tags
         for tag in blog.tags {
             if tag.stub == nil || tag.stub!.isEmpty {
@@ -193,10 +193,10 @@ struct BlogSettingsView: View {
                 tagsUpdated += 1
             }
         }
-        
+
         // Save changes
         try? modelContext.save()
-        
+
         // Update counts for display in success alert
         migratedStubCounts = (postsUpdated, categoriesUpdated, tagsUpdated)
         showingStubMigrationSuccessAlert = true

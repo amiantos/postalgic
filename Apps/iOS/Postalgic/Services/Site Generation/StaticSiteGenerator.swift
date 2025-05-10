@@ -446,6 +446,11 @@ class StaticSiteGenerator {
 
         let publishedPosts = blog.posts.filter { !$0.isDraft }
         for post in publishedPosts {
+            // Ensure post has a stub before generating pages
+            if post.stub == nil || post.stub!.isEmpty {
+                post.regenerateStub()
+            }
+
             // Create directory structure based on post's urlPath
             let postPath = post.urlPath
             let postDirectory = siteDirectory.appendingPathComponent(postPath)
@@ -453,10 +458,10 @@ class StaticSiteGenerator {
                 at: postDirectory,
                 withIntermediateDirectories: true
             )
-            
+
             // Generate the post content
             let postFilePath = postDirectory.appendingPathComponent("index.html")
-            
+
             do {
                 let postContent = try templateEngine.renderPostPage(post: post)
                 try postContent.write(

@@ -126,33 +126,49 @@ final class Blog {
     func usedPostStubs() -> [String] {
         return posts.compactMap { $0.stub }
     }
-    
+
+    /// Returns all used post stubs in this blog except for the specified post
+    /// - Parameter except: Post to exclude from the stubs list
+    /// - Returns: Array of post stub strings
+    func usedPostStubs(except: Post) -> [String] {
+        return posts.filter { $0.id != except.id }.compactMap { $0.stub }
+    }
+
     /// Returns all used category stubs in this blog
     /// - Returns: Array of category stub strings
     func usedCategoryStubs() -> [String] {
         return categories.compactMap { $0.stub }
     }
-    
+
     /// Returns all used tag stubs in this blog
     /// - Returns: Array of tag stub strings
     func usedTagStubs() -> [String] {
         return tags.compactMap { $0.stub }
     }
-    
+
     /// Ensures a post stub is unique within this blog
     /// - Parameter stub: The stub to make unique
     /// - Returns: A unique stub for the post
     func uniquePostStub(_ stub: String) -> String {
         return Utils.makeStubUnique(stub: stub, existingStubs: usedPostStubs())
     }
-    
+
+    /// Ensures a post stub is unique within this blog, excluding the specified post
+    /// - Parameters:
+    ///   - stub: The stub to make unique
+    ///   - except: Post to exclude from the uniqueness check
+    /// - Returns: A unique stub for the post
+    func uniquePostStub(_ stub: String, except: Post) -> String {
+        return Utils.makeStubUnique(stub: stub, existingStubs: usedPostStubs(except: except))
+    }
+
     /// Ensures a category stub is unique within this blog
     /// - Parameter stub: The stub to make unique
     /// - Returns: A unique stub for the category
     func uniqueCategoryStub(_ stub: String) -> String {
         return Utils.makeStubUnique(stub: stub, existingStubs: usedCategoryStubs())
     }
-    
+
     /// Ensures a tag stub is unique within this blog
     /// - Parameter stub: The stub to make unique
     /// - Returns: A unique stub for the tag
@@ -464,22 +480,26 @@ final class Post {
     private func updateStub() {
         // Don't regenerate stub if we're in the middle of being initialized
         // This is a workaround for when SwiftData is restoring objects from persistence
-        guard !content.isEmpty else { return }
-        
+        guard !content.isEmpty || (title != nil && !title!.isEmpty) else { return }
+
         let sourceText: String
-        
+
         if let title = title, !title.isEmpty {
             sourceText = title
-        } else {
+        } else if !content.isEmpty {
             // Use the content, but strip Markdown formatting first
             sourceText = stripMarkdown(from: content)
+        } else {
+            // This should not happen due to the guard above, but providing a fallback
+            sourceText = "post-\(Int(Date().timeIntervalSince1970))"
         }
-        
+
         let newStub = Utils.generateStub(from: sourceText)
-        
+
         // Always generate a new stub, even if the current one is nil
         if let blog = blog {
-            self.stub = blog.uniquePostStub(newStub)
+            // Use the method that excludes this post from uniqueness check
+            self.stub = blog.uniquePostStub(newStub, except: self)
         } else {
             self.stub = newStub
         }

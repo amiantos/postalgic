@@ -42,6 +42,189 @@ class TemplateManager {
             <link rel="stylesheet" href="/css/style.css">
             <link rel="alternate" type="application/rss+xml" title="{{blogName}} RSS Feed" href="/rss.xml">
             {{{customHead}}}
+            <script>
+            // Gallery functionality for image embeds
+            function initGallery(galleryId) {
+                const gallery = document.getElementById(galleryId);
+                if (!gallery) return;
+
+                const slides = gallery.querySelectorAll('.gallery-slide');
+                const dots = gallery.querySelectorAll('.gallery-dot');
+
+                // Initialize the first slide
+                showSlide(galleryId, 0);
+
+                // Add active class to first dot
+                if (dots.length > 0) {
+                    dots[0].classList.add('active');
+                }
+            }
+
+            function showSlide(galleryId, slideIndex) {
+                const gallery = document.getElementById(galleryId);
+                if (!gallery) return;
+
+                const slides = gallery.querySelectorAll('.gallery-slide');
+                const dots = gallery.querySelectorAll('.gallery-dot');
+
+                // Hide all slides
+                for (let i = 0; i < slides.length; i++) {
+                    slides[i].style.display = 'none';
+                    if (dots[i]) dots[i].classList.remove('active');
+                }
+
+                // Show the selected slide and activate dot
+                slides[slideIndex].style.display = 'block';
+                if (dots[slideIndex]) dots[slideIndex].classList.add('active');
+            }
+
+            function nextSlide(galleryId) {
+                const gallery = document.getElementById(galleryId);
+                if (!gallery) return;
+
+                const slides = gallery.querySelectorAll('.gallery-slide');
+                const dots = gallery.querySelectorAll('.gallery-dot');
+
+                // Find active slide
+                let activeIndex = 0;
+                for (let i = 0; i < slides.length; i++) {
+                    if (slides[i].style.display === 'block') {
+                        activeIndex = i;
+                        break;
+                    }
+                }
+
+                // Calculate next slide index
+                const nextIndex = (activeIndex + 1) % slides.length;
+                showSlide(galleryId, nextIndex);
+            }
+
+            function prevSlide(galleryId) {
+                const gallery = document.getElementById(galleryId);
+                if (!gallery) return;
+
+                const slides = gallery.querySelectorAll('.gallery-slide');
+                const dots = gallery.querySelectorAll('.gallery-dot');
+
+                // Find active slide
+                let activeIndex = 0;
+                for (let i = 0; i < slides.length; i++) {
+                    if (slides[i].style.display === 'block') {
+                        activeIndex = i;
+                        break;
+                    }
+                }
+
+                // Calculate previous slide index
+                const prevIndex = (activeIndex - 1 + slides.length) % slides.length;
+                showSlide(galleryId, prevIndex);
+            }
+
+            // Lightbox functionality
+            document.addEventListener('DOMContentLoaded', function() {
+                // Initialize lightbox
+                const lightbox = document.createElement('div');
+                lightbox.id = 'lightbox';
+                lightbox.innerHTML = `
+                    <div class="lightbox-content">
+                        <button class="lightbox-close">&times;</button>
+                        <div class="lightbox-image-container">
+                            <img id="lightbox-image" src="" alt="Lightbox image">
+                        </div>
+                        <div class="lightbox-nav">
+                            <button class="lightbox-prev">❮</button>
+                            <button class="lightbox-next">❯</button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(lightbox);
+
+                // Track current image group and index
+                let currentGroup = '';
+                let currentIndex = 0;
+                let groupImages = [];
+
+                // Handle lightbox trigger clicks
+                document.querySelectorAll('.lightbox-trigger').forEach(trigger => {
+                    trigger.addEventListener('click', function(e) {
+                        e.preventDefault();
+
+                        // Get the image group and build the array of images in this group
+                        const group = this.getAttribute('data-lightbox');
+                        groupImages = Array.from(document.querySelectorAll(`[data-lightbox="${group}"]`));
+                        currentGroup = group;
+                        currentIndex = groupImages.indexOf(this);
+
+                        // Show the lightbox with the selected image
+                        openLightbox(this.getAttribute('href'), this.getAttribute('data-title'));
+                    });
+                });
+
+                // Close lightbox when clicking the close button or outside the image
+                document.querySelector('.lightbox-close').addEventListener('click', closeLightbox);
+                lightbox.addEventListener('click', function(e) {
+                    if (e.target === lightbox) {
+                        closeLightbox();
+                    }
+                });
+
+                // Navigation buttons
+                document.querySelector('.lightbox-prev').addEventListener('click', function() {
+                    if (groupImages.length <= 1) return;
+
+                    currentIndex = (currentIndex - 1 + groupImages.length) % groupImages.length;
+                    const prevTrigger = groupImages[currentIndex];
+                    openLightbox(prevTrigger.getAttribute('href'), prevTrigger.getAttribute('data-title'));
+                });
+
+                document.querySelector('.lightbox-next').addEventListener('click', function() {
+                    if (groupImages.length <= 1) return;
+
+                    currentIndex = (currentIndex + 1) % groupImages.length;
+                    const nextTrigger = groupImages[currentIndex];
+                    openLightbox(nextTrigger.getAttribute('href'), nextTrigger.getAttribute('data-title'));
+                });
+
+                // Keyboard navigation
+                document.addEventListener('keydown', function(e) {
+                    if (!lightbox.classList.contains('active')) return;
+
+                    if (e.key === 'Escape') {
+                        closeLightbox();
+                    } else if (e.key === 'ArrowLeft') {
+                        document.querySelector('.lightbox-prev').click();
+                    } else if (e.key === 'ArrowRight') {
+                        document.querySelector('.lightbox-next').click();
+                    }
+                });
+
+                // Helper functions
+                function openLightbox(imageSrc, imageTitle) {
+                    const lightboxImage = document.getElementById('lightbox-image');
+                    lightboxImage.src = imageSrc;
+                    lightboxImage.alt = imageTitle || 'Image';
+
+                    // Show/hide navigation based on group size
+                    const navButtons = document.querySelectorAll('.lightbox-nav button');
+                    navButtons.forEach(btn => {
+                        btn.style.display = groupImages.length > 1 ? 'block' : 'none';
+                    });
+
+                    lightbox.classList.add('active');
+                    document.body.style.overflow = 'hidden'; // Prevent scrolling when lightbox is open
+                }
+
+                function closeLightbox() {
+                    lightbox.classList.remove('active');
+                    document.body.style.overflow = '';
+                }
+
+                // Initialize all galleries on the page
+                document.querySelectorAll('[id^="gallery-"]').forEach(gallery => {
+                    initGallery(gallery.id);
+                });
+            });
+            </script>
         </head>
         <body>
             <div class="container">
