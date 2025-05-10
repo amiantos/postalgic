@@ -21,6 +21,7 @@ struct BlogSettingsView: View {
     @State private var showingSidebarManagement = false
     @State private var showingPublishSettingsView = false
     @State private var showingTemplateCustomizationView = false
+    @State private var showingAccentColorCustomization = false
     @State private var showingDeleteAlert = false
     @State private var deleteConfirmationText = ""
     @State private var showingStubMigrationAlert = false
@@ -50,6 +51,14 @@ struct BlogSettingsView: View {
                     Button(action: { showingTemplateCustomizationView = true }) {
                         HStack {
                             Label("Templates", systemImage: "richtext.page")
+                            Spacer()
+                            Image(systemName: "chevron.right").foregroundColor(.secondary)
+                        }
+                    }
+
+                    Button(action: { showingAccentColorCustomization = true }) {
+                        HStack {
+                            Label("Customize Accent Color", systemImage: "paintpalette")
                             Spacer()
                             Image(systemName: "chevron.right").foregroundColor(.secondary)
                         }
@@ -108,6 +117,9 @@ struct BlogSettingsView: View {
         }
         .sheet(isPresented: $showingSidebarManagement) {
             SidebarManagementView(blog: blog)
+        }
+        .sheet(isPresented: $showingAccentColorCustomization) {
+            AccentColorCustomizationView(blog: blog)
         }
         .alert("Delete Blog", isPresented: $showingDeleteAlert) {
             TextField("Type 'delete' to confirm", text: $deleteConfirmationText)

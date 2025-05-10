@@ -42,23 +42,26 @@ final class Blog {
     var name: String
     var url: String
     var createdAt: Date
-    
+
     // Blog metadata
     var authorName: String?
     var authorUrl: String?
     var authorEmail: String?
     var tagline: String?
-    
+
+    // Blog appearance
+    var accentColor: String?
+
     // Publisher Type
     var publisherType: String?
-    
+
     // AWS Configuration
     var awsRegion: String?
     var awsS3Bucket: String?
     var awsCloudFrontDistId: String?
     var awsAccessKeyId: String?
     var awsSecretAccessKey: String?
-    
+
     // FTP Configuration
     var ftpHost: String?
     var ftpPort: Int?
@@ -89,7 +92,7 @@ final class Blog {
     @Relationship(deleteRule: .cascade, inverse: \SidebarObject.blog)
     var sidebarObjects: [SidebarObject] = []
 
-    init(name: String, url: String, createdAt: Date = Date(), authorName: String? = nil, authorEmail: String? = nil, authorUrl: String? = nil, tagline: String? = nil) {
+    init(name: String, url: String, createdAt: Date = Date(), authorName: String? = nil, authorEmail: String? = nil, authorUrl: String? = nil, tagline: String? = nil, accentColor: String? = "#FFA100") {
         self.name = name
         self.url = url
         self.createdAt = createdAt
@@ -97,6 +100,7 @@ final class Blog {
         self.authorEmail = authorEmail
         self.authorUrl = authorUrl
         self.tagline = tagline
+        self.accentColor = accentColor
         self.publisherType = PublisherType.none.rawValue
     }
 
