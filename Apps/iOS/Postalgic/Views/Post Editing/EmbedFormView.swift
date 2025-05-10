@@ -37,13 +37,18 @@ struct EmbedFormView: View {
     init(post: Post, onTitleUpdate: ((String) -> Void)? = nil) {
         self.post = post
         self.onTitleUpdate = onTitleUpdate
-        
+
         if let embed = post.embed {
             // Initialize with existing embed values for editing
             _url = State(initialValue: embed.url)
             _embedType = State(initialValue: embed.embedType)
             _position = State(initialValue: embed.embedPosition)
             _isEditing = State(initialValue: true)
+
+            // Load existing images if it's an image embed
+            if embed.embedType == .image {
+                // We'll load the images in the onAppear modifier
+            }
         }
     }
     
@@ -185,7 +190,11 @@ struct EmbedFormView: View {
                                                 .overlay(
                                                     Button(action: {
                                                         selectedImageData.remove(at: index)
-                                                        selectedItems.remove(at: index)
+                                                        // Only remove from selectedItems if it's within bounds
+                                                        // (since we might have loaded images without corresponding PhotosPickerItems)
+                                                        if index < selectedItems.count {
+                                                            selectedItems.remove(at: index)
+                                                        }
                                                     }) {
                                                         Image(systemName: "xmark.circle.fill")
                                                             .foregroundColor(.white)
@@ -368,6 +377,25 @@ struct EmbedFormView: View {
                 }
             }
         }
+        .onAppear {
+            // Load existing images if editing an image embed
+            if isEditing && post.embed?.embedType == .image {
+                loadExistingImages()
+            }
+        }
+    }
+
+    /// Loads existing images from an image embed for editing
+    private func loadExistingImages() {
+        guard let embed = post.embed, embed.embedType == .image else { return }
+
+        // Sort images by order
+        let sortedImages = embed.images.sorted { $0.order < $1.order }
+
+        // Load image data
+        selectedImageData = sortedImages.map { $0.imageData }
+
+        print("📱 Loaded \(selectedImageData.count) existing images for editing")
     }
     
     private func addEmbed() {
