@@ -290,7 +290,7 @@ final class Embed {
     var title: String?
     var embedDescription: String?
     var imageUrl: String? // Remote URL for the image
-    var imageData: Data? // Actual image data stored in the database
+    @Attribute(.externalStorage) var imageData: Data? // Actual image data stored in the database
     
     init(
         post: Post,

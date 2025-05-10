@@ -184,6 +184,13 @@ struct BlogDashboardView: View {
             .padding(.vertical)
         }
         .navigationTitle(blog.name)
+//        .toolbar {
+//            ToolbarItemGroup(placement: .primaryAction) {
+//                Menu("More", systemImage: "ellipsis.circle") {
+//                    
+//                }
+//            }
+//        }
         .sheet(isPresented: $showingPostForm) {
             PostView(blog: blog).interactiveDismissDisabled()
         }

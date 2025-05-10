@@ -68,13 +68,15 @@ struct PostView: View {
                             dismiss()
                         }
                     }
-                    
-                    Button("Settings") {
-                        showingSettings = true
-                    }
                 }
                 
                 ToolbarItemGroup(placement: .topBarTrailing) {
+                    Button {
+                        showingSettings = true
+                    } label: {
+                        Label("Settings", systemImage: "gear")
+                    }
+                    
                     Button(post.isDraft ? post.blog == nil ? "Save" : "Close" : "Save as Draft") {
                         if post.blog == nil {
                             post.blog = blog
