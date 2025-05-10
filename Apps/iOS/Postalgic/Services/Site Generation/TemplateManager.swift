@@ -1014,27 +1014,23 @@ class TemplateManager {
             border-radius: 8px;
         }
 
-        /* Style for the single image display to keep consistency with galleries */
+        /* Style for the single image display - full width */
         .embed.image-embed.single-image {
-            position: relative;
             width: 100%;
-            padding-bottom: 75%; /* 4:3 aspect ratio to match gallery */
-            overflow: hidden;
+            margin: 20px 0;
+            text-align: center;
         }
 
         .embed.image-embed.single-image a {
-            position: absolute;
+            display: block;
             width: 100%;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
         }
 
         .embed.image-embed.single-image img.embed-image {
-            max-height: 100%;
             max-width: 100%;
-            object-fit: contain;
+            height: auto;
+            display: inline-block;
+            margin: 0 auto;
         }
 
         .gallery-container {
