@@ -38,10 +38,19 @@ class TemplateManager {
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>{{pageTitle}}</title>
-            <!-- Use custom meta description for posts, fallback to blog tagline for other pages -->
-            {{^customHead}}
+            <!-- Meta tags: custom for posts, default for other pages -->
+            {{^hasCustomMeta}}
             <meta name="description" content="{{#blogTagline}}{{blogTagline}}{{/blogTagline}}{{^blogTagline}}Posts from {{blogName}}{{/blogTagline}}">
-            {{/customHead}}
+            <meta property="og:title" content="{{pageTitle}}">
+            <meta property="og:description" content="{{#blogTagline}}{{blogTagline}}{{/blogTagline}}{{^blogTagline}}Posts from {{blogName}}{{/blogTagline}}">
+            <meta property="og:type" content="website">
+            <meta property="og:url" content="{{blogUrl}}">
+
+            <meta property="twitter:card" content="summary">
+            <meta property="twitter:title" content="{{pageTitle}}">
+            <meta property="twitter:description" content="{{#blogTagline}}{{blogTagline}}{{/blogTagline}}{{^blogTagline}}Posts from {{blogName}}{{/blogTagline}}">
+            {{/hasCustomMeta}}
+
             <link rel="stylesheet" href="/css/style.css">
             <link rel="alternate" type="application/rss+xml" title="{{blogName}} RSS Feed" href="/rss.xml">
             {{{customHead}}}

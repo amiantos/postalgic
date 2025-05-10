@@ -86,15 +86,17 @@ class TemplateEngine {
     ///   - content: The HTML content to include in the layout
     ///   - pageTitle: The title for the page
     ///   - customHead: Optional custom HTML to include in the head section
+    ///   - hasCustomMeta: Indicates if the page has custom meta tags
     /// - Returns: The complete HTML page
     /// - Throws: Error if rendering fails
-    func renderLayout(content: String, pageTitle: String, customHead: String = "") throws -> String {
+    func renderLayout(content: String, pageTitle: String, customHead: String = "", hasCustomMeta: Bool = false) throws -> String {
         let layoutTemplate = try templateManager.getTemplate(for: "layout")
 
         var context = createBaseContext()
         context["content"] = content
         context["pageTitle"] = pageTitle
         context["customHead"] = customHead
+        context["hasCustomMeta"] = hasCustomMeta
 
         // Generate sidebar content
         let sidebarContent = generateSidebarContent()
@@ -164,15 +166,39 @@ class TemplateEngine {
             ? String(plainContent.prefix(157)) + "..."
             : plainContent
 
-        // Create custom meta tag for post description
+        // Clean the content and title for safe HTML use
+        let escapedDescription = metaDescription
+            .replacingOccurrences(of: "\"", with: "&quot;")
+            .replacingOccurrences(of: "<", with: "&lt;")
+            .replacingOccurrences(of: ">", with: "&gt;")
+
+        let escapedTitle = displayTitle
+            .replacingOccurrences(of: "\"", with: "&quot;")
+            .replacingOccurrences(of: "<", with: "&lt;")
+            .replacingOccurrences(of: ">", with: "&gt;")
+
+        // Get the full URL for the post
+        let postUrl = "\(blog.url)/\(post.urlPath)"
+
+        // Create comprehensive meta tags for SEO and social sharing
         let customHead = """
-        <meta name="description" content="\(metaDescription.replacingOccurrences(of: "\"", with: "&quot;"))">
-        <meta property="og:title" content="\(displayTitle.replacingOccurrences(of: "\"", with: "&quot;"))">
-        <meta property="og:description" content="\(metaDescription.replacingOccurrences(of: "\"", with: "&quot;"))">
+        <!-- Primary Meta Tags -->
+        <meta name="description" content="\(escapedDescription)">
+
+        <!-- Open Graph / Facebook -->
         <meta property="og:type" content="article">
+        <meta property="og:url" content="\(postUrl)">
+        <meta property="og:title" content="\(escapedTitle)">
+        <meta property="og:description" content="\(escapedDescription)">
+
+        <!-- Twitter -->
+        <meta property="twitter:card" content="summary_large_image">
+        <meta property="twitter:url" content="\(postUrl)">
+        <meta property="twitter:title" content="\(escapedTitle)">
+        <meta property="twitter:description" content="\(escapedDescription)">
         """
 
-        return try renderLayout(content: content, pageTitle: pageTitle, customHead: customHead)
+        return try renderLayout(content: content, pageTitle: pageTitle, customHead: customHead, hasCustomMeta: true)
     }
     
     /// Renders the archives page
