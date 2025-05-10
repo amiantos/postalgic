@@ -141,27 +141,38 @@ class TemplateEngine {
     /// - Throws: Error if rendering fails
     func renderPostPage(post: Post) throws -> String {
         let postTemplate = try templateManager.getTemplate(for: "post")
-        
+
         var context = createBaseContext()
         let postData = TemplateDataConverter.convert(post: post, blog: blog, inList: false)
-        
+
         // Merge the post data into the context
         for (key, value) in postData {
             context[key] = value
         }
-        
+
         let content = postTemplate.render(context, library: templateManager.getLibrary())
-        
-        // We need to extract these values for the page title
-        let hasTitle = post.title?.isEmpty == false
+
+        // Use the displayTitle for the page title, which already handles fallback logic
         let displayTitle = post.displayTitle
-        let formattedDate = post.formattedDate
-        
-        let pageTitle = hasTitle 
-            ? "\(displayTitle) - \(blog.name)" 
-            : "\(formattedDate) - \(blog.name)"
-        
-        return try renderLayout(content: content, pageTitle: pageTitle)
+
+        // Always use displayTitle for the page title
+        let pageTitle = "\(displayTitle) - \(blog.name)"
+
+        // Create a post-specific meta description
+        let plainContent = post.plainContent
+        let metaDescription = plainContent.count > 160
+            ? String(plainContent.prefix(157)) + "..."
+            : plainContent
+
+        // Create custom meta tag for post description
+        let customHead = """
+        <meta name="description" content="\(metaDescription.replacingOccurrences(of: "\"", with: "&quot;"))">
+        <meta property="og:title" content="\(displayTitle.replacingOccurrences(of: "\"", with: "&quot;"))">
+        <meta property="og:description" content="\(metaDescription.replacingOccurrences(of: "\"", with: "&quot;"))">
+        <meta property="og:type" content="article">
+        """
+
+        return try renderLayout(content: content, pageTitle: pageTitle, customHead: customHead)
     }
     
     /// Renders the archives page
