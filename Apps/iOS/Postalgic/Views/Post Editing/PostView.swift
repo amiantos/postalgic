@@ -96,6 +96,7 @@ struct PostView: View {
                             blog.posts.append(post)
                         }
                         post.isDraft = false
+                        post.regenerateStub()
                         showingPublishView = true
                     }
                 }

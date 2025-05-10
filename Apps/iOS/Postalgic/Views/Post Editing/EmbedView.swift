@@ -260,7 +260,7 @@ struct ImageEmbedView: View {
                     HStack(spacing: 8) {
                         ForEach(0..<sortedImages.count, id: \.self) { index in
                             Circle()
-                                .fill(index == currentImageIndex ? Color.blue : Color.gray.opacity(0.5))
+                                .fill(index == currentImageIndex ? Color.accentColor : Color.gray.opacity(0.5))
                                 .frame(width: 8, height: 8)
                                 .onTapGesture {
                                     withAnimation {

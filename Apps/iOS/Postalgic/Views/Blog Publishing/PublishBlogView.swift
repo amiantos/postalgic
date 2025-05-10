@@ -309,7 +309,7 @@ struct PublishBlogView: View {
             }
             .alert("Site Generated", isPresented: $showingSuccessAlert) {
                 Button("OK", role: .cancel) {
-                    if autoPublish {
+                    if autoPublish && generatedZipURL == nil {
                         dismiss()
                     }
                 }

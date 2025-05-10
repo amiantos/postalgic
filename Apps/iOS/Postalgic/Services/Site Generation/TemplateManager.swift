@@ -246,7 +246,8 @@ class TemplateManager {
          * 9. Embeds & Media
          * 10. Typography Elements
          * 11. Footer
-         * 12. Responsive Styles
+         * 12. Lightbox
+         * 13. Responsive Styles
          */
 
         /* ==========================================
@@ -644,7 +645,6 @@ class TemplateManager {
            ========================================== */
         .embed {
             margin: 1.5em 0;
-            border-radius: 8px;
             overflow: hidden;
         }
 
@@ -653,6 +653,7 @@ class TemplateManager {
             padding-bottom: 56.25%; /* 16:9 ratio */
             height: 0;
             overflow: hidden;
+            border-radius: 8px;
         }
 
         .youtube-embed iframe {
@@ -744,9 +745,151 @@ class TemplateManager {
             width: 100%;
             border-top: 1px solid var(--light-gray);
         }
+        
+        /* ==========================================
+           12. Lightbox
+           ========================================== */
+        
+        #lightbox {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            overflow: hidden;
+        }
+
+        #lightbox.active {
+            display: flex;
+        }
+
+        .lightbox-content {
+            position: relative;
+            max-width: 90%;
+            max-height: 90%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .lightbox-image-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #lightbox-image {
+            max-width: 100%;
+            max-height: 80vh;
+            object-fit: contain;
+        }
+
+        .lightbox-close {
+            position: absolute;
+            top: -40px;
+            right: 0;
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 30px;
+            cursor: pointer;
+            z-index: 1001;
+        }
+
+        .lightbox-nav {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+
+        .lightbox-prev, .lightbox-next {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            font-size: 24px;
+            padding: 10px 15px;
+            border-radius: 50%;
+            cursor: pointer;
+            margin: 0 20px;
+        }
+
+        /* Image gallery styles */
+        .embed.image-embed {
+            margin: 20px 0;
+        }
+
+        .embed.image-embed img.embed-image {
+            max-width: 100%;
+            height: auto;
+            cursor: pointer;
+            border-radius: 8px;
+        }
+
+        .gallery-container {
+            position: relative;
+            width: 100%;
+        }
+
+        .gallery-slide {
+            display: none;
+            text-align: center;
+        }
+
+        .gallery-slide img {
+            max-width: 100%;
+            max-height: 500px;
+            object-fit: contain;
+        }
+
+        .gallery-nav {
+            display: flex;
+            justify-content: space-between;
+            position: absolute;
+            top: 50%;
+            width: 100%;
+            transform: translateY(-50%);
+            z-index: 1;
+        }
+
+        .gallery-prev, .gallery-next {
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            font-size: 18px;
+            cursor: pointer;
+            margin: 0 10px;
+        }
+
+        .gallery-dots {
+            display: flex;
+            justify-content: center;
+            margin-top: 10px;
+        }
+
+        .gallery-dot {
+            width: 10px;
+            height: 10px;
+            margin: 0 5px;
+            background-color: #bbb;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .gallery-dot.active {
+            background-color: var(--accent-color);
+        }
 
         /* ==========================================
-           12. Responsive Styles
+           13. Responsive Styles
            ========================================== */
         /* Desktop (> 900px) */
         @media (min-width: 901px) {
