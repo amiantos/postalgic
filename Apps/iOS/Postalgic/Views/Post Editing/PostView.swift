@@ -5,21 +5,22 @@ import SwiftData
 struct PostView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
-    
+
     let blog: Blog
     @State private var post: Post
-    
+
     @State private var showURLPrompt: Bool = false
     @State private var urlText: String = ""
     @State private var urlLink: String = ""
-    
+
     @State private var showingSettings: Bool = false
-    
+    @State private var showingPublishView: Bool = false
+
     init(blog: Blog) {
         self.blog = blog
         self.post = Post(content: "", isDraft: true)
     }
-    
+
     init(post: Post) {
         guard let blog = post.blog else { fatalError("Cannot init this view with a post with no blog associated with it")}
         self.blog = blog
@@ -77,7 +78,7 @@ struct PostView: View {
                         Label("Settings", systemImage: "gear")
                     }
                     
-                    Button(post.isDraft ? post.blog == nil ? "Save" : "Close" : "Save as Draft") {
+                    Button("Save as Draft") {
                         if post.blog == nil {
                             post.blog = blog
                             modelContext.insert(post)
@@ -88,19 +89,25 @@ struct PostView: View {
                     }
                     
                     
-                    Button(post.isDraft ? "Publish" : "Close") {
+                    Button("Publish") {
                         if post.blog == nil {
                             post.blog = blog
                             modelContext.insert(post)
                             blog.posts.append(post)
                         }
                         post.isDraft = false
-                        dismiss()
+                        showingPublishView = true
                     }
                 }
             }
             .sheet(isPresented: $showingSettings) {
                 PostSettingsView(post: post, blog: blog).interactiveDismissDisabled()
+            }
+            .sheet(isPresented: $showingPublishView, onDismiss: {
+                // Dismiss the PostView when the PublishBlogView is dismissed
+                dismiss()
+            }) {
+                PublishBlogView(blog: blog, autoPublish: true)
             }
         }
     }
