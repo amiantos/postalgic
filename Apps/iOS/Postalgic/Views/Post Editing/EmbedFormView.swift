@@ -361,7 +361,10 @@ struct EmbedFormView: View {
                         }
                         dismiss()
                     }
-                    .disabled(url.isEmpty || isLoading)
+                    .disabled((embedType != .image && url.isEmpty) ||
+                             (embedType == .image && selectedImageData.isEmpty) ||
+                             isLoading ||
+                             isProcessingImages)
                 }
             }
         }
