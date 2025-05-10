@@ -427,7 +427,7 @@ class TemplateManager {
         
         // Default CSS style
         defaultTemplates["css"] = """
-        /* 
+        /*
          * Blog/Website Theme CSS
          * Table of Contents:
          * 1. CSS Variables & Reset
@@ -451,21 +451,21 @@ class TemplateManager {
         :root {
             /* Colors */
             --primary-color: #4a5568;
-            --accent-color: #FFA100;
+            --accent-color: {{accentColor}};
             --background-color: #efefef;
             --background-outline-color: #efefef;
             --text-color: #2d3748;
-            
+
             /* Grays */
             --light-gray: #dedede;
             --medium-gray: #a0aec0;
             --dark-gray: #4a5568;
-            
+
             /* Tag & Category Colors */
             --tag-bg: #f5e5ef;
             --tag-color: #CB7BAC;
             --category-bg: #faf4eb;
-            --category-color: #FFA100;
+            --category-color: {{accentColor}};
         }
 
         * {

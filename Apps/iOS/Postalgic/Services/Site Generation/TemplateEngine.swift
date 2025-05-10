@@ -55,27 +55,28 @@ class TemplateEngine {
     private func createBaseContext() -> [String: Any] {
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        
+
         var context: [String: Any] = [
             "blogName": blog.name,
             "blogUrl": blog.url,
             "currentYear": Calendar.current.component(.year, from: Date()),
-            "buildDate": formatter.string(from: Date())
+            "buildDate": formatter.string(from: Date()),
+            "accentColor": blog.accentColor ?? "#FFA100" // Use custom accent color or default
         ]
-        
+
         // Add optional values only if they exist
         if let tagline = blog.tagline {
             context["blogTagline"] = tagline
         }
-        
+
         if let authorName = blog.authorName {
             context["blogAuthor"] = authorName
         }
-        
+
         if let authorUrl = blog.authorUrl {
             context["blogAuthorUrl"] = authorUrl
         }
-        
+
         return context
     }
     
@@ -355,6 +356,8 @@ class TemplateEngine {
     /// - Returns: The CSS content
     /// - Throws: Error if rendering fails
     func renderCSS() throws -> String {
-        return try templateManager.getTemplateString(for: "css")
+        let cssTemplate = try templateManager.getTemplate(for: "css")
+        let context = createBaseContext()
+        return cssTemplate.render(context, library: templateManager.getLibrary())
     }
 }

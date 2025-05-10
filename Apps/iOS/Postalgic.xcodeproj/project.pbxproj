@@ -47,6 +47,7 @@
 		44C3642C2DB768DB0057567C /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44C3641D2DB768DB0057567C /* Models.swift */; };
 		44C3642D2DB768DB0057567C /* PostalgicApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44C3641E2DB768DB0057567C /* PostalgicApp.swift */; };
 		44C3642E2DB768DB0057567C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 44C3641C2DB768DB0057567C /* Assets.xcassets */; };
+		44DE43002DCFEBA700F31204 /* AccentColorCustomizationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44DE42FF2DCFEBA700F31204 /* AccentColorCustomizationView.swift */; };
 		44F858B82DC43FAD00B8179B /* BlogDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44F858B72DC43FAD00B8179B /* BlogDashboardView.swift */; };
 /* End PBXBuildFile section */
 
@@ -106,6 +107,7 @@
 		44C3641C2DB768DB0057567C /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		44C3641D2DB768DB0057567C /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		44C3641E2DB768DB0057567C /* PostalgicApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostalgicApp.swift; sourceTree = "<group>"; };
+		44DE42FF2DCFEBA700F31204 /* AccentColorCustomizationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccentColorCustomizationView.swift; sourceTree = "<group>"; };
 		44F858B72DC43FAD00B8179B /* BlogDashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlogDashboardView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -221,6 +223,7 @@
 		4437E9C32DC88F3A00931230 /* Blog Settings */ = {
 			isa = PBXGroup;
 			children = (
+				44DE42FF2DCFEBA700F31204 /* AccentColorCustomizationView.swift */,
 				44362F4D2DC1C85B00EA704F /* BlogSettingsView.swift */,
 				44C364152DB768DB0057567C /* CategoryManagementView.swift */,
 				443F0B622DBB6B9600034EF1 /* TagManagementView.swift */,
@@ -466,6 +469,7 @@
 				44362EE32DBD833600EA704F /* TemplateCustomizationView.swift in Sources */,
 				44C364242DB768DB0057567C /* BlogFormView.swift in Sources */,
 				44499E042DC80B3F00A9624B /* PostView.swift in Sources */,
+				44DE43002DCFEBA700F31204 /* AccentColorCustomizationView.swift in Sources */,
 				44C364252DB768DB0057567C /* BlogsView.swift in Sources */,
 				44362EDF2DBD82B700EA704F /* TemplateEngine.swift in Sources */,
 				443F0B512DBAD7AC00034EF1 /* PreviewData.swift in Sources */,
