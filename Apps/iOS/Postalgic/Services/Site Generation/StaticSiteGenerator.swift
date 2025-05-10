@@ -107,23 +107,51 @@ class StaticSiteGenerator {
     private func saveEmbedImages(to directory: URL) {
         let publishedPosts = blog.posts.filter { !$0.isDraft }
 
+        // Create directory for embed images if it doesn't exist
+        let embedsDir = directory.appendingPathComponent("images/embeds")
+        if !FileManager.default.fileExists(atPath: embedsDir.path) {
+            do {
+                try FileManager.default.createDirectory(at: embedsDir, withIntermediateDirectories: true)
+                print("📁 Created directory for embed images: \(embedsDir.path)")
+            } catch {
+                print("⚠️ Error creating embed images directory: \(error)")
+            }
+        }
+
+        print("🔍 Processing images for \(publishedPosts.count) published posts")
+
         for post in publishedPosts {
             if let embed = post.embed {
                 if embed.embedType == .link, let imageData = embed.imageData {
                     // Create a predictable filename based on URL hash
                     let imageFilename = "embed-\(embed.url.hash).jpg"
-                    let imagePath = directory.appendingPathComponent("images/embeds/\(imageFilename)")
+                    let imagePath = embedsDir.appendingPathComponent(imageFilename)
+
+                    print("📸 Saving link image to: \(imagePath.path)")
 
                     // Save the image data
-                    try? imageData.write(to: imagePath)
+                    do {
+                        try imageData.write(to: imagePath)
+                    } catch {
+                        print("⚠️ Error saving link image: \(error)")
+                    }
                 }
                 else if embed.embedType == .image {
                     // Save all images from the image embed
                     let sortedImages = embed.images.sorted { $0.order < $1.order }
 
-                    for image in sortedImages {
-                        let imagePath = directory.appendingPathComponent("images/embeds/\(image.filename)")
-                        try? image.imageData.write(to: imagePath)
+                    print("📸 Saving \(sortedImages.count) images from image embed for post: \(post.title ?? "Untitled")")
+
+                    for (index, image) in sortedImages.enumerated() {
+                        let imagePath = embedsDir.appendingPathComponent(image.filename)
+
+                        print("📸 Saving image \(index + 1)/\(sortedImages.count) to: \(imagePath.path)")
+
+                        do {
+                            try image.imageData.write(to: imagePath)
+                        } catch {
+                            print("⚠️ Error saving image: \(error)")
+                        }
                     }
                 }
             }
@@ -395,7 +423,7 @@ class StaticSiteGenerator {
         )
         
         // Extract and save all embed images
-        saveEmbedImages(to: embedImagesDirectory)
+        saveEmbedImages(to: siteDirectory)
 
         // Generate site content
         try generateIndexPage()
