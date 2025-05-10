@@ -588,7 +588,7 @@ final class Post {
         // Strip Markdown syntax from content
         let plainContent = stripMarkdown(from: content)
         
-        let maxLength = 75
+        let maxLength = 50
         if plainContent.count <= maxLength {
             return plainContent
         }

@@ -35,9 +35,9 @@ struct Utils {
     /// Generates a URL-friendly stub from the given text
     /// - Parameters:
     ///   - text: The source text to generate a stub from
-    ///   - maxLength: Maximum length of the stub (default: 60)
+    ///   - maxLength: Maximum length of the stub (default: 40)
     /// - Returns: A URL-friendly slug with only lowercase alphanumeric characters and hyphens
-    static func generateStub(from text: String, maxLength: Int = 60) -> String {
+    static func generateStub(from text: String, maxLength: Int = 40) -> String {
         // Start by trimming whitespace and converting to lowercase
         let lowercased = text.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         

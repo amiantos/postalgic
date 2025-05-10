@@ -172,7 +172,9 @@ class TemplateEngine {
             .replacingOccurrences(of: "<", with: "&lt;")
             .replacingOccurrences(of: ">", with: "&gt;")
 
-        let escapedTitle = displayTitle
+        // Create a properly formatted title with blog name
+        let fullTitle = "\(displayTitle) - \(blog.name)"
+        let escapedTitle = fullTitle
             .replacingOccurrences(of: "\"", with: "&quot;")
             .replacingOccurrences(of: "<", with: "&lt;")
             .replacingOccurrences(of: ">", with: "&gt;")
