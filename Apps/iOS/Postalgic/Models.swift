@@ -418,10 +418,10 @@ final class Embed {
 
                 // Add navigation arrows if more than one image
                 html += """
-                    </div>
-                    <div class="gallery-nav">
-                        <button class="gallery-prev" onclick="prevSlide('gallery-\(self.hashValue)')">❮</button>
-                        <button class="gallery-next" onclick="nextSlide('gallery-\(self.hashValue)')">❯</button>
+                        <div class="gallery-nav">
+                            <button class="gallery-prev" onclick="prevSlide('gallery-\(self.hashValue)')">❮</button>
+                            <button class="gallery-next" onclick="nextSlide('gallery-\(self.hashValue)')">❯</button>
+                        </div>
                     </div>
                     <div class="gallery-dots">
                 """
