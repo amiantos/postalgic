@@ -154,6 +154,7 @@ struct AddCategoryView: View {
         )
         modelContext.insert(newCategory)
         blog.categories.append(newCategory)
+        try? modelContext.save()
     }
 }
 

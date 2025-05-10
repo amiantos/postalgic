@@ -150,8 +150,8 @@ struct EmbedFormView: View {
 
                                     for item in newValue {
                                         if let data = try? await item.loadTransferable(type: Data.self) {
-                                            // Optimize the image
-                                            if let optimizedData = Utils.optimizeImage(imageData: data) {
+                                            // Optimize the image (constrained to 1024 pixels max dimension)
+                                            if let optimizedData = Utils.optimizeImage(imageData: data, maxDimension: 1024) {
                                                 selectedImageData.append(optimizedData)
                                             }
                                         }

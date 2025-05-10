@@ -58,6 +58,7 @@ struct AddLinkListView: View {
         let newSidebarObject = SidebarObject(blog: blog, title: title, type: .linkList, order: nextOrder)
         modelContext.insert(newSidebarObject)
         blog.sidebarObjects.append(newSidebarObject)
+        try? modelContext.save()
     }
 }
 
@@ -197,6 +198,7 @@ struct EditLinkListView: View {
         let newLink = LinkItem(sidebarObject: sidebarObject, title: title, url: url, order: nextOrder)
         modelContext.insert(newLink)
         sidebarObject.links.append(newLink)
+        try? modelContext.save()
     }
     
     private func saveLinkList() {

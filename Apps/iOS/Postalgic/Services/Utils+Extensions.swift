@@ -89,13 +89,13 @@ struct Utils {
         return newStub
     }
 
-    /// Optimizes and resizes an image to a maximum width while maintaining aspect ratio
+    /// Optimizes and resizes an image to a maximum dimension of 1024 pixels
     /// - Parameters:
     ///   - imageData: The original image data
-    ///   - maxWidth: Maximum width for the optimized image (default: 1000)
+    ///   - maxDimension: Maximum dimension (width or height) for the optimized image (default: 1024)
     ///   - quality: JPEG compression quality (0.0 to 1.0, default: 0.8)
     /// - Returns: Optimized image data if successful, nil otherwise
-    static func optimizeImage(imageData: Data, maxWidth: CGFloat = 1000, quality: CGFloat = 0.8) -> Data? {
+    static func optimizeImage(imageData: Data, maxDimension: CGFloat = 1024, quality: CGFloat = 0.8) -> Data? {
         guard let originalImage = UIImage(data: imageData) else {
             return nil
         }
@@ -103,16 +103,25 @@ struct Utils {
         // Calculate new dimensions, maintaining aspect ratio
         let originalSize = originalImage.size
 
-        // If the width is already less than or equal to maxWidth, return original image data
-        if originalSize.width <= maxWidth {
-            // Still compress it for consistency
+        // If both dimensions are already smaller than maxDimension, just compress
+        if originalSize.width <= maxDimension && originalSize.height <= maxDimension {
             return originalImage.jpegData(compressionQuality: quality)
         }
 
-        // Calculate new dimensions maintaining aspect ratio
-        let aspectRatio = originalSize.height / originalSize.width
-        let newWidth = maxWidth
-        let newHeight = maxWidth * aspectRatio
+        // Determine which dimension is larger to constrain properly
+        var newWidth: CGFloat
+        var newHeight: CGFloat
+
+        if originalSize.width > originalSize.height {
+            // Width-constrained
+            newWidth = maxDimension
+            newHeight = (maxDimension / originalSize.width) * originalSize.height
+        } else {
+            // Height-constrained
+            newHeight = maxDimension
+            newWidth = (maxDimension / originalSize.height) * originalSize.width
+        }
+
         let newSize = CGSize(width: newWidth, height: newHeight)
 
         // Create a new renderer for resizing
