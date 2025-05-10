@@ -106,15 +106,26 @@ class StaticSiteGenerator {
     /// Saves all embed images to the site directory
     private func saveEmbedImages(to directory: URL) {
         let publishedPosts = blog.posts.filter { !$0.isDraft }
-        
+
         for post in publishedPosts {
-            if let embed = post.embed, embed.embedType == .link, let imageData = embed.imageData {
-                // Create a predictable filename based on URL hash
-                let imageFilename = "embed-\(embed.url.hash).jpg"
-                let imagePath = directory.appendingPathComponent(imageFilename)
-                
-                // Save the image data
-                try? imageData.write(to: imagePath)
+            if let embed = post.embed {
+                if embed.embedType == .link, let imageData = embed.imageData {
+                    // Create a predictable filename based on URL hash
+                    let imageFilename = "embed-\(embed.url.hash).jpg"
+                    let imagePath = directory.appendingPathComponent("images/embeds/\(imageFilename)")
+
+                    // Save the image data
+                    try? imageData.write(to: imagePath)
+                }
+                else if embed.embedType == .image {
+                    // Save all images from the image embed
+                    let sortedImages = embed.images.sorted { $0.order < $1.order }
+
+                    for image in sortedImages {
+                        let imagePath = directory.appendingPathComponent("images/embeds/\(image.filename)")
+                        try? image.imageData.write(to: imagePath)
+                    }
+                }
             }
         }
     }
@@ -225,6 +236,153 @@ class StaticSiteGenerator {
         )
         try templateEngine.renderCSS().write(
             to: cssDirectory.appendingPathComponent("style.css"),
+            atomically: true,
+            encoding: .utf8
+        )
+
+        // Create lightbox CSS file
+        let lightboxCSS = """
+        /* Lightbox styles */
+        #lightbox {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            overflow: hidden;
+        }
+
+        #lightbox.active {
+            display: flex;
+        }
+
+        .lightbox-content {
+            position: relative;
+            max-width: 90%;
+            max-height: 90%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .lightbox-image-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #lightbox-image {
+            max-width: 100%;
+            max-height: 80vh;
+            object-fit: contain;
+        }
+
+        .lightbox-close {
+            position: absolute;
+            top: -40px;
+            right: 0;
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 30px;
+            cursor: pointer;
+            z-index: 1001;
+        }
+
+        .lightbox-nav {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+
+        .lightbox-prev, .lightbox-next {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            font-size: 24px;
+            padding: 10px 15px;
+            border-radius: 50%;
+            cursor: pointer;
+            margin: 0 20px;
+        }
+
+        /* Image gallery styles */
+        .embed.image-embed {
+            margin: 20px 0;
+        }
+
+        .embed.image-embed img.embed-image {
+            max-width: 100%;
+            height: auto;
+            cursor: pointer;
+        }
+
+        .gallery-container {
+            position: relative;
+            width: 100%;
+        }
+
+        .gallery-slide {
+            display: none;
+            text-align: center;
+        }
+
+        .gallery-slide img {
+            max-width: 100%;
+            max-height: 500px;
+            object-fit: contain;
+        }
+
+        .gallery-nav {
+            display: flex;
+            justify-content: space-between;
+            position: absolute;
+            top: 50%;
+            width: 100%;
+            transform: translateY(-50%);
+            z-index: 1;
+        }
+
+        .gallery-prev, .gallery-next {
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            font-size: 18px;
+            cursor: pointer;
+            margin: 0 10px;
+        }
+
+        .gallery-dots {
+            display: flex;
+            justify-content: center;
+            margin-top: 10px;
+        }
+
+        .gallery-dot {
+            width: 10px;
+            height: 10px;
+            margin: 0 5px;
+            background-color: #bbb;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .gallery-dot.active {
+            background-color: #4285f4;
+        }
+        """
+
+        try lightboxCSS.write(
+            to: cssDirectory.appendingPathComponent("lightbox.css"),
             atomically: true,
             encoding: .utf8
         )

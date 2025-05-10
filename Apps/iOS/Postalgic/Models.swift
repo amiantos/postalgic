@@ -270,6 +270,7 @@ final class Tag {
 enum EmbedType: String, Codable {
     case youtube = "YouTube"
     case link = "Link"
+    case image = "Image"
 }
 
 enum EmbedPosition: String, Codable {
@@ -280,18 +281,22 @@ enum EmbedPosition: String, Codable {
 @Model
 final class Embed {
     var post: Post?
-    
+
     var url: String
     var type: String // EmbedType.rawValue
     var position: String // EmbedPosition.rawValue
     var createdAt: Date
-    
+
     // These properties are for Link type embeds
     var title: String?
     var embedDescription: String?
     var imageUrl: String? // Remote URL for the image
     @Attribute(.externalStorage) var imageData: Data? // Actual image data stored in the database
-    
+
+    // These properties are for Image type embeds
+    @Relationship(deleteRule: .cascade, inverse: \EmbedImage.embed)
+    var images: [EmbedImage] = []
+
     init(
         post: Post,
         url: String,
@@ -339,11 +344,11 @@ final class Embed {
         case .link:
             var html = "<div class=\"embed link-embed\">"
             html += "<a href=\"\(url)\" target=\"_blank\" rel=\"noopener noreferrer\">"
-            
+
             if let title = title {
                 html += "<div class=\"link-title\">\(title)</div>"
             }
-            
+
             if let _ = imageData {
                 // When we have image data, we'll create a unique filename for the image
                 // based on a hash of the URL to ensure stability across generations
@@ -354,15 +359,77 @@ final class Embed {
                 // Fallback to direct URL if we don't have image data stored
                 html += "<div class=\"link-image\"><img src=\"\(imageUrl)\" alt=\"\(title ?? "Link preview")\" /></div>"
             }
-            
+
             if let description = embedDescription {
                 html += "<div class=\"link-description\">\(description)</div>"
             }
-            
+
             html += "<div class=\"link-url\">\(url)</div>"
             html += "</a></div>"
-            
+
             return html
+
+        case .image:
+            let sortedImages = images.sorted { $0.order < $1.order }
+
+            // Single image display
+            if sortedImages.count == 1, let image = sortedImages.first {
+                return """
+                <div class="embed image-embed single-image">
+                    <a href="/images/embeds/\(image.filename)" class="lightbox-trigger" data-lightbox="embed-\(self.hashValue)" data-title="">
+                        <img src="/images/embeds/\(image.filename)" alt="Image" class="embed-image" />
+                    </a>
+                </div>
+                """
+            }
+            // Multiple images gallery
+            else if sortedImages.count > 1 {
+                var html = """
+                <div class="embed image-embed gallery" id="gallery-\(self.hashValue)">
+                    <div class="gallery-container">
+                """
+
+                // Add all images
+                for image in sortedImages {
+                    html += """
+                        <div class="gallery-slide">
+                            <a href="/images/embeds/\(image.filename)" class="lightbox-trigger" data-lightbox="embed-\(self.hashValue)" data-title="">
+                                <img src="/images/embeds/\(image.filename)" alt="Image \(image.order + 1)" class="embed-image" />
+                            </a>
+                        </div>
+                    """
+                }
+
+                // Add navigation arrows if more than one image
+                html += """
+                    </div>
+                    <div class="gallery-nav">
+                        <button class="gallery-prev" onclick="prevSlide('gallery-\(self.hashValue)')">❮</button>
+                        <button class="gallery-next" onclick="nextSlide('gallery-\(self.hashValue)')">❯</button>
+                    </div>
+                    <div class="gallery-dots">
+                """
+
+                // Add indicator dots
+                for i in 0..<sortedImages.count {
+                    html += """
+                        <span class="gallery-dot" onclick="showSlide('gallery-\(self.hashValue)', \(i))"></span>
+                    """
+                }
+
+                html += """
+                    </div>
+                </div>
+                <script>
+                    initGallery('gallery-\(self.hashValue)');
+                </script>
+                """
+
+                return html
+            }
+            else {
+                return "<!-- No images available for this embed -->"
+            }
         }
     }
 }
@@ -709,8 +776,26 @@ final class PublishedFiles {
 struct FileChanges {
     let modified: [String]
     let deleted: [String]
-    
+
     var hasChanges: Bool {
         return !modified.isEmpty || !deleted.isEmpty
+    }
+}
+
+@Model
+final class EmbedImage {
+    var embed: Embed?
+
+    var order: Int // To maintain the order of images
+    var filename: String // For referencing in the generated static site
+    @Attribute(.externalStorage) var imageData: Data // The optimized image data
+    var createdAt: Date
+
+    init(embed: Embed, imageData: Data, order: Int, filename: String, createdAt: Date = Date()) {
+        self.embed = embed
+        self.imageData = imageData
+        self.order = order
+        self.filename = filename
+        self.createdAt = createdAt
     }
 }

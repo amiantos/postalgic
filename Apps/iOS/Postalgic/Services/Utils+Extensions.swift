@@ -7,6 +7,7 @@
 
 import Foundation
 import CommonCrypto
+import UIKit
 
 struct Utils {
     static func extractYouTubeId(from url: String) -> String? {
@@ -76,16 +77,76 @@ struct Utils {
         if !existingStubs.contains(stub) {
             return stub
         }
-        
+
         var counter = 2
         var newStub = "\(stub)-\(counter)"
-        
+
         while existingStubs.contains(newStub) {
             counter += 1
             newStub = "\(stub)-\(counter)"
         }
-        
+
         return newStub
+    }
+
+    /// Optimizes and resizes an image to a maximum width while maintaining aspect ratio
+    /// - Parameters:
+    ///   - imageData: The original image data
+    ///   - maxWidth: Maximum width for the optimized image (default: 1000)
+    ///   - quality: JPEG compression quality (0.0 to 1.0, default: 0.8)
+    /// - Returns: Optimized image data if successful, nil otherwise
+    static func optimizeImage(imageData: Data, maxWidth: CGFloat = 1000, quality: CGFloat = 0.8) -> Data? {
+        guard let originalImage = UIImage(data: imageData) else {
+            return nil
+        }
+
+        // Calculate new dimensions, maintaining aspect ratio
+        let originalSize = originalImage.size
+
+        // If the width is already less than or equal to maxWidth, return original image data
+        if originalSize.width <= maxWidth {
+            // Still compress it for consistency
+            return originalImage.jpegData(compressionQuality: quality)
+        }
+
+        // Calculate new dimensions maintaining aspect ratio
+        let aspectRatio = originalSize.height / originalSize.width
+        let newWidth = maxWidth
+        let newHeight = maxWidth * aspectRatio
+        let newSize = CGSize(width: newWidth, height: newHeight)
+
+        // Create a new renderer for resizing
+        UIGraphicsBeginImageContextWithOptions(newSize, false, 1.0)
+        originalImage.draw(in: CGRect(origin: .zero, size: newSize))
+        let resizedImage = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+
+        // Convert to JPEG data with the specified quality
+        return resizedImage?.jpegData(compressionQuality: quality)
+    }
+
+    /// Generates a unique filename for an embed image
+    /// - Parameters:
+    ///   - embed: The embed the image belongs to
+    ///   - originalFilename: Original filename of the image (optional)
+    ///   - order: Order index of the image in the embed
+    /// - Returns: A unique filename for the image
+    static func generateImageFilename(for embed: Embed, originalFilename: String? = nil, order: Int) -> String {
+        let timestamp = Int(Date().timeIntervalSince1970)
+        let uuid = UUID().uuidString.prefix(8)
+        let orderString = String(format: "%02d", order)
+
+        // Extract extension from original filename or use jpg by default
+        let fileExtension: String
+        if let originalFilename = originalFilename,
+           let ext = originalFilename.components(separatedBy: ".").last,
+           !ext.isEmpty {
+            fileExtension = ext.lowercased()
+        } else {
+            fileExtension = "jpg"
+        }
+
+        return "embed-\(timestamp)-\(uuid)-\(orderString).\(fileExtension)"
     }
 }
 

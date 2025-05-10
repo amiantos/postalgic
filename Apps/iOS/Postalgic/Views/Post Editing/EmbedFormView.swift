@@ -7,6 +7,7 @@
 
 import SwiftData
 import SwiftUI
+import PhotosUI
 // Define a struct to pass back to parent view
 struct EmbedTitleUpdate {
     let title: String
@@ -27,6 +28,11 @@ struct EmbedFormView: View {
     @State private var errorMessage: String?
     @State private var linkMetadata: (title: String?, description: String?, imageUrl: String?, imageData: Data?) = (nil, nil, nil, nil)
     @State private var youtubeTitle: String? = nil
+
+    // For image picker
+    @State private var selectedItems: [PhotosPickerItem] = []
+    @State private var selectedImageData: [Data] = []
+    @State private var isProcessingImages = false
     
     init(post: Post, onTitleUpdate: ((String) -> Void)? = nil) {
         self.post = post
@@ -46,7 +52,7 @@ struct EmbedFormView: View {
             Form {
                 Section(header: Text("Embed Type")) {
                     Picker("Type", selection: $embedType) {
-                        ForEach([EmbedType.youtube, EmbedType.link], id: \.self) { type in
+                        ForEach([EmbedType.youtube, EmbedType.link, EmbedType.image], id: \.self) { type in
                             Text(type.rawValue).tag(type)
                         }
                     }
@@ -54,63 +60,148 @@ struct EmbedFormView: View {
                     .disabled(isEditing && post.embed?.embedType != embedType)
                 }
                 
-                Section(header: Text("URL")) {
-                    TextField("Enter URL", text: $url)
-                        .keyboardType(.URL)
-                        .autocorrectionDisabled()
-                        .autocapitalization(.none)
-                    
-                    // For Link type, show fetch button when appropriate
-                    if embedType == .link && !url.isEmpty {
-                        // Show fetch button if:
-                        // 1. New embed or
-                        // 2. Editing and URL changed from original
-                        let shouldShowFetchButton = !isEditing || (isEditing && post.embed?.url != url)
-                        
-                        if shouldShowFetchButton {
-                            Button("Fetch Link Metadata") {
+                // URL section for YouTube and Link embeds
+                if embedType != .image {
+                    Section(header: Text("URL")) {
+                        TextField("Enter URL", text: $url)
+                            .keyboardType(.URL)
+                            .autocorrectionDisabled()
+                            .autocapitalization(.none)
+
+                        // For Link type, show fetch button when appropriate
+                        if embedType == .link && !url.isEmpty {
+                            // Show fetch button if:
+                            // 1. New embed or
+                            // 2. Editing and URL changed from original
+                            let shouldShowFetchButton = !isEditing || (isEditing && post.embed?.url != url)
+
+                            if shouldShowFetchButton {
+                                Button("Fetch Link Metadata") {
+                                    Task {
+                                        isLoading = true
+                                        errorMessage = nil
+                                        linkMetadata = await LinkMetadataService.fetchMetadata(for: url)
+                                        isLoading = false
+
+                                        if linkMetadata == (nil, nil, nil, nil) {
+                                            errorMessage = "Could not fetch metadata for this link"
+                                        }
+                                    }
+                                }
+                                .disabled(isLoading)
+                            }
+                        } else if embedType == .youtube && !url.isEmpty {
+                            // Show fetch title button for YouTube embeds
+                            Button("Fetch YouTube Title") {
                                 Task {
                                     isLoading = true
                                     errorMessage = nil
-                                    linkMetadata = await LinkMetadataService.fetchMetadata(for: url)
+                                    youtubeTitle = await LinkMetadataService.fetchYouTubeTitle(for: url)
                                     isLoading = false
-                                    
-                                    if linkMetadata == (nil, nil, nil, nil) {
-                                        errorMessage = "Could not fetch metadata for this link"
+
+                                    if youtubeTitle == nil {
+                                        errorMessage = "Could not fetch YouTube title"
                                     }
                                 }
                             }
                             .disabled(isLoading)
                         }
-                    } else if embedType == .youtube && !url.isEmpty {
-                        // Show fetch title button for YouTube embeds
-                        Button("Fetch YouTube Title") {
+
+                        if isLoading {
+                            HStack {
+                                Spacer()
+                                ProgressView()
+                                    .progressViewStyle(.circular)
+                                Spacer()
+                            }
+                        }
+
+                        if let error = errorMessage {
+                            Text(error)
+                                .foregroundColor(.red)
+                        }
+                    }
+                }
+
+                // Image picker section for Image embeds
+                if embedType == .image {
+                    Section(header: Text("Select Images")) {
+                        PhotosPicker(
+                            selection: $selectedItems,
+                            matching: .images,
+                            photoLibrary: .shared()
+                        ) {
+                            Label("Select Photos", systemImage: "photo.on.rectangle")
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .background(Color.blue.opacity(0.1))
+                                .cornerRadius(8)
+                        }
+                        .onChange(of: selectedItems) { oldValue, newValue in
                             Task {
-                                isLoading = true
-                                errorMessage = nil
-                                youtubeTitle = await LinkMetadataService.fetchYouTubeTitle(for: url)
-                                isLoading = false
-                                
-                                if youtubeTitle == nil {
-                                    errorMessage = "Could not fetch YouTube title"
+                                if !newValue.isEmpty {
+                                    isProcessingImages = true
+                                    selectedImageData = []
+
+                                    for item in newValue {
+                                        if let data = try? await item.loadTransferable(type: Data.self) {
+                                            // Optimize the image
+                                            if let optimizedData = Utils.optimizeImage(imageData: data) {
+                                                selectedImageData.append(optimizedData)
+                                            }
+                                        }
+                                    }
+
+                                    isProcessingImages = false
                                 }
                             }
                         }
-                        .disabled(isLoading)
-                    }
-                    
-                    if isLoading {
-                        HStack {
-                            Spacer()
-                            ProgressView()
-                                .progressViewStyle(.circular)
-                            Spacer()
+
+                        if isProcessingImages {
+                            HStack {
+                                Spacer()
+                                ProgressView()
+                                Text("Processing images...")
+                                Spacer()
+                            }
+                            .padding(.vertical, 8)
                         }
-                    }
-                    
-                    if let error = errorMessage {
-                        Text(error)
-                            .foregroundColor(.red)
+
+                        // Display selected images
+                        if !selectedImageData.isEmpty {
+                            Text("Selected Photos: \(selectedImageData.count)")
+                                .font(.headline)
+                                .padding(.top, 8)
+
+                            ScrollView(.horizontal) {
+                                HStack(spacing: 10) {
+                                    ForEach(0..<selectedImageData.count, id: \.self) { index in
+                                        if let uiImage = UIImage(data: selectedImageData[index]) {
+                                            Image(uiImage: uiImage)
+                                                .resizable()
+                                                .aspectRatio(contentMode: .fill)
+                                                .frame(width: 100, height: 100)
+                                                .cornerRadius(8)
+                                                .overlay(
+                                                    Button(action: {
+                                                        selectedImageData.remove(at: index)
+                                                        selectedItems.remove(at: index)
+                                                    }) {
+                                                        Image(systemName: "xmark.circle.fill")
+                                                            .foregroundColor(.white)
+                                                            .background(Color.black.opacity(0.7))
+                                                            .clipShape(Circle())
+                                                    }
+                                                    .padding(4),
+                                                    alignment: .topTrailing
+                                                )
+                                        }
+                                    }
+                                }
+                                .padding(.vertical, 8)
+                            }
+                            .frame(height: 120)
+                        }
                     }
                 }
                 
@@ -281,11 +372,14 @@ struct EmbedFormView: View {
         if let oldEmbed = post.embed {
             modelContext.delete(oldEmbed)
         }
-        
+
+        // For image embeds, create a placeholder URL
+        let embedUrl = embedType == .image ? "image://gallery" : url
+
         // Create new embed
         let embed = Embed(
             post: post,
-            url: url,
+            url: embedUrl,
             type: embedType,
             position: position,
             title: embedType == .youtube ? youtubeTitle : linkMetadata.title,
@@ -293,40 +387,58 @@ struct EmbedFormView: View {
             imageUrl: linkMetadata.imageUrl,
             imageData: linkMetadata.imageData
         )
-        
+
         // Insert embed into model context
         modelContext.insert(embed)
         post.embed = embed
+
+        // For image embeds, add all selected images
+        if embedType == .image && !selectedImageData.isEmpty {
+            for (index, imageData) in selectedImageData.enumerated() {
+                let filename = Utils.generateImageFilename(for: embed, order: index)
+                let embedImage = EmbedImage(
+                    embed: embed,
+                    imageData: imageData,
+                    order: index,
+                    filename: filename
+                )
+                modelContext.insert(embedImage)
+                embed.images.append(embedImage)
+            }
+        }
     }
     
     private func updateEmbed() {
-        guard let existingEmbed = post.embed else { 
+        guard let existingEmbed = post.embed else {
             // If for some reason the embed is gone, create a new one instead
             addEmbed()
-            return 
+            return
         }
-        
-        // Check if this is a change in embed type or URL
+
+        // Check if this is a change in embed type
         let isTypeChange = existingEmbed.embedType != embedType
-        let isUrlChange = existingEmbed.url != url
-        
+        let isUrlChange = existingEmbed.url != url && embedType != .image
+
         // For type changes, we create a new embed entirely
         if isTypeChange {
-            // Delete the old embed first
+            // Delete the old embed first (this will cascade delete related embed images)
             modelContext.delete(existingEmbed)
-            
+
+            // For image embeds, create a placeholder URL
+            let embedUrl = embedType == .image ? "image://gallery" : url
+
             // Create a new embed with the new type
             let newEmbed = Embed(
                 post: post,
-                url: url,
+                url: embedUrl,
                 type: embedType,
                 position: position,
                 title: embedType == .youtube ? youtubeTitle : nil
             )
-            
+
             modelContext.insert(newEmbed)
             post.embed = newEmbed
-            
+
             // If changing to Link type and we have metadata, add it
             if embedType == .link && linkMetadata != (nil, nil, nil, nil) {
                 newEmbed.title = linkMetadata.title
@@ -334,16 +446,56 @@ struct EmbedFormView: View {
                 newEmbed.imageUrl = linkMetadata.imageUrl
                 newEmbed.imageData = linkMetadata.imageData
             }
+
+            // If changing to Image type and we have images, add them
+            if embedType == .image && !selectedImageData.isEmpty {
+                for (index, imageData) in selectedImageData.enumerated() {
+                    let filename = Utils.generateImageFilename(for: newEmbed, order: index)
+                    let embedImage = EmbedImage(
+                        embed: newEmbed,
+                        imageData: imageData,
+                        order: index,
+                        filename: filename
+                    )
+                    modelContext.insert(embedImage)
+                    newEmbed.images.append(embedImage)
+                }
+            }
+        } else if embedType == .image {
+            // Update existing Image embed
+            existingEmbed.position = position.rawValue
+
+            // If we have new images, replace all existing ones
+            if !selectedImageData.isEmpty {
+                // Remove all existing images
+                for image in existingEmbed.images {
+                    modelContext.delete(image)
+                }
+                existingEmbed.images = []
+
+                // Add new images
+                for (index, imageData) in selectedImageData.enumerated() {
+                    let filename = Utils.generateImageFilename(for: existingEmbed, order: index)
+                    let embedImage = EmbedImage(
+                        embed: existingEmbed,
+                        imageData: imageData,
+                        order: index,
+                        filename: filename
+                    )
+                    modelContext.insert(embedImage)
+                    existingEmbed.images.append(embedImage)
+                }
+            }
         } else {
-            // For same type, just update properties
+            // For same type (non-image), just update properties
             existingEmbed.url = url
             existingEmbed.position = position.rawValue
-            
+
             // Update YouTube title if we have one
             if embedType == .youtube && youtubeTitle != nil && existingEmbed.title != youtubeTitle {
                 existingEmbed.title = youtubeTitle
             }
-            
+
             // If URL changed for a Link type, update metadata if we have new metadata
             if isUrlChange && embedType == .link && linkMetadata != (nil, nil, nil, nil) {
                 existingEmbed.title = linkMetadata.title
