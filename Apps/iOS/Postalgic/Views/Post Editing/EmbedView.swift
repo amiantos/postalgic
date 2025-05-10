@@ -29,6 +29,13 @@ struct EmbedView: View {
                         RoundedRectangle(cornerRadius: 8)
                             .stroke(Color.gray.opacity(0.3), lineWidth: 1)
                     )
+            case .image:
+                ImageEmbedView(embed: embed)
+                    .cornerRadius(8)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                    )
             }
         }
     }
@@ -171,11 +178,118 @@ struct WebViewContainer: UIViewRepresentable {
     }
 }
 
+struct ImageEmbedView: View {
+    var embed: Embed
+    @State private var currentImageIndex = 0
+
+    var body: some View {
+        VStack(spacing: 10) {
+            if embed.images.isEmpty {
+                // Empty state
+                VStack {
+                    Image(systemName: "photo")
+                        .font(.largeTitle)
+                        .foregroundColor(.secondary)
+                    Text("No images available")
+                        .foregroundColor(.secondary)
+                }
+                .frame(height: 200)
+                .frame(maxWidth: .infinity)
+                .background(Color(.systemGray6))
+            } else {
+                let sortedImages = embed.images.sorted { $0.order < $1.order }
+
+                // Single image view or image gallery
+                ZStack(alignment: .bottom) {
+                    if let imageData = sortedImages[safe: currentImageIndex]?.imageData,
+                       let uiImage = UIImage(data: imageData) {
+                        Image(uiImage: uiImage)
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(maxWidth: .infinity)
+                            .frame(minHeight: 100, maxHeight: 400)
+                            .clipped()
+                    }
+
+                    // Only show navigation controls if we have multiple images
+                    if sortedImages.count > 1 {
+                        // Image counter indicator
+                        Text("\(currentImageIndex + 1) / \(sortedImages.count)")
+                            .font(.caption)
+                            .padding(6)
+                            .background(Color.black.opacity(0.6))
+                            .foregroundColor(.white)
+                            .clipShape(Capsule())
+                            .padding(8)
+
+                        // Navigation arrows
+                        HStack {
+                            Button {
+                                withAnimation {
+                                    currentImageIndex = (currentImageIndex - 1 + sortedImages.count) % sortedImages.count
+                                }
+                            } label: {
+                                Image(systemName: "chevron.left")
+                                    .font(.title3)
+                                    .padding(12)
+                                    .background(Circle().fill(Color.black.opacity(0.6)))
+                                    .foregroundColor(.white)
+                            }
+
+                            Spacer()
+
+                            Button {
+                                withAnimation {
+                                    currentImageIndex = (currentImageIndex + 1) % sortedImages.count
+                                }
+                            } label: {
+                                Image(systemName: "chevron.right")
+                                    .font(.title3)
+                                    .padding(12)
+                                    .background(Circle().fill(Color.black.opacity(0.6)))
+                                    .foregroundColor(.white)
+                            }
+                        }
+                        .padding(.horizontal)
+                        .padding(.bottom, 8)
+                    }
+                }
+
+                // Dots indicator for multiple images
+                if sortedImages.count > 1 {
+                    HStack(spacing: 8) {
+                        ForEach(0..<sortedImages.count, id: \.self) { index in
+                            Circle()
+                                .fill(index == currentImageIndex ? Color.accentColor : Color.gray.opacity(0.5))
+                                .frame(width: 8, height: 8)
+                                .onTapGesture {
+                                    withAnimation {
+                                        currentImageIndex = index
+                                    }
+                                }
+                        }
+                    }
+                    .padding(.bottom, 8)
+                }
+            }
+        }
+        .padding(10)
+        .background(Color(.systemBackground))
+    }
+}
+
+// Extension to safely access array elements
+extension Array {
+    subscript(safe index: Index) -> Element? {
+        return indices.contains(index) ? self[index] : nil
+    }
+}
+
 #Preview {
     VStack(spacing: 20) {
         // YouTube Embed
         EmbedView(embed: PreviewData.youtubeEmbed)
-        
+
         // Link Embed
         EmbedView(embed: PreviewData.linkEmbed)
     }

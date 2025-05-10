@@ -126,33 +126,49 @@ final class Blog {
     func usedPostStubs() -> [String] {
         return posts.compactMap { $0.stub }
     }
-    
+
+    /// Returns all used post stubs in this blog except for the specified post
+    /// - Parameter except: Post to exclude from the stubs list
+    /// - Returns: Array of post stub strings
+    func usedPostStubs(except: Post) -> [String] {
+        return posts.filter { $0.id != except.id }.compactMap { $0.stub }
+    }
+
     /// Returns all used category stubs in this blog
     /// - Returns: Array of category stub strings
     func usedCategoryStubs() -> [String] {
         return categories.compactMap { $0.stub }
     }
-    
+
     /// Returns all used tag stubs in this blog
     /// - Returns: Array of tag stub strings
     func usedTagStubs() -> [String] {
         return tags.compactMap { $0.stub }
     }
-    
+
     /// Ensures a post stub is unique within this blog
     /// - Parameter stub: The stub to make unique
     /// - Returns: A unique stub for the post
     func uniquePostStub(_ stub: String) -> String {
         return Utils.makeStubUnique(stub: stub, existingStubs: usedPostStubs())
     }
-    
+
+    /// Ensures a post stub is unique within this blog, excluding the specified post
+    /// - Parameters:
+    ///   - stub: The stub to make unique
+    ///   - except: Post to exclude from the uniqueness check
+    /// - Returns: A unique stub for the post
+    func uniquePostStub(_ stub: String, except: Post) -> String {
+        return Utils.makeStubUnique(stub: stub, existingStubs: usedPostStubs(except: except))
+    }
+
     /// Ensures a category stub is unique within this blog
     /// - Parameter stub: The stub to make unique
     /// - Returns: A unique stub for the category
     func uniqueCategoryStub(_ stub: String) -> String {
         return Utils.makeStubUnique(stub: stub, existingStubs: usedCategoryStubs())
     }
-    
+
     /// Ensures a tag stub is unique within this blog
     /// - Parameter stub: The stub to make unique
     /// - Returns: A unique stub for the tag
@@ -270,6 +286,7 @@ final class Tag {
 enum EmbedType: String, Codable {
     case youtube = "YouTube"
     case link = "Link"
+    case image = "Image"
 }
 
 enum EmbedPosition: String, Codable {
@@ -280,18 +297,22 @@ enum EmbedPosition: String, Codable {
 @Model
 final class Embed {
     var post: Post?
-    
+
     var url: String
     var type: String // EmbedType.rawValue
     var position: String // EmbedPosition.rawValue
     var createdAt: Date
-    
+
     // These properties are for Link type embeds
     var title: String?
     var embedDescription: String?
     var imageUrl: String? // Remote URL for the image
     @Attribute(.externalStorage) var imageData: Data? // Actual image data stored in the database
-    
+
+    // These properties are for Image type embeds
+    @Relationship(deleteRule: .cascade, inverse: \EmbedImage.embed)
+    var images: [EmbedImage] = []
+
     init(
         post: Post,
         url: String,
@@ -339,11 +360,11 @@ final class Embed {
         case .link:
             var html = "<div class=\"embed link-embed\">"
             html += "<a href=\"\(url)\" target=\"_blank\" rel=\"noopener noreferrer\">"
-            
+
             if let title = title {
                 html += "<div class=\"link-title\">\(title)</div>"
             }
-            
+
             if let _ = imageData {
                 // When we have image data, we'll create a unique filename for the image
                 // based on a hash of the URL to ensure stability across generations
@@ -354,15 +375,77 @@ final class Embed {
                 // Fallback to direct URL if we don't have image data stored
                 html += "<div class=\"link-image\"><img src=\"\(imageUrl)\" alt=\"\(title ?? "Link preview")\" /></div>"
             }
-            
+
             if let description = embedDescription {
                 html += "<div class=\"link-description\">\(description)</div>"
             }
-            
+
             html += "<div class=\"link-url\">\(url)</div>"
             html += "</a></div>"
-            
+
             return html
+
+        case .image:
+            let sortedImages = images.sorted { $0.order < $1.order }
+
+            // Single image display
+            if sortedImages.count == 1, let image = sortedImages.first {
+                return """
+                <div class="embed image-embed single-image">
+                    <a href="/images/embeds/\(image.filename)" class="lightbox-trigger" data-lightbox="embed-\(self.hashValue)" data-title="">
+                        <img src="/images/embeds/\(image.filename)" alt="Image" class="embed-image" />
+                    </a>
+                </div>
+                """
+            }
+            // Multiple images gallery
+            else if sortedImages.count > 1 {
+                var html = """
+                <div class="embed image-embed gallery" id="gallery-\(self.hashValue)">
+                    <div class="gallery-container">
+                """
+
+                // Add all images
+                for image in sortedImages {
+                    html += """
+                        <div class="gallery-slide">
+                            <a href="/images/embeds/\(image.filename)" class="lightbox-trigger" data-lightbox="embed-\(self.hashValue)" data-title="">
+                                <img src="/images/embeds/\(image.filename)" alt="Image \(image.order + 1)" class="embed-image" />
+                            </a>
+                        </div>
+                    """
+                }
+
+                // Add navigation arrows if more than one image
+                html += """
+                        <div class="gallery-nav">
+                            <button class="gallery-prev" onclick="prevSlide('gallery-\(self.hashValue)')">❮</button>
+                            <button class="gallery-next" onclick="nextSlide('gallery-\(self.hashValue)')">❯</button>
+                        </div>
+                    </div>
+                    <div class="gallery-dots">
+                """
+
+                // Add indicator dots
+                for i in 0..<sortedImages.count {
+                    html += """
+                        <span class="gallery-dot" onclick="showSlide('gallery-\(self.hashValue)', \(i))"></span>
+                    """
+                }
+
+                html += """
+                    </div>
+                </div>
+                <script>
+                    initGallery('gallery-\(self.hashValue)');
+                </script>
+                """
+
+                return html
+            }
+            else {
+                return "<!-- No images available for this embed -->"
+            }
         }
     }
 }
@@ -397,22 +480,26 @@ final class Post {
     private func updateStub() {
         // Don't regenerate stub if we're in the middle of being initialized
         // This is a workaround for when SwiftData is restoring objects from persistence
-        guard !content.isEmpty else { return }
-        
+        guard !content.isEmpty || (title != nil && !title!.isEmpty) else { return }
+
         let sourceText: String
-        
+
         if let title = title, !title.isEmpty {
             sourceText = title
-        } else {
+        } else if !content.isEmpty {
             // Use the content, but strip Markdown formatting first
             sourceText = stripMarkdown(from: content)
+        } else {
+            // This should not happen due to the guard above, but providing a fallback
+            sourceText = "post-\(Int(Date().timeIntervalSince1970))"
         }
-        
+
         let newStub = Utils.generateStub(from: sourceText)
-        
+
         // Always generate a new stub, even if the current one is nil
         if let blog = blog {
-            self.stub = blog.uniquePostStub(newStub)
+            // Use the method that excludes this post from uniqueness check
+            self.stub = blog.uniquePostStub(newStub, except: self)
         } else {
             self.stub = newStub
         }
@@ -475,13 +562,18 @@ final class Post {
         return formatter.string(from: createdAt)
     }
     
+    var dateTimeUrlPath: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy/MM/dd/HHmmss"
+        return formatter.string(from: createdAt)
+    }
+    
     /// Returns the full URL path including stub if available
     var urlPath: String {
-        let basePath = dateUrlPath
         if let stub = stub, !stub.isEmpty {
-            return "\(basePath)/\(stub)"
+            return "\(dateUrlPath)/\(stub)"
         }
-        return basePath
+        return dateTimeUrlPath
     }
     
     var plainContent: String {
@@ -496,7 +588,7 @@ final class Post {
         // Strip Markdown syntax from content
         let plainContent = stripMarkdown(from: content)
         
-        let maxLength = 75
+        let maxLength = 50
         if plainContent.count <= maxLength {
             return plainContent
         }
@@ -709,8 +801,26 @@ final class PublishedFiles {
 struct FileChanges {
     let modified: [String]
     let deleted: [String]
-    
+
     var hasChanges: Bool {
         return !modified.isEmpty || !deleted.isEmpty
+    }
+}
+
+@Model
+final class EmbedImage {
+    var embed: Embed?
+
+    var order: Int // To maintain the order of images
+    var filename: String // For referencing in the generated static site
+    @Attribute(.externalStorage) var imageData: Data // The optimized image data
+    var createdAt: Date
+
+    init(embed: Embed, imageData: Data, order: Int, filename: String, createdAt: Date = Date()) {
+        self.embed = embed
+        self.imageData = imageData
+        self.order = order
+        self.filename = filename
+        self.createdAt = createdAt
     }
 }

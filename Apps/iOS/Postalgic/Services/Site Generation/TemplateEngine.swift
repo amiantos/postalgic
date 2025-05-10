@@ -86,20 +86,22 @@ class TemplateEngine {
     ///   - content: The HTML content to include in the layout
     ///   - pageTitle: The title for the page
     ///   - customHead: Optional custom HTML to include in the head section
+    ///   - hasCustomMeta: Indicates if the page has custom meta tags
     /// - Returns: The complete HTML page
     /// - Throws: Error if rendering fails
-    func renderLayout(content: String, pageTitle: String, customHead: String = "") throws -> String {
+    func renderLayout(content: String, pageTitle: String, customHead: String = "", hasCustomMeta: Bool = false) throws -> String {
         let layoutTemplate = try templateManager.getTemplate(for: "layout")
-        
+
         var context = createBaseContext()
         context["content"] = content
         context["pageTitle"] = pageTitle
         context["customHead"] = customHead
-        
+        context["hasCustomMeta"] = hasCustomMeta
+
         // Generate sidebar content
         let sidebarContent = generateSidebarContent()
         context["sidebarContent"] = sidebarContent
-        
+
         return layoutTemplate.render(context, library: templateManager.getLibrary())
     }
     
@@ -141,27 +143,64 @@ class TemplateEngine {
     /// - Throws: Error if rendering fails
     func renderPostPage(post: Post) throws -> String {
         let postTemplate = try templateManager.getTemplate(for: "post")
-        
+
         var context = createBaseContext()
         let postData = TemplateDataConverter.convert(post: post, blog: blog, inList: false)
-        
+
         // Merge the post data into the context
         for (key, value) in postData {
             context[key] = value
         }
-        
+
         let content = postTemplate.render(context, library: templateManager.getLibrary())
-        
-        // We need to extract these values for the page title
-        let hasTitle = post.title?.isEmpty == false
+
+        // Use the displayTitle for the page title, which already handles fallback logic
         let displayTitle = post.displayTitle
-        let formattedDate = post.formattedDate
-        
-        let pageTitle = hasTitle 
-            ? "\(displayTitle) - \(blog.name)" 
-            : "\(formattedDate) - \(blog.name)"
-        
-        return try renderLayout(content: content, pageTitle: pageTitle)
+
+        // Always use displayTitle for the page title
+        let pageTitle = "\(displayTitle) - \(blog.name)"
+
+        // Create a post-specific meta description
+        let plainContent = post.plainContent
+        let metaDescription = plainContent.count > 160
+            ? String(plainContent.prefix(157)) + "..."
+            : plainContent
+
+        // Clean the content and title for safe HTML use
+        let escapedDescription = metaDescription
+            .replacingOccurrences(of: "\"", with: "&quot;")
+            .replacingOccurrences(of: "<", with: "&lt;")
+            .replacingOccurrences(of: ">", with: "&gt;")
+
+        // Create a properly formatted title with blog name
+        let fullTitle = "\(displayTitle) - \(blog.name)"
+        let escapedTitle = fullTitle
+            .replacingOccurrences(of: "\"", with: "&quot;")
+            .replacingOccurrences(of: "<", with: "&lt;")
+            .replacingOccurrences(of: ">", with: "&gt;")
+
+        // Get the full URL for the post
+        let postUrl = "\(blog.url)/\(post.urlPath)"
+
+        // Create comprehensive meta tags for SEO and social sharing
+        let customHead = """
+        <!-- Primary Meta Tags -->
+        <meta name="description" content="\(escapedDescription)">
+
+        <!-- Open Graph / Facebook -->
+        <meta property="og:type" content="article">
+        <meta property="og:url" content="\(postUrl)">
+        <meta property="og:title" content="\(escapedTitle)">
+        <meta property="og:description" content="\(escapedDescription)">
+
+        <!-- Twitter -->
+        <meta property="twitter:card" content="summary_large_image">
+        <meta property="twitter:url" content="\(postUrl)">
+        <meta property="twitter:title" content="\(escapedTitle)">
+        <meta property="twitter:description" content="\(escapedDescription)">
+        """
+
+        return try renderLayout(content: content, pageTitle: pageTitle, customHead: customHead, hasCustomMeta: true)
     }
     
     /// Renders the archives page

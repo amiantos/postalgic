@@ -134,6 +134,7 @@ struct AddTagView: View {
         let newTag = Tag(blog: blog, name: name)
         modelContext.insert(newTag)
         blog.tags.append(newTag)
+        try? modelContext.save()
     }
 }
 

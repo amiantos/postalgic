@@ -72,6 +72,7 @@ struct SidebarManagementView: View {
                             for (offset, object) in itemsToMove.enumerated() {
                                 object.order = newOffset + offset
                             }
+                            try? modelContext.save()
                         }
                         .onDelete { indexSet in
                             let sortedObjects = blog.sidebarObjects.sorted(by: { $0.order < $1.order })
@@ -86,6 +87,7 @@ struct SidebarManagementView: View {
                             for (i, object) in remainingObjects.enumerated() {
                                 object.order = i
                             }
+                            try? modelContext.save()
                         }
                     }
                 } header: {

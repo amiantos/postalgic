@@ -7,6 +7,7 @@
 
 import Foundation
 import CommonCrypto
+import UIKit
 
 struct Utils {
     static func extractYouTubeId(from url: String) -> String? {
@@ -34,9 +35,9 @@ struct Utils {
     /// Generates a URL-friendly stub from the given text
     /// - Parameters:
     ///   - text: The source text to generate a stub from
-    ///   - maxLength: Maximum length of the stub (default: 60)
+    ///   - maxLength: Maximum length of the stub (default: 40)
     /// - Returns: A URL-friendly slug with only lowercase alphanumeric characters and hyphens
-    static func generateStub(from text: String, maxLength: Int = 60) -> String {
+    static func generateStub(from text: String, maxLength: Int = 40) -> String {
         // Start by trimming whitespace and converting to lowercase
         let lowercased = text.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         
@@ -76,16 +77,85 @@ struct Utils {
         if !existingStubs.contains(stub) {
             return stub
         }
-        
+
         var counter = 2
         var newStub = "\(stub)-\(counter)"
-        
+
         while existingStubs.contains(newStub) {
             counter += 1
             newStub = "\(stub)-\(counter)"
         }
-        
+
         return newStub
+    }
+
+    /// Optimizes and resizes an image to a maximum dimension of 1024 pixels
+    /// - Parameters:
+    ///   - imageData: The original image data
+    ///   - maxDimension: Maximum dimension (width or height) for the optimized image (default: 1024)
+    ///   - quality: JPEG compression quality (0.0 to 1.0, default: 0.8)
+    /// - Returns: Optimized image data if successful, nil otherwise
+    static func optimizeImage(imageData: Data, maxDimension: CGFloat = 1024, quality: CGFloat = 0.8) -> Data? {
+        guard let originalImage = UIImage(data: imageData) else {
+            return nil
+        }
+
+        // Calculate new dimensions, maintaining aspect ratio
+        let originalSize = originalImage.size
+
+        // If both dimensions are already smaller than maxDimension, just compress
+        if originalSize.width <= maxDimension && originalSize.height <= maxDimension {
+            return originalImage.jpegData(compressionQuality: quality)
+        }
+
+        // Determine which dimension is larger to constrain properly
+        var newWidth: CGFloat
+        var newHeight: CGFloat
+
+        if originalSize.width > originalSize.height {
+            // Width-constrained
+            newWidth = maxDimension
+            newHeight = (maxDimension / originalSize.width) * originalSize.height
+        } else {
+            // Height-constrained
+            newHeight = maxDimension
+            newWidth = (maxDimension / originalSize.height) * originalSize.width
+        }
+
+        let newSize = CGSize(width: newWidth, height: newHeight)
+
+        // Create a new renderer for resizing
+        UIGraphicsBeginImageContextWithOptions(newSize, false, 1.0)
+        originalImage.draw(in: CGRect(origin: .zero, size: newSize))
+        let resizedImage = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+
+        // Convert to JPEG data with the specified quality
+        return resizedImage?.jpegData(compressionQuality: quality)
+    }
+
+    /// Generates a unique filename for an embed image
+    /// - Parameters:
+    ///   - embed: The embed the image belongs to
+    ///   - originalFilename: Original filename of the image (optional)
+    ///   - order: Order index of the image in the embed
+    /// - Returns: A unique filename for the image
+    static func generateImageFilename(for embed: Embed, originalFilename: String? = nil, order: Int) -> String {
+        let timestamp = Int(Date().timeIntervalSince1970)
+        let uuid = UUID().uuidString.prefix(8)
+        let orderString = String(format: "%02d", order)
+
+        // Extract extension from original filename or use jpg by default
+        let fileExtension: String
+        if let originalFilename = originalFilename,
+           let ext = originalFilename.components(separatedBy: ".").last,
+           !ext.isEmpty {
+            fileExtension = ext.lowercased()
+        } else {
+            fileExtension = "jpg"
+        }
+
+        return "embed-\(timestamp)-\(uuid)-\(orderString).\(fileExtension)"
     }
 }
 

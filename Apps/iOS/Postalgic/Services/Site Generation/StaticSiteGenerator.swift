@@ -106,15 +106,54 @@ class StaticSiteGenerator {
     /// Saves all embed images to the site directory
     private func saveEmbedImages(to directory: URL) {
         let publishedPosts = blog.posts.filter { !$0.isDraft }
-        
+
+        // Create directory for embed images if it doesn't exist
+        let embedsDir = directory.appendingPathComponent("images/embeds")
+        if !FileManager.default.fileExists(atPath: embedsDir.path) {
+            do {
+                try FileManager.default.createDirectory(at: embedsDir, withIntermediateDirectories: true)
+                print("📁 Created directory for embed images: \(embedsDir.path)")
+            } catch {
+                print("⚠️ Error creating embed images directory: \(error)")
+            }
+        }
+
+        print("🔍 Processing images for \(publishedPosts.count) published posts")
+
         for post in publishedPosts {
-            if let embed = post.embed, embed.embedType == .link, let imageData = embed.imageData {
-                // Create a predictable filename based on URL hash
-                let imageFilename = "embed-\(embed.url.hash).jpg"
-                let imagePath = directory.appendingPathComponent(imageFilename)
-                
-                // Save the image data
-                try? imageData.write(to: imagePath)
+            if let embed = post.embed {
+                if embed.embedType == .link, let imageData = embed.imageData {
+                    // Create a predictable filename based on URL hash
+                    let imageFilename = "embed-\(embed.url.hash).jpg"
+                    let imagePath = embedsDir.appendingPathComponent(imageFilename)
+
+                    print("📸 Saving link image to: \(imagePath.path)")
+
+                    // Save the image data
+                    do {
+                        try imageData.write(to: imagePath)
+                    } catch {
+                        print("⚠️ Error saving link image: \(error)")
+                    }
+                }
+                else if embed.embedType == .image {
+                    // Save all images from the image embed
+                    let sortedImages = embed.images.sorted { $0.order < $1.order }
+
+                    print("📸 Saving \(sortedImages.count) images from image embed for post: \(post.title ?? "Untitled")")
+
+                    for (index, image) in sortedImages.enumerated() {
+                        let imagePath = embedsDir.appendingPathComponent(image.filename)
+
+                        print("📸 Saving image \(index + 1)/\(sortedImages.count) to: \(imagePath.path)")
+
+                        do {
+                            try image.imageData.write(to: imagePath)
+                        } catch {
+                            print("⚠️ Error saving image: \(error)")
+                        }
+                    }
+                }
             }
         }
     }
@@ -237,7 +276,7 @@ class StaticSiteGenerator {
         )
         
         // Extract and save all embed images
-        saveEmbedImages(to: embedImagesDirectory)
+        saveEmbedImages(to: siteDirectory)
 
         // Generate site content
         try generateIndexPage()
@@ -407,6 +446,11 @@ class StaticSiteGenerator {
 
         let publishedPosts = blog.posts.filter { !$0.isDraft }
         for post in publishedPosts {
+            // Ensure post has a stub before generating pages
+            if post.stub == nil || post.stub!.isEmpty {
+                post.regenerateStub()
+            }
+
             // Create directory structure based on post's urlPath
             let postPath = post.urlPath
             let postDirectory = siteDirectory.appendingPathComponent(postPath)
@@ -414,10 +458,10 @@ class StaticSiteGenerator {
                 at: postDirectory,
                 withIntermediateDirectories: true
             )
-            
+
             // Generate the post content
             let postFilePath = postDirectory.appendingPathComponent("index.html")
-            
+
             do {
                 let postContent = try templateEngine.renderPostPage(post: post)
                 try postContent.write(
