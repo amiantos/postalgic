@@ -83,19 +83,21 @@ struct PostView: View {
                         Label("Settings", systemImage: "gear")
                     }
                     
-                    Button("Save as Draft") {
-                        if post.blog == nil {
-                            post.blog = blog
-                            modelContext.insert(post)
-                            blog.posts.append(post)
+                    if post.blog == nil || !post.isDraft {
+                        Button("Save as Draft") {
+                            if post.blog == nil {
+                                post.blog = blog
+                                modelContext.insert(post)
+                                blog.posts.append(post)
+                            }
+                            post.isDraft = true
+                            // Ensure stub is generated even for drafts
+                            if !post.content.isEmpty || (post.title != nil && !post.title!.isEmpty) {
+                                post.regenerateStub()
+                            }
+                            try? modelContext.save()
+                            dismiss()
                         }
-                        post.isDraft = true
-                        // Ensure stub is generated even for drafts
-                        if !post.content.isEmpty || (post.title != nil && !post.title!.isEmpty) {
-                            post.regenerateStub()
-                        }
-                        try? modelContext.save()
-                        dismiss()
                     }
                     
                     

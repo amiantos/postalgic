@@ -44,7 +44,7 @@ struct BlogSettingsView: View {
                         Label("Sidebar Content", systemImage: "sidebar.right")
                     }
                 } header: {
-                    Text("Metadata")
+                    Text("Metadata").foregroundStyle(.secondary)
                 }
                 
                 Section {
@@ -60,7 +60,7 @@ struct BlogSettingsView: View {
                         Label("Tags", systemImage: "tag")
                     }
                 } header: {
-                    Text("Organization")
+                    Text("Organization").foregroundStyle(.secondary)
                 }
                 
                 Section {
@@ -76,7 +76,7 @@ struct BlogSettingsView: View {
                         Label("Edit Templates", systemImage: "richtext.page")
                     }
                 } header: {
-                    Text("Appearance")
+                    Text("Appearance").foregroundStyle(.secondary)
                 }
                 
                 Section {
@@ -86,18 +86,15 @@ struct BlogSettingsView: View {
                         Label("Publishing Settings", systemImage: "document.badge.gearshape")
                     }
                 } header: {
-                    Text("Publishing")
+                    Text("Publishing").foregroundStyle(.secondary)
                 }
 
                 Section {
                     Button(action: { showingStubMigrationAlert = true }) {
-                        HStack {
-                            Label("Regenerate URL Stubs", systemImage: "link.badge.plus")
-                            Spacer()
-                        }
+                        Label("Regenerate URL Stubs", systemImage: "link.badge.plus")
                     }
                 } header: {
-                    Text("Debug")
+                    Text("Debug").foregroundStyle(.secondary)
                 } footer: {
                     Text("If some posts are not getting proper URL stubs when generating your site, use this option to regenerate all URL stubs.")
                 }
