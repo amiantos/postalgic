@@ -33,7 +33,7 @@ struct AccentColorCustomizationView: View {
                 
                 Section("Preview") {
                     WebView(htmlString: htmlPreview)
-                        .frame(height: 380)
+                        .frame(height: 330)
                         .cornerRadius(10)
                 }
             }
@@ -87,7 +87,7 @@ struct AccentColorCustomizationView: View {
                     font-family: -apple-system, BlinkMacSystemFont, sans-serif;
                     background-color: var(--background-color);
                     color: var(--text-color);
-                    padding: 20px;
+                    padding: 12px;
                     line-height: 1.6;
                 }
 
@@ -130,17 +130,11 @@ struct AccentColorCustomizationView: View {
         </head>
         <body>
             <div class="section">
-                <h3>Separator</h3>
                 <div class="header-separator"></div>
-            </div>
-
-            <div class="section">
                 <h3>Example Post Title</h3>
                 <p>This is regular text on your blog, and <a href="#">this is a link</a> to demonstrate how the accent color looks.</p>
-            </div>
-            
-            <div class="section">
                 <div class="category"><a href="#">Category Name</a></div>
+                <div class="header-separator"></div>
             </div>
         </body>
         </html>
