@@ -68,6 +68,11 @@ struct PostView: View {
                             modelContext.delete(post)
                             dismiss()
                         }
+                    } else {
+                        Button("Save & Close") {
+                            try? modelContext.save()
+                            dismiss()
+                        }
                     }
                 }
                 
@@ -89,6 +94,7 @@ struct PostView: View {
                         if !post.content.isEmpty || (post.title != nil && !post.title!.isEmpty) {
                             post.regenerateStub()
                         }
+                        try? modelContext.save()
                         dismiss()
                     }
                     
@@ -101,6 +107,7 @@ struct PostView: View {
                         }
                         post.isDraft = false
                         post.regenerateStub()
+                        try? modelContext.save()
                         showingPublishView = true
                     }
                 }
