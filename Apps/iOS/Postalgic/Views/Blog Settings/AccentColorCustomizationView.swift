@@ -16,90 +16,44 @@ struct AccentColorCustomizationView: View {
     var blog: Blog
     
     @State private var accentColor: Color
-    @State private var colorHex: String
     @State private var htmlPreview: String = ""
     
     init(blog: Blog) {
         self.blog = blog
-        
-        // Initialize with the blog's accent color or the default
         let colorString = blog.accentColor ?? "#FFA100"
-        _colorHex = State(initialValue: colorString)
         _accentColor = State(initialValue: Color(hex: colorString) ?? .orange)
     }
     
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: 20) {
-                    // Color picker - no onChange handler to avoid glitches
-                    ColorPicker("Select Accent Color", selection: $accentColor)
-                        .padding()
-                    
-                    // Hex code input
-                    HStack {
-                        Text("Hex Color: ")
-                        TextField("Hex Color Code", text: $colorHex)
-                            .autocorrectionDisabled()
-                            .textInputAutocapitalization(.never)
-                            .onSubmit {
-                                if let color = Color(hex: colorHex) {
-                                    accentColor = color
-                                } else {
-                                    // Invalid hex, revert to color picker's hex
-                                    colorHex = accentColor.toHex() ?? "#FFA100"
-                                }
-                            }
-                    }
-                    .padding()
-                    
-                    Divider()
-                    
-                    // Update Preview Button
-                    Button(action: {
-                        // Update hex from color picker
-                        colorHex = accentColor.toHex() ?? "#FFA100"
-                        updatePreviewHTML()
-                    }) {
-                        Label("Update Preview", systemImage: "arrow.clockwise")
-                    }
-                    .buttonStyle(.bordered)
-                    .padding(.bottom)
-                    
-                    // Preview section with WebView
-                    VStack(alignment: .leading) {
-                        Text("Preview")
-                            .font(.headline)
-                            .padding(.horizontal)
-                        
-                        WebView(htmlString: htmlPreview)
-                            .frame(height: 400)
-                            .cornerRadius(10)
-                            .padding(.horizontal)
-                    }
-                    
-                    Spacer()
+            List {
+                Section {
+                    ColorPicker("Select Accent Color", selection: $accentColor, supportsOpacity: false)
                 }
-                .padding(.vertical)
-                .onAppear {
-                    colorHex = accentColor.toHex() ?? "#FFA100"
-                    updatePreviewHTML()
+                
+                Section("Preview") {
+                    WebView(htmlString: htmlPreview)
+                        .frame(height: 380)
+                        .cornerRadius(10)
                 }
-                .navigationTitle("Customize Accent Color")
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .cancellationAction) {
-                        Button("Cancel") {
-                            dismiss()
-                        }
+            }
+            .onAppear {
+                updatePreviewHTML()
+            }
+            .onChange(of: accentColor, initial: false, { oldValue, newValue in
+                updatePreviewHTML()
+            })
+            .navigationTitle("Accent Color")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        dismiss()
                     }
-                    
-                    ToolbarItem(placement: .confirmationAction) {
-                        Button("Save") {
-                            // Update hex from color picker one last time
-                            colorHex = accentColor.toHex() ?? "#FFA100"
-                            saveAccentColor()
-                        }
+                }
+                
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        saveAccentColor()
                     }
                 }
             }
@@ -108,11 +62,7 @@ struct AccentColorCustomizationView: View {
     
     // Generate HTML preview with current accent color
     private func updatePreviewHTML() {
-        // Make sure hex has # prefix
-        var safeHex = colorHex.trimmingCharacters(in: .whitespacesAndNewlines)
-        if !safeHex.hasPrefix("#") {
-            safeHex = "#" + safeHex
-        }
+        guard let safeHex = accentColor.toHex() else { return }
         
         // Include a timestamp in CSS to force WebView refresh
         let timestamp = Date().timeIntervalSince1970
@@ -180,17 +130,16 @@ struct AccentColorCustomizationView: View {
         </head>
         <body>
             <div class="section">
-                <h3>Header Separator</h3>
+                <h3>Separator</h3>
                 <div class="header-separator"></div>
             </div>
 
             <div class="section">
-                <h3>Text with Link</h3>
+                <h3>Example Post Title</h3>
                 <p>This is regular text on your blog, and <a href="#">this is a link</a> to demonstrate how the accent color looks.</p>
             </div>
             
             <div class="section">
-                <h3>Category Tag</h3>
                 <div class="category"><a href="#">Category Name</a></div>
             </div>
         </body>
@@ -200,12 +149,7 @@ struct AccentColorCustomizationView: View {
     
     // Save the selected accent color to the blog model
     private func saveAccentColor() {
-        // Clean up the hex value before saving
-        var safeHex = colorHex.trimmingCharacters(in: .whitespacesAndNewlines)
-        if !safeHex.hasPrefix("#") {
-            safeHex = "#" + safeHex
-        }
-        
+        guard let safeHex = accentColor.toHex() else { return }
         blog.accentColor = safeHex
         try? modelContext.save()
         dismiss()
