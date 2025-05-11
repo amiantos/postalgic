@@ -10,6 +10,8 @@ import SwiftUI
 
 struct PostsView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.dismiss) private var dismiss
+    
     var blog: Blog
     
     // Search state
@@ -29,6 +31,8 @@ struct PostsView: View {
     // SwiftData query for posts - we'll handle sorting in the view
     @Query private var allPosts: [Post]
     
+    @State private var showingPostForm = false
+    
     // Initialize the query based on the blog
     init(blog: Blog) {
         self.blog = blog
@@ -44,65 +48,81 @@ struct PostsView: View {
     }
     
     var body: some View {
-        VStack {
-            // Search bar
-            TextField("Search posts", text: $searchText)
-                .padding(10)
-                .background(Color(.systemGray6))
-                .cornerRadius(10)
-                .padding(.horizontal)
-                .padding(.top, 10)
-            
-            // Toolbar with sort options
-            HStack {
-                Menu {
-                    ForEach(SortOption.allCases, id: \.self) { option in
-                        Button(action: {
-                            sortOption = option
-                        }) {
-                            HStack {
-                                Text(option.rawValue)
-                                if sortOption == option {
-                                    Image(systemName: "checkmark")
+        NavigationStack {
+            VStack {
+                // Search bar
+                TextField("Search posts", text: $searchText)
+                    .padding(10)
+                    .background(.background.secondary)
+                    .foregroundStyle(.primary)
+                    .cornerRadius(10)
+                    .padding(.horizontal)
+                    .padding(.top, 10)
+                
+                // Toolbar with sort options
+                HStack {
+                    Menu {
+                        ForEach(SortOption.allCases, id: \.self) { option in
+                            Button(action: {
+                                sortOption = option
+                            }) {
+                                HStack {
+                                    Text(option.rawValue)
+                                    if sortOption == option {
+                                        Image(systemName: "checkmark")
+                                    }
                                 }
                             }
                         }
-                    }
-                } label: {
-                    HStack {
-                        Image(systemName: "arrow.up.arrow.down")
-                        Text("Sort: \(sortOption.rawValue)")
-                        Image(systemName: "chevron.down")
-                            .font(.caption)
-                    }
-                    .padding(8)
-                    .background(Color(.systemGray6))
-                    .cornerRadius(8)
-                }
-                
-                Spacer()
-                
-                Text("\(filteredPosts.count) posts")
-                    .foregroundColor(.secondary)
-                    .font(.caption)
-            }
-            .padding(.horizontal)
-            
-            // Posts list
-            ScrollView {
-                if filteredPosts.isEmpty {
-                    emptyStateView
-                } else {
-                    LazyVStack(spacing: 20) {
-                        ForEach(filteredPosts) { post in
-                            PostPreviewView(post: post)
+                    } label: {
+                        HStack {
+                            Image(systemName: "arrow.up.arrow.down")
+                            Text("Sort: \(sortOption.rawValue)")
+                            Image(systemName: "chevron.down")
+                                .font(.caption)
                         }
+                        .padding(8)
+                        .background(.background.secondary)
+                        .foregroundStyle(.primary)
+                        .cornerRadius(8)
                     }
-                    .padding(.vertical)
+                    
+                    Spacer()
+                    
+                    Text("\(filteredPosts.count) posts")
+                        .foregroundColor(.secondary)
+                        .font(.caption)
                 }
+                .padding(.horizontal)
+                
+                // Posts list
+                ScrollView {
+                    if filteredPosts.isEmpty {
+                        emptyStateView
+                    } else {
+                        LazyVStack(spacing: 20) {
+                            ForEach(filteredPosts) { post in
+                                PostPreviewView(post: post)
+                            }
+                        }
+                        .padding(.vertical)
+                    }
+                }
+            }
+            .navigationTitle("All Posts")
+            .toolbar {
+                ToolbarItemGroup(placement: .primaryAction) {
+                    Button {
+                        showingPostForm = true
+                    } label: {
+                        Label("New Post", systemImage: "plus")
+                    }
+                }
+            }
+            .sheet(isPresented: $showingPostForm) {
+                PostView(blog: blog).interactiveDismissDisabled()
             }
         }
-        .navigationTitle("All Posts")
     }
     
     private var emptyStateView: some View {

@@ -32,40 +32,54 @@ struct BlogSettingsView: View {
         NavigationStack {
             List {
                 Section {
-                    Button(action: { showingEditBlogView = true }) {
-                        HStack {
-                            Label("Blog Metadata", systemImage: "person")
-                            Spacer()
-                            Image(systemName: "chevron.right").foregroundColor(.secondary)
-                        }
+                    Button {
+                        showingEditBlogView = true
+                    } label: {
+                        Label("Blog Information", systemImage: "person")
                     }
 
-                    Button(action: { showingSidebarManagement = true }) {
-                        HStack {
-                            Label("Sidebar Management", systemImage: "sidebar.right")
-                            Spacer()
-                            Image(systemName: "chevron.right").foregroundColor(.secondary)
-                        }
-                    }
-
-                    Button(action: { showingTemplateCustomizationView = true }) {
-                        HStack {
-                            Label("Templates", systemImage: "richtext.page")
-                            Spacer()
-                            Image(systemName: "chevron.right").foregroundColor(.secondary)
-                        }
-                    }
-
-                    Button(action: { showingAccentColorCustomization = true }) {
-                        HStack {
-                            Label("Customize Accent Color", systemImage: "paintpalette")
-                            Spacer()
-                            Image(systemName: "chevron.right").foregroundColor(.secondary)
-                        }
+                    Button {
+                        showingSidebarManagement = true
+                    } label: {
+                        Label("Sidebar Content", systemImage: "sidebar.right")
                     }
                 } header: {
-                    Text("General")
+                    Text("Metadata")
                 }
+                
+                Section {
+                    Button {
+                        showingCategoryManagement = true
+                    } label: {
+                        Label("Categories", systemImage: "folder")
+                    }
+                    
+                    Button {
+                        showingTagManagement = true
+                    } label: {
+                        Label("Tags", systemImage: "tag")
+                    }
+                } header: {
+                    Text("Organization")
+                }
+                
+                Section {
+                    Button {
+                        showingAccentColorCustomization = true
+                    } label: {
+                        Label("Customize Colors", systemImage: "paintpalette")
+                    }
+                    
+                    Button {
+                        showingTemplateCustomizationView = true
+                    } label: {
+                        Label("Edit Templates", systemImage: "richtext.page")
+                    }
+                } header: {
+                    Text("Appearance")
+                }
+
+
 
                 Section {
                     Button(action: { showingStubMigrationAlert = true }) {
@@ -90,15 +104,7 @@ struct BlogSettingsView: View {
                 }
             }
             .foregroundColor(.primary)
-            .navigationTitle("Appearance")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Done") {
-                        dismiss()
-                    }
-                }
-            }
+            .navigationTitle("Blog Settings")
         }
         .sheet(isPresented: $showingEditBlogView) {
             BlogFormView(blog: blog).interactiveDismissDisabled()

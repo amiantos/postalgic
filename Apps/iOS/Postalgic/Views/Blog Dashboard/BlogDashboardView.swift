@@ -15,8 +15,7 @@ struct BlogDashboardView: View {
     @State private var showingPostForm = false
     @State private var showingPublishView = false
     @State private var showingSettingsView = false
-    @State private var showingCategoryManagement = false
-    @State private var showingTagManagement = false
+    @State private var showingPostsView = false
 
     // Query for all blog posts, sorted by creation date
     @Query(sort: \Post.createdAt, order: .reverse) private var allPosts: [Post]
@@ -36,92 +35,67 @@ struct BlogDashboardView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 30) {
                 // Quick Actions Section
-                VStack(spacing: 12) {
-                    HStack(spacing: 12) {
-                        Button(action: { showingCategoryManagement = true }) {
-                            VStack(spacing: 3) {
-                                Image(systemName: "folder").font(
-                                    .system(size: 24)
-                                )
-                                Text("Categories").font(.caption)
-                            }.padding(3).frame(
+                VStack(spacing: 8) {
+                    Button {
+                        showingPostForm = true
+                    } label: {
+                        Label("New Post", systemImage: "square.and.pencil")
+                            .padding(.vertical, 5)
+                            .frame(
                                 maxWidth: .infinity,
-                                maxHeight: .infinity
+                                maxHeight: .infinity,
+                                alignment: .leading
                             )
-                        }.buttonStyle(.bordered).foregroundStyle(.primary)
-                        
-                        Button(action: {
-                            if let url = URL(string: blog.url) {
-                                UIApplication.shared.open(url)
-                            }
-                        }) {
-                            VStack(spacing: 3) {
-                                Image(systemName: "safari")
-                                    .font(.system(size: 24))
-                                Text("Visit Site")
-                                    .font(.caption)
-                            }.padding(3).frame(
+                    }.buttonStyle(.borderedProminent).foregroundStyle(.primary).padding(.horizontal)
+                    
+                    Button {
+                        showingPublishView = true
+                    } label: {
+                        Label("Publish", systemImage: "paperplane")
+                            .padding(.vertical, 5)
+                            .frame(
                                 maxWidth: .infinity,
-                                maxHeight: .infinity
+                                maxHeight: .infinity,
+                                alignment: .leading
                             )
-                        }.buttonStyle(.bordered).foregroundStyle(.primary)
-                        
-                        
-                        Button(action: { showingPublishView = true }) {
-                            VStack(spacing: 3) {
-                                Image(systemName: "paperplane")
-                                    .font(.system(size: 24))
-                                Text("Publish")
-                                    .font(.caption)
-                            }.padding(3).frame(
+                    }.buttonStyle(.bordered).foregroundStyle(.primary).padding(.horizontal)
+                    
+                    NavigationLink {
+                        PostsView(blog: blog)
+                    } label: {
+                        Label("Posts", systemImage: "text.page").padding(.vertical, 5)
+                            .frame(
                                 maxWidth: .infinity,
-                                maxHeight: .infinity
+                                maxHeight: .infinity,
+                                alignment: .leading
                             )
-                        }.buttonStyle(.bordered).foregroundStyle(.primary)
-                        
-                      
-                    }.padding(.horizontal)
-
-                    HStack(spacing: 12) {
-                        
-                        Button(action: { showingTagManagement = true }) {
-                            VStack(spacing: 3) {
-                                Image(systemName: "tag").font(.system(size: 24))
-                                Text("Tags").font(.caption)
-                            }.padding(3).frame(
+                    }.buttonStyle(.bordered).foregroundStyle(.primary).padding(.horizontal)
+                    
+                    Button {
+                        if let url = URL(string: blog.url) {
+                            UIApplication.shared.open(url)
+                        }
+                    } label: {
+                        Label("Visit Blog", systemImage: "safari")
+                            .padding(.vertical, 5)
+                            .frame(
                                 maxWidth: .infinity,
-                                maxHeight: .infinity
+                                maxHeight: .infinity,
+                                alignment: .leading
                             )
-                        }.buttonStyle(.bordered).foregroundStyle(.primary)
-                        
-                        Button(action: { showingSettingsView = true }) {
-                            VStack(spacing: 3) {
-                                Image(systemName: "richtext.page").font(
-                                    .system(size: 24)
-                                )
-                                Text("Appearance").font(.caption)
-                            }.padding(3).frame(
+                    }.buttonStyle(.bordered).foregroundStyle(.primary).padding(.horizontal)
+                    
+                    NavigationLink {
+                        BlogSettingsView(blog: blog)
+                    } label: {
+                        Label("Blog Settings", systemImage: "gear")
+                            .padding(.vertical, 5)
+                            .frame(
                                 maxWidth: .infinity,
-                                maxHeight: .infinity
+                                maxHeight: .infinity,
+                                alignment: .leading
                             )
-                        }.buttonStyle(.bordered).foregroundStyle(.primary)
-
-
-                        Button(action: { showingPostForm = true }) {
-                            VStack(spacing: 3) {
-                                Image(systemName: "square.and.pencil")
-                                    .font(.system(size: 24))
-                                Text("New Post")
-                                    .font(.caption)
-                            }.padding(3).frame(
-                                maxWidth: .infinity,
-                                maxHeight: .infinity
-                            )
-                        }.buttonStyle(.borderedProminent).foregroundStyle(
-                            .primary
-                        )
-                    }
-                    .padding(.horizontal)
+                    }.buttonStyle(.bordered).foregroundStyle(.primary).padding(.horizontal)
                 }
 
                 // Draft Posts Section
@@ -144,15 +118,6 @@ struct BlogDashboardView: View {
                         Text("Recent Posts")
                             .font(.title2)
                             .fontWeight(.bold)
-
-                        Spacer()
-
-                        NavigationLink(destination: PostsView(blog: blog))
-                        {
-                            Text("View All")
-                                .font(.subheadline)
-                                .foregroundColor(.accentColor)
-                        }
                     }
                     .padding(.horizontal)
 
@@ -184,13 +149,15 @@ struct BlogDashboardView: View {
             .padding(.vertical)
         }
         .navigationTitle(blog.name)
-//        .toolbar {
-//            ToolbarItemGroup(placement: .primaryAction) {
-//                Menu("More", systemImage: "ellipsis.circle") {
-//                    
-//                }
-//            }
-//        }
+        .toolbar {
+            ToolbarItemGroup(placement: .primaryAction) {
+                Button {
+                    showingPostForm = true
+                } label: {
+                    Label("New Post", systemImage: "plus")
+                }
+            }
+        }
         .sheet(isPresented: $showingPostForm) {
             PostView(blog: blog).interactiveDismissDisabled()
         }
@@ -200,11 +167,8 @@ struct BlogDashboardView: View {
         .sheet(isPresented: $showingSettingsView) {
             BlogSettingsView(blog: blog)
         }
-        .sheet(isPresented: $showingCategoryManagement) {
-            CategoryManagementView(blog: blog)
-        }
-        .sheet(isPresented: $showingTagManagement) {
-            TagManagementView(blog: blog)
+        .sheet(isPresented: $showingPostsView) {
+            PostsView(blog: blog)
         }
     }
 
