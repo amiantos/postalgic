@@ -223,8 +223,8 @@
 		4437E9C32DC88F3A00931230 /* Blog Settings */ = {
 			isa = PBXGroup;
 			children = (
-				44DE42FF2DCFEBA700F31204 /* AccentColorCustomizationView.swift */,
 				44362F4D2DC1C85B00EA704F /* BlogSettingsView.swift */,
+				44DE42FF2DCFEBA700F31204 /* AccentColorCustomizationView.swift */,
 				44C364152DB768DB0057567C /* CategoryManagementView.swift */,
 				443F0B622DBB6B9600034EF1 /* TagManagementView.swift */,
 				44362F142DC0989000EA704F /* SidebarManagementView.swift */,

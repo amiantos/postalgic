@@ -48,8 +48,8 @@ struct BlogFormView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Blog Info") {
-                    TextField("Name", text: $name)
+                Section("Blog Title and Tagline") {
+                    TextField("Title", text: $name)
                     TextField("Tagline (optional)", text: $tagline)
                 }
 
@@ -68,7 +68,7 @@ struct BlogFormView: View {
                 } header: {
                     Text("Author Information")
                 } footer: {
-                    Text("If provided, author information will be added to posts and included in the RSS feed. The email is only used in the RSS feed's <email> tag.")
+                    Text("If provided, author information will be added to posts and included in the RSS feed.")
                 }
             }
             .navigationTitle(isEditing ? "Metadata" : "New Blog")

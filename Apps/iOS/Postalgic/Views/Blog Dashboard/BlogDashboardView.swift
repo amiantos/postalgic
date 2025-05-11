@@ -59,24 +59,28 @@ struct BlogDashboardView: View {
                                 alignment: .leading
                             )
                     }.buttonStyle(.bordered).foregroundStyle(.primary).padding(.horizontal)
+
+                    if let url = URL(string: blog.url) {
+                        Button {
+                            UIApplication.shared.open(url)
+                        } label: {
+                            Label("Visit Blog", systemImage: "safari")
+                                .padding(.vertical, 5)
+                                .frame(
+                                    maxWidth: .infinity,
+                                    maxHeight: .infinity,
+                                    alignment: .leading
+                                )
+                        }.buttonStyle(.bordered).foregroundStyle(.primary).padding(.horizontal)
+                    }
+                    
+                    Divider().padding(.horizontal)
+                    
                     
                     NavigationLink {
                         PostsView(blog: blog)
                     } label: {
-                        Label("Posts", systemImage: "text.page").padding(.vertical, 5)
-                            .frame(
-                                maxWidth: .infinity,
-                                maxHeight: .infinity,
-                                alignment: .leading
-                            )
-                    }.buttonStyle(.bordered).foregroundStyle(.primary).padding(.horizontal)
-                    
-                    Button {
-                        if let url = URL(string: blog.url) {
-                            UIApplication.shared.open(url)
-                        }
-                    } label: {
-                        Label("Visit Blog", systemImage: "safari")
+                        Label("All Posts", systemImage: "book.pages")
                             .padding(.vertical, 5)
                             .frame(
                                 maxWidth: .infinity,
@@ -85,10 +89,11 @@ struct BlogDashboardView: View {
                             )
                     }.buttonStyle(.bordered).foregroundStyle(.primary).padding(.horizontal)
                     
+                    
                     NavigationLink {
                         BlogSettingsView(blog: blog)
                     } label: {
-                        Label("Blog Settings", systemImage: "gear")
+                        Label("More", systemImage: "ellipsis.circle")
                             .padding(.vertical, 5)
                             .frame(
                                 maxWidth: .infinity,

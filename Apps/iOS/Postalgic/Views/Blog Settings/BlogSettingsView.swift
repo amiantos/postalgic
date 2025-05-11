@@ -78,8 +78,16 @@ struct BlogSettingsView: View {
                 } header: {
                     Text("Appearance")
                 }
-
-
+                
+                Section {
+                    Button {
+                        showingPublishSettingsView = true
+                    } label: {
+                        Label("Publishing Settings", systemImage: "document.badge.gearshape")
+                    }
+                } header: {
+                    Text("Publishing")
+                }
 
                 Section {
                     Button(action: { showingStubMigrationAlert = true }) {
@@ -89,7 +97,7 @@ struct BlogSettingsView: View {
                         }
                     }
                 } header: {
-                    Text("Maintenance")
+                    Text("Debug")
                 } footer: {
                     Text("If some posts are not getting proper URL stubs when generating your site, use this option to regenerate all URL stubs.")
                 }
