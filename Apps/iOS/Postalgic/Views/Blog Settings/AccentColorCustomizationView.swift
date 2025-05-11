@@ -28,7 +28,7 @@ struct AccentColorCustomizationView: View {
         NavigationStack {
             List {
                 Section {
-                    ColorPicker("Select Accent Color", selection: $accentColor, supportsOpacity: false)
+                    ColorPicker("Accent Color", selection: $accentColor, supportsOpacity: false)
                 }
                 
                 Section("Preview") {
@@ -43,7 +43,7 @@ struct AccentColorCustomizationView: View {
             .onChange(of: accentColor, initial: false, { oldValue, newValue in
                 updatePreviewHTML()
             })
-            .navigationTitle("Accent Color")
+            .navigationTitle("Customize Colors")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
