@@ -42,11 +42,12 @@ struct PostView: View {
                 MarkdownTextEditor(text: Binding(
                     get: { post.content },
                     set: { post.content = $0 }
-                ), 
+                ),
                 onShowLinkPrompt: {
                     selectedText, selectedRange in
                     self.handleShowLinkPrompt(selectedText: selectedText, selectedRange: selectedRange)
-                })
+                },
+                focusOnAppear: true)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
             .alert("Add Link", isPresented: $showURLPrompt) {
@@ -166,7 +167,8 @@ struct PostView: View {
 struct MarkdownTextEditor: UIViewRepresentable {
     @Binding var text: String
     var onShowLinkPrompt: (String?, NSRange?) -> Void
-    
+    var focusOnAppear: Bool = false
+
     func makeUIView(context: Context) -> UITextView {
         let textView = UITextView()
         textView.font = UIFont.preferredFont(forTextStyle: .body)
@@ -206,6 +208,12 @@ struct MarkdownTextEditor: UIViewRepresentable {
         if textView.text != text {
             textView.text = text
         }
+
+        // Set focus if requested
+        if focusOnAppear && !context.coordinator.didFocus {
+            textView.becomeFirstResponder()
+            context.coordinator.didFocus = true
+        }
     }
     
     func makeCoordinator() -> Coordinator {
@@ -216,7 +224,8 @@ struct MarkdownTextEditor: UIViewRepresentable {
         @Binding var text: String
         var onShowLinkPrompt: (String?, NSRange?) -> Void
         weak var textView: UITextView?
-        
+        var didFocus: Bool = false
+
         init(text: Binding<String>, onShowLinkPrompt: @escaping (String?, NSRange?) -> Void) {
             self._text = text
             self.onShowLinkPrompt = onShowLinkPrompt
