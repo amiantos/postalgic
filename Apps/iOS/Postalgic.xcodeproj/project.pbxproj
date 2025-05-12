@@ -48,6 +48,8 @@
 		44C3642D2DB768DB0057567C /* PostalgicApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44C3641E2DB768DB0057567C /* PostalgicApp.swift */; };
 		44C3642E2DB768DB0057567C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 44C3641C2DB768DB0057567C /* Assets.xcassets */; };
 		44DE43002DCFEBA700F31204 /* AccentColorCustomizationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44DE42FF2DCFEBA700F31204 /* AccentColorCustomizationView.swift */; };
+		44DE43212DD1C63F00F31204 /* CategorySelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44DE431F2DD1C63F00F31204 /* CategorySelectionView.swift */; };
+		44DE43222DD1C63F00F31204 /* TagSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44DE43202DD1C63F00F31204 /* TagSelectionView.swift */; };
 		44F858B82DC43FAD00B8179B /* BlogDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44F858B72DC43FAD00B8179B /* BlogDashboardView.swift */; };
 /* End PBXBuildFile section */
 
@@ -108,6 +110,8 @@
 		44C3641D2DB768DB0057567C /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		44C3641E2DB768DB0057567C /* PostalgicApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostalgicApp.swift; sourceTree = "<group>"; };
 		44DE42FF2DCFEBA700F31204 /* AccentColorCustomizationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccentColorCustomizationView.swift; sourceTree = "<group>"; };
+		44DE431F2DD1C63F00F31204 /* CategorySelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CategorySelectionView.swift; sourceTree = "<group>"; };
+		44DE43202DD1C63F00F31204 /* TagSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagSelectionView.swift; sourceTree = "<group>"; };
 		44F858B72DC43FAD00B8179B /* BlogDashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlogDashboardView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -214,6 +218,8 @@
 			children = (
 				44499E032DC80B3F00A9624B /* PostView.swift */,
 				44C364192DB768DB0057567C /* PostSettingsView.swift */,
+				44DE431F2DD1C63F00F31204 /* CategorySelectionView.swift */,
+				44DE43202DD1C63F00F31204 /* TagSelectionView.swift */,
 				443F0B2B2DB8D47500034EF1 /* EmbedFormView.swift */,
 				443F0B2C2DB8D47500034EF1 /* EmbedView.swift */,
 			);
@@ -481,6 +487,8 @@
 				44362EE12DBD82EB00EA704F /* ManualPublisher.swift in Sources */,
 				443F0B632DBB6B9600034EF1 /* TagManagementView.swift in Sources */,
 				44362F002DBF3D8200EA704F /* Utils+Extensions.swift in Sources */,
+				44DE43212DD1C63F00F31204 /* CategorySelectionView.swift in Sources */,
+				44DE43222DD1C63F00F31204 /* TagSelectionView.swift in Sources */,
 				44362EDB2DBD826B00EA704F /* TemplateManager.swift in Sources */,
 				44362E792DBC0AEE00EA704F /* FTPPublisher.swift in Sources */,
 				44C3642A2DB768DB0057567C /* PostSettingsView.swift in Sources */,

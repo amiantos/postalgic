@@ -34,11 +34,32 @@ struct PostView: View {
                     get: { post.title ?? "" },
                     set: { post.title = $0.isEmpty ? nil : $0 }
                 ))
-                .font(.title)
+                .font(.title3)
                 .padding()
                 
                 Divider()
                 
+                HStack {
+                    NavigationLink(destination: CategorySelectionView(blog: blog, post: post)) {
+                        Label(post.category?.name ?? "Add Category", systemImage: "folder")
+                            .font(.footnote)
+                            .padding(.leading)
+                            .padding(.vertical, 12)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    
+                    Divider().frame(height: 10)
+                    
+                    NavigationLink(destination: TagSelectionView(blog: blog, post: post)) {
+                        Label(post.tags.isEmpty ? "Add Tags" : "\(post.tags.count) tag\(post.tags.count == 1 ? "" : "s")", systemImage: "tag")
+                            .font(.footnote)
+                            .padding(.vertical, 12)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                }.foregroundStyle(.secondary)
+
+                Divider()
+
                 MarkdownTextEditor(text: Binding(
                     get: { post.content },
                     set: { post.content = $0 }
