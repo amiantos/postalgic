@@ -15,6 +15,7 @@ struct PostView: View {
 
     @State private var showingSettings: Bool = false
     @State private var showingPublishView: Bool = false
+    @State private var showingEmbedMenu: Bool = false
 
     init(blog: Blog) {
         self.blog = blog
@@ -47,9 +48,9 @@ struct PostView: View {
                             .padding(.vertical, 12)
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
-                    
+
                     Divider().frame(height: 10)
-                    
+
                     NavigationLink(destination: TagSelectionView(blog: blog, post: post)) {
                         Label(post.tags.isEmpty ? "Add Tags" : "\(post.tags.count) tag\(post.tags.count == 1 ? "" : "s")", systemImage: "tag")
                             .font(.footnote)
@@ -57,6 +58,19 @@ struct PostView: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
                 }.foregroundStyle(.secondary)
+
+                Divider()
+
+                Button(action: {
+                    showingEmbedMenu = true
+                }) {
+                    Label(post.embed == nil ? "Add Embed" : "Edit Embed", systemImage: "rectangle.and.paperclip")
+                        .font(.footnote)
+                        .padding(.vertical, 12)
+                        .padding(.leading)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .foregroundStyle(.secondary)
+                }
 
                 Divider()
 
@@ -144,6 +158,13 @@ struct PostView: View {
                 dismiss()
             }) {
                 PublishBlogView(blog: blog, autoPublish: true)
+            }
+            .sheet(isPresented: $showingEmbedMenu) {
+                EmbedMenuView(post: post, onTitleUpdate: { newTitle in
+                    if post.title == nil || post.title!.isEmpty {
+                        post.title = newTitle
+                    }
+                })
             }
         }
     }

@@ -30,7 +30,7 @@ struct EmbedView: View {
                             .stroke(Color.gray.opacity(0.3), lineWidth: 1)
                     )
             case .image:
-                ImageEmbedView(embed: embed)
+                InlineImageEmbedView(embed: embed)
                     .cornerRadius(8)
                     .overlay(
                         RoundedRectangle(cornerRadius: 8)
@@ -178,7 +178,7 @@ struct WebViewContainer: UIViewRepresentable {
     }
 }
 
-struct ImageEmbedView: View {
+struct InlineImageEmbedView: View {
     var embed: Embed
     @State private var currentImageIndex = 0
 
