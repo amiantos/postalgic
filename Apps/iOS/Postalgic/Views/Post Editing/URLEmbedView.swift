@@ -4,10 +4,10 @@ import SwiftData
 struct URLEmbedView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
-    
+
     var post: Post
     var onTitleUpdate: ((String) -> Void)?
-    
+
     @State private var url: String = ""
     @State private var embedType: EmbedType = .link
     @State private var position: EmbedPosition = .below
@@ -15,9 +15,38 @@ struct URLEmbedView: View {
     @State private var errorMessage: String?
     @State private var linkMetadata: (title: String?, description: String?, imageUrl: String?, imageData: Data?) = (nil, nil, nil, nil)
     @State private var youtubeTitle: String?
-    
+    @State private var isEditing: Bool = false
+
     // Check clipboard on appearing
     @State private var hasCheckedClipboard = false
+
+    init(post: Post, onTitleUpdate: ((String) -> Void)? = nil) {
+        self.post = post
+        self.onTitleUpdate = onTitleUpdate
+
+        // Check if we're editing an existing embed
+        if let embed = post.embed, (embed.embedType == .youtube || embed.embedType == .link) {
+            _url = State(initialValue: embed.url)
+            _embedType = State(initialValue: embed.embedType)
+            _position = State(initialValue: embed.embedPosition)
+            _isEditing = State(initialValue: true)
+
+            // Pre-populate title for YouTube embeds
+            if embed.embedType == .youtube {
+                _youtubeTitle = State(initialValue: embed.title)
+            }
+
+            // Pre-populate metadata for Link embeds
+            if embed.embedType == .link {
+                _linkMetadata = State(initialValue: (
+                    title: embed.title,
+                    description: embed.embedDescription,
+                    imageUrl: embed.imageUrl,
+                    imageData: embed.imageData
+                ))
+            }
+        }
+    }
     
     var body: some View {
         NavigationStack {
@@ -96,7 +125,11 @@ struct URLEmbedView: View {
                     if let title = currentEmbedTitle, !title.isEmpty {
                         Button("Set as Post Title") {
                             onTitleUpdate?(title)
-                            addEmbed()
+                            if isEditing {
+                                updateEmbed()
+                            } else {
+                                addEmbed()
+                            }
                             dismiss()
                         }
                         .buttonStyle(.borderedProminent)
@@ -154,7 +187,7 @@ struct URLEmbedView: View {
                     .pickerStyle(.segmented)
                 }
             }
-            .navigationTitle("Add URL Embed")
+            .navigationTitle(isEditing ? "Edit URL Embed" : "Add URL Embed")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
@@ -162,8 +195,12 @@ struct URLEmbedView: View {
                     }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Add") {
-                        addEmbed()
+                    Button(isEditing ? "Update" : "Add") {
+                        if isEditing {
+                            updateEmbed()
+                        } else {
+                            addEmbed()
+                        }
                         dismiss()
                     }
                     .disabled(url.isEmpty || isLoading)
@@ -176,14 +213,15 @@ struct URLEmbedView: View {
     }
     
     private func checkClipboard() {
-        guard !hasCheckedClipboard else { return }
-        
+        // Skip clipboard check if we're editing an existing embed
+        guard !hasCheckedClipboard && !isEditing else { return }
+
         if let clipboardString = UIPasteboard.general.string,
            let clipboardUrl = URL(string: clipboardString),
            UIApplication.shared.canOpenURL(clipboardUrl) {
-            
+
             url = clipboardString
-            
+
             // If it looks like a YouTube URL, change embed type to YouTube
             if Utils.extractYouTubeId(from: clipboardString) != nil {
                 embedType = .youtube
@@ -192,7 +230,7 @@ struct URLEmbedView: View {
                 fetchLinkMetadata()
             }
         }
-        
+
         hasCheckedClipboard = true
     }
     
@@ -227,7 +265,7 @@ struct URLEmbedView: View {
         if let oldEmbed = post.embed {
             modelContext.delete(oldEmbed)
         }
-        
+
         // Create new embed
         let embed = Embed(
             post: post,
@@ -240,9 +278,56 @@ struct URLEmbedView: View {
             imageData: linkMetadata.imageData
         )
         
-        // Insert embed into model context
-        try? modelContext.insert(embed)
         post.embed = embed
+        // Insert embed into model context
+        modelContext.insert(embed)
+    }
+
+    private func updateEmbed() {
+        guard let existingEmbed = post.embed else {
+            // If for some reason the embed is gone, create a new one
+            addEmbed()
+            return
+        }
+
+        // Is it a type change?
+        let isTypeChange = existingEmbed.embedType != embedType
+
+        if isTypeChange {
+            // If the type changed, it's safer to delete and create a new one
+            modelContext.delete(existingEmbed)
+
+            // Create a new embed
+            let newEmbed = Embed(
+                post: post,
+                url: url,
+                type: embedType,
+                position: position,
+                title: embedType == .youtube ? youtubeTitle : linkMetadata.title,
+                embedDescription: linkMetadata.description,
+                imageUrl: linkMetadata.imageUrl,
+                imageData: linkMetadata.imageData
+            )
+            
+            post.embed = newEmbed
+            modelContext.insert(newEmbed)
+        } else {
+            // Update the existing embed's properties
+            existingEmbed.url = url
+            existingEmbed.position = position.rawValue
+
+            if embedType == .youtube {
+                existingEmbed.title = youtubeTitle
+                existingEmbed.embedDescription = nil
+                existingEmbed.imageUrl = nil
+                existingEmbed.imageData = nil
+            } else if embedType == .link {
+                existingEmbed.title = linkMetadata.title
+                existingEmbed.embedDescription = linkMetadata.description
+                existingEmbed.imageUrl = linkMetadata.imageUrl
+                existingEmbed.imageData = linkMetadata.imageData
+            }
+        }
     }
 }
 

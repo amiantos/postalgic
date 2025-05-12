@@ -22,7 +22,6 @@
 		44362F182DC0989000EA704F /* TextBlockFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44362F152DC0989000EA704F /* TextBlockFormView.swift */; };
 		44362F4E2DC1C85B00EA704F /* BlogSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44362F4D2DC1C85B00EA704F /* BlogSettingsView.swift */; };
 		443F0B2D2DB8D47500034EF1 /* EmbedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 443F0B2C2DB8D47500034EF1 /* EmbedView.swift */; };
-		443F0B2E2DB8D47500034EF1 /* EmbedFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 443F0B2B2DB8D47500034EF1 /* EmbedFormView.swift */; };
 		443F0B302DB8D48B00034EF1 /* LinkMetadataService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 443F0B2F2DB8D48B00034EF1 /* LinkMetadataService.swift */; };
 		443F0B512DBAD7AC00034EF1 /* PreviewData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 443F0B502DBAD7AC00034EF1 /* PreviewData.swift */; };
 		443F0B612DBB696600034EF1 /* HelpView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 443F0B602DBB696600034EF1 /* HelpView.swift */; };
@@ -42,7 +41,6 @@
 		44C364242DB768DB0057567C /* BlogFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44C364132DB768DB0057567C /* BlogFormView.swift */; };
 		44C364252DB768DB0057567C /* BlogsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44C364142DB768DB0057567C /* BlogsView.swift */; };
 		44C364262DB768DB0057567C /* CategoryManagementView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44C364152DB768DB0057567C /* CategoryManagementView.swift */; };
-		44C3642A2DB768DB0057567C /* PostSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44C364192DB768DB0057567C /* PostSettingsView.swift */; };
 		44C3642B2DB768DB0057567C /* PublishBlogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44C3641A2DB768DB0057567C /* PublishBlogView.swift */; };
 		44C3642C2DB768DB0057567C /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44C3641D2DB768DB0057567C /* Models.swift */; };
 		44C3642D2DB768DB0057567C /* PostalgicApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44C3641E2DB768DB0057567C /* PostalgicApp.swift */; };
@@ -90,7 +88,6 @@
 		443674762DB3898500F67B00 /* Postalgic.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Postalgic.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		443674852DB3898600F67B00 /* PostalgicTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PostalgicTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		4436748F2DB3898600F67B00 /* PostalgicUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PostalgicUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		443F0B2B2DB8D47500034EF1 /* EmbedFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmbedFormView.swift; sourceTree = "<group>"; };
 		443F0B2C2DB8D47500034EF1 /* EmbedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmbedView.swift; sourceTree = "<group>"; };
 		443F0B2F2DB8D48B00034EF1 /* LinkMetadataService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LinkMetadataService.swift; sourceTree = "<group>"; };
 		443F0B502DBAD7AC00034EF1 /* PreviewData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewData.swift; sourceTree = "<group>"; };
@@ -107,7 +104,6 @@
 		44C364132DB768DB0057567C /* BlogFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlogFormView.swift; sourceTree = "<group>"; };
 		44C364142DB768DB0057567C /* BlogsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlogsView.swift; sourceTree = "<group>"; };
 		44C364152DB768DB0057567C /* CategoryManagementView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CategoryManagementView.swift; sourceTree = "<group>"; };
-		44C364192DB768DB0057567C /* PostSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostSettingsView.swift; sourceTree = "<group>"; };
 		44C3641A2DB768DB0057567C /* PublishBlogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PublishBlogView.swift; sourceTree = "<group>"; };
 		44C3641C2DB768DB0057567C /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		44C3641D2DB768DB0057567C /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
@@ -223,13 +219,11 @@
 			isa = PBXGroup;
 			children = (
 				44499E032DC80B3F00A9624B /* PostView.swift */,
-				44C364192DB768DB0057567C /* PostSettingsView.swift */,
 				44DE431F2DD1C63F00F31204 /* CategorySelectionView.swift */,
 				44DE43202DD1C63F00F31204 /* TagSelectionView.swift */,
 				44DE43232DD1CCFB00F31204 /* URLEmbedView.swift */,
 				44DE43252DD1CD0C00F31204 /* EmbedMenuView.swift */,
 				44DE43262DD1CD0C00F31204 /* ImageEmbedView.swift */,
-				443F0B2B2DB8D47500034EF1 /* EmbedFormView.swift */,
 				443F0B2C2DB8D47500034EF1 /* EmbedView.swift */,
 			);
 			path = "Post Editing";
@@ -470,7 +464,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				443F0B2D2DB8D47500034EF1 /* EmbedView.swift in Sources */,
-				443F0B2E2DB8D47500034EF1 /* EmbedFormView.swift in Sources */,
 				44C364202DB768DB0057567C /* AWSPublisher.swift in Sources */,
 				44362F162DC0989000EA704F /* LinkListFormView.swift in Sources */,
 				44DE43242DD1CCFB00F31204 /* URLEmbedView.swift in Sources */,
@@ -503,7 +496,6 @@
 				44DE43222DD1C63F00F31204 /* TagSelectionView.swift in Sources */,
 				44362EDB2DBD826B00EA704F /* TemplateManager.swift in Sources */,
 				44362E792DBC0AEE00EA704F /* FTPPublisher.swift in Sources */,
-				44C3642A2DB768DB0057567C /* PostSettingsView.swift in Sources */,
 				443F0B612DBB696600034EF1 /* HelpView.swift in Sources */,
 				44C3642B2DB768DB0057567C /* PublishBlogView.swift in Sources */,
 				44C3642C2DB768DB0057567C /* Models.swift in Sources */,

@@ -61,7 +61,7 @@ struct PostView: View {
                 return "photo"
             }
         } else {
-            return "rectangle.and.paperclip"
+            return "paperclip"
         }
     }
     
@@ -110,8 +110,7 @@ struct PostView: View {
                         .padding(.vertical, 12)
                         .padding(.leading)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .foregroundStyle(.secondary)
-                }
+                }.foregroundStyle(.secondary)
 
                 Divider()
 
@@ -126,7 +125,6 @@ struct PostView: View {
                 focusOnAppear: true)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
-//            .navigationTitle(post.blog == nil ? "New Post" : "Edit Post")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItemGroup(placement: .topBarLeading) {
@@ -144,12 +142,6 @@ struct PostView: View {
                 }
 
                 ToolbarItemGroup(placement: .topBarTrailing) {
-                    Button {
-                        showingSettings = true
-                    } label: {
-                        Label("Settings", systemImage: "gear")
-                    }
-
                     if post.blog == nil || !post.isDraft {
                         Button("Save as Draft") {
                             if post.blog == nil {
@@ -225,10 +217,6 @@ struct PostView: View {
                 Button("Cancel", role: .cancel) {}
             } message: {
                 Text("What would you like to do with this embed?")
-            }
-            // Settings sheet
-            .sheet(isPresented: $showingSettings) {
-                PostSettingsView(post: post, blog: blog).interactiveDismissDisabled()
             }
             // Publish sheet
             .sheet(isPresented: $showingPublishView, onDismiss: {

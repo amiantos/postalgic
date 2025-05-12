@@ -5,15 +5,30 @@ import PhotosUI
 struct ImageEmbedView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
-    
+
     var post: Post
-    
+
     @State private var position: EmbedPosition = .below
     @State private var isProcessingImages = false
-    
+    @State private var isEditing: Bool = false
+
     // For image picker
     @State private var selectedItems: [PhotosPickerItem] = []
     @State private var selectedImageData: [Data] = []
+
+    init(post: Post) {
+        self.post = post
+
+        // Check if we're editing an existing image embed
+        if let embed = post.embed, embed.embedType == .image {
+            _position = State(initialValue: embed.embedPosition)
+            _isEditing = State(initialValue: true)
+
+            // Load existing images
+            let sortedImages = embed.images.sorted { $0.order < $1.order }
+            _selectedImageData = State(initialValue: sortedImages.map { $0.imageData })
+        }
+    }
     
     var body: some View {
         NavigationStack {
@@ -24,7 +39,7 @@ struct ImageEmbedView: View {
                         matching: .images,
                         photoLibrary: .shared()
                     ) {
-                        Label("Select Photos", systemImage: "photo.on.rectangle")
+                        Label(selectedImageData.isEmpty ? "Select Photos" : "Change Photos", systemImage: "photo.on.rectangle")
                             .frame(maxWidth: .infinity)
                             .padding()
                             .background(Color.blue.opacity(0.1))
@@ -109,7 +124,7 @@ struct ImageEmbedView: View {
                     .pickerStyle(.segmented)
                 }
             }
-            .navigationTitle("Add Image Embed")
+            .navigationTitle(isEditing ? "Edit Image Embed" : "Add Image Embed")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
@@ -117,8 +132,12 @@ struct ImageEmbedView: View {
                     }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Add") {
-                        addEmbed()
+                    Button(isEditing ? "Update" : "Add") {
+                        if isEditing {
+                            updateEmbed()
+                        } else {
+                            addEmbed()
+                        }
                         dismiss()
                     }
                     .disabled(selectedImageData.isEmpty || isProcessingImages)
@@ -132,7 +151,7 @@ struct ImageEmbedView: View {
         if let oldEmbed = post.embed {
             modelContext.delete(oldEmbed)
         }
-        
+
         // Create new embed with placeholder URL
         let embed = Embed(
             post: post,
@@ -140,11 +159,11 @@ struct ImageEmbedView: View {
             type: .image,
             position: position
         )
-        
+
         // Insert embed into model context
         modelContext.insert(embed)
         post.embed = embed
-        
+
         // Add all selected images to the embed
         for (index, imageData) in selectedImageData.enumerated() {
             let filename = Utils.generateImageFilename(for: embed, order: index)
@@ -156,6 +175,36 @@ struct ImageEmbedView: View {
             )
             modelContext.insert(embedImage)
             embed.images.append(embedImage)
+        }
+    }
+
+    private func updateEmbed() {
+        guard let existingEmbed = post.embed, existingEmbed.embedType == .image else {
+            // If for some reason the embed is gone or not an image embed, create a new one
+            addEmbed()
+            return
+        }
+
+        // Update position
+        existingEmbed.position = position.rawValue
+
+        // Remove all existing images
+        for image in existingEmbed.images {
+            modelContext.delete(image)
+        }
+        existingEmbed.images = []
+
+        // Add all selected images to the embed
+        for (index, imageData) in selectedImageData.enumerated() {
+            let filename = Utils.generateImageFilename(for: existingEmbed, order: index)
+            let embedImage = EmbedImage(
+                embed: existingEmbed,
+                imageData: imageData,
+                order: index,
+                filename: filename
+            )
+            modelContext.insert(embedImage)
+            existingEmbed.images.append(embedImage)
         }
     }
 }
