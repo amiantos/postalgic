@@ -56,7 +56,8 @@ struct TagSelectionView: View {
                         .autocorrectionDisabled()
                         .padding(.horizontal)
                         .padding(.vertical, 10)
-                        .background(Color(.systemGray6))
+                        .background(.background.secondary)
+                        .foregroundStyle(.primary)
                         .cornerRadius(8)
                         .padding(.trailing, 8)
                         .onSubmit {
@@ -86,7 +87,7 @@ struct TagSelectionView: View {
                         HStack {
                             ForEach(selectedTags) { tag in
                                 HStack(spacing: 5) {
-                                    Text(tag.name)
+                                    Text(tag.name).foregroundStyle(.primary)
                                     Button(action: {
                                         selectedTags.removeAll { $0.id == tag.id }
                                     }) {
@@ -96,7 +97,7 @@ struct TagSelectionView: View {
                                 }
                                 .padding(.horizontal, 10)
                                 .padding(.vertical, 5)
-                                .background(Color.blue.opacity(0.2))
+                                .background(.background.secondary)
                                 .cornerRadius(8)
                             }
                         }
@@ -122,8 +123,7 @@ struct TagSelectionView: View {
                                         Text(tag.name)
                                         Spacer()
                                         if selectedTags.contains(where: { $0.id == tag.id }) {
-                                            Image(systemName: "checkmark")
-                                                .foregroundColor(.blue)
+                                            Image(systemName: "checkmark").foregroundStyle(Color.accentColor)
                                         }
                                     }
                                 }
@@ -148,7 +148,7 @@ struct TagSelectionView: View {
                                         Spacer()
                                         if selectedTags.contains(where: { $0.id == tag.id }) {
                                             Image(systemName: "checkmark")
-                                                .foregroundColor(.blue)
+                                                .foregroundStyle(Color.accentColor)
                                         }
                                     }
                                 }
