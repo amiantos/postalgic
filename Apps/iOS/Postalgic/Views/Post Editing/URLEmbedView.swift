@@ -241,7 +241,7 @@ struct URLEmbedView: View {
         )
         
         // Insert embed into model context
-        modelContext.insert(embed)
+        try? modelContext.insert(embed)
         post.embed = embed
     }
 }

@@ -15,7 +15,12 @@ struct PostView: View {
 
     @State private var showingSettings: Bool = false
     @State private var showingPublishView: Bool = false
-    @State private var showingEmbedMenu: Bool = false
+
+    // For embed functionality
+    @State private var showingEmbedTypeAlert: Bool = false
+    @State private var showingEmbedActionAlert: Bool = false
+    @State private var showingURLEmbed: Bool = false
+    @State private var showingImageEmbed: Bool = false
 
     init(blog: Blog) {
         self.blog = blog
@@ -26,6 +31,38 @@ struct PostView: View {
         guard let blog = post.blog else { fatalError("Cannot init this view with a post with no blog associated with it")}
         self.blog = blog
         self.post = post
+    }
+
+    // Computed properties for embed button label
+    var embedLabelText: String {
+        if let embed = post.embed {
+            switch embed.embedType {
+            case .youtube:
+                return "YouTube Embed"
+            case .link:
+                return "Link Embed"
+            case .image:
+                let count = embed.images.count
+                return count == 1 ? "Image Embed" : "\(count) Images"
+            }
+        } else {
+            return "Add Embed"
+        }
+    }
+
+    var embedIconName: String {
+        if let embed = post.embed {
+            switch embed.embedType {
+            case .youtube:
+                return "play.rectangle"
+            case .link:
+                return "link"
+            case .image:
+                return "photo"
+            }
+        } else {
+            return "rectangle.and.paperclip"
+        }
     }
     
     var body: some View {
@@ -62,9 +99,13 @@ struct PostView: View {
                 Divider()
 
                 Button(action: {
-                    showingEmbedMenu = true
+                    if post.embed == nil {
+                        showingEmbedTypeAlert = true
+                    } else {
+                        showingEmbedActionAlert = true
+                    }
                 }) {
-                    Label(post.embed == nil ? "Add Embed" : "Edit Embed", systemImage: "rectangle.and.paperclip")
+                    Label(embedLabelText, systemImage: embedIconName)
                         .font(.footnote)
                         .padding(.vertical, 12)
                         .padding(.leading)
@@ -85,16 +126,6 @@ struct PostView: View {
                 focusOnAppear: true)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
-            .alert("Add Link", isPresented: $showURLPrompt) {
-                TextField("Text", text: $urlText)
-                TextField("URL", text: $urlLink)
-                Button("Cancel", role: .cancel) {}
-                Button("Add") {
-                    insertLink()
-                }
-            } message: {
-                Text("Enter link details")
-            }
 //            .navigationTitle(post.blog == nil ? "New Post" : "Edit Post")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -111,14 +142,14 @@ struct PostView: View {
                         }
                     }
                 }
-                
+
                 ToolbarItemGroup(placement: .topBarTrailing) {
                     Button {
                         showingSettings = true
                     } label: {
                         Label("Settings", systemImage: "gear")
                     }
-                    
+
                     if post.blog == nil || !post.isDraft {
                         Button("Save as Draft") {
                             if post.blog == nil {
@@ -135,8 +166,8 @@ struct PostView: View {
                             dismiss()
                         }
                     }
-                    
-                    
+
+
                     Button("Publish") {
                         if post.blog == nil {
                             post.blog = blog
@@ -150,21 +181,73 @@ struct PostView: View {
                     }
                 }
             }
+            // Link prompt alert
+            .alert("Add Link", isPresented: $showURLPrompt) {
+                TextField("Text", text: $urlText)
+                TextField("URL", text: $urlLink)
+                Button("Cancel", role: .cancel) {}
+                Button("Add") {
+                    insertLink()
+                }
+            } message: {
+                Text("Enter link details")
+            }
+            // Embed type selection alert
+            .alert("Add Embed", isPresented: $showingEmbedTypeAlert) {
+                Button("URL or YouTube Video") {
+                    showingURLEmbed = true
+                }
+                Button("Images") {
+                    showingImageEmbed = true
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("Choose the type of content to embed")
+            }
+            // Embed action alert
+            .alert("Embed Options", isPresented: $showingEmbedActionAlert) {
+                Button("Edit") {
+                    if let embed = post.embed {
+                        switch embed.embedType {
+                        case .youtube, .link:
+                            showingURLEmbed = true
+                        case .image:
+                            showingImageEmbed = true
+                        }
+                    }
+                }
+                Button("Remove", role: .destructive) {
+                    if let oldEmbed = post.embed {
+                        modelContext.delete(oldEmbed)
+                        post.embed = nil
+                    }
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("What would you like to do with this embed?")
+            }
+            // Settings sheet
             .sheet(isPresented: $showingSettings) {
                 PostSettingsView(post: post, blog: blog).interactiveDismissDisabled()
             }
+            // Publish sheet
             .sheet(isPresented: $showingPublishView, onDismiss: {
                 // Dismiss the PostView when the PublishBlogView is dismissed
                 dismiss()
             }) {
                 PublishBlogView(blog: blog, autoPublish: true)
             }
-            .sheet(isPresented: $showingEmbedMenu) {
-                EmbedMenuView(post: post, onTitleUpdate: { newTitle in
+            // URL embed sheet
+            .sheet(isPresented: $showingURLEmbed) {
+                URLEmbedView(post: post, onTitleUpdate: { newTitle in
                     if post.title == nil || post.title!.isEmpty {
                         post.title = newTitle
                     }
                 })
+            }
+            // Image embed sheet
+            .sheet(isPresented: $showingImageEmbed) {
+                ImageEmbedView(post: post)
             }
         }
     }
