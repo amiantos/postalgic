@@ -46,7 +46,7 @@ struct PostView: View {
                 return count == 1 ? "Image Embed" : "\(count) Images"
             }
         } else {
-            return "Add Embed"
+            return "Attach Embed"
         }
     }
 
