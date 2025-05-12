@@ -66,11 +66,13 @@ struct PublishSettingsView: View {
             }
             .listStyle(InsetGroupedListStyle())
             .navigationTitle("Publishing")
-            .navigationBarItems(
-                trailing: Button("Done") {
-                    dismiss()
+            .toolbar {
+                ToolbarItemGroup(placement: .cancellationAction) {
+                    Button("Done") {
+                        dismiss()
+                    }
                 }
-            )
+            }
             .sheet(isPresented: $showingAwsConfigView) {
                 BlogAwsConfigView(blog: blog).interactiveDismissDisabled()
             }
