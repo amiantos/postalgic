@@ -4,11 +4,414 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta name="description" content="Postalgic - A pocket-sized, decentralized micro-blogging platform inspired by the early web">
     <title>Postalgic</title>
+    <style>
+        /* ==========================================
+           CSS Variables & Reset
+           ========================================== */
+
+        /* Pro badge styling */
+        .pro-badge {
+            display: inline-block;
+            background-color: var(--accent-color);
+            color: white;
+            padding: 3px 6px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            vertical-align: middle;
+            top:-2px;
+            position: relative;
+        }
+        :root {
+            /* Colors */
+            --primary-color: #4a5568;
+            --accent-color: #FFA100;
+            --background-color: #efefef;
+            --background-outline-color: #efefef;
+            --text-color: #2d3748;
+
+            /* Grays */
+            --light-gray: #dedede;
+            --medium-gray: #a0aec0;
+            --dark-gray: #4a5568;
+
+            /* Tag & Category Colors */
+            --tag-bg: #faf4eb;
+            --tag-color: #FFA100;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        /* ==========================================
+           Base Styles
+           ========================================== */
+        html {
+            overflow-y: scroll;
+            height: 100%;
+            font: 100%/1.5 sans-serif;
+            word-wrap: break-word;
+            margin: 0 auto;
+            padding: 1.5em;
+        }
+        
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--background-outline-color);
+        }
+        
+        a {
+            color: var(--accent-color);
+            text-decoration: none;
+        }
+        
+        a:hover {
+            text-decoration: underline;
+        }
+        
+        /* ==========================================
+           Layout & Container
+           ========================================== */
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: var(--background-color);
+            position: relative;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .content-wrapper {
+            display: block;
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* ==========================================
+           Header
+           ========================================== */
+        header {
+            padding: 2em;
+            padding-bottom: 1em;
+            text-align: center;
+        }
+        
+        header h1 {
+            color: var(--primary-color);
+            font-size: 2.2rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        header .tagline {
+            color: var(--medium-gray);
+            font-size: 1.2rem;
+            font-style: italic;
+            margin-bottom: 0.5rem;
+        }
+        
+        .header-separator {
+            height: 28px;
+            width: 100%;
+            background-color: var(--accent-color);
+            --mask:
+              radial-gradient(10.96px at 50% calc(100% + 5.6px),#0000 calc(99% - 4px),#000 calc(101% - 4px) 99%,#0000 101%) calc(50% - 14px) calc(50% - 5.5px + .5px)/28px 11px repeat-x,
+              radial-gradient(10.96px at 50% -5.6px,#0000 calc(99% - 4px),#000 calc(101% - 4px) 99%,#0000 101%) 50% calc(50% + 5.5px)/28px 11px repeat-x;
+            -webkit-mask: var(--mask);
+            mask: var(--mask);
+            margin-top: 2em;
+        }
+        
+        .logo {
+            width:100%;
+            max-width: 850px;
+            height: auto;
+            /* margin-bottom: 1rem; */
+        }
+
+        .blink {
+            animation: blink-animation 1s steps(5, start) infinite;
+        }
+
+        .retro {
+            font-size: 1.1rem;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        
+        @keyframes blink-animation {
+            to {
+                visibility: hidden;
+            }
+        }
+        
+        /* ==========================================
+           Main Content
+           ========================================== */
+        main {
+            padding: 2em;
+            overflow: hidden;
+            margin-bottom: 30px;
+            flex: 1;
+        }
+        
+        /* ==========================================
+           Sections & Features
+           ========================================== */
+        section {
+            margin-bottom: 3rem;
+            /* background-color: white; */
+            /* border-radius: 8px; */
+            /* box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); */
+            /* padding: 1.5rem; */
+        }
+        
+        h1, h2, h3 {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+        
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+        }
+        
+        h2 {
+            font-size: 1.6rem;
+            font-weight: 600;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #edf2f7;
+        }
+
+        
+        .feature-list {
+            list-style-type: none;
+            margin: 1.5rem 0;
+        }
+        
+        .feature-list li {
+            margin-bottom: 1rem;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+        
+        .feature-list li::before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            color: var(--accent-color);
+            font-weight: bold;
+        }
+        
+        /* ==========================================
+           Post Separator (used as section divider)
+           ========================================== */
+        .post-separator {
+            height: 28px;
+            width: 100%;
+            background-color: var(--accent-color);
+            --mask:
+              radial-gradient(10.96px at 50% calc(100% + 5.6px),#0000 calc(99% - 4px),#000 calc(101% - 4px) 99%,#0000 101%) calc(50% - 14px) calc(50% - 5.5px + .5px)/28px 11px repeat-x,
+              radial-gradient(10.96px at 50% -5.6px,#0000 calc(99% - 4px),#000 calc(101% - 4px) 99%,#0000 101%) 50% calc(50% + 5.5px)/28px 11px repeat-x;
+            -webkit-mask: var(--mask);
+            mask: var(--mask);
+            margin: 3em 0;
+        }
+        
+        /* ==========================================
+           Tags
+           ========================================== */
+        .tag-container {
+            margin-top: 1.5rem;
+        }
+        
+        .tag {
+            display: inline-block;
+            background-color: var(--tag-bg);
+            color: var(--tag-color);
+            border: 1px solid var(--tag-color);
+            padding: 3px 8px;
+            border-radius: 1em;
+            margin: 0.25rem;
+            font-size: 0.85rem;
+        }
+        
+        .tag:hover {
+            background-color: var(--tag-color);
+            color: white;
+            text-decoration: none;
+        }
+        
+        /* ==========================================
+           Highlight Box & CTA
+           ========================================== */
+        .highlight-box {
+            background-color: var(--tag-bg);
+            padding: 1.5rem;
+            border: 2px solid var(--accent-color);
+            margin: 1.5rem 0;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-style: italic;
+        }
+        
+        .cta {
+            display: inline-block;
+            background-color: var(--accent-color);
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border-radius: 13px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: background-color 0.3s;
+            margin-top: 1rem;
+
+        }
+        
+        .cta:hover {
+            background-color: #e69100;
+            text-decoration: none;
+        }
+        
+        /* ==========================================
+           Footer
+           ========================================== */
+        footer {
+            text-align: center;
+            padding: 2em;
+            color: var(--medium-gray);
+            font-size: 0.9rem;
+            margin-top: auto;
+            width: 100%;
+            border-top: 1px solid var(--light-gray);
+        }
+        
+        footer a {
+            color: var(--accent-color);
+        }
+        
+        /* ==========================================
+           Responsive Styles
+           ========================================== */
+        @media (max-width: 900px) {
+            html {
+                padding: 0.6em;
+            }
+            
+            .container {
+                padding: 0;
+            }
+            
+            header, main, footer {
+                padding: 1em;
+            }
+
+            header .tagline {
+                font-size: 1.1rem;
+            }
+
+            header .retro {
+                font-size: 0.8rem;
+            }
+            
+            h1 {
+                font-size: 1.8rem;
+            }
+            
+            h2 {
+                font-size: 1.4rem;
+            }
+        }
+    </style>
 </head>
 <body>
-    <p><img src="postalgic-logo.png"/></p>
-    <p>Postalgic - Coming Soon!</P>
-    <p>Learn more on <a href="https://github.com/amiantos/postalgic">GitHub</a>.</p>
+    <div class="container">
+        <header>
+            <img src="postalgic-logo.png" alt="Postalgic Logo" class="logo">
+            <p class="tagline">A pocket-sized, decentralized micro-blogging platform</p>
+            <p class="retro"><span class="blink">★</span> Inspired by the web we used to love <span class="blink">★</span></p>
+            <div class="header-separator"></div>
+        </header>
+        
+        <main>
+            <section>
+                <h2>What is Postalgic?</h2>
+                <p>Postalgic reimagines blogging in the spirit of the late 90s/early 2000s web publishing, before social media took over our digital lives.</p>
+                
+                <div class="highlight-box">
+                    <p>Online 'social networks' have proven themselves incapable of nurturing meaningful human relationships. <strong>We do not need them.</strong></p>
+                </div>
+                
+                <p>With Postalgic, you can create and manage your own micro-blog through a simple iOS app, generate a clean static site with customizable templates, and publish it wherever you want. No algorithms, no ads, no surveillance—just pure self-expression.</p>
+            </section>
+            
+            <div class="post-separator"></div>
+            
+            <section>
+                <h2>Key Features</h2>
+                <ul class="feature-list">
+                    <li><strong>iOS App</strong>: Create and manage your blog posts from your iPhone</li>
+                    <li><strong>Decentralized</strong>: Host your blog wherever you want (AWS S3, SFTP, and more)</li>
+                    <li><strong>Static Sites</strong>: Generate fast, secure static sites using Mustache templating</li>
+                    <li><strong>Own Your Content</strong>: No corporate platform owns your thoughts</li>
+                    <li><strong>RSS Ready</strong>: Follow others and be followed through good old RSS</li>
+                </ul>
+            </section>
+            
+            <div class="post-separator"></div>
+            
+            <section>
+                <h2>A Different Way to Connect</h2>
+                <p>Instead of likes, comments, and algorithms, Postalgic encourages alternative forms of meaningful interaction:</p>
+                
+                <ul class="feature-list">
+                    <li>Use <strong>RSS</strong> to follow blogs you care about</li>
+                    <li>Write <strong>response posts</strong> instead of shallow comments</li>
+                    <li>Share content you appreciate with your <strong>personal networks</strong></li>
+                    <li>Communicate directly via <strong>email</strong> for deeper conversations</li>
+                </ul>
+            </section>
+            
+            <div class="post-separator"></div>
+
+            <section>
+                <h2>Coming Soon: Postalgic <span class="pro-badge">Pro</span></h2>
+                <p>For those who want a hassle-free blogging experience, we're introducing <strong>Postalgic Pro</strong> — a premium hosting service for your Postalgic blog.</p>
+
+                <div class="highlight-box">
+                    <p>Effortless publishing with the philosophy and freedom of Postalgic, combined with the convenience of managed hosting.</p>
+                </div>
+
+                <ul class="feature-list">
+                    <li><strong>One-Click Publishing</strong>: Create posts in the app and publish instantly</li>
+                    <li><strong>Traffic Analytics</strong>: Get insights about your readership without invasive tracking</li>
+                    <li><strong>Custom Domains</strong>: Use your own domain with our streamlined setup</li>
+                    <li><strong>Reliable Hosting</strong>: Fast, secure, and always available</li>
+                </ul>
+
+                <p>Postalgic Pro will provide a sustainable way to support the continued development of the free, open-source Postalgic app.</p>
+            </section>
+
+            <div class="post-separator"></div>
+
+            <section>
+                <h2>Get Started</h2>
+                <p>Postalgic is currently in development. Be among the first to try it out!</p>
+                <p><a href="https://github.com/amiantos/postalgic" class="cta">Learn More on GitHub</a></p>
+            </section>
+        </main>
+
+        <footer>
+            <p>Postalgic &copy; 2023-2025 <a href="https://bradroot.me">Brad Root</a></p>
+        </footer>
+    </div>
 </body>
 </html>
