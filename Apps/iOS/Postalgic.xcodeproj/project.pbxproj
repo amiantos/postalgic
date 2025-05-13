@@ -50,6 +50,8 @@
 		44DE43242DD1CCFB00F31204 /* URLEmbedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44DE43232DD1CCFB00F31204 /* URLEmbedView.swift */; };
 		44DE43272DD1CD0C00F31204 /* EmbedMenuView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44DE43252DD1CD0C00F31204 /* EmbedMenuView.swift */; };
 		44DE43282DD1CD0C00F31204 /* ImageEmbedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44DE43262DD1CD0C00F31204 /* ImageEmbedView.swift */; };
+		44DE433D2DD32D2D00F31204 /* ThemeEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44DE433B2DD32D2D00F31204 /* ThemeEditorView.swift */; };
+		44DE433E2DD32D2D00F31204 /* ThemesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44DE433C2DD32D2D00F31204 /* ThemesView.swift */; };
 		44F858B82DC43FAD00B8179B /* BlogDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44F858B72DC43FAD00B8179B /* BlogDashboardView.swift */; };
 /* End PBXBuildFile section */
 
@@ -112,6 +114,8 @@
 		44DE43232DD1CCFB00F31204 /* URLEmbedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLEmbedView.swift; sourceTree = "<group>"; };
 		44DE43252DD1CD0C00F31204 /* EmbedMenuView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmbedMenuView.swift; sourceTree = "<group>"; };
 		44DE43262DD1CD0C00F31204 /* ImageEmbedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageEmbedView.swift; sourceTree = "<group>"; };
+		44DE433B2DD32D2D00F31204 /* ThemeEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeEditorView.swift; sourceTree = "<group>"; };
+		44DE433C2DD32D2D00F31204 /* ThemesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemesView.swift; sourceTree = "<group>"; };
 		44F858B72DC43FAD00B8179B /* BlogDashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlogDashboardView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -236,6 +240,8 @@
 				44362F142DC0989000EA704F /* SidebarManagementView.swift */,
 				44362F132DC0989000EA704F /* LinkListFormView.swift */,
 				44362F152DC0989000EA704F /* TextBlockFormView.swift */,
+				44DE433B2DD32D2D00F31204 /* ThemeEditorView.swift */,
+				44DE433C2DD32D2D00F31204 /* ThemesView.swift */,
 			);
 			path = "Blog Settings";
 			sourceTree = "<group>";
@@ -477,6 +483,8 @@
 				44C364242DB768DB0057567C /* BlogFormView.swift in Sources */,
 				44499E042DC80B3F00A9624B /* PostView.swift in Sources */,
 				44DE43002DCFEBA700F31204 /* AccentColorCustomizationView.swift in Sources */,
+				44DE433D2DD32D2D00F31204 /* ThemeEditorView.swift in Sources */,
+				44DE433E2DD32D2D00F31204 /* ThemesView.swift in Sources */,
 				44C364252DB768DB0057567C /* BlogsView.swift in Sources */,
 				44362EDF2DBD82B700EA704F /* TemplateEngine.swift in Sources */,
 				443F0B512DBAD7AC00034EF1 /* PreviewData.swift in Sources */,

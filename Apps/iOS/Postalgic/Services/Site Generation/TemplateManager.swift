@@ -7,11 +7,15 @@
 
 import Foundation
 import Mustache
+import SwiftData
 
 /// Manages and provides access to Mustache templates for the static site generator
 class TemplateManager {
     // Default templates
     private var defaultTemplates = [String: String]()
+    
+    // Custom theme templates
+    private var customTemplates = [String: String]()
     
     // Compiled templates
     private var compiledTemplates = [String: MustacheTemplate]()
@@ -19,11 +23,15 @@ class TemplateManager {
     // Reference to the blog
     private let blog: Blog
     
+    // The theme to use for templates
+    private var theme: Theme?
+    
     // MARK: - Initialization
     
     init(blog: Blog) {
         self.blog = blog
         setupDefaultTemplates()
+        loadCustomTheme()
     }
     
     // MARK: - Template Setup
@@ -1410,7 +1418,7 @@ class TemplateManager {
     private lazy var templateLibrary: MustacheLibrary = {
         var library = MustacheLibrary()
         
-        // Register all default templates
+        // First register default templates
         for (name, content) in defaultTemplates {
             do {
                 try library.register(content, named: name)
@@ -1419,13 +1427,26 @@ class TemplateManager {
             }
         }
         
+        // Then register custom templates (overriding defaults if names match)
+        for (name, content) in customTemplates {
+            do {
+                try library.register(content, named: name)
+            } catch {
+                print("Error registering custom template \(name): \(error)")
+            }
+        }
+        
         return library
     }()
     
     /// Compiles a template for the specified template type
     private func compileTemplate(for templateType: String) throws -> MustacheTemplate {
-        // Use the default template
-        if let defaultTemplate = defaultTemplates[templateType] {
+        // Check if we have a custom template for this type
+        if let customTemplate = customTemplates[templateType] {
+            return try MustacheTemplate(string: customTemplate)
+        }
+        // Fall back to the default template
+        else if let defaultTemplate = defaultTemplates[templateType] {
             return try MustacheTemplate(string: defaultTemplate)
         } 
         // If no template exists for this type, throw an error
@@ -1435,6 +1456,39 @@ class TemplateManager {
     }
     
     // MARK: - Template Access
+    
+    /// Loads the custom theme if one is specified in the blog's themeIdentifier
+    private func loadCustomTheme() {
+        guard let themeIdentifier = blog.themeIdentifier, themeIdentifier != "default" else {
+            // Use default templates
+            return
+        }
+        
+        // Try to find the custom theme using the model context
+        do {
+            let descriptor = FetchDescriptor<Theme>(predicate: #Predicate { $0.identifier == themeIdentifier })
+            
+            guard let modelContext = blog.modelContext else {
+                print("⚠️ No model context available, using default theme")
+                return
+            }
+            
+            if let customTheme = try modelContext.fetch(descriptor).first {
+                theme = customTheme
+                
+                // Load all template files from the theme
+                for file in customTheme.files {
+                    customTemplates[file.name] = file.content
+                }
+                
+                print("🎨 Loaded custom theme: \(customTheme.name)")
+            } else {
+                print("⚠️ Theme with identifier \(themeIdentifier) not found, using default theme")
+            }
+        } catch {
+            print("⚠️ Error loading custom theme: \(error), using default theme")
+        }
+    }
     
     /// Gets the compiled template for the specified type
     /// - Parameter type: The type of template to retrieve
@@ -1460,13 +1514,17 @@ class TemplateManager {
         }
     }
     
-    /// Gets the default template string content for the specified type
+    /// Gets the template string content for the specified type
     /// - Parameter type: The type of template to retrieve
     /// - Returns: The template string
     /// - Throws: TemplateError if the template doesn't exist
     func getTemplateString(for type: String) throws -> String {
-        // Use the default template
-        if let defaultTemplate = defaultTemplates[type] {
+        // Check if we have a custom template for this type
+        if let customTemplate = customTemplates[type] {
+            return customTemplate
+        }
+        // Fall back to the default template
+        else if let defaultTemplate = defaultTemplates[type] {
             return defaultTemplate
         } 
         // If no template exists for this type, throw an error
@@ -1478,8 +1536,9 @@ class TemplateManager {
     /// Returns all available template types
     /// - Returns: Array of template type identifiers
     func availableTemplateTypes() -> [String] {
-        // Get only the default template types
-        return Array(defaultTemplates.keys).sorted()
+        // Combine default and custom template types, with defaults taking precedence
+        let allTemplateTypes = Set(defaultTemplates.keys)
+        return Array(allTemplateTypes).sorted()
     }
     
     /// Returns the template library for use with partials

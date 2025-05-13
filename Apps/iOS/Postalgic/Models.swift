@@ -37,6 +37,7 @@ final class Blog {
 
     // Blog appearance
     var accentColor: String?
+    var themeIdentifier: String?
 
     // Publisher Type
     var publisherType: String?
@@ -86,6 +87,7 @@ final class Blog {
         self.tagline = tagline
         self.accentColor = accentColor
         self.publisherType = PublisherType.none.rawValue
+        self.themeIdentifier = "default"
     }
 
     var hasAwsConfigured: Bool {
@@ -757,6 +759,42 @@ struct FileChanges {
 
     var hasChanges: Bool {
         return !modified.isEmpty || !deleted.isEmpty
+    }
+}
+
+@Model
+final class Theme {
+    var name: String
+    var identifier: String
+    var createdAt: Date
+    var isCustomized: Bool
+    
+    @Relationship(deleteRule: .cascade, inverse: \ThemeFile.theme)
+    var files: [ThemeFile] = []
+    
+    init(name: String, identifier: String, isCustomized: Bool = false, createdAt: Date = Date()) {
+        self.name = name
+        self.identifier = identifier
+        self.isCustomized = isCustomized
+        self.createdAt = createdAt
+    }
+}
+
+@Model
+final class ThemeFile {
+    var theme: Theme?
+    
+    var name: String // Template type like "layout", "post", "css", etc.
+    var content: String
+    var createdAt: Date
+    var lastModified: Date
+    
+    init(theme: Theme, name: String, content: String, createdAt: Date = Date()) {
+        self.theme = theme
+        self.name = name
+        self.content = content
+        self.createdAt = createdAt
+        self.lastModified = createdAt
     }
 }
 

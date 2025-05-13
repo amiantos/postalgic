@@ -21,6 +21,7 @@ struct BlogSettingsView: View {
     @State private var showingSidebarManagement = false
     @State private var showingPublishSettingsView = false
     @State private var showingAccentColorCustomization = false
+    @State private var showingThemesView = false
     @State private var showingDeleteAlert = false
     @State private var deleteConfirmationText = ""
     @State private var showingStubMigrationAlert = false
@@ -67,6 +68,12 @@ struct BlogSettingsView: View {
                         showingAccentColorCustomization = true
                     } label: {
                         Label("Customize Colors", systemImage: "paintpalette")
+                    }
+                    
+                    Button {
+                        showingThemesView = true
+                    } label: {
+                        Label("Choose Theme", systemImage: "doc.text.fill")
                     }
                 } header: {
                     Text("Appearance").foregroundStyle(.secondary)
@@ -121,6 +128,9 @@ struct BlogSettingsView: View {
         }
         .sheet(isPresented: $showingAccentColorCustomization) {
             AccentColorCustomizationView(blog: blog)
+        }
+        .sheet(isPresented: $showingThemesView) {
+            ThemesView(blog: blog)
         }
         .alert("Delete Blog", isPresented: $showingDeleteAlert) {
             TextField("Type 'delete' to confirm", text: $deleteConfirmationText)
