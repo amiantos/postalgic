@@ -103,28 +103,18 @@ struct ThemesView: View {
                 }
             }
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
+                ToolbarItemGroup(placement: .primaryAction) {
+                    Button {
+                        duplicateDefaultTheme()
+                    } label: {
+                        Label("New Theme", systemImage: "plus")
+                    }
+                }
+                ToolbarItemGroup(placement: .cancellationAction) {
                     Button("Done") {
                         dismiss()
                     }
                 }
-            }
-            .safeAreaInset(edge: .bottom) {
-                Button {
-                    duplicateDefaultTheme()
-                } label: {
-                    HStack {
-                        Image(systemName: "plus")
-                        Text("Duplicate Default Theme")
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color.blue)
-                    .foregroundColor(.white)
-                    .cornerRadius(10)
-                    .padding(.horizontal)
-                }
-                .padding(.bottom)
             }
             .navigationTitle("Themes")
             .sheet(item: $selectedTheme) { theme in
