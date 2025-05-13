@@ -13,53 +13,70 @@ struct ThemeEditorView: View {
     @Environment(\.dismiss) private var dismiss
     
     @State private var showingFileEditor = false
-    @State private var selectedFile: ThemeFile?
+    @State private var selectedTemplateName: String = ""
     @State private var editedContent: String = ""
     @State private var isEdited = false
+    @State private var isLoading = true
+    @State private var templateNames: [String] = []
     
     @State var theme: Theme
     
     var body: some View {
         NavigationStack {
-            List {
-                Section {
-                    TextField("Theme Name", text: $theme.name)
-                        .onChange(of: theme.name) {
-                            isEdited = true
-                        }
-                } header: {
-                    Text("Theme Settings")
-                }
-                
-                Section {
-                    if theme.files.isEmpty {
-                        Text("No template files found")
+            Group {
+                if isLoading {
+                    VStack {
+                        ProgressView()
+                            .padding()
+                        Text("Loading theme files...")
                             .foregroundStyle(.secondary)
-                            .italic()
-                    } else {
-                        ForEach(theme.files) { file in
-                            HStack {
-                                Text(file.name)
-                                    .fontWeight(.medium)
-                                
-                                Spacer()
-                                
-                                Button {
-                                    selectedFile = file
-                                    editedContent = file.content
-                                    showingFileEditor = true
-                                } label: {
+                    }
+                } else {
+                    List {
+                        Section {
+                            TextField("Theme Name", text: $theme.name)
+                                .onChange(of: theme.name) {
+                                    isEdited = true
+                                }
+                        } header: {
+                            Text("Theme Settings")
+                        }
+                        
+                        Section {
+                            if templateNames.isEmpty {
+                                Text("No template files found")
+                                    .foregroundStyle(.secondary)
+                                    .italic()
+                            } else {
+                                ForEach(templateNames, id: \.self) { templateName in
                                     HStack {
-                                        Text("Edit")
-                                        Image(systemName: "chevron.right")
+                                        Text(templateName)
+                                            .fontWeight(.medium)
+                                        
+                                        Spacer()
+                                        
+                                        Button {
+                                            selectedTemplateName = templateName
+                                            if let content = theme.template(named: templateName) {
+                                                editedContent = content
+                                            } else {
+                                                editedContent = "// No content found for this template"
+                                            }
+                                            showingFileEditor = true
+                                        } label: {
+                                            HStack {
+                                                Text("Edit")
+                                                Image(systemName: "chevron.right")
+                                            }
+                                            .foregroundColor(.blue)
+                                        }
                                     }
-                                    .foregroundColor(.blue)
                                 }
                             }
+                        } header: {
+                            Text("Template Files (\(templateNames.count))")
                         }
                     }
-                } header: {
-                    Text("Template Files")
                 }
             }
             .navigationTitle("Edit Theme")
@@ -74,25 +91,23 @@ struct ThemeEditorView: View {
                 }
             }
             .sheet(isPresented: $showingFileEditor) {
-                if let file = selectedFile {
-                    FileEditorView(
-                        fileName: file.name,
-                        content: $editedContent,
-                        onSave: {
-                            file.content = editedContent
-                            file.lastModified = Date()
-                            isEdited = true
-                        }
-                    )
-                }
+                FileEditorView(
+                    fileName: selectedTemplateName,
+                    content: $editedContent,
+                    onSave: {
+                        theme.setTemplate(named: selectedTemplateName, content: editedContent)
+                        isEdited = true
+                    }
+                )
             }
             .onAppear {
-                // Refresh the list of files when the view appears
-                if theme.files.isEmpty {
-                    print("Theme has no files, this might be a problem")
-                } else {
-                    print("Theme has \(theme.files.count) files")
-                }
+                // Load all templates from the theme
+                print("ThemeEditor: Opening theme \(theme.identifier) - \(theme.name)")
+                
+                // Get all template keys
+                templateNames = Array(theme.templates.keys).sorted()
+                
+                isLoading = false
             }
         }
     }
@@ -150,25 +165,4 @@ struct FileEditorView: View {
             }
         }
     }
-}
-
-#Preview {
-    let modelContainer = PreviewData.previewContainer
-    
-    // Fetch a theme or create one if it doesn't exist
-    let theme: Theme
-    let themes = try? modelContainer.mainContext.fetch(FetchDescriptor<Theme>())
-    
-    if let existingTheme = themes?.first {
-        theme = existingTheme
-    } else {
-        theme = Theme(name: "Preview Theme", identifier: "preview")
-        let file = ThemeFile(theme: theme, name: "css", content: "/* CSS content */")
-        theme.files.append(file)
-        modelContainer.mainContext.insert(theme)
-        try? modelContainer.mainContext.save()
-    }
-    
-    return ThemeEditorView(theme: theme)
-        .modelContainer(modelContainer)
 }

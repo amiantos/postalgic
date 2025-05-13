@@ -12,16 +12,13 @@ struct ThemesView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     
-    // Using ThemeService to manage themes
-    @State private var themes: [Theme] = []
+    // Use Query to directly fetch all themes
+    @Query private var themes: [Theme]
     
     var blog: Blog
     
     @State private var showingThemeEditor = false
     @State private var selectedTheme: Theme?
-    
-    // Reference to ThemeService
-    private let themeService = ThemeService.shared
     
     init(blog: Blog) {
         self.blog = blog
@@ -51,6 +48,7 @@ struct ThemesView: View {
                 .contentShape(Rectangle())
                 .onTapGesture {
                     blog.themeIdentifier = "default"
+                    try? modelContext.save()
                 }
                 
                 // Section for custom themes
@@ -78,19 +76,25 @@ struct ThemesView: View {
                             }
                             .contentShape(Rectangle())
                             .onTapGesture {
-                                selectTheme(theme)
+                                blog.themeIdentifier = theme.identifier
+                                try? modelContext.save()
                             }
                             .swipeActions(edge: .trailing) {
                                 if theme.isCustomized {
                                     Button {
-                                        showThemeEditor(theme)
+                                        selectedTheme = theme
+                                        showingThemeEditor = true
                                     } label: {
                                         Label("Edit", systemImage: "pencil")
                                     }
                                     .tint(.blue)
                                     
                                     Button(role: .destructive) {
-                                        deleteTheme(theme)
+                                        if blog.themeIdentifier == theme.identifier {
+                                            blog.themeIdentifier = "default"
+                                        }
+                                        modelContext.delete(theme)
+                                        try? modelContext.save()
                                     } label: {
                                         Label("Delete", systemImage: "trash")
                                     }
@@ -130,69 +134,39 @@ struct ThemesView: View {
                     ThemeEditorView(theme: theme)
                 }
             })
-            .onAppear {
-                loadThemes()
-            }
         }
-    }
-    
-    private func loadThemes() {
-        // Make sure blog has a themeIdentifier set
-        if blog.themeIdentifier == nil {
-            blog.themeIdentifier = "default"
-        }
-        
-        // Load themes from the service
-        themeService.loadThemesFromDatabase(modelContext: modelContext)
-        
-        // Get themes from the service
-        themes = themeService.getAllThemes()
-        
-        print("Loaded \(themes.count) themes from ThemeService")
     }
     
     private func duplicateDefaultTheme() {
-        // Use the theme service to create the duplicate
-        let templateManager = TemplateManager(blog: blog)
-        let newTheme = themeService.duplicateDefaultTheme(
-            modelContext: modelContext,
-            templateManager: templateManager
+        // Create a new theme
+        let customTheme = Theme(
+            name: "Default (Customized)", 
+            identifier: "custom_\(UUID().uuidString)",
+            isCustomized: true
         )
         
-        // Update the blog to use the new theme
-        blog.themeIdentifier = newTheme.identifier
+        // Copy default templates from TemplateManager
+        let templateManager = TemplateManager(blog: blog)
+        for templateType in templateManager.availableTemplateTypes() {
+            do {
+                let content = try templateManager.getTemplateString(for: templateType)
+                customTheme.setTemplate(named: templateType, content: content)
+            } catch {
+                print("Error copying template: \(error)")
+            }
+        }
+        
+        // Save the new theme
+        modelContext.insert(customTheme)
         try? modelContext.save()
         
-        // Refresh our local list
-        loadThemes()
+        // Set it as the active theme
+        blog.themeIdentifier = customTheme.identifier
+        try? modelContext.save()
         
-        // Show the theme editor
-        selectedTheme = newTheme
+        // Show the editor
+        selectedTheme = customTheme
         showingThemeEditor = true
-    }
-    
-    private func selectTheme(_ theme: Theme) {
-        blog.themeIdentifier = theme.identifier
-    }
-    
-    private func showThemeEditor(_ theme: Theme) {
-        selectedTheme = theme
-        showingThemeEditor = true
-    }
-    
-    private func deleteTheme(_ theme: Theme) {
-        // If this is the currently selected theme, revert to default
-        if blog.themeIdentifier == theme.identifier {
-            blog.themeIdentifier = "default"
-        }
-        
-        // Delete the theme
-        modelContext.delete(theme)
-        
-        // Update our local list
-        if let index = themes.firstIndex(where: { $0.id == theme.id }) {
-            themes.remove(at: index)
-        }
     }
 }
 

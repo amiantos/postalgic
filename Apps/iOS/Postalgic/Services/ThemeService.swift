@@ -36,7 +36,7 @@ class ThemeService {
     }
     
     /// Create a duplicate of the default theme
-    func duplicateDefaultTheme(modelContext: ModelContext, templateManager: TemplateManager) -> Theme {
+    func duplicateDefaultTheme(modelContext: ModelContext, templates: [String: String]) -> Theme {
         // Create a unique ID for the theme
         let uniqueId = "custom_\(UUID().uuidString)"
         
@@ -47,25 +47,13 @@ class ThemeService {
             isCustomized: true
         )
         
+        // Add all templates to the theme
+        for (templateName, content) in templates {
+            customTheme.setTemplate(named: templateName, content: content)
+        }
+        
         // Add it to the model context
         modelContext.insert(customTheme)
-        
-        // Add the template files from the default theme
-        for templateType in templateManager.availableTemplateTypes() {
-            do {
-                let content = try templateManager.getTemplateString(for: templateType)
-                let file = ThemeFile(
-                    theme: customTheme,
-                    name: templateType,
-                    content: content
-                )
-                
-                modelContext.insert(file)
-                customTheme.files.append(file)
-            } catch {
-                print("Error creating template file: \(error)")
-            }
-        }
         
         // Save to database
         try? modelContext.save()
@@ -86,7 +74,7 @@ class ThemeService {
             // Add each to the cache
             for theme in themes {
                 addTheme(theme)
-                print("ThemeService: Cached theme \(theme.identifier) with \(theme.files.count) files")
+                print("ThemeService: Cached theme \(theme.identifier) with \(theme.templates.count) templates")
             }
         } catch {
             print("ThemeService: Error loading themes from database - \(error)")
@@ -100,11 +88,6 @@ class ThemeService {
             return nil
         }
         
-        guard let file = theme.files.first(where: { $0.name == templateName }) else {
-            print("ThemeService: Template \(templateName) not found in theme \(themeId)")
-            return nil
-        }
-        
-        return file.content
+        return theme.template(named: templateName)
     }
 }

@@ -16,6 +16,7 @@ struct PostalgicApp: App {
             Post.self,
             Tag.self,
             Category.self,
+            Theme.self,
         ])
 
         // Check if we're running UI tests and need to reset data
@@ -44,7 +45,11 @@ struct PostalgicApp: App {
                 try container.mainContext.delete(model: Post.self)
                 try container.mainContext.delete(model: Tag.self)
                 try container.mainContext.delete(model: Category.self)
+                try container.mainContext.delete(model: Theme.self)
             }
+            
+            // Initialize the theme service
+            ThemeService.shared.loadThemesFromDatabase(modelContext: container.mainContext)
 
             return container
         } catch {

@@ -769,8 +769,8 @@ final class Theme {
     var createdAt: Date
     var isCustomized: Bool
     
-    @Relationship(deleteRule: .cascade, inverse: \ThemeFile.theme)
-    var files: [ThemeFile] = []
+    // Dictionary of template name -> content
+    var templates: [String: String] = [:]
     
     init(name: String, identifier: String, isCustomized: Bool = false, createdAt: Date = Date()) {
         self.name = name
@@ -778,23 +778,15 @@ final class Theme {
         self.isCustomized = isCustomized
         self.createdAt = createdAt
     }
-}
-
-@Model
-final class ThemeFile {
-    var theme: Theme?
     
-    var name: String // Template type like "layout", "post", "css", etc.
-    var content: String
-    var createdAt: Date
-    var lastModified: Date
+    // Helper method to get a template
+    func template(named: String) -> String? {
+        return templates[named]
+    }
     
-    init(theme: Theme, name: String, content: String, createdAt: Date = Date()) {
-        self.theme = theme
-        self.name = name
-        self.content = content
-        self.createdAt = createdAt
-        self.lastModified = createdAt
+    // Helper method to set a template
+    func setTemplate(named: String, content: String) {
+        templates[named] = content
     }
 }
 

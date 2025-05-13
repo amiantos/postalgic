@@ -1465,47 +1465,31 @@ class TemplateManager {
             return
         }
         
-        // Try to get the theme from ThemeService
-        if let customTheme = ThemeService.shared.getTheme(identifier: themeIdentifier) {
-            print("Found theme \(customTheme.identifier) in ThemeService")
+        // Try to find the custom theme using the model context
+        guard let modelContext = blog.modelContext else {
+            print("No model context available for blog, using default theme")
+            return
+        }
+        
+        // Try to find the theme
+        let descriptor = FetchDescriptor<Theme>()
+        
+        do {
+            let allThemes = try modelContext.fetch(descriptor)
             
-            // Load all template files from the theme
-            for file in customTheme.files {
-                customTemplates[file.name] = file.content
-                print("Loaded template: \(file.name)")
+            // Find the theme with matching identifier
+            if let customTheme = allThemes.first(where: { $0.identifier == themeIdentifier }) {
+                print("Found theme: \(customTheme.name)")
+                
+                // Load all templates from the dictionary
+                customTemplates = customTheme.templates
+                
+                print("Loaded \(customTemplates.count) templates from theme")
+            } else {
+                print("Theme with ID \(themeIdentifier) not found, using default theme")
             }
-            
-            print("Successfully loaded custom theme: \(customTheme.name) with \(customTheme.files.count) templates")
-        } else {
-            print("Theme not found in ThemeService, trying database lookup")
-            
-            // If not found in service, try the database
-            guard let modelContext = blog.modelContext else {
-                print("No model context available for blog, using default theme")
-                return
-            }
-            
-            let descriptor = FetchDescriptor<Theme>(
-                predicate: #Predicate<Theme> { $0.identifier == themeIdentifier }
-            )
-            
-            do {
-                if let customTheme = try modelContext.fetch(descriptor).first {
-                    // Add theme to service for future use
-                    ThemeService.shared.addTheme(customTheme)
-                    
-                    // Load all template files from the theme
-                    for file in customTheme.files {
-                        customTemplates[file.name] = file.content
-                    }
-                    
-                    print("Loaded custom theme from database: \(customTheme.name)")
-                } else {
-                    print("Theme not found in database, falling back to default theme")
-                }
-            } catch {
-                print("Error loading theme from database: \(error)")
-            }
+        } catch {
+            print("Error loading custom theme: \(error)")
         }
     }
     
