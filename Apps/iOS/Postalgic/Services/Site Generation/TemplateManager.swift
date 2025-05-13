@@ -1461,29 +1461,39 @@ class TemplateManager {
     private func loadCustomTheme() {
         guard let themeIdentifier = blog.themeIdentifier, themeIdentifier != "default" else {
             // Use default templates
+            print("🎨 Using default theme")
             return
         }
         
         // Try to find the custom theme using the model context
+        guard let modelContext = blog.modelContext else {
+            print("⚠️ No model context available, using default theme")
+            return
+        }
+        
+        // Create a descriptor that matches the identifier exactly
+        let descriptor = FetchDescriptor<Theme>(predicate: #Predicate<Theme> { 
+            $0.identifier == themeIdentifier 
+        })
+        
         do {
-            let descriptor = FetchDescriptor<Theme>(predicate: #Predicate { $0.identifier == themeIdentifier })
+            let matchingThemes = try modelContext.fetch(descriptor)
             
-            guard let modelContext = blog.modelContext else {
-                print("⚠️ No model context available, using default theme")
-                return
-            }
-            
-            if let customTheme = try modelContext.fetch(descriptor).first {
+            if let customTheme = matchingThemes.first {
                 theme = customTheme
                 
                 // Load all template files from the theme
                 for file in customTheme.files {
+                    print("🎨 Loading template file: \(file.name)")
                     customTemplates[file.name] = file.content
                 }
                 
-                print("🎨 Loaded custom theme: \(customTheme.name)")
+                print("🎨 Loaded custom theme: \(customTheme.name) with \(customTheme.files.count) templates")
             } else {
-                print("⚠️ Theme with identifier \(themeIdentifier) not found, using default theme")
+                // Try a more flexible search if exact match fails
+                let allThemes = try modelContext.fetch(FetchDescriptor<Theme>())
+                print("⚠️ Theme with identifier \(themeIdentifier) not found. Available themes: \(allThemes.map { $0.identifier }.joined(separator: ", "))")
+                print("⚠️ Using default theme")
             }
         } catch {
             print("⚠️ Error loading custom theme: \(error), using default theme")

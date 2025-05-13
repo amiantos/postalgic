@@ -12,21 +12,16 @@ struct ThemesView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     
-    @Query private var allThemes: [Theme]
+    // Manually track themes to avoid SwiftData refresh issues
+    @State private var themes: [Theme] = []
     
     var blog: Blog
-    
-    private var sortedThemes: [Theme] {
-        // Now we only sort the customized themes since default is not stored in database
-        allThemes.sorted { $0.name < $1.name }
-    }
     
     @State private var showingThemeEditor = false
     @State private var selectedTheme: Theme?
     
     init(blog: Blog) {
         self.blog = blog
-        self._allThemes = Query()
     }
     
     var body: some View {
@@ -56,9 +51,9 @@ struct ThemesView: View {
                 }
                 
                 // Section for custom themes
-                if !sortedThemes.isEmpty {
+                if !themes.isEmpty {
                     Section("Custom Themes") {
-                        ForEach(sortedThemes) { theme in
+                        ForEach(themes) { theme in
                             HStack {
                                 VStack(alignment: .leading) {
                                     Text(theme.name)
@@ -133,55 +128,83 @@ struct ThemesView: View {
                 }
             })
             .onAppear {
-                ensureDefaultThemeExists()
+                loadThemes()
             }
         }
     }
     
-    private func ensureDefaultThemeExists() {
-        // We don't need to create a default theme in the database anymore
-        // since the default theme templates are hardcoded in TemplateManager
-        
-        // Make sure the blog has a themeIdentifier set
+    private func loadThemes() {
+        // Make sure blog has a themeIdentifier set
         if blog.themeIdentifier == nil {
             blog.themeIdentifier = "default"
+        }
+        
+        // Load all themes from the database
+        let descriptor = FetchDescriptor<Theme>()
+        do {
+            themes = try modelContext.fetch(descriptor)
+            print("Loaded \(themes.count) themes")
+        } catch {
+            print("Error loading themes: \(error)")
         }
     }
     
     private func duplicateDefaultTheme() {
-        // Create a template manager to access default templates
-        let templateManager = TemplateManager(blog: blog)
+        // Generate a unique identifier
+        let uniqueId = "custom_\(UUID().uuidString)"
+        print("Creating new theme with ID: \(uniqueId)")
         
-        // Create a new customized theme
-        let customizedTheme = Theme(
+        // Create a new theme with a simple structure
+        let newTheme = Theme(
             name: "Default (Customized)",
-            identifier: "default_customized_\(UUID().uuidString)",
+            identifier: uniqueId,
             isCustomized: true
         )
         
-        // Copy all templates from the default theme in TemplateManager
+        // Insert the theme first
+        modelContext.insert(newTheme)
+        
+        // Add template files from the default theme
+        let templateManager = TemplateManager(blog: blog)
         for templateType in templateManager.availableTemplateTypes() {
             do {
-                let templateContent = try templateManager.getTemplateString(for: templateType)
-                let themeFile = ThemeFile(
-                    theme: customizedTheme,
+                let content = try templateManager.getTemplateString(for: templateType)
+                let file = ThemeFile(
+                    theme: newTheme,
                     name: templateType,
-                    content: templateContent
+                    content: content
                 )
-                customizedTheme.files.append(themeFile)
+                
+                // Insert each file into the model context
+                modelContext.insert(file)
+                
+                // Also add it to the theme's relationship
+                newTheme.files.append(file)
+                
+                print("Added template file: \(templateType)")
             } catch {
-                print("Error creating theme file for \(templateType): \(error)")
+                print("Error getting template \(templateType): \(error)")
             }
         }
         
-        modelContext.insert(customizedTheme)
-        
-        // Automatically select the new theme
-        blog.themeIdentifier = customizedTheme.identifier
-        
-        // Show the theme editor for the new theme
-        selectedTheme = customizedTheme
-        showingThemeEditor = true
+        // Save everything
+        do {
+            try modelContext.save()
+            print("Successfully saved theme with \(newTheme.files.count) files")
+            
+            // Update our local list
+            themes.append(newTheme)
+            
+            // Select the new theme
+            blog.themeIdentifier = uniqueId
+            
+            // Save blog changes
+            try modelContext.save()
+            
+            print("Successfully set blog theme to: \(uniqueId)")
+        } catch {
+            print("Error saving theme: \(error)")
+        }
     }
     
     private func selectTheme(_ theme: Theme) {
@@ -201,6 +224,11 @@ struct ThemesView: View {
         
         // Delete the theme
         modelContext.delete(theme)
+        
+        // Update our local list
+        if let index = themes.firstIndex(where: { $0.id == theme.id }) {
+            themes.remove(at: index)
+        }
     }
 }
 

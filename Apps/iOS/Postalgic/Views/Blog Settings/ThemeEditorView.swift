@@ -32,23 +32,29 @@ struct ThemeEditorView: View {
                 }
                 
                 Section {
-                    ForEach(theme.files) { file in
-                        HStack {
-                            Text(file.name)
-                                .fontWeight(.medium)
-                            
-                            Spacer()
-                            
-                            Button {
-                                selectedFile = file
-                                editedContent = file.content
-                                showingFileEditor = true
-                            } label: {
-                                HStack {
-                                    Text("Edit")
-                                    Image(systemName: "chevron.right")
+                    if theme.files.isEmpty {
+                        Text("No template files found")
+                            .foregroundStyle(.secondary)
+                            .italic()
+                    } else {
+                        ForEach(theme.files) { file in
+                            HStack {
+                                Text(file.name)
+                                    .fontWeight(.medium)
+                                
+                                Spacer()
+                                
+                                Button {
+                                    selectedFile = file
+                                    editedContent = file.content
+                                    showingFileEditor = true
+                                } label: {
+                                    HStack {
+                                        Text("Edit")
+                                        Image(systemName: "chevron.right")
+                                    }
+                                    .foregroundColor(.blue)
                                 }
-                                .foregroundColor(.blue)
                             }
                         }
                     }
@@ -78,6 +84,14 @@ struct ThemeEditorView: View {
                             isEdited = true
                         }
                     )
+                }
+            }
+            .onAppear {
+                // Refresh the list of files when the view appears
+                if theme.files.isEmpty {
+                    print("Theme has no files, this might be a problem")
+                } else {
+                    print("Theme has \(theme.files.count) files")
                 }
             }
         }
@@ -152,6 +166,7 @@ struct FileEditorView: View {
         let file = ThemeFile(theme: theme, name: "css", content: "/* CSS content */")
         theme.files.append(file)
         modelContainer.mainContext.insert(theme)
+        try? modelContainer.mainContext.save()
     }
     
     return ThemeEditorView(theme: theme)
