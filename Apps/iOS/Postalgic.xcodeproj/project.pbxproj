@@ -52,6 +52,7 @@
 		44DE43282DD1CD0C00F31204 /* ImageEmbedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44DE43262DD1CD0C00F31204 /* ImageEmbedView.swift */; };
 		44DE433D2DD32D2D00F31204 /* ThemeEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44DE433B2DD32D2D00F31204 /* ThemeEditorView.swift */; };
 		44DE433E2DD32D2D00F31204 /* ThemesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44DE433C2DD32D2D00F31204 /* ThemesView.swift */; };
+		44DE43402DD332C200F31204 /* ThemeService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44DE433F2DD332C200F31204 /* ThemeService.swift */; };
 		44F858B82DC43FAD00B8179B /* BlogDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44F858B72DC43FAD00B8179B /* BlogDashboardView.swift */; };
 /* End PBXBuildFile section */
 
@@ -116,6 +117,7 @@
 		44DE43262DD1CD0C00F31204 /* ImageEmbedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageEmbedView.swift; sourceTree = "<group>"; };
 		44DE433B2DD32D2D00F31204 /* ThemeEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeEditorView.swift; sourceTree = "<group>"; };
 		44DE433C2DD32D2D00F31204 /* ThemesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemesView.swift; sourceTree = "<group>"; };
+		44DE433F2DD332C200F31204 /* ThemeService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeService.swift; sourceTree = "<group>"; };
 		44F858B72DC43FAD00B8179B /* BlogDashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlogDashboardView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -261,6 +263,7 @@
 				44362EF62DBDE7BF00EA704F /* Site Generation */,
 				44362E7C2DBC0B1A00EA704F /* Publishers */,
 				443F0B2F2DB8D48B00034EF1 /* LinkMetadataService.swift */,
+				44DE433F2DD332C200F31204 /* ThemeService.swift */,
 				44362EFF2DBF3D8200EA704F /* Utils+Extensions.swift */,
 			);
 			path = Services;
@@ -491,6 +494,7 @@
 				44499DE42DC5CD1E00A9624B /* PostsView.swift in Sources */,
 				44362EDD2DBD829000EA704F /* TemplateModels.swift in Sources */,
 				44499DE22DC5CBC500A9624B /* PostPreviewView.swift in Sources */,
+				44DE43402DD332C200F31204 /* ThemeService.swift in Sources */,
 				44C364262DB768DB0057567C /* CategoryManagementView.swift in Sources */,
 				44362E7B2DBC0B0E00EA704F /* Publisher.swift in Sources */,
 				44362EE12DBD82EB00EA704F /* ManualPublisher.swift in Sources */,
