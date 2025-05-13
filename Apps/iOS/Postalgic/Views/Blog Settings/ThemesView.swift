@@ -16,9 +16,8 @@ struct ThemesView: View {
     @Query private var themes: [Theme]
     
     var blog: Blog
-    
-    @State private var showingThemeEditor = false
-    @State private var selectedTheme: Theme?
+
+    @State private var selectedTheme: Theme? = nil
     
     init(blog: Blog) {
         self.blog = blog
@@ -83,7 +82,6 @@ struct ThemesView: View {
                                 if theme.isCustomized {
                                     Button {
                                         selectedTheme = theme
-                                        showingThemeEditor = true
                                     } label: {
                                         Label("Edit", systemImage: "pencil")
                                     }
@@ -129,11 +127,9 @@ struct ThemesView: View {
                 .padding(.bottom)
             }
             .navigationTitle("Themes")
-            .sheet(isPresented: $showingThemeEditor, content: {
-                if let theme = selectedTheme {
-                    ThemeEditorView(theme: theme)
-                }
-            })
+            .sheet(item: $selectedTheme) { theme in
+                ThemeEditorView(theme: theme)
+            }
         }
     }
     
@@ -166,7 +162,6 @@ struct ThemesView: View {
         
         // Show the editor
         selectedTheme = customTheme
-        showingThemeEditor = true
     }
 }
 
