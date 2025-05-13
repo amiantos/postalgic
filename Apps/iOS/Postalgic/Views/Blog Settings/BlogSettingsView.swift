@@ -20,7 +20,6 @@ struct BlogSettingsView: View {
     @State private var showingTagManagement = false
     @State private var showingSidebarManagement = false
     @State private var showingPublishSettingsView = false
-    @State private var showingTemplateCustomizationView = false
     @State private var showingAccentColorCustomization = false
     @State private var showingDeleteAlert = false
     @State private var deleteConfirmationText = ""
@@ -69,12 +68,6 @@ struct BlogSettingsView: View {
                     } label: {
                         Label("Customize Colors", systemImage: "paintpalette")
                     }
-                    
-                    Button {
-                        showingTemplateCustomizationView = true
-                    } label: {
-                        Label("Edit Templates", systemImage: "richtext.page")
-                    }
                 } header: {
                     Text("Appearance").foregroundStyle(.secondary)
                 }
@@ -122,9 +115,6 @@ struct BlogSettingsView: View {
         }
         .sheet(isPresented: $showingPublishSettingsView) {
             PublishSettingsView(blog: blog)
-        }
-        .sheet(isPresented: $showingTemplateCustomizationView) {
-            TemplateCustomizationView(blog: blog).interactiveDismissDisabled()
         }
         .sheet(isPresented: $showingSidebarManagement) {
             SidebarManagementView(blog: blog)

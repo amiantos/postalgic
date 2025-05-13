@@ -68,29 +68,6 @@ class StaticSiteGenerator {
         self.forceFullUpload = forceFullUpload
     }
     
-    // MARK: - Template Management
-    
-    /// Register a custom template for the site
-    /// - Parameters:
-    ///   - template: The template content
-    ///   - type: The template type identifier
-    func registerCustomTemplate(_ template: String, for type: String) {
-        templateEngine.registerCustomTemplate(template, for: type)
-    }
-    
-    /// Get the template content for a specific template type
-    /// - Parameter type: The template type identifier
-    /// - Returns: The template content
-    /// - Throws: Error if the template doesn't exist
-    func getTemplateContent(for type: String) throws -> String {
-        return try templateEngine.getTemplateString(for: type)
-    }
-    
-    /// Get all available template types
-    /// - Returns: Array of template type identifiers
-    func availableTemplateTypes() -> [String] {
-        return templateEngine.availableTemplateTypes()
-    }
 
     // MARK: - Site Generation Helpers
 

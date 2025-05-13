@@ -1419,26 +1419,13 @@ class TemplateManager {
             }
         }
         
-        // Register all custom blog templates (these will override defaults with the same name)
-        for templateObj in blog.templates {
-            do {
-                try library.register(templateObj.content, named: templateObj.type)
-            } catch {
-                print("Error registering custom template \(templateObj.type): \(error)")
-            }
-        }
-        
         return library
     }()
     
     /// Compiles a template for the specified template type
     private func compileTemplate(for templateType: String) throws -> MustacheTemplate {
-        // First check if the blog has a saved template of this type
-        if let blogTemplate = blog.template(for: templateType) {
-            return try MustacheTemplate(string: blogTemplate.content)
-        } 
-        // Otherwise use the default template
-        else if let defaultTemplate = defaultTemplates[templateType] {
+        // Use the default template
+        if let defaultTemplate = defaultTemplates[templateType] {
             return try MustacheTemplate(string: defaultTemplate)
         } 
         // If no template exists for this type, throw an error
@@ -1448,30 +1435,6 @@ class TemplateManager {
     }
     
     // MARK: - Template Access
-    
-    /// Registers a custom template for the blog and handles saving it to the database
-    /// - Parameters:
-    ///   - template: The template content
-    ///   - type: The template type identifier
-    func registerCustomTemplate(_ template: String, for type: String) {
-        // If the template content is empty, delete the template from the blog
-        if template.isEmpty {
-            blog.deleteTemplate(for: type)
-        } else {
-            // Save the template to the blog
-            blog.saveTemplate(template, for: type)
-        }
-        
-        // Remove from cache to ensure it's recompiled next time
-        compiledTemplates[type] = nil
-        
-        // Update the template in the library
-        do {
-            try templateLibrary.register(template, named: type)
-        } catch {
-            print("Error updating template library for \(type): \(error)")
-        }
-    }
     
     /// Gets the compiled template for the specified type
     /// - Parameter type: The type of template to retrieve
@@ -1497,17 +1460,13 @@ class TemplateManager {
         }
     }
     
-    /// Gets the default or custom template string content for the specified type
+    /// Gets the default template string content for the specified type
     /// - Parameter type: The type of template to retrieve
     /// - Returns: The template string
     /// - Throws: TemplateError if the template doesn't exist
     func getTemplateString(for type: String) throws -> String {
-        // First check if the blog has a saved template of this type
-        if let blogTemplate = blog.template(for: type) {
-            return blogTemplate.content
-        }
-        // Otherwise use the default template
-        else if let defaultTemplate = defaultTemplates[type] {
+        // Use the default template
+        if let defaultTemplate = defaultTemplates[type] {
             return defaultTemplate
         } 
         // If no template exists for this type, throw an error
@@ -1519,14 +1478,8 @@ class TemplateManager {
     /// Returns all available template types
     /// - Returns: Array of template type identifiers
     func availableTemplateTypes() -> [String] {
-        // Get the default template types
-        let defaultTypes = Set(defaultTemplates.keys)
-        
-        // Get blog-specific templates
-        let blogTemplateTypes = Set(blog.templates.map { $0.type })
-        
-        // Combine and sort
-        return Array(defaultTypes.union(blogTemplateTypes)).sorted()
+        // Get only the default template types
+        return Array(defaultTemplates.keys).sorted()
     }
     
     /// Returns the template library for use with partials

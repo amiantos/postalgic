@@ -25,29 +25,6 @@ class TemplateEngine {
         self.markdownParser = MarkdownParser()
     }
     
-    // MARK: - Template Management
-    
-    /// Registers a custom template, overriding the default one
-    /// - Parameters:
-    ///   - template: The template content
-    ///   - type: The template type identifier
-    func registerCustomTemplate(_ template: String, for type: String) {
-        templateManager.registerCustomTemplate(template, for: type)
-    }
-    
-    /// Gets the template string for a specific template type
-    /// - Parameter type: The template type
-    /// - Returns: The template string
-    /// - Throws: Error if the template doesn't exist
-    func getTemplateString(for type: String) throws -> String {
-        return try templateManager.getTemplateString(for: type)
-    }
-    
-    /// Returns all available template types
-    /// - Returns: Array of template type identifiers
-    func availableTemplateTypes() -> [String] {
-        return templateManager.availableTemplateTypes()
-    }
     
     // MARK: - Shared Context Properties
     
