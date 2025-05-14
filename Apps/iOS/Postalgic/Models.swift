@@ -509,6 +509,13 @@ final class Post {
         formatter.timeStyle = .short
         return formatter.string(from: createdAt)
     }
+    
+    var shortFormattedDate: String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .long
+        formatter.timeStyle = .none
+        return formatter.string(from: createdAt)
+    }
 
     /// Returns the date-based portion of the URL path (without the stub)
     var dateUrlPath: String {

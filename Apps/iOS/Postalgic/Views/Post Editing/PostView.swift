@@ -46,7 +46,7 @@ struct PostView: View {
                 return count == 1 ? "Image Embeded" : "\(count) Images Embeded"
             }
         } else {
-            return "Attach Embed"
+            return "Embed Content"
         }
     }
 
@@ -77,7 +77,7 @@ struct PostView: View {
                 
                 Divider()
                 
-                HStack {
+                HStack(spacing: 0.0) {
                     NavigationLink(destination: CategorySelectionView(blog: blog, post: post)) {
                         Label(post.category?.name ?? "Add Category", systemImage: "folder")
                             .font(.footnote)
@@ -86,7 +86,7 @@ struct PostView: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
 
-                    Divider().frame(height: 10)
+//                    Divider().frame(height: 10)
 
                     NavigationLink(destination: TagSelectionView(blog: blog, post: post)) {
                         Label(post.tags.isEmpty ? "Add Tags" : "\(post.tags.count) tag\(post.tags.count == 1 ? "" : "s")", systemImage: "tag")
@@ -98,18 +98,27 @@ struct PostView: View {
 
                 Divider()
 
-                Button(action: {
-                    if post.embed == nil {
-                        showingEmbedTypeAlert = true
-                    } else {
-                        showingEmbedActionAlert = true
+                HStack(spacing: 0.0) {
+                    Button(action: {
+                        if post.embed == nil {
+                            showingEmbedTypeAlert = true
+                        } else {
+                            showingEmbedActionAlert = true
+                        }
+                    }) {
+                        Label(embedLabelText, systemImage: embedIconName)
+                            .font(.footnote)
+                            .padding(.leading)
+                            .padding(.vertical, 12)
+                            .frame(maxWidth: .infinity, alignment: .leading)
                     }
-                }) {
-                    Label(embedLabelText, systemImage: embedIconName)
-                        .font(.footnote)
-                        .padding(.vertical, 12)
-                        .padding(.leading)
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                    
+                    Button(action: {}) {
+                        Label(post.shortFormattedDate, systemImage: "calendar")
+                            .font(.footnote)
+                            .padding(.vertical, 12)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
                 }.foregroundStyle(.secondary)
 
                 Divider()
