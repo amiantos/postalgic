@@ -42,12 +42,12 @@ struct PostView: View {
         if let embed = post.embed {
             switch embed.embedType {
             case .youtube:
-                return "YouTube Video Embeded"
+                return "YouTube Video"
             case .link:
                 return "Link Embeded"
             case .image:
                 let count = embed.images.count
-                return count == 1 ? "Image Embeded" : "\(count) Images Embeded"
+                return count == 1 ? "1 Image" : "\(count) Images"
             }
         } else {
             return "Embed Content"

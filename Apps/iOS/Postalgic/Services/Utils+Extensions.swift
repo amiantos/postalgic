@@ -37,16 +37,19 @@ struct Utils {
     ///   - text: The source text to generate a stub from
     ///   - maxLength: Maximum length of the stub (default: 40)
     /// - Returns: A URL-friendly slug with only lowercase alphanumeric characters and hyphens
-    static func generateStub(from text: String, maxLength: Int = 40) -> String {
+    static func generateStub(from text: String, maxLength: Int = 50) -> String {
         // Start by trimming whitespace and converting to lowercase
         let lowercased = text.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         
-        // Replace spaces with hyphens
-        var stub = lowercased.replacingOccurrences(of: " ", with: "-")
+        // Normalize the string to decompose accented characters
+        let normalized = lowercased.folding(options: [.diacriticInsensitive, .caseInsensitive], locale: .current)
         
-        // Remove any characters that are not alphanumeric or hyphens
+        // Define allowed characters and create an inverted set for non-allowed characters
         let allowedCharacters = CharacterSet(charactersIn: "abcdefghijklmnopqrstuvwxyz0123456789-")
-        stub = stub.unicodeScalars.filter { allowedCharacters.contains($0) }.map { String($0) }.joined()
+        let nonAllowedCharacters = allowedCharacters.inverted
+        
+        // Replace non-allowed characters with hyphens, including spaces and slashes
+        var stub = normalized.components(separatedBy: nonAllowedCharacters).joined(separator: "-")
         
         // Replace multiple consecutive hyphens with a single hyphen
         while stub.contains("--") {
