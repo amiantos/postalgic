@@ -21,16 +21,20 @@ struct PostView: View {
     @State private var showingEmbedActionAlert: Bool = false
     @State private var showingURLEmbed: Bool = false
     @State private var showingImageEmbed: Bool = false
+    @State private var showingDatePicker: Bool = false
+    @State private var selectedDate: Date
 
     init(blog: Blog) {
         self.blog = blog
         self.post = Post(content: "", isDraft: true)
+        self._selectedDate = State(initialValue: Date())
     }
 
     init(post: Post) {
         guard let blog = post.blog else { fatalError("Cannot init this view with a post with no blog associated with it")}
         self.blog = blog
         self.post = post
+        self._selectedDate = State(initialValue: post.createdAt)
     }
 
     // Computed properties for embed button label
@@ -113,7 +117,10 @@ struct PostView: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
                     
-                    Button(action: {}) {
+                    Button(action: {
+                        selectedDate = post.createdAt
+                        showingDatePicker = true
+                    }) {
                         Label(post.shortFormattedDate, systemImage: "calendar")
                             .font(.footnote)
                             .padding(.vertical, 12)
@@ -245,6 +252,36 @@ struct PostView: View {
             // Image embed sheet
             .sheet(isPresented: $showingImageEmbed) {
                 ImageEmbedView(post: post)
+            }
+            
+            // Date picker sheet
+            .sheet(isPresented: $showingDatePicker) {
+                NavigationStack {
+                    ScrollView {
+                        VStack {
+                            DatePicker("Post Date", selection: $selectedDate, displayedComponents: [.date, .hourAndMinute])
+                                .datePickerStyle(.graphical)
+                                .padding(.horizontal)
+                            Spacer()
+                        }
+                    }
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button("Cancel") {
+                                showingDatePicker = false
+                            }
+                        }
+                        ToolbarItem(placement: .confirmationAction) {
+                            Button("Save") {
+                                // Update the post's date
+                                post.createdAt = selectedDate
+                                try? modelContext.save()
+                                showingDatePicker = false
+                            }
+                        }
+                    }
+                    .navigationTitle("Change Post Date")
+                }
             }
         }
     }
