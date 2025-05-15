@@ -10,6 +10,7 @@ import SwiftUI
 struct BlogAwsConfigView: View {
     @Bindable var blog: Blog
     @Environment(\.dismiss) private var dismiss
+    @State private var awsSecretAccessKey: String = ""
 
     // Available AWS regions
     let awsRegions = [
@@ -94,12 +95,7 @@ struct BlogAwsConfigView: View {
 
                     SecureField(
                         "AWS Secret Access Key",
-                        text: Binding(
-                            get: { blog.awsSecretAccessKey ?? "" },
-                            set: {
-                                blog.awsSecretAccessKey = $0.isEmpty ? nil : $0
-                            }
-                        )
+                        text: $awsSecretAccessKey
                     )
                     .autocapitalization(.none)
                     .disableAutocorrection(true)
@@ -124,7 +120,10 @@ struct BlogAwsConfigView: View {
                         blog.awsS3Bucket = nil
                         blog.awsCloudFrontDistId = nil
                         blog.awsAccessKeyId = nil
-                        blog.awsSecretAccessKey = nil
+                        
+                        // Clear secret from keychain if available
+                        try? KeychainService.deletePassword(for: blog.persistentModelID, type: .aws)
+                        awsSecretAccessKey = ""
                     }) {
                         Text("Clear AWS Configuration")
                             .foregroundColor(.red)
@@ -167,9 +166,17 @@ struct BlogAwsConfigView: View {
                     dismiss()
                 },
                 trailing: Button("Save") {
+                    // Save AWS secret key to keychain
+                    if !awsSecretAccessKey.isEmpty {
+                        blog.setAwsSecretAccessKey(awsSecretAccessKey)
+                    }
                     dismiss()
                 }
             )
+            .onAppear {
+                // Load existing AWS secret key
+                awsSecretAccessKey = blog.getAwsSecretAccessKey() ?? ""
+            }
         }
     }
 }

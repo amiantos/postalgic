@@ -50,6 +50,13 @@ struct PostalgicApp: App {
             
             // Initialize the theme service
             ThemeService.shared.loadThemesFromDatabase(modelContext: container.mainContext)
+            
+            // Migrate passwords to keychain for all blogs
+            if !isUITesting {
+                Task {
+                    await Self.migrateAllBlogsPasswordsToKeychain(context: container.mainContext)
+                }
+            }
 
             return container
         } catch {
@@ -62,5 +69,24 @@ struct PostalgicApp: App {
             BlogsView()
         }
         .modelContainer(sharedModelContainer)
+    }
+    
+    /// Migrates all blogs' passwords from SwiftData to Keychain
+    private static func migrateAllBlogsPasswordsToKeychain(context: ModelContext) async {
+        do {
+            let descriptor = FetchDescriptor<Blog>()
+            let blogs = try context.fetch(descriptor)
+            
+            // For each blog, attempt to migrate passwords to keychain
+            for blog in blogs {
+                blog.migratePasswordsToKeychain()
+            }
+            
+            // Save changes to SwiftData
+            try context.save()
+            print("Successfully migrated all blog passwords to keychain")
+        } catch {
+            print("Error migrating passwords to keychain: \(error)")
+        }
     }
 }

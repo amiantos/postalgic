@@ -89,9 +89,8 @@ struct BlogFtpConfigView: View {
                     username = ftpUsername
                 }
                 
-                if let ftpPassword = blog.ftpPassword {
-                    password = ftpPassword
-                }
+                // Get password from keychain or SwiftData model
+                password = blog.getFtpPassword() ?? ""
                 
                 if let ftpPath = blog.ftpPath {
                     remotePath = ftpPath
@@ -107,7 +106,12 @@ struct BlogFtpConfigView: View {
         blog.ftpHost = host.trimmingCharacters(in: .whitespacesAndNewlines)
         blog.ftpPort = Int(port) ?? 22
         blog.ftpUsername = username.trimmingCharacters(in: .whitespacesAndNewlines)
-        blog.ftpPassword = password
+        
+        // Store password in keychain
+        if !password.isEmpty {
+            blog.setFtpPassword(password)
+        }
+        
         blog.ftpPath = remotePath.trimmingCharacters(in: .whitespacesAndNewlines)
         blog.ftpUseSFTP = true // Always set to true since we only support SFTP now
     }

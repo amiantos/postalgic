@@ -278,7 +278,7 @@ class StaticSiteGenerator {
                     bucket: blog.awsS3Bucket!,
                     distributionId: blog.awsCloudFrontDistId!,
                     accessKeyId: blog.awsAccessKeyId!,
-                    secretAccessKey: blog.awsSecretAccessKey!
+                    secretAccessKey: blog.getAwsSecretAccessKey()!
                 )
             } else {
                 // Fall back to manual if AWS is selected but not properly configured
@@ -290,7 +290,7 @@ class StaticSiteGenerator {
                     host: blog.ftpHost!,
                     port: blog.ftpPort!,
                     username: blog.ftpUsername!,
-                    password: blog.ftpPassword!,
+                    password: blog.getFtpPassword()!,
                     remotePath: blog.ftpPath!,
                     useSFTP: blog.ftpUseSFTP ?? false
                 )
@@ -303,7 +303,7 @@ class StaticSiteGenerator {
                 publisher = GitPublisher(
                     repositoryUrl: blog.gitRepositoryUrl!,
                     username: blog.gitUsername!,
-                    password: blog.gitPassword!,
+                    password: blog.getGitPassword()!,
                     branch: blog.gitBranch!,
                     commitMessage: blog.gitCommitMessage ?? "Update site content"
                 )

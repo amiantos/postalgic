@@ -8,6 +8,7 @@
 import Foundation
 import CommonCrypto
 import UIKit
+import SwiftData
 
 struct Utils {
     static func extractYouTubeId(from url: String) -> String? {
@@ -172,3 +173,16 @@ extension Data {
         return hash.map { String(format: "%02x", $0) }.joined()
     }
 }
+
+extension PersistentIdentifier {
+
+    public func stringRepresentation() -> String? {
+        if let encoded = try? JSONEncoder().encode(self),
+           let dictionary = try? JSONSerialization.jsonObject(with: encoded) as? [String: Any],
+           let implementation = dictionary["implementation"] as? [String: Any],
+           let uriRepresentation = implementation["uriRepresentation"] as? String {
+            return uriRepresentation as String
+        } else {
+            return  nil
+        }
+    } }

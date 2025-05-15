@@ -56,6 +56,7 @@
 		44DE43672DD55F9500F31204 /* AsyncSwiftGit in Frameworks */ = {isa = PBXBuildFile; productRef = 44DE43662DD55F9500F31204 /* AsyncSwiftGit */; };
 		44DE43692DD589A200F31204 /* GitPublisher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44DE43682DD589A200F31204 /* GitPublisher.swift */; };
 		44DE436B2DD589B600F31204 /* BlogGitConfigView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44DE436A2DD589B600F31204 /* BlogGitConfigView.swift */; };
+		44DE438D2DD5A32200F31204 /* KeychainService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44DE438C2DD5A32200F31204 /* KeychainService.swift */; };
 		44F858B82DC43FAD00B8179B /* BlogDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44F858B72DC43FAD00B8179B /* BlogDashboardView.swift */; };
 /* End PBXBuildFile section */
 
@@ -123,6 +124,7 @@
 		44DE433F2DD332C200F31204 /* ThemeService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeService.swift; sourceTree = "<group>"; };
 		44DE43682DD589A200F31204 /* GitPublisher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitPublisher.swift; sourceTree = "<group>"; };
 		44DE436A2DD589B600F31204 /* BlogGitConfigView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlogGitConfigView.swift; sourceTree = "<group>"; };
+		44DE438C2DD5A32200F31204 /* KeychainService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainService.swift; sourceTree = "<group>"; };
 		44F858B72DC43FAD00B8179B /* BlogDashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlogDashboardView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -271,6 +273,7 @@
 				44362EF62DBDE7BF00EA704F /* Site Generation */,
 				44362E7C2DBC0B1A00EA704F /* Publishers */,
 				443F0B2F2DB8D48B00034EF1 /* LinkMetadataService.swift */,
+				44DE438C2DD5A32200F31204 /* KeychainService.swift */,
 				44DE433F2DD332C200F31204 /* ThemeService.swift */,
 				44362EFF2DBF3D8200EA704F /* Utils+Extensions.swift */,
 			);
@@ -489,6 +492,7 @@
 				443F0B652DBB779200034EF1 /* PublishSettingsView.swift in Sources */,
 				44362F4E2DC1C85B00EA704F /* BlogSettingsView.swift in Sources */,
 				44C364212DB768DB0057567C /* StaticSiteGenerator.swift in Sources */,
+				44DE438D2DD5A32200F31204 /* KeychainService.swift in Sources */,
 				44F858B82DC43FAD00B8179B /* BlogDashboardView.swift in Sources */,
 				44C364222DB768DB0057567C /* BlogAwsConfigView.swift in Sources */,
 				44DE43272DD1CD0C00F31204 /* EmbedMenuView.swift in Sources */,
