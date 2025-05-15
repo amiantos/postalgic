@@ -48,20 +48,17 @@ final class Blog {
     var awsS3Bucket: String?
     var awsCloudFrontDistId: String?
     var awsAccessKeyId: String?
-    var awsSecretAccessKey: String?
 
     // FTP Configuration
     var ftpHost: String?
     var ftpPort: Int?
     var ftpUsername: String?
-    var ftpPassword: String?
     var ftpPath: String?
     var ftpUseSFTP: Bool?
     
     // Git Configuration
     var gitRepositoryUrl: String?
     var gitUsername: String?
-    var gitPassword: String?
     var gitBranch: String?
     var gitCommitMessage: String?
     
@@ -100,8 +97,7 @@ final class Blog {
 
     var hasAwsConfigured: Bool {
         // Check if we have the password in keychain or still in the model
-        let hasSecretKey = (awsSecretAccessKey != nil && !awsSecretAccessKey!.isEmpty) || 
-                           (KeychainService.passwordExists(for: persistentModelID, type: .aws))
+        let hasSecretKey = KeychainService.passwordExists(for: persistentModelID, type: .aws)
         
         return awsRegion != nil && !awsRegion!.isEmpty && awsS3Bucket != nil
             && !awsS3Bucket!.isEmpty && awsCloudFrontDistId != nil
@@ -111,8 +107,7 @@ final class Blog {
     
     var hasFtpConfigured: Bool {
         // Check if we have the password in keychain or still in the model
-        let hasPassword = (ftpPassword != nil && !ftpPassword!.isEmpty) || 
-                          (KeychainService.passwordExists(for: persistentModelID, type: .ftp))
+        let hasPassword = KeychainService.passwordExists(for: persistentModelID, type: .ftp)
         
         return ftpHost != nil && !ftpHost!.isEmpty && ftpUsername != nil
             && !ftpUsername!.isEmpty && hasPassword && ftpPath != nil
@@ -121,8 +116,7 @@ final class Blog {
     
     var hasGitConfigured: Bool {
         // Check if we have the password in keychain or still in the model
-        let hasPassword = (gitPassword != nil && !gitPassword!.isEmpty) || 
-                          (KeychainService.passwordExists(for: persistentModelID, type: .git))
+        let hasPassword = KeychainService.passwordExists(for: persistentModelID, type: .git)
         
         return gitRepositoryUrl != nil && !gitRepositoryUrl!.isEmpty 
             && gitUsername != nil && !gitUsername!.isEmpty 

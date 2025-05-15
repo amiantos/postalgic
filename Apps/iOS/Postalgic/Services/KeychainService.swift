@@ -136,47 +136,8 @@ class KeychainService {
 // MARK: - Blog Extension
 
 extension Blog {
-    /// Migrates any existing passwords from SwiftData to Keychain
-    func migratePasswordsToKeychain() {
-        
-        // Migrate AWS secret key if it exists
-        if let awsSecretAccessKey = awsSecretAccessKey, !awsSecretAccessKey.isEmpty {
-            do {
-                try KeychainService.storePassword(awsSecretAccessKey, for: persistentModelID, type: .aws)
-                self.awsSecretAccessKey = nil
-            } catch {
-                print("Failed to migrate AWS secret key: \(error)")
-            }
-        }
-        
-        // Migrate FTP password if it exists
-        if let ftpPassword = ftpPassword, !ftpPassword.isEmpty {
-            do {
-                try KeychainService.storePassword(ftpPassword, for: persistentModelID, type: .ftp)
-                self.ftpPassword = nil
-            } catch {
-                print("Failed to migrate FTP password: \(error)")
-            }
-        }
-        
-        // Migrate Git password if it exists
-        if let gitPassword = gitPassword, !gitPassword.isEmpty {
-            do {
-                try KeychainService.storePassword(gitPassword, for: persistentModelID, type: .git)
-                self.gitPassword = nil
-            } catch {
-                print("Failed to migrate Git password: \(error)")
-            }
-        }
-    }
-    
     /// Gets the AWS secret key from keychain
     func getAwsSecretAccessKey() -> String? {
-        // If we still have it in SwiftData, return that (it hasn't been migrated yet)
-        if let awsSecretAccessKey = awsSecretAccessKey, !awsSecretAccessKey.isEmpty {
-            return awsSecretAccessKey
-        }
-        
         do {
             return try KeychainService.retrievePassword(for: persistentModelID, type: .aws)
         } catch {
@@ -186,11 +147,6 @@ extension Blog {
     
     /// Gets the FTP password from keychain
     func getFtpPassword() -> String? {
-        // If we still have it in SwiftData, return that (it hasn't been migrated yet)
-        if let ftpPassword = ftpPassword, !ftpPassword.isEmpty {
-            return ftpPassword
-        }
-        
         do {
             return try KeychainService.retrievePassword(for: persistentModelID, type: .ftp)
         } catch {
@@ -200,11 +156,6 @@ extension Blog {
     
     /// Gets the Git password from keychain
     func getGitPassword() -> String? {
-        // If we still have it in SwiftData, return that (it hasn't been migrated yet)
-        if let gitPassword = gitPassword, !gitPassword.isEmpty {
-            return gitPassword
-        }
-        
         do {
             return try KeychainService.retrievePassword(for: persistentModelID, type: .git)
         } catch {
@@ -216,11 +167,7 @@ extension Blog {
     func setAwsSecretAccessKey(_ password: String) {
         do {
             try KeychainService.storePassword(password, for: persistentModelID, type: .aws)
-            // Clear from SwiftData if it exists
-            self.awsSecretAccessKey = nil
         } catch {
-            // Fallback to SwiftData if keychain fails
-            self.awsSecretAccessKey = password
             print("Failed to store AWS secret key in keychain: \(error)")
         }
     }
@@ -229,11 +176,7 @@ extension Blog {
     func setFtpPassword(_ password: String) {
         do {
             try KeychainService.storePassword(password, for: persistentModelID, type: .ftp)
-            // Clear from SwiftData if it exists
-            self.ftpPassword = nil
         } catch {
-            // Fallback to SwiftData if keychain fails
-            self.ftpPassword = password
             print("Failed to store FTP password in keychain: \(error)")
         }
     }
@@ -242,11 +185,7 @@ extension Blog {
     func setGitPassword(_ password: String) {
         do {
             try KeychainService.storePassword(password, for: persistentModelID, type: .git)
-            // Clear from SwiftData if it exists
-            self.gitPassword = nil
         } catch {
-            // Fallback to SwiftData if keychain fails
-            self.gitPassword = password
             print("Failed to store Git password in keychain: \(error)")
         }
     }
