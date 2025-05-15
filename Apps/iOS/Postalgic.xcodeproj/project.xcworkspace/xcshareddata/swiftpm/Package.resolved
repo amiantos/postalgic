@@ -1,6 +1,15 @@
 {
-  "originHash" : "51446426632b64f51ec15b8e8b3e8cfcd7c480e4fbcbb309c18d1cad213ca074",
+  "originHash" : "885eb6bcbb80d841e4714c3a5e1c82b3eb87af207eb06929313610e2469c8e45",
   "pins" : [
+    {
+      "identity" : "asyncswiftgit",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/bdewey/AsyncSwiftGit/",
+      "state" : {
+        "revision" : "2ced14cdf816cea694a0faae4c54f80da2a70eda",
+        "version" : "0.5.0"
+      }
+    },
     {
       "identity" : "aws-sdk-ios-spm",
       "kind" : "remoteSourceControl",
@@ -44,6 +53,15 @@
       "state" : {
         "revision" : "bcc9f219900a62c4210e6db726035d7f03ae757b",
         "version" : "0.6.0"
+      }
+    },
+    {
+      "identity" : "static-libgit2",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/bdewey/static-libgit2",
+      "state" : {
+        "revision" : "ca2b13cb2cd04365c9416803c1d7e26116b23efd",
+        "version" : "0.5.0"
       }
     },
     {

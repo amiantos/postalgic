@@ -298,6 +298,19 @@ class StaticSiteGenerator {
                 // Fall back to manual if FTP is selected but not properly configured
                 publisher = ManualPublisher()
             }
+        case .git:
+            if blog.hasGitConfigured {
+                publisher = GitPublisher(
+                    repositoryUrl: blog.gitRepositoryUrl!,
+                    username: blog.gitUsername!,
+                    password: blog.gitPassword!,
+                    branch: blog.gitBranch!,
+                    commitMessage: blog.gitCommitMessage ?? "Update site content"
+                )
+            } else {
+                // Fall back to manual if Git is selected but not properly configured
+                publisher = ManualPublisher()
+            }
         case .none:
             publisher = ManualPublisher()
         // Future publisher types would be handled here

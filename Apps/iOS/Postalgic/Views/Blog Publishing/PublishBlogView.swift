@@ -51,6 +51,13 @@ struct PublishBlogView: View {
                     )
                     .multilineTextAlignment(.center)
                     .padding(.horizontal)
+                } else if blog.hasGitConfigured && blog.currentPublisherType == .git
+                {
+                    Text(
+                        "Publishing will generate a static website from all your blog posts and securely commit and push it to your Git repository."
+                    )
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal)
                 } else if blog.currentPublisherType == .none {
                     Text(
                         "Publishing will generate a static website from all your blog posts. The site will be packaged as a ZIP file you can download and upload to any web host."
@@ -230,6 +237,69 @@ struct PublishBlogView: View {
                                 .disabled(blog.url.isEmpty)
                             }
                         }
+                        // Git Publishing Button
+                        else if blog.hasGitConfigured
+                                    && blog.currentPublisherType == .git
+                        {
+                            VStack(spacing: 12) {
+                                Button(action: {
+                                    forceFullUpload = false
+                                    generateSite()
+                                }) {
+                                    HStack {
+                                        Image(systemName: "arrow.up.to.line")
+                                            .font(.system(size: 16, weight: .bold))
+                                        Text("Smart Publish to Git Repository")
+                                            .fontWeight(.semibold)
+                                    }
+                                    .padding()
+                                    .frame(maxWidth: .infinity)
+                                    .background(Color("PBlue"))
+                                    .foregroundColor(.primary)
+                                    .cornerRadius(10)
+                                }
+                                .padding(.horizontal)
+                                
+                                Button(action: {
+                                    forceFullUpload = true
+                                    generateSite()
+                                }) {
+                                    HStack {
+                                        Image(systemName: "arrow.up.to.line.square")
+                                            .font(.system(size: 16, weight: .bold))
+                                        Text("Full Publish to Git Repository")
+                                            .fontWeight(.semibold)
+                                    }
+                                    .padding()
+                                    .frame(maxWidth: .infinity)
+                                    .background(Color("PYellow"))
+                                    .foregroundColor(.primary)
+                                    .cornerRadius(10)
+                                }
+                                .padding(.horizontal)
+                            }
+                            
+                            // View Published Site Button (shown if success message exists)
+                            if publishSuccessMessage != nil {
+                                Button(action: {
+                                    if let url = URL(string: blog.url) {
+                                        UIApplication.shared.open(url)
+                                    }
+                                }) {
+                                    HStack {
+                                        Image(systemName: "safari")
+                                        Text("View Published Site")
+                                    }
+                                    .padding()
+                                    .frame(maxWidth: .infinity)
+                                    .background(Color("PGreen"))
+                                    .foregroundColor(.primary)
+                                    .cornerRadius(10)
+                                }
+                                .padding(.horizontal)
+                                .disabled(blog.url.isEmpty)
+                            }
+                        }
                         // Local ZIP Generation Option
                         else if generatedZipURL != nil,
                                 blog.currentPublisherType == .none
@@ -323,6 +393,11 @@ struct PublishBlogView: View {
                     Text(
                         "Your site has been successfully published to your web host using SFTP."
                     )
+                } else if blog.hasGitConfigured && blog.currentPublisherType == .git
+                {
+                    Text(
+                        "Your site has been successfully published to your Git repository on the \(blog.gitBranch ?? "main") branch."
+                    )
                 } else {
                     Text(
                         "Your site has been successfully generated. You can now share the ZIP file."
@@ -395,6 +470,12 @@ struct PublishBlogView: View {
                         // FTP publishing was used
                         self.publishSuccessMessage =
                             "Site successfully published via SFTP!"
+                    } else if blog.currentPublisherType == .git
+                        && blog.hasGitConfigured
+                    {
+                        // Git publishing was used
+                        self.publishSuccessMessage =
+                            "Site successfully published to Git repository!"
                     } else if blog.currentPublisherType == .none {
                         // ZIP file was generated
                         self.generatedZipURL = result

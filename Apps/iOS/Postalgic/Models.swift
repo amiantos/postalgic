@@ -14,6 +14,7 @@ enum PublisherType: String, Codable, CaseIterable {
     case none = "Manual Download (Zip)"
     case aws = "AWS"
     case ftp = "SFTP"
+    case git = "Git Repository"
 //    case netlify = "Netlify"
 //    case github = "GitHub Pages"
 //    case gitlab = "GitLab Pages"
@@ -56,6 +57,13 @@ final class Blog {
     var ftpPassword: String?
     var ftpPath: String?
     var ftpUseSFTP: Bool?
+    
+    // Git Configuration
+    var gitRepositoryUrl: String?
+    var gitUsername: String?
+    var gitPassword: String?
+    var gitBranch: String?
+    var gitCommitMessage: String?
     
     // Future Netlify Configuration
     // var netlifyToken: String?
@@ -103,6 +111,13 @@ final class Blog {
             && !ftpUsername!.isEmpty && ftpPassword != nil
             && !ftpPassword!.isEmpty && ftpPath != nil
             && !ftpPath!.isEmpty && ftpPort != nil
+    }
+    
+    var hasGitConfigured: Bool {
+        return gitRepositoryUrl != nil && !gitRepositoryUrl!.isEmpty 
+            && gitUsername != nil && !gitUsername!.isEmpty 
+            && gitPassword != nil && !gitPassword!.isEmpty
+            && gitBranch != nil && !gitBranch!.isEmpty
     }
     
     var currentPublisherType: PublisherType {

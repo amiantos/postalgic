@@ -15,6 +15,7 @@ struct PublishSettingsView: View {
     @State private var selectedTab = 0
     @State private var showingAwsConfigView = false
     @State private var showingFtpConfigView = false
+    @State private var showingGitConfigView = false
 
     var body: some View {
         NavigationStack {
@@ -52,6 +53,8 @@ struct PublishSettingsView: View {
                     awsSettingsView
                 case .ftp:
                     ftpSettingsView
+                case .git:
+                    gitSettingsView
 //                case .netlify:
 //                    netlifySettingsView
                 case .none:
@@ -78,6 +81,9 @@ struct PublishSettingsView: View {
             }
             .sheet(isPresented: $showingFtpConfigView) {
                 BlogFtpConfigView(blog: blog).interactiveDismissDisabled()
+            }
+            .sheet(isPresented: $showingGitConfigView) {
+                BlogGitConfigView(blog: blog).interactiveDismissDisabled()
             }
         }
     }
@@ -145,7 +151,38 @@ struct PublishSettingsView: View {
             }.buttonStyle(.automatic)
 
         }
+    }
+    
+    // Git Settings View
+    private var gitSettingsView: some View {
+        Section(
+            header: Text("Configuration Status"),
+            footer: Text(
+                "Git publishing lets you directly upload your static site to a Git repository, enabling GitHub Pages, GitLab Pages, or any other Git-based hosting."
+            )
+        ) {
+            if blog.hasGitConfigured {
+                Label {
+                    Text("Git repository is fully configured")
+                } icon: {
+                    Image(systemName: "checkmark.circle.fill").foregroundStyle(
+                        .pGreen
+                    )
+                }
+            } else {
+                Label {
+                    Text("Git repository is not fully configured")
+                } icon: {
+                    Image(systemName: "x.circle.fill").foregroundStyle(
+                        .pYellow
+                    )
+                }
+            }
 
+            Button("Configure Git Repository") {
+                showingGitConfigView.toggle()
+            }.buttonStyle(.automatic)
+        }
     }
 
     // Netlify Settings View (placeholder for future implementation)

@@ -1,0 +1,143 @@
+//
+//  BlogGitConfigView.swift
+//  Postalgic
+//
+//  Created by Claude on 5/14/25.
+//
+
+import SwiftData
+import SwiftUI
+
+struct BlogGitConfigView: View {
+    @Bindable var blog: Blog
+    @Environment(\.dismiss) private var dismiss
+    
+    @State private var repositoryUrl: String = ""
+    @State private var username: String = ""
+    @State private var password: String = ""
+    @State private var branch: String = "main"
+    @State private var commitMessage: String = "Update site content"
+    
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section(header: Text("Git Repository")) {
+                    TextField("Repository URL (e.g. https://github.com/user/repo.git)", text: $repositoryUrl)
+                        .keyboardType(.URL)
+                        .textContentType(.URL)
+                        .autocapitalization(.none)
+                        .disableAutocorrection(true)
+                }
+                
+                Section(header: Text("Authentication")) {
+                    TextField("Username", text: $username)
+                        .textContentType(.username)
+                        .autocapitalization(.none)
+                        .disableAutocorrection(true)
+                    
+                    SecureField("Password or Token", text: $password)
+                        .textContentType(.password)
+                        .autocapitalization(.none)
+                        .disableAutocorrection(true)
+                }
+                
+                Section(header: Text("Branch Settings")) {
+                    TextField("Branch Name", text: $branch)
+                        .autocapitalization(.none)
+                        .disableAutocorrection(true)
+                }
+                
+                Section(header: Text("Commit Settings")) {
+                    TextField("Commit Message", text: $commitMessage)
+                        .disableAutocorrection(true)
+                }
+                
+                Section(header: Text("Help"), footer: Text("For GitHub, you can use a personal access token with the 'repo' scope as your password. For GitLab, use a personal access token with the 'write_repository' scope.")) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Git Repository Settings")
+                            .font(.headline)
+                        
+                        Text("• Use HTTPS URLs for repositories (not SSH)")
+                            .font(.caption)
+                        
+                        Text("• The branch will be created if it doesn't exist")
+                            .font(.caption)
+                            
+                        Text("• For GitHub Pages, use 'gh-pages' as the branch")
+                            .font(.caption)
+                            
+                        Text("• For GitLab Pages, use 'main' for project sites or 'pages' for user/group sites")
+                            .font(.caption)
+                    }
+                    .padding(.vertical, 4)
+                    
+                    Link("GitHub Pages Documentation", destination: URL(string: "https://pages.github.com/")!)
+                    Link("GitLab Pages Documentation", destination: URL(string: "https://docs.gitlab.com/ee/user/project/pages/")!)
+                }
+                
+                Section(
+                    footer: Text(
+                        "You can remove Git configuration at any time."
+                    )
+                ) {
+                    Button(action: {
+                        // Clear Git configuration
+                        blog.gitRepositoryUrl = nil
+                        blog.gitUsername = nil
+                        blog.gitPassword = nil
+                        blog.gitBranch = nil
+                        blog.gitCommitMessage = nil
+                    }) {
+                        Text("Clear Git Configuration")
+                            .foregroundColor(.red)
+                    }
+                }
+            }
+            .navigationTitle("Git Repository Configuration")
+            .navigationBarItems(
+                leading: Button("Cancel") {
+                    dismiss()
+                },
+                trailing: Button("Save") {
+                    saveConfig()
+                    dismiss()
+                }
+            )
+            .onAppear {
+                // Load existing values if available
+                if let gitRepositoryUrl = blog.gitRepositoryUrl {
+                    repositoryUrl = gitRepositoryUrl
+                }
+                
+                if let gitUsername = blog.gitUsername {
+                    username = gitUsername
+                }
+                
+                if let gitPassword = blog.gitPassword {
+                    password = gitPassword
+                }
+                
+                if let gitBranch = blog.gitBranch {
+                    branch = gitBranch
+                }
+                
+                if let gitCommitMessage = blog.gitCommitMessage {
+                    commitMessage = gitCommitMessage
+                }
+            }
+        }
+    }
+    
+    private func saveConfig() {
+        blog.gitRepositoryUrl = repositoryUrl.trimmingCharacters(in: .whitespacesAndNewlines)
+        blog.gitUsername = username.trimmingCharacters(in: .whitespacesAndNewlines)
+        blog.gitPassword = password
+        blog.gitBranch = branch.trimmingCharacters(in: .whitespacesAndNewlines)
+        blog.gitCommitMessage = commitMessage.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+}
+
+#Preview {
+    BlogGitConfigView(blog: PreviewData.blog)
+        .modelContainer(PreviewData.previewContainer)
+}
