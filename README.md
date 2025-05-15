@@ -19,11 +19,11 @@ Online "social networks" have proven themselves incapable of nuturing meaningful
 - [x] Upload your static website to a variety of static site hosting services
   - [x] AWS S3 with CloudFront
   - [x] Any SFTP Server
-  - [ ] Postalgic Pro
-  - [ ] Others...?
+  - [x] Any Git Repository
 
 # Sample Sites
 - https://brad.postalgic.app
+- https://staires.org
 - https://dev.postalgic.app
 - https://test.postalgic.app
 
