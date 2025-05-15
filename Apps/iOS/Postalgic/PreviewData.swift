@@ -36,7 +36,6 @@ struct PreviewData {
         blog.awsS3Bucket = "techchronicles-blog"
         blog.awsCloudFrontDistId = "E1A2B3C4D5E6F7"
         blog.awsAccessKeyId = "AKIAEXAMPLE"
-        blog.awsSecretAccessKey = "examplekey123456789"
         
         // Add categories
         let categories = [

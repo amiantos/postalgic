@@ -48,20 +48,17 @@ final class Blog {
     var awsS3Bucket: String?
     var awsCloudFrontDistId: String?
     var awsAccessKeyId: String?
-    var awsSecretAccessKey: String?
 
     // FTP Configuration
     var ftpHost: String?
     var ftpPort: Int?
     var ftpUsername: String?
-    var ftpPassword: String?
     var ftpPath: String?
     var ftpUseSFTP: Bool?
     
     // Git Configuration
     var gitRepositoryUrl: String?
     var gitUsername: String?
-    var gitPassword: String?
     var gitBranch: String?
     var gitCommitMessage: String?
     
@@ -99,25 +96,31 @@ final class Blog {
     }
 
     var hasAwsConfigured: Bool {
+        // Check if we have the password in keychain or still in the model
+        let hasSecretKey = KeychainService.passwordExists(for: persistentModelID, type: .aws)
+        
         return awsRegion != nil && !awsRegion!.isEmpty && awsS3Bucket != nil
             && !awsS3Bucket!.isEmpty && awsCloudFrontDistId != nil
             && !awsCloudFrontDistId!.isEmpty && awsAccessKeyId != nil
-            && !awsAccessKeyId!.isEmpty && awsSecretAccessKey != nil
-            && !awsSecretAccessKey!.isEmpty
+            && !awsAccessKeyId!.isEmpty && hasSecretKey
     }
     
     var hasFtpConfigured: Bool {
+        // Check if we have the password in keychain or still in the model
+        let hasPassword = KeychainService.passwordExists(for: persistentModelID, type: .ftp)
+        
         return ftpHost != nil && !ftpHost!.isEmpty && ftpUsername != nil
-            && !ftpUsername!.isEmpty && ftpPassword != nil
-            && !ftpPassword!.isEmpty && ftpPath != nil
+            && !ftpUsername!.isEmpty && hasPassword && ftpPath != nil
             && !ftpPath!.isEmpty && ftpPort != nil
     }
     
     var hasGitConfigured: Bool {
+        // Check if we have the password in keychain or still in the model
+        let hasPassword = KeychainService.passwordExists(for: persistentModelID, type: .git)
+        
         return gitRepositoryUrl != nil && !gitRepositoryUrl!.isEmpty 
             && gitUsername != nil && !gitUsername!.isEmpty 
-            && gitPassword != nil && !gitPassword!.isEmpty
-            && gitBranch != nil && !gitBranch!.isEmpty
+            && hasPassword && gitBranch != nil && !gitBranch!.isEmpty
     }
     
     var currentPublisherType: PublisherType {

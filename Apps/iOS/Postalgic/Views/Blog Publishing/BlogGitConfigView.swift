@@ -84,7 +84,11 @@ struct BlogGitConfigView: View {
                         // Clear Git configuration
                         blog.gitRepositoryUrl = nil
                         blog.gitUsername = nil
-                        blog.gitPassword = nil
+                        
+                        // Clear password from keychain if available
+                        try? KeychainService.deletePassword(for: blog.persistentModelID, type: .git)
+                        password = ""
+                        
                         blog.gitBranch = nil
                         blog.gitCommitMessage = nil
                     }) {
@@ -113,9 +117,8 @@ struct BlogGitConfigView: View {
                     username = gitUsername
                 }
                 
-                if let gitPassword = blog.gitPassword {
-                    password = gitPassword
-                }
+                // Get password from keychain or SwiftData model
+                password = blog.getGitPassword() ?? ""
                 
                 if let gitBranch = blog.gitBranch {
                     branch = gitBranch
@@ -131,7 +134,12 @@ struct BlogGitConfigView: View {
     private func saveConfig() {
         blog.gitRepositoryUrl = repositoryUrl.trimmingCharacters(in: .whitespacesAndNewlines)
         blog.gitUsername = username.trimmingCharacters(in: .whitespacesAndNewlines)
-        blog.gitPassword = password
+        
+        // Store password in keychain
+        if !password.isEmpty {
+            blog.setGitPassword(password)
+        }
+        
         blog.gitBranch = branch.trimmingCharacters(in: .whitespacesAndNewlines)
         blog.gitCommitMessage = commitMessage.trimmingCharacters(in: .whitespacesAndNewlines)
     }
