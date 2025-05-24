@@ -153,6 +153,7 @@ struct ArchiveMonthData {
         return [
             "month": month,
             "monthName": monthName,
+            "monthPadded": String(format: "%02d", month),
             "posts": posts.map { $0.toDictionary() }
         ]
     }

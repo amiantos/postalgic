@@ -224,6 +224,56 @@ class TemplateEngine {
         return try renderLayout(content: content, pageTitle: "Archives - \(blog.name)")
     }
     
+    /// Renders a monthly archive page
+    /// - Parameters:
+    ///   - year: The year for this archive
+    ///   - month: The month for this archive
+    ///   - posts: The posts to include in this monthly archive
+    ///   - previousMonth: Previous month navigation info (year, month)
+    ///   - nextMonth: Next month navigation info (year, month)
+    /// - Returns: The rendered HTML
+    /// - Throws: Error if rendering fails
+    func renderMonthlyArchivePage(year: Int, month: Int, posts: [Post], previousMonth: (year: Int, month: Int)?, nextMonth: (year: Int, month: Int)?) throws -> String {
+        let monthlyArchiveTemplate = try templateManager.getTemplate(for: "monthly-archive")
+        
+        var context = createBaseContext()
+        
+        // Add month/year info
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "MMMM"
+        let monthName = dateFormatter.monthSymbols[month - 1]
+        
+        context["year"] = year
+        context["month"] = month
+        context["monthName"] = monthName
+        context["postCount"] = posts.count
+        context["postCountText"] = posts.count == 1 ? "post" : "posts"
+        
+        // Add posts
+        context["posts"] = posts.map { TemplateDataConverter.convert(post: $0, blog: blog) }
+        
+        // Add navigation
+        context["hasPreviousMonth"] = previousMonth != nil
+        context["hasNextMonth"] = nextMonth != nil
+        
+        if let prev = previousMonth {
+            let prevMonthName = dateFormatter.monthSymbols[prev.month - 1]
+            context["previousMonthUrl"] = "/\(String(format: "%04d", prev.year))/\(String(format: "%02d", prev.month))/"
+            context["previousMonthName"] = prevMonthName
+            context["previousYear"] = prev.year
+        }
+        
+        if let next = nextMonth {
+            let nextMonthName = dateFormatter.monthSymbols[next.month - 1]
+            context["nextMonthUrl"] = "/\(String(format: "%04d", next.year))/\(String(format: "%02d", next.month))/"
+            context["nextMonthName"] = nextMonthName
+            context["nextYear"] = next.year
+        }
+        
+        let content = monthlyArchiveTemplate.render(context, library: templateManager.getLibrary())
+        return try renderLayout(content: content, pageTitle: "\(monthName) \(year) - Archives - \(blog.name)")
+    }
+    
     /// Renders the tags index page
     /// - Parameter tags: The tags to include, with corresponding posts
     /// - Returns: The rendered HTML
@@ -333,9 +383,10 @@ class TemplateEngine {
     ///   - posts: All published posts
     ///   - tags: All tags used in published posts
     ///   - categories: All categories used in published posts
+    ///   - monthlyArchives: All monthly archive year/month combinations
     /// - Returns: The rendered XML
     /// - Throws: Error if rendering fails
-    func renderSitemap(posts: [Post], tags: [Tag], categories: [Category]) throws -> String {
+    func renderSitemap(posts: [Post], tags: [Tag], categories: [Category], monthlyArchives: [(year: Int, month: Int)] = []) throws -> String {
         let sitemapTemplate = try templateManager.getTemplate(for: "sitemap")
         
         var context = createBaseContext()
@@ -353,6 +404,15 @@ class TemplateEngine {
             // Create dummy CategoryTemplateData
             let emptyPosts: [Post] = []
             return TemplateDataConverter.convert(category: category, posts: emptyPosts)
+        }
+        
+        // Add monthly archives
+        let formatter = ISO8601DateFormatter()
+        context["monthlyArchives"] = monthlyArchives.map { yearMonth in
+            return [
+                "url": "/\(String(format: "%04d", yearMonth.year))/\(String(format: "%02d", yearMonth.month))/",
+                "lastmod": formatter.string(from: Date())
+            ]
         }
         
         return sitemapTemplate.render(context, library: templateManager.getLibrary())

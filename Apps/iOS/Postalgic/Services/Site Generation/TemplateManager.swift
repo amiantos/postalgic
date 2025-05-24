@@ -377,8 +377,10 @@ class TemplateManager {
         {{#years}}
             <div class="archive-year">{{year}}</div>
             {{#months}}
-                <div class="archive-month">{{monthName}}</div>
-                <ul>
+                <div class="archive-month">
+                    <a href="/{{year}}/{{monthPadded}}/">{{monthName}}</a>
+                </div>
+                <ul class="archive-posts">
                     {{#posts}}
                         <li>
                             <span class="archive-date">{{dayPadded}} {{monthName}}</span>
@@ -388,6 +390,45 @@ class TemplateManager {
                 </ul>
             {{/months}}
         {{/years}}
+        """
+        
+        // Monthly archive template
+        defaultTemplates["monthly-archive"] = """
+        <h1>{{monthName}} {{year}}</h1>
+        <p class="archive-meta">{{postCount}} {{postCountText}} in this month</p>
+        
+        <div class="post-list">
+            {{#posts}}
+                {{> post}}
+            {{/posts}}
+        </div>
+        
+        {{#hasPreviousMonth}}{{#hasNextMonth}}
+        <nav class="month-navigation">
+            <div class="nav-previous">
+                <a href="{{previousMonthUrl}}">&larr; {{previousMonthName}} {{previousYear}}</a>
+            </div>
+            <div class="nav-next">
+                <a href="{{nextMonthUrl}}">{{nextMonthName}} {{nextYear}} &rarr;</a>
+            </div>
+        </nav>
+        {{/hasNextMonth}}{{/hasPreviousMonth}}
+        
+        {{#hasPreviousMonth}}{{^hasNextMonth}}
+        <nav class="month-navigation">
+            <div class="nav-previous">
+                <a href="{{previousMonthUrl}}">&larr; {{previousMonthName}} {{previousYear}}</a>
+            </div>
+        </nav>
+        {{/hasNextMonth}}{{/hasPreviousMonth}}
+        
+        {{^hasPreviousMonth}}{{#hasNextMonth}}
+        <nav class="month-navigation">
+            <div class="nav-next">
+                <a href="{{nextMonthUrl}}">{{nextMonthName}} {{nextYear}} &rarr;</a>
+            </div>
+        </nav>
+        {{/hasNextMonth}}{{/hasPreviousMonth}}
         """
         
         // Tags list template
@@ -842,10 +883,59 @@ class TemplateManager {
             color: var(--dark-gray);
         }
 
+        .archive-month a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        .archive-month a:hover {
+            color: var(--accent-color);
+            text-decoration: underline;
+        }
+
+        .archive-posts {
+            list-style: none;
+            padding-left: 0;
+        }
+
         .archive-date {
             color: var(--medium-gray);
             display: inline-block;
             width: 100px;
+        }
+
+        /* Monthly Archive Pages */
+        .archive-meta {
+            color: var(--medium-gray);
+            font-style: italic;
+            margin-bottom: 30px;
+        }
+
+        .month-navigation {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid var(--light-gray);
+        }
+
+        .month-navigation .nav-previous,
+        .month-navigation .nav-next {
+            flex: 1;
+        }
+
+        .month-navigation .nav-next {
+            text-align: right;
+        }
+
+        .month-navigation a {
+            color: var(--accent-color);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .month-navigation a:hover {
+            text-decoration: underline;
         }
 
         /* ==========================================
@@ -1413,6 +1503,15 @@ class TemplateManager {
                 <priority>0.5</priority>
             </url>
             {{/categories}}
+            
+            {{#monthlyArchives}}
+            <url>
+                <loc>{{blogUrl}}{{url}}</loc>
+                <lastmod>{{lastmod}}</lastmod>
+                <changefreq>monthly</changefreq>
+                <priority>0.6</priority>
+            </url>
+            {{/monthlyArchives}}
         </urlset>
         """
     }

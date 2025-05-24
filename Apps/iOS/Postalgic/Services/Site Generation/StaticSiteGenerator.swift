@@ -293,6 +293,7 @@ class StaticSiteGenerator {
         try generateIndexPage()
         try generatePostPages()
         try generateArchivesPage()
+        try generateMonthlyArchivePages()
         try generateTagPages()
         try generateCategoryPages()
         try generateRSSFeed()
@@ -532,6 +533,102 @@ class StaticSiteGenerator {
             throw SiteGeneratorError.templateRenderingFailed("Archives page generation failed: \(error.localizedDescription)")
         }
     }
+    
+    /// Generates monthly archive pages for each year/month combination
+    private func generateMonthlyArchivePages() throws {
+        guard let siteDirectory = siteDirectory else {
+            throw SiteGeneratorError.noSiteDirectory
+        }
+
+        let sortedPosts = publishedPostsSorted()
+        let calendar = Calendar.current
+        
+        // Group posts by year and month
+        var yearMonthPosts: [Int: [Int: [Post]]] = [:]
+        
+        for post in sortedPosts {
+            let year = calendar.component(.year, from: post.createdAt)
+            let month = calendar.component(.month, from: post.createdAt)
+            
+            if yearMonthPosts[year] == nil {
+                yearMonthPosts[year] = [:]
+            }
+            
+            if yearMonthPosts[year]?[month] == nil {
+                yearMonthPosts[year]?[month] = []
+            }
+            
+            yearMonthPosts[year]?[month]?.append(post)
+        }
+        
+        // Generate archive pages for each year/month combination
+        for (year, months) in yearMonthPosts {
+            for (month, posts) in months {
+                // Create directory structure: /yyyy/MM/
+                let yearDirectory = siteDirectory.appendingPathComponent(String(format: "%04d", year))
+                let monthDirectory = yearDirectory.appendingPathComponent(String(format: "%02d", month))
+                
+                try FileManager.default.createDirectory(
+                    at: monthDirectory,
+                    withIntermediateDirectories: true
+                )
+                
+                let monthlyArchivePath = monthDirectory.appendingPathComponent("index.html")
+                
+                // Sort posts within the month chronologically (newest first)
+                let sortedMonthPosts = posts.sorted { $0.createdAt > $1.createdAt }
+                
+                // Get previous and next month info for navigation
+                let navInfo = getMonthNavigationInfo(currentYear: year, currentMonth: month, allYearMonths: yearMonthPosts)
+                
+                do {
+                    let monthlyArchiveContent = try templateEngine.renderMonthlyArchivePage(
+                        year: year,
+                        month: month,
+                        posts: sortedMonthPosts,
+                        previousMonth: navInfo.previous,
+                        nextMonth: navInfo.next
+                    )
+                    try monthlyArchiveContent.write(
+                        to: monthlyArchivePath,
+                        atomically: true,
+                        encoding: .utf8
+                    )
+                } catch {
+                    throw SiteGeneratorError.templateRenderingFailed("Monthly archive page generation failed for \(year)/\(month): \(error.localizedDescription)")
+                }
+            }
+        }
+    }
+    
+    /// Helper to get navigation info for a given year/month
+    private func getMonthNavigationInfo(currentYear: Int, currentMonth: Int, allYearMonths: [Int: [Int: [Post]]]) -> (previous: (year: Int, month: Int)?, next: (year: Int, month: Int)?) {
+        // Get all year/month combinations sorted chronologically
+        var allMonths: [(year: Int, month: Int)] = []
+        
+        for (year, months) in allYearMonths {
+            for month in months.keys {
+                allMonths.append((year: year, month: month))
+            }
+        }
+        
+        allMonths.sort { first, second in
+            if first.year != second.year {
+                return first.year < second.year
+            }
+            return first.month < second.month
+        }
+        
+        // Find current month index
+        guard let currentIndex = allMonths.firstIndex(where: { $0.year == currentYear && $0.month == currentMonth }) else {
+            return (previous: nil, next: nil)
+        }
+        
+        let previousMonth = currentIndex > 0 ? allMonths[currentIndex - 1] : nil
+        let nextMonth = currentIndex < allMonths.count - 1 ? allMonths[currentIndex + 1] : nil
+        
+        return (previous: previousMonth, next: nextMonth)
+    }
 
     /// Generates tag pages for all tags used in posts
     private func generateTagPages() throws {
@@ -707,11 +804,30 @@ class StaticSiteGenerator {
         let tags = Array(Set(sortedPosts.flatMap { $0.tags }))
         let categories = Array(Set(sortedPosts.compactMap { $0.category }))
         
+        // Generate monthly archive info for sitemap
+        let calendar = Calendar.current
+        var yearMonthCombos: [(year: Int, month: Int)] = []
+        
+        let groupedPosts = Dictionary(grouping: sortedPosts) { post in
+            let year = calendar.component(.year, from: post.createdAt)
+            let month = calendar.component(.month, from: post.createdAt)
+            return "\(year)-\(month)"
+        }
+        
+        for posts in groupedPosts.values {
+            if let firstPost = posts.first {
+                let year = calendar.component(.year, from: firstPost.createdAt)
+                let month = calendar.component(.month, from: firstPost.createdAt)
+                yearMonthCombos.append((year: year, month: month))
+            }
+        }
+        
         do {
             let sitemapContent = try templateEngine.renderSitemap(
                 posts: sortedPosts,
                 tags: tags,
-                categories: categories
+                categories: categories,
+                monthlyArchives: yearMonthCombos
             )
             try sitemapContent.write(to: sitemapPath, atomically: true, encoding: .utf8)
         } catch {
