@@ -124,9 +124,14 @@ struct ThemesView: View {
             .confirmationDialog("Delete Theme", isPresented: .constant(themeToDelete != nil), titleVisibility: .visible) {
                 Button("Delete", role: .destructive) {
                     if let theme = themeToDelete {
-                        if blog.themeIdentifier == theme.identifier {
-                            blog.themeIdentifier = "default"
+                        // Reset all blogs using this theme to default
+                        let descriptor = FetchDescriptor<Blog>()
+                        if let allBlogs = try? modelContext.fetch(descriptor) {
+                            for blog in allBlogs where blog.themeIdentifier == theme.identifier {
+                                blog.themeIdentifier = "default"
+                            }
                         }
+                        
                         modelContext.delete(theme)
                         try? modelContext.save()
                         themeToDelete = nil
