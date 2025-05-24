@@ -375,6 +375,7 @@ class TemplateManager {
         defaultTemplates["archives"] = """
         <h1>Archives</h1>
         {{#years}}
+            <div class="archive-separator"></div>
             <div class="archive-year">{{year}}</div>
             {{#months}}
                 <div class="archive-month">
@@ -396,6 +397,7 @@ class TemplateManager {
         defaultTemplates["monthly-archive"] = """
         <h1>{{monthName}} {{year}}</h1>
         <p class="archive-meta">{{postCount}} {{postCountText}} in this month</p>
+        <div class="archive-separator"></div>
         
         <div class="post-list">
             {{#posts}}
@@ -434,6 +436,7 @@ class TemplateManager {
         // Tags list template
         defaultTemplates["tags"] = """
         <h1>All Tags</h1>
+        <div class="archive-separator"></div>
         <div class="tag-list">
             {{#tags}}
                 <div class="tag-item">
@@ -447,6 +450,8 @@ class TemplateManager {
         defaultTemplates["tag"] = """
         <h1>Posts tagged with "{{tagName}}"</h1>
         <p class="tag-meta">{{totalPosts}} {{postCountText}} with this tag{{#hasPagination}} (showing page {{currentPage}} of {{totalPages}}){{/hasPagination}}</p>
+        <div class="archive-separator"></div>
+        
         <div class="post-list">
             {{#posts}}
                 {{> post}}
@@ -472,6 +477,7 @@ class TemplateManager {
         // Categories list template
         defaultTemplates["categories"] = """
         <h1>All Categories</h1>
+        <div class="archive-separator"></div>
         <div class="category-list">
             {{#categories}}
                 <div class="category-item">
@@ -487,6 +493,8 @@ class TemplateManager {
         <h1>Posts in category "{{categoryName}}"</h1>
         {{#hasDescription}}<p class="category-description">{{description}}</p>{{/hasDescription}}
         <p class="category-meta">{{totalPosts}} {{postCountText}} in this category{{#hasPagination}} (showing page {{currentPage}} of {{totalPages}}){{/hasPagination}}</p>
+        <div class="archive-separator"></div>
+        
         <div class="post-list">
             {{#posts}}
                 {{> post}}
@@ -567,7 +575,6 @@ class TemplateManager {
             font: 100%/1.5 sans-serif;
             word-wrap: break-word;
             margin: 0 auto;
-            padding: 1.5em;
         }
 
         body {
@@ -759,6 +766,14 @@ class TemplateManager {
             margin-bottom: 30px;
             flex: 1;
         }
+        
+        .archive-separator {
+            height: 1px;
+            width: 100%;
+            background-color: var(--light-gray);
+            margin-top: 2em;
+            margin-bottom: 2em;
+        }
 
         .post-content a {
             text-decoration: underline;
@@ -869,7 +884,6 @@ class TemplateManager {
         .category-meta {
             color: var(--medium-gray);
             font-style: italic;
-            margin-bottom: 20px;
         }
 
         /* Categories */
@@ -903,7 +917,7 @@ class TemplateManager {
         .archive-year {
             font-size: 1.5rem;
             font-weight: bold;
-            margin: 30px 0 10px;
+            margin: 0px 0 10px;
             color: var(--dark-gray);
         }
 
@@ -938,7 +952,6 @@ class TemplateManager {
         .archive-meta {
             color: var(--medium-gray);
             font-style: italic;
-            margin-bottom: 30px;
         }
 
         .month-navigation,
@@ -1301,11 +1314,7 @@ class TemplateManager {
         }
 
         /* Mobile (≤ 900px) */
-        @media (max-width: 900px) {
-            html {
-                padding: 0.6em;
-            }
-            
+        @media (max-width: 900px) {            
             body {
                 background-color: var(--background-outline-color);
             }
