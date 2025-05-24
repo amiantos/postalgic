@@ -22,14 +22,30 @@ struct BlogsView: View {
                     NavigationLink {
                         BlogDashboardView(blog: blog)
                     } label: {
-                        VStack(alignment: .leading) {
-                            Text(blog.name)
-                                .font(.headline)
-                            if !blog.url.isEmpty {
-                                Text(blog.url)
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
+                        HStack {
+                            // Display favicon if available
+                            if let favicon = blog.favicon, let image = UIImage(data: favicon.data) {
+                                Image(uiImage: image)
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fit)
+                                    .frame(width: 36, height: 36)
+                                    .clipShape(RoundedRectangle(cornerRadius: 4))
+                            } else {
+                                // Placeholder icon when no favicon
+                                Image(systemName: "globe")
+                                    .foregroundColor(.secondary)
+                                    .frame(width: 36, height: 36)
                             }
+                            
+                            VStack(alignment: .leading) {
+                                Text(blog.name)
+                                    .font(.headline)
+                                if !blog.url.isEmpty {
+                                    Text(blog.url)
+                                        .font(.subheadline)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }.padding(.leading, 6)
                         }
                     }
                 }
