@@ -316,6 +316,10 @@ final class Embed {
         return EmbedPosition(rawValue: position) ?? .above
     }
     
+    var identifier: String {
+        return self.persistentModelID.stringRepresentation() ?? "\(self.hashValue)"
+    }
+    
     // Generate HTML for the embed based on type
     func generateHtml() -> String {
         switch embedType {
@@ -365,7 +369,7 @@ final class Embed {
             if sortedImages.count == 1, let image = sortedImages.first {
                 return """
                 <div class="embed image-embed single-image">
-                    <a href="/images/embeds/\(image.filename)" class="lightbox-trigger" data-lightbox="embed-\(self.hashValue)" data-title="">
+                    <a href="/images/embeds/\(image.filename)" class="lightbox-trigger" data-lightbox="embed-\(self.identifier)" data-title="">
                         <img src="/images/embeds/\(image.filename)" alt="Image" class="embed-image" />
                     </a>
                 </div>
@@ -374,7 +378,7 @@ final class Embed {
             // Multiple images gallery
             else if sortedImages.count > 1 {
                 var html = """
-                <div class="embed image-embed gallery" id="gallery-\(self.hashValue)">
+                <div class="embed image-embed gallery" id="gallery-\(self.identifier)">
                     <div class="gallery-container">
                 """
 
@@ -382,7 +386,7 @@ final class Embed {
                 for image in sortedImages {
                     html += """
                         <div class="gallery-slide">
-                            <a href="/images/embeds/\(image.filename)" class="lightbox-trigger" data-lightbox="embed-\(self.hashValue)" data-title="">
+                            <a href="/images/embeds/\(image.filename)" class="lightbox-trigger" data-lightbox="embed-\(self.identifier)" data-title="">
                                 <img src="/images/embeds/\(image.filename)" alt="Image \(image.order + 1)" class="embed-image" />
                             </a>
                         </div>
@@ -392,8 +396,8 @@ final class Embed {
                 // Add navigation arrows if more than one image
                 html += """
                         <div class="gallery-nav">
-                            <button class="gallery-prev" onclick="prevSlide('gallery-\(self.hashValue)')">❮</button>
-                            <button class="gallery-next" onclick="nextSlide('gallery-\(self.hashValue)')">❯</button>
+                            <button class="gallery-prev" onclick="prevSlide('gallery-\(self.identifier)')">❮</button>
+                            <button class="gallery-next" onclick="nextSlide('gallery-\(self.identifier)')">❯</button>
                         </div>
                     </div>
                     <div class="gallery-dots">
@@ -402,7 +406,7 @@ final class Embed {
                 // Add indicator dots
                 for i in 0..<sortedImages.count {
                     html += """
-                        <span class="gallery-dot" onclick="showSlide('gallery-\(self.hashValue)', \(i))"></span>
+                        <span class="gallery-dot" onclick="showSlide('gallery-\(self.identifier)', \(i))"></span>
                     """
                 }
 
@@ -410,7 +414,7 @@ final class Embed {
                     </div>
                 </div>
                 <script>
-                    initGallery('gallery-\(self.hashValue)');
+                    initGallery('gallery-\(self.identifier)');
                 </script>
                 """
 
