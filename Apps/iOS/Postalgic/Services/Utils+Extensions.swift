@@ -93,6 +93,27 @@ struct Utils {
         return newStub
     }
 
+    /// Resizes an image to specific dimensions
+    /// - Parameters:
+    ///   - imageData: The original image data
+    ///   - targetSize: The target size for the resized image
+    ///   - quality: JPEG compression quality (0.0 to 1.0, default: 0.8)
+    /// - Returns: Resized image data if successful, nil otherwise
+    static func resizeImage(imageData: Data, to targetSize: CGSize, quality: CGFloat = 0.8) -> Data? {
+        guard let originalImage = UIImage(data: imageData) else {
+            return nil
+        }
+        
+        // Create a new renderer for resizing
+        UIGraphicsBeginImageContextWithOptions(targetSize, false, 1.0)
+        originalImage.draw(in: CGRect(origin: .zero, size: targetSize))
+        let resizedImage = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+        
+        // Convert to PNG data for better quality with icons
+        return resizedImage?.pngData()
+    }
+    
     /// Optimizes and resizes an image to a maximum dimension of 1024 pixels
     /// - Parameters:
     ///   - imageData: The original image data

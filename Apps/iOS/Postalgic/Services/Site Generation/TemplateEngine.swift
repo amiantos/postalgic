@@ -106,9 +106,17 @@ class TemplateEngine {
     private func generateStaticFilesHead() -> String {
         var headContent = ""
         
-        // Add favicon if it exists
+        // Add favicon if it exists - generate multiple sizes following WordPress pattern
         if let favicon = blog.favicon {
-            headContent += "<link rel=\"icon\" href=\"/\(favicon.filename)\" type=\"\(favicon.mimeType)\">"
+            if favicon.isImage {
+                // Generate multiple favicon link tags for different sizes
+                headContent += "<link rel=\"icon\" href=\"/favicon-32x32.png\" sizes=\"32x32\" type=\"image/png\">"
+                headContent += "\n<link rel=\"icon\" href=\"/favicon-192x192.png\" sizes=\"192x192\" type=\"image/png\">"
+                headContent += "\n<link rel=\"apple-touch-icon\" href=\"/apple-touch-icon.png\">"
+            } else {
+                // For ICO files, use the original file
+                headContent += "<link rel=\"icon\" href=\"/\(favicon.filename)\" type=\"\(favicon.mimeType)\" sizes=\"any\">"
+            }
         }
         
         // Add social share image meta tags if it exists

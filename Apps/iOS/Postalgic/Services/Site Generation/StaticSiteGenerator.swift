@@ -140,28 +140,83 @@ class StaticSiteGenerator {
         print("📁 Processing \(blog.staticFiles.count) static files")
         
         for staticFile in blog.staticFiles {
-            let filename = staticFile.filename
-            
-            // Create intermediate directories if needed
-            let fileURL = directory.appendingPathComponent(filename)
-            let directoryPath = fileURL.deletingLastPathComponent()
-            
-            if !FileManager.default.fileExists(atPath: directoryPath.path) {
+            // Handle favicon specially to generate multiple sizes
+            if staticFile.isSpecialFile && staticFile.fileType == .favicon {
+                saveFaviconFiles(staticFile: staticFile, to: directory)
+            } else {
+                let filename = staticFile.filename
+                
+                // Create intermediate directories if needed
+                let fileURL = directory.appendingPathComponent(filename)
+                let directoryPath = fileURL.deletingLastPathComponent()
+                
+                if !FileManager.default.fileExists(atPath: directoryPath.path) {
+                    do {
+                        try FileManager.default.createDirectory(at: directoryPath, withIntermediateDirectories: true)
+                        print("📁 Created directory: \(directoryPath.path)")
+                    } catch {
+                        print("⚠️ Error creating directory for static file \(filename): \(error)")
+                        continue
+                    }
+                }
+                
+                // Write the file data
                 do {
-                    try FileManager.default.createDirectory(at: directoryPath, withIntermediateDirectories: true)
-                    print("📁 Created directory: \(directoryPath.path)")
+                    try staticFile.data.write(to: fileURL)
+                    print("📄 Saved static file: \(filename) (\(staticFile.fileSizeString))")
                 } catch {
-                    print("⚠️ Error creating directory for static file \(filename): \(error)")
-                    continue
+                    print("⚠️ Error saving static file \(filename): \(error)")
                 }
             }
-            
-            // Write the file data
+        }
+    }
+    
+    /// Saves favicon files in multiple sizes (32x32, 192x192, 180x180 for apple-touch-icon)
+    private func saveFaviconFiles(staticFile: StaticFile, to directory: URL) {
+        print("🎨 Processing favicon: generating multiple sizes")
+        
+        guard staticFile.isImage else {
+            print("⚠️ Favicon is not an image format, saving as-is")
             do {
+                let fileURL = directory.appendingPathComponent(staticFile.filename)
                 try staticFile.data.write(to: fileURL)
-                print("📄 Saved static file: \(filename) (\(staticFile.fileSizeString))")
+                print("📄 Saved favicon: \(staticFile.filename)")
             } catch {
-                print("⚠️ Error saving static file \(filename): \(error)")
+                print("⚠️ Error saving favicon: \(error)")
+            }
+            return
+        }
+        
+        // Generate 32x32 favicon
+        if let favicon32Data = Utils.resizeImage(imageData: staticFile.data, to: CGSize(width: 32, height: 32)) {
+            do {
+                let favicon32URL = directory.appendingPathComponent("favicon-32x32.png")
+                try favicon32Data.write(to: favicon32URL)
+                print("📄 Generated favicon-32x32.png")
+            } catch {
+                print("⚠️ Error saving 32x32 favicon: \(error)")
+            }
+        }
+        
+        // Generate 192x192 favicon
+        if let favicon192Data = Utils.resizeImage(imageData: staticFile.data, to: CGSize(width: 192, height: 192)) {
+            do {
+                let favicon192URL = directory.appendingPathComponent("favicon-192x192.png")
+                try favicon192Data.write(to: favicon192URL)
+                print("📄 Generated favicon-192x192.png")
+            } catch {
+                print("⚠️ Error saving 192x192 favicon: \(error)")
+            }
+        }
+        
+        // Generate 180x180 apple-touch-icon
+        if let appleTouchIconData = Utils.resizeImage(imageData: staticFile.data, to: CGSize(width: 180, height: 180)) {
+            do {
+                let appleTouchIconURL = directory.appendingPathComponent("apple-touch-icon.png")
+                try appleTouchIconData.write(to: appleTouchIconURL)
+                print("📄 Generated apple-touch-icon.png")
+            } catch {
+                print("⚠️ Error saving apple-touch-icon: \(error)")
             }
         }
     }
