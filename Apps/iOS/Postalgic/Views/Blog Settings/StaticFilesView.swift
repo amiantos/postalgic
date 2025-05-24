@@ -105,9 +105,21 @@ struct StaticFilesView: View {
             
             if let file = file {
                 VStack(alignment: .trailing, spacing: 2) {
-                    Text("Added")
+                    HStack(spacing: 8) {
+                        Button("Replace") {
+                            action()
+                        }
                         .font(.caption)
-                        .foregroundColor(.green)
+                        .buttonStyle(.bordered)
+                        
+                        Button("Remove") {
+                            deleteSpecialFile(file)
+                        }
+                        .font(.caption)
+                        .buttonStyle(.bordered)
+                        .foregroundColor(.red)
+                    }
+                    
                     Text(file.fileSizeString)
                         .font(.caption2)
                         .foregroundColor(.secondary)
@@ -120,12 +132,6 @@ struct StaticFilesView: View {
                 .buttonStyle(.bordered)
             }
         }
-        .contentShape(Rectangle())
-        .onTapGesture {
-            if file == nil {
-                action()
-            }
-        }
     }
 
     private func deleteFiles(at offsets: IndexSet) {
@@ -133,6 +139,11 @@ struct StaticFilesView: View {
             let fileToDelete = regularFiles[index]
             modelContext.delete(fileToDelete)
         }
+        try? modelContext.save()
+    }
+    
+    private func deleteSpecialFile(_ file: StaticFile) {
+        modelContext.delete(file)
         try? modelContext.save()
     }
 }
