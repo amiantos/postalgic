@@ -18,6 +18,7 @@ struct ThemesView: View {
     var blog: Blog
 
     @State private var selectedTheme: Theme? = nil
+    @State private var themeToDelete: Theme? = nil
     
     init(blog: Blog) {
         self.blog = blog
@@ -88,11 +89,7 @@ struct ThemesView: View {
                                     .tint(.blue)
                                     
                                     Button(role: .destructive) {
-                                        if blog.themeIdentifier == theme.identifier {
-                                            blog.themeIdentifier = "default"
-                                        }
-                                        modelContext.delete(theme)
-                                        try? modelContext.save()
+                                        themeToDelete = theme
                                     } label: {
                                         Label("Delete", systemImage: "trash")
                                     }
@@ -123,6 +120,25 @@ struct ThemesView: View {
             .navigationTitle("Themes")
             .sheet(item: $selectedTheme) { theme in
                 ThemeEditorView(theme: theme)
+            }
+            .confirmationDialog("Delete Theme", isPresented: .constant(themeToDelete != nil), titleVisibility: .visible) {
+                Button("Delete", role: .destructive) {
+                    if let theme = themeToDelete {
+                        if blog.themeIdentifier == theme.identifier {
+                            blog.themeIdentifier = "default"
+                        }
+                        modelContext.delete(theme)
+                        try? modelContext.save()
+                        themeToDelete = nil
+                    }
+                }
+                Button("Cancel", role: .cancel) {
+                    themeToDelete = nil
+                }
+            } message: {
+                if let theme = themeToDelete {
+                    Text("Are you sure you want to delete the theme \"\(theme.name)\"? This action cannot be undone.")
+                }
             }
         }
     }
