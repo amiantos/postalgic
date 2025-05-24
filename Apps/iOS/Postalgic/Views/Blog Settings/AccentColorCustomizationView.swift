@@ -80,6 +80,7 @@ struct AccentColorCustomizationView: View {
                     --text-color: #2d3748;
                     --light-gray: #dedede;
                     --medium-gray: #a0aec0;
+                    --category-bg: #faf4eb;
                     --category-color: \(safeHex);
                 }
 
@@ -107,11 +108,26 @@ struct AccentColorCustomizationView: View {
                     mask: var(--mask);
                     margin: 15px 0;
                 }
+        
+                .category, .tag {
+                    display: inline-block;
+                    margin-right:5px;
+                }
 
                 .category a {
                     display: inline-block;
                     color: white;
                     background-color: var(--category-color);
+                    border: 1px solid var(--category-color);
+                    padding: 3px 8px;
+                    border-radius: 1em;
+                    font-size: 0.8em;
+                }
+        
+                .tag a {
+                    display: inline-block;
+                    color: var(--category-color);
+                    background-color: var(--category-bg);
                     border: 1px solid var(--category-color);
                     padding: 3px 8px;
                     border-radius: 1em;
@@ -134,6 +150,7 @@ struct AccentColorCustomizationView: View {
                 <h3>Example Post Title</h3>
                 <p>This is regular text on your blog, and <a href="#">this is a link</a> to demonstrate how the accent color looks.</p>
                 <div class="category"><a href="#">Category Name</a></div>
+                <div class="tag"><a href="#">#tag name</a></div>
                 <div class="header-separator"></div>
             </div>
         </body>
