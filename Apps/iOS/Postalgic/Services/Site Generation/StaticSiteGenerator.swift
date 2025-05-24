@@ -453,9 +453,13 @@ class StaticSiteGenerator {
 
         let indexPath = siteDirectory.appendingPathComponent("index.html")
         let sortedPosts = publishedPostsSorted()
+        
+        // Limit to 20 posts on index page
+        let indexPosts = Array(sortedPosts.prefix(20))
+        let hasMorePosts = sortedPosts.count > 20
 
         do {
-            let pageContent = try templateEngine.renderIndexPage(posts: sortedPosts)
+            let pageContent = try templateEngine.renderIndexPage(posts: indexPosts, hasMorePosts: hasMorePosts)
             try pageContent.write(to: indexPath, atomically: true, encoding: .utf8)
         } catch {
             throw SiteGeneratorError.templateRenderingFailed("Index page generation failed: \(error.localizedDescription)")

@@ -124,14 +124,17 @@ class TemplateEngine {
     }
     
     /// Renders the index page with a list of posts
-    /// - Parameter posts: The posts to display on the index page
+    /// - Parameters:
+    ///   - posts: The posts to display on the index page
+    ///   - hasMorePosts: Whether there are more posts available (to show archives link)
     /// - Returns: The rendered HTML
     /// - Throws: Error if rendering fails
-    func renderIndexPage(posts: [Post]) throws -> String {
+    func renderIndexPage(posts: [Post], hasMorePosts: Bool = false) throws -> String {
         let indexTemplate = try templateManager.getTemplate(for: "index")
         
         var context = createBaseContext()
         context["posts"] = posts.map { TemplateDataConverter.convert(post: $0, blog: blog) }
+        context["hasMorePosts"] = hasMorePosts
         
         let content = indexTemplate.render(context, library: templateManager.getLibrary())
         return try renderLayout(

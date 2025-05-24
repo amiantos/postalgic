@@ -364,6 +364,11 @@ class TemplateManager {
         {{#posts}}
             {{> post}}
         {{/posts}}
+        {{#hasMorePosts}}
+        <div class="archives-link">
+            <a href="/archives">View all posts in archives →</a>
+        </div>
+        {{/hasMorePosts}}
         """
         
         // Archives template
