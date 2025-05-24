@@ -542,7 +542,6 @@ class TemplateManager {
            ========================================== */
         :root {
             /* Colors */
-            --primary-color: #4a5568;
             --accent-color: {{accentColor}};
             --background-color: #efefef;
             --text-color: #2d3748;
@@ -622,7 +621,7 @@ class TemplateManager {
         }
 
         header h1 a {
-            color: var(--primary-color);
+            color: var(--dark-shade);
             text-decoration: none;
         }
 
@@ -709,7 +708,7 @@ class TemplateManager {
             padding: 8px 0;
             font-weight: 600;
             font-size: 1.1rem;
-            color: var(--primary-color);
+            color: var(--dark-shade);
         }
 
         aside h2, 
@@ -717,7 +716,7 @@ class TemplateManager {
             margin-bottom: 0.3em;
             font-weight: 600;
             font-size: 1.1rem;
-            color: var(--primary-color);
+            color: var(--dark-shade);
         }
 
         .sidebar-links {

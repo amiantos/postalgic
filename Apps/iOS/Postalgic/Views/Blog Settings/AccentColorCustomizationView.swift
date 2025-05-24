@@ -33,7 +33,7 @@ struct AccentColorCustomizationView: View {
                 
                 Section("Preview") {
                     WebView(htmlString: htmlPreview)
-                        .frame(height: 330)
+                        .frame(height: 380)
                         .cornerRadius(10)
                 }
             }
@@ -74,13 +74,12 @@ struct AccentColorCustomizationView: View {
             <meta name="viewport" content="width=device-width, initial-scale=1">
             <style data-timestamp="\(timestamp)">
                 :root {
-                    --primary-color: #4a5568;
                     --accent-color: \(safeHex);
                     --background-color: #efefef;
                     --text-color: #2d3748;
                     --light-shade: #dedede;
                     --medium-shade: #a0aec0;
-                    --dark-shade: #a0aec0;
+                    --dark-shade: #4a5568;
                 }
 
                 body {
@@ -139,18 +138,51 @@ struct AccentColorCustomizationView: View {
 
                 h3 {
                     margin-bottom: 8px;
-                    color: var(--primary-color);
+                    color: var(--dark-shade);
+                }
+        
+                h2 {
+                    color: var(--text-color);
+                    font-size: 1.5em;
+                    font-weight: bold;
+                    margin-bottom:0px;
+                    margin-top:10px;
+                }
+        
+                .post-date {
+                    color: var(--medium-shade);
+                    font-size: 0.9em;
+                    display: inline-block;
+                    margin-top:0px;
+                }
+        
+                .menu-button {
+                    display: block;
+                    padding: 8px 0;
+                    font-weight: 600;
+                    font-size: 1.1rem;
+                    color: var(--dark-shade);
+                    text-decoration:none;
+                }
+        
+                .menu-sample {
+                    margin-bottom: 25px;
+                    border-bottom: 1px solid var(--light-shade);
                 }
             </style>
         </head>
         <body>
             <div class="section">
-                <div class="header-separator"></div>
-                <h3>Example Post Title</h3>
+                <h2>Example Post Title</h2>
+                <div class="post-date">May 24, 2025 at 1:50 AM</div>
+                
                 <p>This is regular text on your blog, and <a href="#">this is a link</a> to demonstrate how the accent color looks.</p>
                 <div class="category"><a href="#">Category Name</a></div>
                 <div class="tag"><a href="#">#tag name</a></div>
                 <div class="header-separator"></div>
+                <div class="menu-sample">
+                    <a class="menu-button">Menu Nav Item</a>
+                </div>
             </div>
         </body>
         </html>
