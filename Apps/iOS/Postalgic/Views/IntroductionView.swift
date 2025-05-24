@@ -26,7 +26,7 @@ struct IntroductionView: View {
                             .font(.largeTitle)
                             .fontWeight(.bold)
                         
-                        Text("Create beautiful micro-blogs with ease")
+                        Text("Create beautiful blogs with ease")
                             .font(.title2)
                             .foregroundStyle(.secondary)
                             .multilineTextAlignment(.center)
