@@ -10,6 +10,7 @@ import SwiftUI
 
 struct BlogDashboardView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.dismiss) private var dismiss
     var blog: Blog
 
     @State private var showingPostForm = false
@@ -37,8 +38,8 @@ struct BlogDashboardView: View {
                 // Quick Actions Section
                 VStack(spacing: 12) {
                     HStack(spacing: 12) {
-                        NavigationLink {
-                            BlogSettingsView(blog: blog)
+                        Button {
+                            showingSettingsView = true
                         } label: {
                             VStack(spacing: 3) {
                                 Image(systemName: "ellipsis.circle")
@@ -182,7 +183,9 @@ struct BlogDashboardView: View {
             PublishBlogView(blog: blog)
         }
         .sheet(isPresented: $showingSettingsView) {
-            BlogSettingsView(blog: blog)
+            BlogSettingsView(blog: blog) {
+                dismiss()
+            }
         }
         .sheet(isPresented: $showingPostsView) {
             PostsView(blog: blog)
