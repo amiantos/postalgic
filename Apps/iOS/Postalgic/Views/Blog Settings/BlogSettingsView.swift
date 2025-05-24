@@ -117,6 +117,13 @@ struct BlogSettingsView: View {
             }
             .foregroundColor(.primary)
             .navigationTitle("Blog Settings")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Close") {
+                        dismiss()
+                    }
+                }
+            }
         }
         .sheet(isPresented: $showingEditBlogView) {
             BlogFormView(blog: blog).interactiveDismissDisabled()

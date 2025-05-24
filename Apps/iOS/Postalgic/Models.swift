@@ -298,7 +298,7 @@ enum EmbedPosition: String, Codable {
 }
 
 enum SpecialFileType: String, Codable, CaseIterable {
-    case favicon = "favicon.ico"
+    case favicon = "favicon"
     case socialShareImage = "social-share.png"
     
     var displayName: String {

@@ -108,7 +108,7 @@ class TemplateEngine {
         
         // Add favicon if it exists
         if let favicon = blog.favicon {
-            headContent += "<link rel=\"icon\" href=\"/\(favicon.filename)\">"
+            headContent += "<link rel=\"icon\" href=\"/\(favicon.filename)\" type=\"\(favicon.mimeType)\">"
         }
         
         // Add social share image meta tags if it exists

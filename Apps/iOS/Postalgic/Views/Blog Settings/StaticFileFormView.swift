@@ -192,6 +192,10 @@ struct StaticFileFormView: View {
         case .success(let urls):
             guard let url = urls.first else { return }
             
+            guard url.startAccessingSecurityScopedResource() else {
+                 return
+            }
+            
             do {
                 let data = try Data(contentsOf: url)
                 selectedFileData = data
@@ -207,6 +211,8 @@ struct StaticFileFormView: View {
                 errorMessage = "Failed to load file: \(error.localizedDescription)"
                 showingErrorAlert = true
             }
+            
+            url.stopAccessingSecurityScopedResource()
             
         case .failure(let error):
             errorMessage = "Failed to select file: \(error.localizedDescription)"
@@ -225,9 +231,19 @@ struct StaticFileFormView: View {
             }
         }
         
+        // Generate proper filename for favicon with extension
+        var finalFilename = filename
+        if let specialType = specialFileType, specialType == .favicon, let selectedFileName = selectedFileName {
+            // Extract the file extension from the selected file
+            let fileExtension = (selectedFileName as NSString).pathExtension.lowercased()
+            if !fileExtension.isEmpty {
+                finalFilename = "favicon.\(fileExtension)"
+            }
+        }
+        
         let staticFile = StaticFile(
             blog: blog,
-            filename: filename,
+            filename: finalFilename,
             data: data,
             mimeType: mimeType,
             isSpecialFile: isSpecialFile,
