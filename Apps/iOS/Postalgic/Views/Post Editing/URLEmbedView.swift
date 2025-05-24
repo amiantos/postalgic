@@ -10,7 +10,7 @@ struct URLEmbedView: View {
 
     @State private var url: String = ""
     @State private var embedType: EmbedType = .link
-    @State private var position: EmbedPosition = .below
+    @State private var position: EmbedPosition = .above
     @State private var isLoading = false
     @State private var errorMessage: String?
     @State private var linkMetadata: (title: String?, description: String?, imageUrl: String?, imageData: Data?) = (nil, nil, nil, nil)

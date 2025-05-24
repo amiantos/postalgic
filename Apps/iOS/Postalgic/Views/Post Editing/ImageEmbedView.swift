@@ -8,7 +8,7 @@ struct ImageEmbedView: View {
 
     var post: Post
 
-    @State private var position: EmbedPosition = .below
+    @State private var position: EmbedPosition = .above
     @State private var isProcessingImages = false
     @State private var isEditing: Bool = false
 

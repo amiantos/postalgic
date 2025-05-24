@@ -313,7 +313,7 @@ final class Embed {
     }
     
     var embedPosition: EmbedPosition {
-        return EmbedPosition(rawValue: position) ?? .below
+        return EmbedPosition(rawValue: position) ?? .above
     }
     
     // Generate HTML for the embed based on type

@@ -87,7 +87,7 @@ struct PreviewData {
                     post: post,
                     url: "https://www.youtube.com/watch?v=RoSQqtgCZss",
                     type: .youtube,
-                    position: .below
+                    position: .above
                 )
             }
             
@@ -141,7 +141,7 @@ struct PreviewData {
         post: post,
         url: "https://apple.com",
         type: .link,
-        position: .below,
+        position: .above,
         title: "Apple",
         embedDescription: "Apple Inc. is an American multinational technology company that designs, develops, and sells consumer electronics, computer software, and online services.",
         imageUrl: "https://www.apple.com/ac/structured-data/images/open_graph_logo.png"
