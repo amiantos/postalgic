@@ -16,22 +16,47 @@ struct AccentColorCustomizationView: View {
     var blog: Blog
     
     @State private var accentColor: Color
+    @State private var backgroundColor: Color
+    @State private var textColor: Color
+    @State private var lightShade: Color
+    @State private var mediumShade: Color
+    @State private var darkShade: Color
     @State private var htmlPreview: String = ""
     
     init(blog: Blog) {
         self.blog = blog
-        let colorString = blog.accentColor ?? "#FFA100"
-        _accentColor = State(initialValue: Color(hex: colorString) ?? .orange)
+        let accentColorString = blog.accentColor ?? "#FFA100"
+        _accentColor = State(initialValue: Color(hex: accentColorString) ?? .orange)
+        
+        let backgroundColorString = blog.backgroundColor ?? "#efefef"
+        _backgroundColor = State(initialValue: Color(hex: backgroundColorString) ?? Color(hex: "#efefef")!)
+        
+        let textColorString = blog.textColor ?? "#2d3748"
+        _textColor = State(initialValue: Color(hex: textColorString) ?? Color(hex: "#2d3748")!)
+        
+        let lightShadeString = blog.lightShade ?? "#dedede"
+        _lightShade = State(initialValue: Color(hex: lightShadeString) ?? Color(hex: "#dedede")!)
+        
+        let mediumShadeString = blog.mediumShade ?? "#a0aec0"
+        _mediumShade = State(initialValue: Color(hex: mediumShadeString) ?? Color(hex: "#a0aec0")!)
+        
+        let darkShadeString = blog.darkShade ?? "#4a5568"
+        _darkShade = State(initialValue: Color(hex: darkShadeString) ?? Color(hex: "#4a5568")!)
     }
     
     var body: some View {
         NavigationStack {
             List {
-                Section {
+                Section("Theme Colors") {
                     ColorPicker("Accent Color", selection: $accentColor, supportsOpacity: false)
+                    ColorPicker("Background Color", selection: $backgroundColor, supportsOpacity: false)
+                    ColorPicker("Text Color", selection: $textColor, supportsOpacity: false)
+                    ColorPicker("Light Shade", selection: $lightShade, supportsOpacity: false)
+                    ColorPicker("Medium Shade", selection: $mediumShade, supportsOpacity: false)
+                    ColorPicker("Dark Shade", selection: $darkShade, supportsOpacity: false)
                 }
                 
-                Section("Preview") {
+                Section("Default Template Preview") {
                     WebView(htmlString: htmlPreview)
                         .frame(height: 380)
                         .cornerRadius(10)
@@ -43,6 +68,21 @@ struct AccentColorCustomizationView: View {
             .onChange(of: accentColor, initial: false, { oldValue, newValue in
                 updatePreviewHTML()
             })
+            .onChange(of: backgroundColor, initial: false, { oldValue, newValue in
+                updatePreviewHTML()
+            })
+            .onChange(of: textColor, initial: false, { oldValue, newValue in
+                updatePreviewHTML()
+            })
+            .onChange(of: lightShade, initial: false, { oldValue, newValue in
+                updatePreviewHTML()
+            })
+            .onChange(of: mediumShade, initial: false, { oldValue, newValue in
+                updatePreviewHTML()
+            })
+            .onChange(of: darkShade, initial: false, { oldValue, newValue in
+                updatePreviewHTML()
+            })
             .navigationTitle("Customize Colors")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -51,18 +91,36 @@ struct AccentColorCustomizationView: View {
                     }
                 }
                 
+                ToolbarItem(placement: .primaryAction) {
+                    Menu {
+                        Button("Reset to Default") {
+                            resetToDefaultColors()
+                        }
+                        Button("Reset to Dark Mode") {
+                            resetToDarkMode()
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis.circle")
+                    }
+                }
+                
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
-                        saveAccentColor()
+                        saveColors()
                     }
                 }
             }
         }
     }
     
-    // Generate HTML preview with current accent color
+    // Generate HTML preview with current colors
     private func updatePreviewHTML() {
-        guard let safeHex = accentColor.toHex() else { return }
+        guard let accentHex = accentColor.toHex(),
+              let backgroundHex = backgroundColor.toHex(),
+              let textHex = textColor.toHex(),
+              let lightHex = lightShade.toHex(),
+              let mediumHex = mediumShade.toHex(),
+              let darkHex = darkShade.toHex() else { return }
         
         // Include a timestamp in CSS to force WebView refresh
         let timestamp = Date().timeIntervalSince1970
@@ -74,12 +132,12 @@ struct AccentColorCustomizationView: View {
             <meta name="viewport" content="width=device-width, initial-scale=1">
             <style data-timestamp="\(timestamp)">
                 :root {
-                    --accent-color: \(safeHex);
-                    --background-color: #efefef;
-                    --text-color: #2d3748;
-                    --light-shade: #dedede;
-                    --medium-shade: #a0aec0;
-                    --dark-shade: #4a5568;
+                    --accent-color: \(accentHex);
+                    --background-color: \(backgroundHex);
+                    --text-color: \(textHex);
+                    --light-shade: \(lightHex);
+                    --medium-shade: \(mediumHex);
+                    --dark-shade: \(darkHex);
                 }
 
                 body {
@@ -189,10 +247,41 @@ struct AccentColorCustomizationView: View {
         """
     }
     
-    // Save the selected accent color to the blog model
-    private func saveAccentColor() {
-        guard let safeHex = accentColor.toHex() else { return }
-        blog.accentColor = safeHex
+    // Reset all colors to their default values
+    private func resetToDefaultColors() {
+        accentColor = Color(hex: "#FFA100")!
+        backgroundColor = Color(hex: "#efefef")!
+        textColor = Color(hex: "#2d3748")!
+        lightShade = Color(hex: "#dedede")!
+        mediumShade = Color(hex: "#a0aec0")!
+        darkShade = Color(hex: "#4a5568")!
+    }
+    
+    // Reset to dark mode colors (reversed shades, keep accent color)
+    private func resetToDarkMode() {
+        accentColor = Color(hex: "#FFA100")! // Keep the same accent color
+        backgroundColor = Color(hex: "#1a202c")! // Dark background
+        textColor = Color(hex: "#e2e8f0")! // Light text
+        lightShade = Color(hex: "#2d3748")! // Reversed: was dark, now light shade
+        mediumShade = Color(hex: "#4a5568")! // Reversed: was medium, stays medium-dark
+        darkShade = Color(hex: "#cbd5e0")! // Reversed: was light, now dark shade
+    }
+    
+    // Save all selected colors to the blog model
+    private func saveColors() {
+        guard let accentHex = accentColor.toHex(),
+              let backgroundHex = backgroundColor.toHex(),
+              let textHex = textColor.toHex(),
+              let lightHex = lightShade.toHex(),
+              let mediumHex = mediumShade.toHex(),
+              let darkHex = darkShade.toHex() else { return }
+        
+        blog.accentColor = accentHex
+        blog.backgroundColor = backgroundHex
+        blog.textColor = textHex
+        blog.lightShade = lightHex
+        blog.mediumShade = mediumHex
+        blog.darkShade = darkHex
         try? modelContext.save()
         dismiss()
     }

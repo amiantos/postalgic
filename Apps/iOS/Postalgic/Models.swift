@@ -38,6 +38,11 @@ final class Blog {
 
     // Blog appearance
     var accentColor: String?
+    var backgroundColor: String?
+    var textColor: String?
+    var lightShade: String?
+    var mediumShade: String?
+    var darkShade: String?
     var themeIdentifier: String?
 
     // Publisher Type
@@ -85,7 +90,7 @@ final class Blog {
     @Relationship(deleteRule: .cascade, inverse: \StaticFile.blog)
     var staticFiles: [StaticFile] = []
 
-    init(name: String, url: String, createdAt: Date = Date(), authorName: String? = nil, authorEmail: String? = nil, authorUrl: String? = nil, tagline: String? = nil, accentColor: String? = "#FFA100") {
+    init(name: String, url: String, createdAt: Date = Date(), authorName: String? = nil, authorEmail: String? = nil, authorUrl: String? = nil, tagline: String? = nil, accentColor: String? = "#FFA100", backgroundColor: String? = "#efefef", textColor: String? = "#2d3748", lightShade: String? = "#dedede", mediumShade: String? = "#a0aec0", darkShade: String? = "#4a5568") {
         self.name = name
         self.url = url
         self.createdAt = createdAt
@@ -94,6 +99,11 @@ final class Blog {
         self.authorUrl = authorUrl
         self.tagline = tagline
         self.accentColor = accentColor
+        self.backgroundColor = backgroundColor
+        self.textColor = textColor
+        self.lightShade = lightShade
+        self.mediumShade = mediumShade
+        self.darkShade = darkShade
         self.publisherType = PublisherType.none.rawValue
         self.themeIdentifier = "default"
     }

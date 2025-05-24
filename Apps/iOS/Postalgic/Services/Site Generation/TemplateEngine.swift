@@ -38,7 +38,12 @@ class TemplateEngine {
             "blogUrl": blog.url,
             "currentYear": Calendar.current.component(.year, from: Date()),
             "buildDate": formatter.string(from: Date()),
-            "accentColor": blog.accentColor ?? "#FFA100" // Use custom accent color or default
+            "accentColor": blog.accentColor ?? "#FFA100",
+            "backgroundColor": blog.backgroundColor ?? "#efefef",
+            "textColor": blog.textColor ?? "#2d3748",
+            "lightShade": blog.lightShade ?? "#dedede",
+            "mediumShade": blog.mediumShade ?? "#a0aec0",
+            "darkShade": blog.darkShade ?? "#4a5568"
         ]
 
         // Add optional values only if they exist

@@ -543,13 +543,13 @@ class TemplateManager {
         :root {
             /* Colors */
             --accent-color: {{accentColor}};
-            --background-color: #efefef;
-            --text-color: #2d3748;
+            --background-color: {{backgroundColor}};
+            --text-color: {{textColor}};
 
             /* Shades */
-            --light-shade: #dedede;
-            --medium-shade: #a0aec0;
-            --dark-shade: #4a5568;
+            --light-shade: {{lightShade}};
+            --medium-shade: {{mediumShade}};
+            --dark-shade: {{darkShade}};
         }
 
         * {
