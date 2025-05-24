@@ -547,14 +547,10 @@ class TemplateManager {
             --background-color: #efefef;
             --text-color: #2d3748;
 
-            /* Grays */
-            --light-gray: #dedede;
-            --medium-gray: #a0aec0;
-            --dark-gray: #4a5568;
-
-            /* Tag & Category Colors */
-            --category-bg: #faf4eb;
-            --category-color: {{accentColor}};
+            /* Shades */
+            --light-shade: #dedede;
+            --medium-shade: #a0aec0;
+            --dark-shade: #4a5568;
         }
 
         * {
@@ -631,7 +627,7 @@ class TemplateManager {
         }
 
         header .tagline {
-            color: var(--medium-gray);
+            color: var(--medium-shade);
             font-size: 1.2rem;
             font-style: italic;
         }
@@ -659,7 +655,7 @@ class TemplateManager {
             display: block;
             width: 25px;
             height: 3px;
-            background-color: var(--dark-gray);
+            background-color: var(--dark-shade);
             margin: 5px 0;
             transition: 0.3s;
         }
@@ -688,7 +684,7 @@ class TemplateManager {
         /* Mobile Navigation in Sidebar */
         .mobile-nav {
             margin-bottom: 25px;
-            border-bottom: 1px solid var(--light-gray);
+            border-bottom: 1px solid var(--light-shade);
             padding-bottom: 20px;
         }
 
@@ -767,7 +763,7 @@ class TemplateManager {
         .archive-separator {
             height: 1px;
             width: 100%;
-            background-color: var(--light-gray);
+            background-color: var(--light-shade);
             margin-top: 2em;
             margin-bottom: 2em;
         }
@@ -777,14 +773,14 @@ class TemplateManager {
         }
 
         .post-date {
-            color: var(--medium-gray);
+            color: var(--medium-shade);
             font-size: 0.9em;
             display: inline-block;
         }
 
         .post-date a, 
         .post-author a {
-            color: var(--medium-gray);
+            color: var(--medium-shade);
             text-decoration: none;
         }
 
@@ -795,7 +791,7 @@ class TemplateManager {
         }
 
         .post-author {
-            color: var(--medium-gray);
+            color: var(--medium-shade);
             font-size: 0.9em;
             display: inline-block;
         }
@@ -842,15 +838,15 @@ class TemplateManager {
 
         .tag {
             display: inline-block;
-            background-color: var(--category-bg);
-            color: var(--category-color);
-            border: 1px solid var(--category-color);
+            background-color: var(--background-color);
+            color: var(--accent-color);
+            border: 1px solid var(--accent-color);
             padding: 3px 8px;
             border-radius: 1em;
         }
 
         .tag:hover {
-            background-color: var(--category-color);
+            background-color: var(--accent-color);
             color: white;
             text-decoration: none;
         }
@@ -865,7 +861,7 @@ class TemplateManager {
 
         .tag-item, 
         .category-item {
-            background-color: var(--light-gray);
+            background-color: var(--light-shade);
             padding: 15px;
             border-radius: 4px;
         }
@@ -873,13 +869,13 @@ class TemplateManager {
         .tag-count, 
         .category-count {
             font-size: 0.8rem;
-            color: var(--medium-gray);
+            color: var(--medium-shade);
             font-weight: normal;
         }
 
         .tag-meta, 
         .category-meta {
-            color: var(--medium-gray);
+            color: var(--medium-shade);
             font-style: italic;
         }
 
@@ -891,15 +887,15 @@ class TemplateManager {
         .post-category a {
             display: inline-block;
             color: white;
-            background-color: var(--category-color);
-            border: 1px solid var(--category-color);
+            background-color: var(--accent-color);
+            border: 1px solid var(--accent-color);
             padding: 3px 8px;
             border-radius: 1em;
         }
 
         .post-category a:hover {
-            background-color: var(--category-bg);
-            color: var(--category-color);
+            background-color: var(--background-color);
+            color: var(--accent-color);
             text-decoration: none;
         }
 
@@ -915,13 +911,13 @@ class TemplateManager {
             font-size: 1.5rem;
             font-weight: bold;
             margin: 0px 0 10px;
-            color: var(--dark-gray);
+            color: var(--dark-shade);
         }
 
         .archive-month {
             font-size: 1.2rem;
             margin: 20px 0 10px;
-            color: var(--dark-gray);
+            color: var(--dark-shade);
         }
 
         .archive-month a {
@@ -940,14 +936,14 @@ class TemplateManager {
         }
 
         .archive-date {
-            color: var(--medium-gray);
+            color: var(--medium-shade);
             display: inline-block;
             width: 70px;
         }
 
         /* Monthly Archive Pages */
         .archive-meta {
-            color: var(--medium-gray);
+            color: var(--medium-shade);
             font-style: italic;
         }
 
@@ -957,7 +953,7 @@ class TemplateManager {
             justify-content: space-between;
             margin-top: 40px;
             padding-top: 20px;
-            border-top: 1px solid var(--light-gray);
+            border-top: 1px solid var(--light-shade);
         }
 
         .month-navigation .nav-previous,
@@ -1010,7 +1006,7 @@ class TemplateManager {
         }
 
         .link-embed {
-            border: 1px solid var(--light-gray);
+            border: 1px solid var(--light-shade);
             border-radius: 8px;
             overflow: hidden;
         }
@@ -1029,7 +1025,7 @@ class TemplateManager {
         }
 
         .link-embed a:hover {
-            background-color: var(--light-gray);
+            background-color: var(--light-shade);
             text-decoration: none;
         }
 
@@ -1043,13 +1039,13 @@ class TemplateManager {
             grid-area: description;
             font-size: 0.9em;
             padding: 0 10px;
-            color: var(--dark-gray);
+            color: var(--dark-shade);
         }
 
         .link-url {
             grid-area: url;
             font-size: 0.8em;
-            color: var(--medium-gray);
+            color: var(--medium-shade);
             padding: 5px 10px 10px 10px;
             white-space: nowrap;
             overflow: hidden;
@@ -1071,7 +1067,7 @@ class TemplateManager {
            10. Typography Elements
            ========================================== */
         blockquote {
-            color: var(--dark-gray);
+            color: var(--dark-shade);
             font-style: italic;
             border-left: 2px solid var(--accent-color);
             padding-left: 1.3em;
@@ -1083,11 +1079,11 @@ class TemplateManager {
         footer {
             text-align: center;
             padding: 2em;
-            color: var(--medium-gray);
+            color: var(--medium-shade);
             font-size: 0.9rem;
             margin-top: auto;
             width: 100%;
-            border-top: 1px solid var(--light-gray);
+            border-top: 1px solid var(--light-shade);
         }
         
         /* ==========================================

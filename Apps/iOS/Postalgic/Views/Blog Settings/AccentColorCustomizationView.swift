@@ -78,10 +78,9 @@ struct AccentColorCustomizationView: View {
                     --accent-color: \(safeHex);
                     --background-color: #efefef;
                     --text-color: #2d3748;
-                    --light-gray: #dedede;
-                    --medium-gray: #a0aec0;
-                    --category-bg: #faf4eb;
-                    --category-color: \(safeHex);
+                    --light-shade: #dedede;
+                    --medium-shade: #a0aec0;
+                    --dark-shade: #a0aec0;
                 }
 
                 body {
@@ -117,8 +116,8 @@ struct AccentColorCustomizationView: View {
                 .category a {
                     display: inline-block;
                     color: white;
-                    background-color: var(--category-color);
-                    border: 1px solid var(--category-color);
+                    background-color: var(--accent-color);
+                    border: 1px solid var(--accent-color);
                     padding: 3px 8px;
                     border-radius: 1em;
                     font-size: 0.8em;
@@ -126,9 +125,9 @@ struct AccentColorCustomizationView: View {
         
                 .tag a {
                     display: inline-block;
-                    color: var(--category-color);
-                    background-color: var(--category-bg);
-                    border: 1px solid var(--category-color);
+                    color: var(--accent-color);
+                    background-color: var(--background-color);
+                    border: 1px solid var(--accent-color);
                     padding: 3px 8px;
                     border-radius: 1em;
                     font-size: 0.8em;
