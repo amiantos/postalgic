@@ -52,7 +52,7 @@ struct ThemesView: View {
                 
                 // Section for custom themes
                 if !themes.isEmpty {
-                    Section("Custom Themes") {
+                    Section {
                         ForEach(themes) { theme in
                             HStack {
                                 VStack(alignment: .leading) {
@@ -99,6 +99,10 @@ struct ThemesView: View {
                                 }
                             }
                         }
+                    } header: {
+                        Text("Custom Themes")
+                    } footer: {
+                        Text("Custom themes can be used across every blog on your device.")
                     }
                 }
             }
@@ -126,7 +130,7 @@ struct ThemesView: View {
     private func duplicateDefaultTheme() {
         // Create a new theme
         let customTheme = Theme(
-            name: "Default (Customized)", 
+            name: "Default (\(blog.name))",
             identifier: "custom_\(UUID().uuidString)",
             isCustomized: true
         )
