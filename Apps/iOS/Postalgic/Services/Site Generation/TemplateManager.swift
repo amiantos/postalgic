@@ -1326,7 +1326,7 @@ class TemplateManager {
             }
 
             /* Hide desktop nav on mobile */
-            nav:not(.sidebar-nav) {
+            nav:not(.sidebar-nav):not(.month-navigation):not(.pagination-navigation) {
                 display: none;
             }
             
@@ -1426,6 +1426,21 @@ class TemplateManager {
                 padding-left: 1em;
                 padding-right: 1em;
                 width: 100%; /* Full width when sidebar is hidden */
+            }
+            
+            /* Mobile pagination styling */
+            .month-navigation,
+            .pagination-navigation {
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }
+            
+            .month-navigation .nav-previous,
+            .month-navigation .nav-next,
+            .pagination-navigation .nav-previous,
+            .pagination-navigation .nav-next {
+                text-align: center;
             }
         }
         """
