@@ -35,73 +35,86 @@ struct BlogDashboardView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 30) {
                 // Quick Actions Section
-                VStack(spacing: 8) {
-                    Button {
-                        showingPostForm = true
-                    } label: {
-                        Label("New Post", systemImage: "square.and.pencil")
-                            .padding(.vertical, 5)
-                            .frame(
-                                maxWidth: .infinity,
-                                maxHeight: .infinity,
-                                alignment: .leading
-                            )
-                    }.buttonStyle(.borderedProminent).foregroundStyle(.primary).padding(.horizontal)
-                    
-                    Button {
-                        showingPublishView = true
-                    } label: {
-                        Label("Publish", systemImage: "paperplane")
-                            .padding(.vertical, 5)
-                            .frame(
-                                maxWidth: .infinity,
-                                maxHeight: .infinity,
-                                alignment: .leading
-                            )
-                    }.buttonStyle(.bordered).foregroundStyle(.primary).padding(.horizontal)
-
-                    if let url = URL(string: blog.url) {
-                        Button {
-                            UIApplication.shared.open(url)
+                VStack(spacing: 12) {
+                    HStack(spacing: 12) {
+                        NavigationLink {
+                            BlogSettingsView(blog: blog)
                         } label: {
-                            Label("Visit Blog", systemImage: "safari")
-                                .padding(.vertical, 5)
-                                .frame(
-                                    maxWidth: .infinity,
-                                    maxHeight: .infinity,
-                                    alignment: .leading
-                                )
-                        }.buttonStyle(.bordered).foregroundStyle(.primary).padding(.horizontal)
+                            VStack(spacing: 3) {
+                                Image(systemName: "ellipsis.circle")
+                                    .font(.system(size: 24))
+                                Text("More")
+                                    .font(.caption)
+                            }.padding(3).frame(
+                                maxWidth: .infinity,
+                                maxHeight: .infinity
+                            )
+                        }.buttonStyle(.bordered).foregroundStyle(.primary)
+                        
+                        Button(action: {
+                            if let url = URL(string: blog.url) {
+                                UIApplication.shared.open(url)
+                            }
+                        }) {
+                            VStack(spacing: 3) {
+                                Image(systemName: "safari")
+                                    .font(.system(size: 24))
+                                Text("Visit Site")
+                                    .font(.caption)
+                            }.padding(3).frame(
+                                maxWidth: .infinity,
+                                maxHeight: .infinity
+                            )
+                        }.buttonStyle(.bordered).foregroundStyle(.primary)
+                        
+                        
+                        Button(action: { showingPublishView = true }) {
+                            VStack(spacing: 3) {
+                                Image(systemName: "paperplane")
+                                    .font(.system(size: 24))
+                                Text("Publish")
+                                    .font(.caption)
+                            }.padding(3).frame(
+                                maxWidth: .infinity,
+                                maxHeight: .infinity
+                            )
+                        }.buttonStyle(.bordered).foregroundStyle(.primary)
+                    }.padding(.horizontal)
+                    
+                    HStack(spacing: 12) {
+                        
+                        NavigationLink {
+                            PostsView(blog: blog)
+                        } label: {
+                            VStack(spacing: 3) {
+                                Image(systemName: "book.pages")
+                                    .font(.system(size: 24))
+                                Text("All Posts")
+                                    .font(.caption)
+                            }.padding(3).frame(
+                                maxWidth: .infinity,
+                                maxHeight: .infinity
+                            )
+                        }.buttonStyle(.bordered).foregroundStyle(
+                            .primary
+                        )
+                        
+                        Button(action: { showingPostForm = true }) {
+                            VStack(spacing: 3) {
+                                Image(systemName: "square.and.pencil")
+                                    .font(.system(size: 24))
+                                Text("New Post")
+                                    .font(.caption)
+                            }.padding(3).frame(
+                                maxWidth: .infinity,
+                                maxHeight: .infinity
+                            )
+                        }.buttonStyle(.borderedProminent).foregroundStyle(
+                            .primary
+                        )
                     }
-                    
-                    Divider().padding(.horizontal)
-                    
-                    
-                    NavigationLink {
-                        PostsView(blog: blog)
-                    } label: {
-                        Label("All Posts", systemImage: "book.pages")
-                            .padding(.vertical, 5)
-                            .frame(
-                                maxWidth: .infinity,
-                                maxHeight: .infinity,
-                                alignment: .leading
-                            )
-                    }.buttonStyle(.bordered).foregroundStyle(.primary).padding(.horizontal)
-                    
-                    
-                    NavigationLink {
-                        BlogSettingsView(blog: blog)
-                    } label: {
-                        Label("More", systemImage: "ellipsis.circle")
-                            .padding(.vertical, 5)
-                            .frame(
-                                maxWidth: .infinity,
-                                maxHeight: .infinity,
-                                alignment: .leading
-                            )
-                    }.buttonStyle(.bordered).foregroundStyle(.primary).padding(.horizontal)
-                }
+                    .padding(.horizontal)
+                }.dynamicTypeSize(...DynamicTypeSize.xLarge)
 
                 // Draft Posts Section
                 if !draftPosts.isEmpty {

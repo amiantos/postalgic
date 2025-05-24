@@ -131,7 +131,7 @@ struct PostPreviewView: View {
                     }
                 }.frame(maxWidth: .infinity)
 
-            }.font(.subheadline).foregroundStyle(.secondary).padding(.top, 12)
+            }.dynamicTypeSize(...DynamicTypeSize.xLarge).font(.subheadline).foregroundStyle(.secondary).padding(.top, 12)
         }
         .frame(maxWidth: .infinity)
         .padding()
