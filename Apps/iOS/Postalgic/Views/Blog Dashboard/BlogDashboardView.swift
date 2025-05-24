@@ -50,23 +50,22 @@ struct BlogDashboardView: View {
                                 maxHeight: .infinity
                             )
                         }.buttonStyle(.bordered).foregroundStyle(.primary)
-                        
-                        Button(action: {
-                            if let url = URL(string: blog.url) {
+
+                        if let url = URL(string: blog.url) {
+                            Button(action: {
                                 UIApplication.shared.open(url)
-                            }
-                        }) {
-                            VStack(spacing: 3) {
-                                Image(systemName: "safari")
-                                    .font(.system(size: 24))
-                                Text("Visit Site")
-                                    .font(.caption)
-                            }.padding(3).frame(
-                                maxWidth: .infinity,
-                                maxHeight: .infinity
-                            )
-                        }.buttonStyle(.bordered).foregroundStyle(.primary)
-                        
+                            }) {
+                                VStack(spacing: 3) {
+                                    Image(systemName: "safari")
+                                        .font(.system(size: 24))
+                                    Text("Visit Site")
+                                        .font(.caption)
+                                }.padding(3).frame(
+                                    maxWidth: .infinity,
+                                    maxHeight: .infinity
+                                )
+                            }.buttonStyle(.bordered).foregroundStyle(.primary)
+                        }
                         
                         Button(action: { showingPublishView = true }) {
                             VStack(spacing: 3) {
