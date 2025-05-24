@@ -103,6 +103,7 @@ struct BlogFormView: View {
             tagline: tagline.isEmpty ? nil : tagline
         )
         modelContext.insert(newBlog)
+        try? modelContext.save()
     }
     
     private func updateBlog() {
