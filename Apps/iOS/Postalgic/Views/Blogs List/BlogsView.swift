@@ -13,6 +13,7 @@ struct BlogsView: View {
     @Query private var blogs: [Blog]
     @State private var showingBlogForm = false
     @State private var showingHelpSheet = false
+    @State private var showingIntroduction = false
 
     var body: some View {
         NavigationStack {
@@ -53,6 +54,9 @@ struct BlogsView: View {
             .sheet(isPresented: $showingHelpSheet) {
                 HelpView()
             }
+            .fullScreenCover(isPresented: $showingIntroduction) {
+                IntroductionView(isPresented: $showingIntroduction)
+            }
             .toolbar {
                 ToolbarItem {
                     Button(action: { showingBlogForm = true }) {
@@ -65,11 +69,24 @@ struct BlogsView: View {
                     } label: {
                         Label("Help", systemImage: "questionmark.circle")
                     }
+                    
+                    #if DEBUG
+                    Button {
+                        showingIntroduction = true
+                    } label: {
+                        Label("Introduction", systemImage: "info.circle")
+                    }
+                    #endif
                 }
             }
             .navigationTitle("Your Blogs")
             .sheet(isPresented: $showingBlogForm) {
                 BlogFormView().interactiveDismissDisabled()
+            }
+            .onAppear {
+                if !UserDefaults.standard.bool(forKey: "hasSeenIntroduction") {
+                    showingIntroduction = true
+                }
             }
         }
     }
