@@ -115,9 +115,10 @@ struct TagSelectionView: View {
                                 Button(action: {
                                     if !selectedTags.contains(where: { $0.id == tag.id }) {
                                         selectedTags.append(tag)
+                                    } else {
+                                        selectedTags.removeAll(where: { $0.id == tag.id })
                                     }
-                                    tagInput = ""
-                                    showingSuggestions = false
+                                    updatePostTags()
                                 }) {
                                     HStack {
                                         Text(tag.name)
