@@ -545,7 +545,6 @@ class TemplateManager {
             --primary-color: #4a5568;
             --accent-color: {{accentColor}};
             --background-color: #efefef;
-            --background-outline-color: #efefef;
             --text-color: #2d3748;
 
             /* Grays */
@@ -554,8 +553,6 @@ class TemplateManager {
             --dark-gray: #4a5568;
 
             /* Tag & Category Colors */
-            --tag-bg: #f5e5ef;
-            --tag-color: #CB7BAC;
             --category-bg: #faf4eb;
             --category-color: {{accentColor}};
         }
@@ -581,7 +578,7 @@ class TemplateManager {
             font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
             line-height: 1.6;
             color: var(--text-color);
-            background-color: var(--background-outline-color);
+            background-color: var(--background-color);
         }
 
         a {
@@ -1280,7 +1277,7 @@ class TemplateManager {
         /* Desktop (> 900px) */
         @media (min-width: 901px) {
             body {
-                background-color: var(--background-outline-color);
+                background-color: var(--background-color);
                 font-size: 115%;
             }
             
@@ -1316,7 +1313,7 @@ class TemplateManager {
         /* Mobile (≤ 900px) */
         @media (max-width: 900px) {            
             body {
-                background-color: var(--background-outline-color);
+                background-color: var(--background-color);
             }
             
             .container {
