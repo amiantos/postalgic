@@ -383,7 +383,7 @@ class TemplateManager {
                 <ul class="archive-posts">
                     {{#posts}}
                         <li>
-                            <span class="archive-date">{{dayPadded}} {{monthName}}</span>
+                            <span class="archive-date">{{dayPadded}} {{monthAbbr}}</span>
                             <a href="/{{urlPath}}/">{{displayTitle}}</a>
                         </li>
                     {{/posts}}
@@ -901,7 +901,7 @@ class TemplateManager {
         .archive-date {
             color: var(--medium-gray);
             display: inline-block;
-            width: 100px;
+            width: 70px;
         }
 
         /* Monthly Archive Pages */

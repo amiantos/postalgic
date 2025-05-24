@@ -164,12 +164,21 @@ struct ArchivePostData {
     let post: Post
     
     func toDictionary() -> [String: Any] {
-        let day = Calendar.current.component(.day, from: post.createdAt)
+        let calendar = Calendar.current
+        let day = calendar.component(.day, from: post.createdAt)
+        let month = calendar.component(.month, from: post.createdAt)
+        
+        // Generate 3-letter month abbreviation
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "MMM"
+        let monthAbbr = dateFormatter.string(from: post.createdAt)
+        
         return [
             "displayTitle": post.displayTitle,
             "urlPath": post.urlPath,
             "day": day,
-            "dayPadded": String(format: "%02d", day)
+            "dayPadded": String(format: "%02d", day),
+            "monthAbbr": monthAbbr
         ]
     }
 }
