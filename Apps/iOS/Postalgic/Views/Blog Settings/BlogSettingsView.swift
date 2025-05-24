@@ -27,6 +27,7 @@ struct BlogSettingsView: View {
     @State private var showingStubMigrationAlert = false
     @State private var showingStubMigrationSuccessAlert = false
     @State private var migratedStubCounts: (posts: Int, categories: Int, tags: Int) = (0, 0, 0)
+    @State private var showingStaticFiles = false
     
     var body: some View {
         NavigationStack {
@@ -74,6 +75,12 @@ struct BlogSettingsView: View {
                         showingThemesView = true
                     } label: {
                         Label("Choose Theme", systemImage: "doc.text.fill")
+                    }
+                    
+                    Button {
+                        showingStaticFiles = true
+                    } label: {
+                        Label("Static Files", systemImage: "doc.on.doc")
                     }
                 } header: {
                     Text("Appearance").foregroundStyle(.secondary)
@@ -131,6 +138,9 @@ struct BlogSettingsView: View {
         }
         .sheet(isPresented: $showingThemesView) {
             ThemesView(blog: blog)
+        }
+        .sheet(isPresented: $showingStaticFiles) {
+            StaticFilesView(blog: blog)
         }
         .alert("Delete Blog", isPresented: $showingDeleteAlert) {
             TextField("Type 'delete' to confirm", text: $deleteConfirmationText)

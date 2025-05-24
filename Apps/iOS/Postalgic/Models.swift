@@ -81,6 +81,9 @@ final class Blog {
     
     @Relationship(deleteRule: .cascade, inverse: \SidebarObject.blog)
     var sidebarObjects: [SidebarObject] = []
+    
+    @Relationship(deleteRule: .cascade, inverse: \StaticFile.blog)
+    var staticFiles: [StaticFile] = []
 
     init(name: String, url: String, createdAt: Date = Date(), authorName: String? = nil, authorEmail: String? = nil, authorUrl: String? = nil, tagline: String? = nil, accentColor: String? = "#FFA100") {
         self.name = name
@@ -184,6 +187,33 @@ final class Blog {
         return Utils.makeStubUnique(stub: stub, existingStubs: usedTagStubs())
     }
     
+    // MARK: - Static File Management
+    
+    /// Returns all used static file names in this blog
+    /// - Returns: Array of filename strings
+    func usedStaticFileNames() -> [String] {
+        return staticFiles.map { $0.filename }
+    }
+    
+    /// Checks if a filename is unique within this blog's static files
+    /// - Parameter filename: The filename to check
+    /// - Returns: True if unique, false if already exists
+    func isStaticFileNameUnique(_ filename: String) -> Bool {
+        return !usedStaticFileNames().contains(filename)
+    }
+    
+    /// Returns the favicon static file if it exists
+    /// - Returns: StaticFile for favicon or nil
+    var favicon: StaticFile? {
+        return staticFiles.first { $0.isSpecialFile && $0.fileType == .favicon }
+    }
+    
+    /// Returns the social share image static file if it exists
+    /// - Returns: StaticFile for social share image or nil
+    var socialShareImage: StaticFile? {
+        return staticFiles.first { $0.isSpecialFile && $0.fileType == .socialShareImage }
+    }
+    
 }
 
 @Model
@@ -265,6 +295,20 @@ enum EmbedType: String, Codable {
 enum EmbedPosition: String, Codable {
     case above = "Above"
     case below = "Below"
+}
+
+enum SpecialFileType: String, Codable, CaseIterable {
+    case favicon = "favicon.ico"
+    case socialShareImage = "social-share.png"
+    
+    var displayName: String {
+        switch self {
+        case .favicon:
+            return "Favicon"
+        case .socialShareImage:
+            return "Social Share Image"
+        }
+    }
 }
 
 @Model
@@ -834,5 +878,55 @@ final class EmbedImage {
         self.order = order
         self.filename = filename
         self.createdAt = createdAt
+    }
+}
+
+@Model
+final class StaticFile {
+    var blog: Blog?
+    
+    var filename: String
+    @Attribute(.externalStorage) var data: Data
+    var mimeType: String
+    var isSpecialFile: Bool
+    var specialFileType: String? // SpecialFileType.rawValue
+    var createdAt: Date
+    
+    init(blog: Blog, filename: String, data: Data, mimeType: String, isSpecialFile: Bool = false, specialFileType: SpecialFileType? = nil, createdAt: Date = Date()) {
+        self.blog = blog
+        self.filename = filename
+        self.data = data
+        self.mimeType = mimeType
+        self.isSpecialFile = isSpecialFile
+        self.specialFileType = specialFileType?.rawValue
+        self.createdAt = createdAt
+    }
+    
+    var fileType: SpecialFileType? {
+        guard let specialFileType = specialFileType else { return nil }
+        return SpecialFileType(rawValue: specialFileType)
+    }
+    
+    var displayName: String {
+        if isSpecialFile, let fileType = fileType {
+            return fileType.displayName
+        }
+        return filename
+    }
+    
+    var fileExtension: String {
+        return (filename as NSString).pathExtension.lowercased()
+    }
+    
+    var isImage: Bool {
+        let imageExtensions = ["jpg", "jpeg", "png", "gif", "webp", "svg"]
+        return imageExtensions.contains(fileExtension)
+    }
+    
+    var fileSizeString: String {
+        let formatter = ByteCountFormatter()
+        formatter.allowedUnits = [.useBytes, .useKB, .useMB]
+        formatter.countStyle = .file
+        return formatter.string(fromByteCount: Int64(data.count))
     }
 }

@@ -134,6 +134,37 @@ class StaticSiteGenerator {
             }
         }
     }
+    
+    /// Saves all static files to the site directory
+    private func saveStaticFiles(to directory: URL) {
+        print("📁 Processing \(blog.staticFiles.count) static files")
+        
+        for staticFile in blog.staticFiles {
+            let filename = staticFile.filename
+            
+            // Create intermediate directories if needed
+            let fileURL = directory.appendingPathComponent(filename)
+            let directoryPath = fileURL.deletingLastPathComponent()
+            
+            if !FileManager.default.fileExists(atPath: directoryPath.path) {
+                do {
+                    try FileManager.default.createDirectory(at: directoryPath, withIntermediateDirectories: true)
+                    print("📁 Created directory: \(directoryPath.path)")
+                } catch {
+                    print("⚠️ Error creating directory for static file \(filename): \(error)")
+                    continue
+                }
+            }
+            
+            // Write the file data
+            do {
+                try staticFile.data.write(to: fileURL)
+                print("📄 Saved static file: \(filename) (\(staticFile.fileSizeString))")
+            } catch {
+                print("⚠️ Error saving static file \(filename): \(error)")
+            }
+        }
+    }
 
     // MARK: - File Tracking and Diffing
     
@@ -254,6 +285,9 @@ class StaticSiteGenerator {
         
         // Extract and save all embed images
         saveEmbedImages(to: siteDirectory)
+        
+        // Save static files
+        saveStaticFiles(to: siteDirectory)
 
         // Generate site content
         try generateIndexPage()

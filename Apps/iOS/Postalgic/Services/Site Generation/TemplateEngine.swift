@@ -73,7 +73,11 @@ class TemplateEngine {
         var context = createBaseContext()
         context["content"] = content
         context["pageTitle"] = pageTitle
-        context["customHead"] = customHead
+        
+        // Generate custom head with static file meta tags
+        let staticFileHead = generateStaticFilesHead()
+        let combinedHead = staticFileHead + (customHead.isEmpty ? "" : "\n" + customHead)
+        context["customHead"] = combinedHead
         context["hasCustomMeta"] = hasCustomMeta
 
         // Generate sidebar content
@@ -95,6 +99,28 @@ class TemplateEngine {
         }
         
         return sidebarHtml
+    }
+    
+    /// Generates HTML head content for static files (favicon and social share image)
+    /// - Returns: HTML meta tags for special static files
+    private func generateStaticFilesHead() -> String {
+        var headContent = ""
+        
+        // Add favicon if it exists
+        if let favicon = blog.favicon {
+            headContent += "<link rel=\"icon\" href=\"/\(favicon.filename)\">"
+        }
+        
+        // Add social share image meta tags if it exists
+        if let socialShareImage = blog.socialShareImage {
+            if !headContent.isEmpty {
+                headContent += "\n"
+            }
+            headContent += "<meta property=\"og:image\" content=\"\(blog.url.hasSuffix("/") ? blog.url : blog.url + "/")\(socialShareImage.filename)\">"
+            headContent += "\n<meta name=\"twitter:image\" content=\"\(blog.url.hasSuffix("/") ? blog.url : blog.url + "/")\(socialShareImage.filename)\">"
+        }
+        
+        return headContent
     }
     
     /// Renders the index page with a list of posts
