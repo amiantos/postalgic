@@ -510,9 +510,9 @@ class StaticSiteGenerator {
         let indexPath = siteDirectory.appendingPathComponent("index.html")
         let sortedPosts = publishedPostsSorted()
         
-        // Limit to 20 posts on index page
-        let indexPosts = Array(sortedPosts.prefix(20))
-        let hasMorePosts = sortedPosts.count > 20
+        // Limit to 10 posts on index page
+        let indexPosts = Array(sortedPosts.prefix(10))
+        let hasMorePosts = sortedPosts.count > 10
 
         do {
             let pageContent = try templateEngine.renderIndexPage(posts: indexPosts, hasMorePosts: hasMorePosts)
@@ -724,31 +724,63 @@ class StaticSiteGenerator {
             throw SiteGeneratorError.templateRenderingFailed("Tag index page generation failed: \(error.localizedDescription)")
         }
 
-        // Create individual tag pages
+        // Create individual tag pages with pagination
         for tag in sortedTags {
             let tagPosts = publishedPosts.filter { $0.tags.contains(tag) }
                 .sorted { $0.createdAt > $1.createdAt }
             
-            // Use the tag's urlPath property
-            let tagPathComponent = tag.urlPath
-            let tagDirectory = tagsDirectory.appendingPathComponent(
-                tagPathComponent
-            )
-            try FileManager.default.createDirectory(
-                at: tagDirectory,
-                withIntermediateDirectories: true
-            )
-            let tagPath = tagDirectory.appendingPathComponent("index.html")
-
+            try generatePaginatedTagPages(tag: tag, posts: tagPosts, tagsDirectory: tagsDirectory)
+        }
+    }
+    
+    /// Generates paginated pages for a specific tag
+    private func generatePaginatedTagPages(tag: Tag, posts: [Post], tagsDirectory: URL) throws {
+        let postsPerPage = 10
+        let totalPages = max(1, Int(ceil(Double(posts.count) / Double(postsPerPage))))
+        
+        // Use the tag's urlPath property
+        let tagPathComponent = tag.urlPath
+        let tagDirectory = tagsDirectory.appendingPathComponent(tagPathComponent)
+        try FileManager.default.createDirectory(
+            at: tagDirectory,
+            withIntermediateDirectories: true
+        )
+        
+        for page in 1...totalPages {
+            let startIndex = (page - 1) * postsPerPage
+            let endIndex = min(startIndex + postsPerPage, posts.count)
+            let postsForPage = Array(posts[startIndex..<endIndex])
+            
+            // Determine the file path for this page
+            let pageDirectory: URL
+            let pagePath: URL
+            
+            if page == 1 {
+                // First page goes to /tags/tag-name/index.html
+                pageDirectory = tagDirectory
+                pagePath = pageDirectory.appendingPathComponent("index.html")
+            } else {
+                // Other pages go to /tags/tag-name/page/2/index.html, etc.
+                pageDirectory = tagDirectory.appendingPathComponent("page").appendingPathComponent("\(page)")
+                try FileManager.default.createDirectory(at: pageDirectory, withIntermediateDirectories: true)
+                pagePath = pageDirectory.appendingPathComponent("index.html")
+            }
+            
             do {
-                let tagPageContent = try templateEngine.renderTagPage(tag: tag, posts: tagPosts)
+                let tagPageContent = try templateEngine.renderTagPage(
+                    tag: tag,
+                    posts: postsForPage,
+                    currentPage: page,
+                    totalPages: totalPages,
+                    totalPosts: posts.count
+                )
                 try tagPageContent.write(
-                    to: tagPath,
+                    to: pagePath,
                     atomically: true,
                     encoding: .utf8
                 )
             } catch {
-                throw SiteGeneratorError.templateRenderingFailed("Tag page generation failed for \(tag.name): \(error.localizedDescription)")
+                throw SiteGeneratorError.templateRenderingFailed("Tag page generation failed for \(tag.name) page \(page): \(error.localizedDescription)")
             }
         }
     }
@@ -798,34 +830,64 @@ class StaticSiteGenerator {
             throw SiteGeneratorError.templateRenderingFailed("Category index page generation failed: \(error.localizedDescription)")
         }
 
-        // Create individual category pages
+        // Create individual category pages with pagination
         for category in sortedCategories {
             let categoryPosts = publishedPosts.filter {
                 $0.category?.id == category.id
             }.sorted { $0.createdAt > $1.createdAt }
             
-            // Use the category's urlPath property
-            let categoryPathComponent = category.urlPath
-            let categoryDirectory = categoriesDirectory.appendingPathComponent(
-                categoryPathComponent
-            )
-            try FileManager.default.createDirectory(
-                at: categoryDirectory,
-                withIntermediateDirectories: true
-            )
-            let categoryPath = categoryDirectory.appendingPathComponent(
-                "index.html"
-            )
-
+            try generatePaginatedCategoryPages(category: category, posts: categoryPosts, categoriesDirectory: categoriesDirectory)
+        }
+    }
+    
+    /// Generates paginated pages for a specific category
+    private func generatePaginatedCategoryPages(category: Category, posts: [Post], categoriesDirectory: URL) throws {
+        let postsPerPage = 10
+        let totalPages = max(1, Int(ceil(Double(posts.count) / Double(postsPerPage))))
+        
+        // Use the category's urlPath property
+        let categoryPathComponent = category.urlPath
+        let categoryDirectory = categoriesDirectory.appendingPathComponent(categoryPathComponent)
+        try FileManager.default.createDirectory(
+            at: categoryDirectory,
+            withIntermediateDirectories: true
+        )
+        
+        for page in 1...totalPages {
+            let startIndex = (page - 1) * postsPerPage
+            let endIndex = min(startIndex + postsPerPage, posts.count)
+            let postsForPage = Array(posts[startIndex..<endIndex])
+            
+            // Determine the file path for this page
+            let pageDirectory: URL
+            let pagePath: URL
+            
+            if page == 1 {
+                // First page goes to /categories/category-name/index.html
+                pageDirectory = categoryDirectory
+                pagePath = pageDirectory.appendingPathComponent("index.html")
+            } else {
+                // Other pages go to /categories/category-name/page/2/index.html, etc.
+                pageDirectory = categoryDirectory.appendingPathComponent("page").appendingPathComponent("\(page)")
+                try FileManager.default.createDirectory(at: pageDirectory, withIntermediateDirectories: true)
+                pagePath = pageDirectory.appendingPathComponent("index.html")
+            }
+            
             do {
-                let categoryPageContent = try templateEngine.renderCategoryPage(category: category, posts: categoryPosts)
+                let categoryPageContent = try templateEngine.renderCategoryPage(
+                    category: category,
+                    posts: postsForPage,
+                    currentPage: page,
+                    totalPages: totalPages,
+                    totalPosts: posts.count
+                )
                 try categoryPageContent.write(
-                    to: categoryPath,
+                    to: pagePath,
                     atomically: true,
                     encoding: .utf8
                 )
             } catch {
-                throw SiteGeneratorError.templateRenderingFailed("Category page generation failed for \(category.name): \(error.localizedDescription)")
+                throw SiteGeneratorError.templateRenderingFailed("Category page generation failed for \(category.name) page \(page): \(error.localizedDescription)")
             }
         }
     }

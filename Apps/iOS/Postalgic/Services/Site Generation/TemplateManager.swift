@@ -446,12 +446,27 @@ class TemplateManager {
         // Single tag template
         defaultTemplates["tag"] = """
         <h1>Posts tagged with "{{tagName}}"</h1>
-        <p class="tag-meta">{{postCount}} {{postCountText}} with this tag</p>
+        <p class="tag-meta">{{totalPosts}} {{postCountText}} with this tag{{#hasPagination}} (showing page {{currentPage}} of {{totalPages}}){{/hasPagination}}</p>
         <div class="post-list">
             {{#posts}}
                 {{> post}}
             {{/posts}}
         </div>
+        
+        {{#hasPagination}}
+        <nav class="pagination-navigation">
+            {{#hasPreviousPage}}
+            <div class="nav-previous">
+                <a href="{{previousPageUrl}}">&larr; Previous</a>
+            </div>
+            {{/hasPreviousPage}}
+            {{#hasNextPage}}
+            <div class="nav-next">
+                <a href="{{nextPageUrl}}">Next &rarr;</a>
+            </div>
+            {{/hasNextPage}}
+        </nav>
+        {{/hasPagination}}
         """
         
         // Categories list template
@@ -471,12 +486,27 @@ class TemplateManager {
         defaultTemplates["category"] = """
         <h1>Posts in category "{{categoryName}}"</h1>
         {{#hasDescription}}<p class="category-description">{{description}}</p>{{/hasDescription}}
-        <p class="category-meta">{{postCount}} {{postCountText}} in this category</p>
+        <p class="category-meta">{{totalPosts}} {{postCountText}} in this category{{#hasPagination}} (showing page {{currentPage}} of {{totalPages}}){{/hasPagination}}</p>
         <div class="post-list">
             {{#posts}}
                 {{> post}}
             {{/posts}}
         </div>
+        
+        {{#hasPagination}}
+        <nav class="pagination-navigation">
+            {{#hasPreviousPage}}
+            <div class="nav-previous">
+                <a href="{{previousPageUrl}}">&larr; Previous</a>
+            </div>
+            {{/hasPreviousPage}}
+            {{#hasNextPage}}
+            <div class="nav-next">
+                <a href="{{nextPageUrl}}">Next &rarr;</a>
+            </div>
+            {{/hasNextPage}}
+        </nav>
+        {{/hasPagination}}
         """
         
         // Default CSS style
@@ -911,7 +941,8 @@ class TemplateManager {
             margin-bottom: 30px;
         }
 
-        .month-navigation {
+        .month-navigation,
+        .pagination-navigation {
             display: flex;
             justify-content: space-between;
             margin-top: 40px;
@@ -920,21 +951,26 @@ class TemplateManager {
         }
 
         .month-navigation .nav-previous,
-        .month-navigation .nav-next {
+        .month-navigation .nav-next,
+        .pagination-navigation .nav-previous,
+        .pagination-navigation .nav-next {
             flex: 1;
         }
 
-        .month-navigation .nav-next {
+        .month-navigation .nav-next,
+        .pagination-navigation .nav-next {
             text-align: right;
         }
 
-        .month-navigation a {
+        .month-navigation a,
+        .pagination-navigation a {
             color: var(--accent-color);
             text-decoration: none;
             font-weight: 500;
         }
 
-        .month-navigation a:hover {
+        .month-navigation a:hover,
+        .pagination-navigation a:hover {
             text-decoration: underline;
         }
 

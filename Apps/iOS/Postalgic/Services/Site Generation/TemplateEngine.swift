@@ -302,25 +302,47 @@ class TemplateEngine {
     /// - Parameters:
     ///   - tag: The tag to display
     ///   - posts: The posts with this tag
+    ///   - currentPage: The current page number (default: 1)
+    ///   - totalPages: The total number of pages (default: 1)
+    ///   - totalPosts: The total number of posts (default: posts.count)
     /// - Returns: The rendered HTML
     /// - Throws: Error if rendering fails
-    func renderTagPage(tag: Tag, posts: [Post]) throws -> String {
+    func renderTagPage(tag: Tag, posts: [Post], currentPage: Int = 1, totalPages: Int = 1, totalPosts: Int? = nil) throws -> String {
         let tagTemplate = try templateManager.getTemplate(for: "tag")
         
         var context = createBaseContext()
         // Add tag data
-        let tagData = TemplateDataConverter.convert(tag: tag, posts: posts)
+        let tagData = TemplateDataConverter.convert(tag: tag, posts: Array(posts))
         for (key, value) in tagData {
             context[key] = value
         }
         
+        let actualTotalPosts = totalPosts ?? posts.count
+        
         // Add additional context
         context["tagName"] = tag.name
-        context["postCountText"] = posts.count == 1 ? "post" : "posts"
+        context["postCountText"] = actualTotalPosts == 1 ? "post" : "posts"
         context["posts"] = posts.map { TemplateDataConverter.convert(post: $0, blog: blog) }
         
+        // Add pagination context
+        context["currentPage"] = currentPage
+        context["totalPages"] = totalPages
+        context["totalPosts"] = actualTotalPosts
+        context["hasPagination"] = totalPages > 1
+        context["hasPreviousPage"] = currentPage > 1
+        context["hasNextPage"] = currentPage < totalPages
+        
+        if currentPage > 1 {
+            context["previousPageUrl"] = currentPage == 2 ? "/tags/\(tag.urlPath)/" : "/tags/\(tag.urlPath)/page/\(currentPage - 1)/"
+        }
+        
+        if currentPage < totalPages {
+            context["nextPageUrl"] = "/tags/\(tag.urlPath)/page/\(currentPage + 1)/"
+        }
+        
         let content = tagTemplate.render(context, library: templateManager.getLibrary())
-        return try renderLayout(content: content, pageTitle: "Tag: \(tag.name) - \(blog.name)")
+        let pageTitle = currentPage == 1 ? "Tag: \(tag.name) - \(blog.name)" : "Tag: \(tag.name) (Page \(currentPage)) - \(blog.name)"
+        return try renderLayout(content: content, pageTitle: pageTitle)
     }
     
     /// Renders the categories index page
@@ -343,26 +365,48 @@ class TemplateEngine {
     /// - Parameters:
     ///   - category: The category to display
     ///   - posts: The posts in this category
+    ///   - currentPage: The current page number (default: 1)
+    ///   - totalPages: The total number of pages (default: 1)
+    ///   - totalPosts: The total number of posts (default: posts.count)
     /// - Returns: The rendered HTML
     /// - Throws: Error if rendering fails
-    func renderCategoryPage(category: Category, posts: [Post]) throws -> String {
+    func renderCategoryPage(category: Category, posts: [Post], currentPage: Int = 1, totalPages: Int = 1, totalPosts: Int? = nil) throws -> String {
         let categoryTemplate = try templateManager.getTemplate(for: "category")
         
         var context = createBaseContext()
         
         // Add category data
-        let categoryData = TemplateDataConverter.convert(category: category, posts: posts)
+        let categoryData = TemplateDataConverter.convert(category: category, posts: Array(posts))
         for (key, value) in categoryData {
             context[key] = value
         }
         
+        let actualTotalPosts = totalPosts ?? posts.count
+        
         // Add additional context
         context["categoryName"] = category.name
-        context["postCountText"] = posts.count == 1 ? "post" : "posts"
+        context["postCountText"] = actualTotalPosts == 1 ? "post" : "posts"
         context["posts"] = posts.map { TemplateDataConverter.convert(post: $0, blog: blog) }
         
+        // Add pagination context
+        context["currentPage"] = currentPage
+        context["totalPages"] = totalPages
+        context["totalPosts"] = actualTotalPosts
+        context["hasPagination"] = totalPages > 1
+        context["hasPreviousPage"] = currentPage > 1
+        context["hasNextPage"] = currentPage < totalPages
+        
+        if currentPage > 1 {
+            context["previousPageUrl"] = currentPage == 2 ? "/categories/\(category.urlPath)/" : "/categories/\(category.urlPath)/page/\(currentPage - 1)/"
+        }
+        
+        if currentPage < totalPages {
+            context["nextPageUrl"] = "/categories/\(category.urlPath)/page/\(currentPage + 1)/"
+        }
+        
         let content = categoryTemplate.render(context, library: templateManager.getLibrary())
-        return try renderLayout(content: content, pageTitle: "Category: \(category.name) - \(blog.name)")
+        let pageTitle = currentPage == 1 ? "Category: \(category.name) - \(blog.name)" : "Category: \(category.name) (Page \(currentPage)) - \(blog.name)"
+        return try renderLayout(content: content, pageTitle: pageTitle)
     }
     
     /// Renders the RSS feed
