@@ -17,36 +17,63 @@ struct BlogsView: View {
 
     var body: some View {
         NavigationStack {
-            List {
-                ForEach(blogs.sorted(by: { $0.createdAt > $1.createdAt })) {
-                    blog in
-                    NavigationLink {
-                        BlogDashboardView(blog: blog)
-                    } label: {
-                        HStack {
-                            // Display favicon if available
-                            if let favicon = blog.favicon, let image = UIImage(data: favicon.data) {
-                                Image(uiImage: image)
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fit)
-                                    .frame(width: 36, height: 36)
-                                    .clipShape(RoundedRectangle(cornerRadius: 4))
-                            } else {
-                                // Placeholder icon when no favicon
-                                Image(systemName: "globe")
-                                    .foregroundColor(.secondary)
-                                    .frame(width: 36, height: 36)
-                            }
-                            
-                            VStack(alignment: .leading) {
-                                Text(blog.name)
-                                    .font(.headline)
-                                if !blog.url.isEmpty {
-                                    Text(blog.url)
-                                        .font(.subheadline)
-                                        .foregroundStyle(.secondary)
+            Group {
+                if blogs.isEmpty {
+                    VStack(spacing: 12) {
+                        Image(systemName: "globe")
+                            .font(.system(size: 48))
+                            .foregroundColor(.secondary)
+                        
+                        Text("No blogs yet")
+                            .font(.title2)
+                            .fontWeight(.semibold)
+                        
+                        Text("Create your first blog to get started")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.center)
+                        
+                        Button(action: { showingBlogForm = true }) {
+                            Text("Create Blog")
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .padding(.top, 8)
+                    }
+                    .padding()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else {
+                    List {
+                        ForEach(blogs.sorted(by: { $0.createdAt > $1.createdAt })) {
+                            blog in
+                            NavigationLink {
+                                BlogDashboardView(blog: blog)
+                            } label: {
+                                HStack {
+                                    // Display favicon if available
+                                    if let favicon = blog.favicon, let image = UIImage(data: favicon.data) {
+                                        Image(uiImage: image)
+                                            .resizable()
+                                            .aspectRatio(contentMode: .fit)
+                                            .frame(width: 36, height: 36)
+                                            .clipShape(RoundedRectangle(cornerRadius: 4))
+                                    } else {
+                                        // Placeholder icon when no favicon
+                                        Image(systemName: "globe")
+                                            .foregroundColor(.secondary)
+                                            .frame(width: 36, height: 36)
+                                    }
+                                    
+                                    VStack(alignment: .leading) {
+                                        Text(blog.name)
+                                            .font(.headline)
+                                        if !blog.url.isEmpty {
+                                            Text(blog.url)
+                                                .font(.subheadline)
+                                                .foregroundStyle(.secondary)
+                                        }
+                                    }.padding(.leading, 6)
                                 }
-                            }.padding(.leading, 6)
+                            }
                         }
                     }
                 }
