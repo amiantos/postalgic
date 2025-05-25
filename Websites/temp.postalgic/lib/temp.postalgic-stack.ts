@@ -7,6 +7,7 @@ import { aws_cloudfront as cloudfront } from "aws-cdk-lib";
 import { aws_cloudfront_origins as origins } from "aws-cdk-lib";
 import { aws_route53 as route53 } from "aws-cdk-lib";
 import { aws_route53_targets as targets } from "aws-cdk-lib";
+import { aws_iam as iam } from "aws-cdk-lib";
 
 export class TempPostalgicStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -125,10 +126,81 @@ export class TempPostalgicStack extends cdk.Stack {
       target: route53.RecordTarget.fromAlias(new targets.CloudFrontTarget(mainDistribution)),
     });
 
+    // Create IAM user for S3 and CloudFront access
+    const deploymentUser = new iam.User(this, "DeploymentUser", {
+      userName: `${SUBDOMAIN}-postalgic-deployment-user`
+    });
+
+    // Create policy for S3 bucket access
+    const s3Policy = new iam.Policy(this, "S3AccessPolicy", {
+      policyName: `${SUBDOMAIN}-postalgic-s3-access`,
+      statements: [
+        new iam.PolicyStatement({
+          effect: iam.Effect.ALLOW,
+          actions: [
+            "s3:GetObject",
+            "s3:PutObject",
+            "s3:DeleteObject",
+            "s3:ListBucket"
+          ],
+          resources: [
+            mainBucket.bucketArn,
+            `${mainBucket.bucketArn}/*`
+          ]
+        })
+      ]
+    });
+
+    // Create policy for CloudFront invalidation
+    const cloudfrontPolicy = new iam.Policy(this, "CloudFrontAccessPolicy", {
+      policyName: `${SUBDOMAIN}-postalgic-cloudfront-access`,
+      statements: [
+        new iam.PolicyStatement({
+          effect: iam.Effect.ALLOW,
+          actions: [
+            "cloudfront:CreateInvalidation"
+          ],
+          resources: [
+            `arn:aws:cloudfront::${this.account}:distribution/${mainDistribution.distributionId}`
+          ]
+        })
+      ]
+    });
+
+    // Attach policies to user
+    deploymentUser.attachInlinePolicy(s3Policy);
+    deploymentUser.attachInlinePolicy(cloudfrontPolicy);
+
+    // Create access key for the user
+    const accessKey = new iam.AccessKey(this, "DeploymentUserAccessKey", {
+      user: deploymentUser
+    });
+
     // Output the CloudFront domain names
     new cdk.CfnOutput(this, "MainSiteDomain", {
       value: mainDistribution.domainName,
       description: "Main Site CloudFront Distribution Domain",
+    });
+
+    // Output deployment credentials
+    new cdk.CfnOutput(this, "DeploymentAccessKeyId", {
+      value: accessKey.accessKeyId,
+      description: "Access Key ID for deployment user",
+    });
+
+    new cdk.CfnOutput(this, "DeploymentSecretAccessKey", {
+      value: accessKey.secretAccessKey.unsafeUnwrap(),
+      description: "Secret Access Key for deployment user",
+    });
+
+    new cdk.CfnOutput(this, "S3BucketName", {
+      value: mainBucket.bucketName,
+      description: "S3 bucket name for website files",
+    });
+
+    new cdk.CfnOutput(this, "CloudFrontDistributionId", {
+      value: mainDistribution.distributionId,
+      description: "CloudFront distribution ID for cache invalidation",
     });
   }
 }
