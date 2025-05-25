@@ -11,6 +11,7 @@ struct BlogAwsConfigView: View {
     @Bindable var blog: Blog
     @Environment(\.dismiss) private var dismiss
     @State private var awsSecretAccessKey: String = ""
+    @Environment(\.modelContext) private var modelContext
 
     // Available AWS regions
     let awsRegions = [
@@ -170,6 +171,7 @@ struct BlogAwsConfigView: View {
                     if !awsSecretAccessKey.isEmpty {
                         blog.setAwsSecretAccessKey(awsSecretAccessKey)
                     }
+                    try? modelContext.save()
                     dismiss()
                 }
             )
