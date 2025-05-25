@@ -109,7 +109,7 @@ class TemplateEngine {
     /// Generates HTML head content for static files (favicon and social share image)
     /// - Returns: HTML meta tags for special static files
     private func generateStaticFilesHead() -> String {
-        var headContent = ""
+        var headContent = "<meta name=\"apple-mobile-web-app-title\" content=\"\(blog.name)\"/>"
         
         // Add favicon if it exists - generate multiple sizes following WordPress pattern
         if let favicon = blog.favicon {
@@ -117,7 +117,7 @@ class TemplateEngine {
                 // Generate multiple favicon link tags for different sizes
                 headContent += "<link rel=\"icon\" href=\"/favicon-32x32.png\" sizes=\"32x32\" type=\"image/png\">"
                 headContent += "\n<link rel=\"icon\" href=\"/favicon-192x192.png\" sizes=\"192x192\" type=\"image/png\">"
-                headContent += "\n<link rel=\"apple-touch-icon\" href=\"/apple-touch-icon.png\">"
+                headContent += "\n<link rel=\"apple-touch-icon\" href=\"/apple-touch-icon.png\" sizes=\"180x180\">"
             } else {
                 // For ICO files, use the original file
                 headContent += "<link rel=\"icon\" href=\"/\(favicon.filename)\" type=\"\(favicon.mimeType)\" sizes=\"any\">"

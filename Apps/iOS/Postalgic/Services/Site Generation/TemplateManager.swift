@@ -1312,7 +1312,7 @@ class TemplateManager {
             }
             
             .container {
-                padding: 0;
+                padding: 0.5em;
                 position: relative;
                 overflow-x: hidden;
             }
