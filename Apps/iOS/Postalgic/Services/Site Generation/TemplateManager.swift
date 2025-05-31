@@ -269,8 +269,8 @@ class TemplateManager {
                                 <ul>
                                     <li><a href="/">Home</a></li>
                                     <li><a href="/archives/">Archives</a></li>
-                                    <li><a href="/categories/">Categories</a></li>
-                                    <li><a href="/tags/">Tags</a></li>
+                                    {{#hasCategories}}<li><a href="/categories/">Categories</a></li>{{/hasCategories}}
+                                    {{#hasTags}}<li><a href="/tags/">Tags</a></li>{{/hasTags}}
                                 </ul>
                             </nav>
                         </div>

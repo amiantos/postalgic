@@ -32,6 +32,11 @@ class TemplateEngine {
     private func createBaseContext() -> [String: Any] {
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        
+        // Check if there are any published posts with tags or categories
+        let publishedPosts = blog.posts.filter { !$0.isDraft }
+        let hasTags = !Set(publishedPosts.flatMap { $0.tags }).isEmpty
+        let hasCategories = !Set(publishedPosts.compactMap { $0.category }).isEmpty
 
         var context: [String: Any] = [
             "blogName": blog.name,
@@ -43,7 +48,9 @@ class TemplateEngine {
             "textColor": blog.textColor ?? "#2d3748",
             "lightShade": blog.lightShade ?? "#dedede",
             "mediumShade": blog.mediumShade ?? "#a0aec0",
-            "darkShade": blog.darkShade ?? "#4a5568"
+            "darkShade": blog.darkShade ?? "#4a5568",
+            "hasTags": hasTags,
+            "hasCategories": hasCategories
         ]
 
         // Add optional values only if they exist

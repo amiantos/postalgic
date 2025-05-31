@@ -698,7 +698,12 @@ class StaticSiteGenerator {
             $0.name < $1.name
         }
 
-        // Always create tags directory
+        // Skip tag page generation if no tags exist
+        guard !sortedTags.isEmpty else {
+            return
+        }
+
+        // Create tags directory
         let tagsDirectory = siteDirectory.appendingPathComponent("tags")
         try FileManager.default.createDirectory(
             at: tagsDirectory,
@@ -800,7 +805,12 @@ class StaticSiteGenerator {
             $0.name < $1.name
         }
 
-        // Always create categories directory
+        // Skip category page generation if no categories exist
+        guard !sortedCategories.isEmpty else {
+            return
+        }
+
+        // Create categories directory
         let categoriesDirectory = siteDirectory.appendingPathComponent(
             "categories"
         )
