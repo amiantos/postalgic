@@ -228,6 +228,7 @@ struct PostView: View {
                     if let oldEmbed = post.embed {
                         modelContext.delete(oldEmbed)
                         post.embed = nil
+                        try? modelContext.save()
                     }
                 }
                 Button("Cancel", role: .cancel) {}

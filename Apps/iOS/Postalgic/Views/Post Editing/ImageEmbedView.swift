@@ -176,6 +176,7 @@ struct ImageEmbedView: View {
             modelContext.insert(embedImage)
             embed.images.append(embedImage)
         }
+        try? modelContext.save()
     }
 
     private func updateEmbed() {
@@ -206,6 +207,7 @@ struct ImageEmbedView: View {
             modelContext.insert(embedImage)
             existingEmbed.images.append(embedImage)
         }
+        try? modelContext.save()
     }
 }
 

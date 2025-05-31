@@ -73,6 +73,7 @@ struct CategoryManagementView: View {
             let categoryToDelete = sortedCategories[index]
             modelContext.delete(categoryToDelete)
         }
+        try? modelContext.save()
     }
 }
 

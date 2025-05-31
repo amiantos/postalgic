@@ -281,6 +281,7 @@ struct URLEmbedView: View {
         post.embed = embed
         // Insert embed into model context
         modelContext.insert(embed)
+        try? modelContext.save()
     }
 
     private func updateEmbed() {
@@ -328,6 +329,7 @@ struct URLEmbedView: View {
                 existingEmbed.imageData = linkMetadata.imageData
             }
         }
+        try? modelContext.save()
     }
 }
 

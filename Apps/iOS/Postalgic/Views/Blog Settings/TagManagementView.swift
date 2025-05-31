@@ -75,6 +75,7 @@ struct TagManagementView: View {
             let tagToDelete = sortedTags[index]
             modelContext.delete(tagToDelete)
         }
+        try? modelContext.save()
     }
 }
 
