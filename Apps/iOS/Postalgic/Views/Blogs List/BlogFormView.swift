@@ -17,6 +17,9 @@ struct BlogFormView: View {
     // Optional blog for editing mode
     private var blog: Blog?
     
+    // Callback for when a new blog is created
+    var onBlogCreated: ((Blog) -> Void)?
+    
     @State private var name: String
     @State private var authorName: String
     @State private var authorEmail: String
@@ -24,9 +27,10 @@ struct BlogFormView: View {
     @State private var tagline: String
     
     // Initialize for creating a new blog
-    init() {
+    init(onBlogCreated: ((Blog) -> Void)? = nil) {
         self.isEditing = false
         self.blog = nil
+        self.onBlogCreated = onBlogCreated
         _name = State(initialValue: "")
         _authorName = State(initialValue: "")
         _authorEmail = State(initialValue: "")
@@ -38,6 +42,7 @@ struct BlogFormView: View {
     init(blog: Blog) {
         self.isEditing = true
         self.blog = blog
+        self.onBlogCreated = nil
         _name = State(initialValue: blog.name)
         _authorName = State(initialValue: blog.authorName ?? "")
         _authorEmail = State(initialValue: blog.authorEmail ?? "")
@@ -83,7 +88,8 @@ struct BlogFormView: View {
                         if isEditing {
                             updateBlog()
                         } else {
-                            addBlog()
+                            let newBlog = addBlog()
+                            onBlogCreated?(newBlog)
                         }
                         dismiss()
                     }
@@ -93,7 +99,7 @@ struct BlogFormView: View {
         }
     }
     
-    private func addBlog() {
+    private func addBlog() -> Blog {
         let newBlog = Blog(
             name: name, 
             url: "",
@@ -104,6 +110,7 @@ struct BlogFormView: View {
         )
         modelContext.insert(newBlog)
         try? modelContext.save()
+        return newBlog
     }
     
     private func updateBlog() {
