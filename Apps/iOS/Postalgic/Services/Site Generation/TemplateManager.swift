@@ -366,7 +366,7 @@ class TemplateManager {
         {{/posts}}
         {{#hasMorePosts}}
         <div class="archives-link">
-            <a href="/archives">View all posts in archives →</a>
+            <a href="{{#recentArchiveUrl}}{{recentArchiveUrl}}{{/recentArchiveUrl}}{{^recentArchiveUrl}}/archives{{/recentArchiveUrl}}">← View more posts in the archives</a>
         </div>
         {{/hasMorePosts}}
         """

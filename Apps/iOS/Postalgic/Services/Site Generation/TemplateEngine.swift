@@ -156,6 +156,17 @@ class TemplateEngine {
         context["posts"] = posts.map { TemplateDataConverter.convert(post: $0, blog: blog) }
         context["hasMorePosts"] = hasMorePosts
         
+        // Add most recent month's archive URL
+        if hasMorePosts {
+            let publishedPosts = blog.posts.filter { !$0.isDraft }.sorted { $0.createdAt > $1.createdAt }
+            if let mostRecentPost = publishedPosts.first {
+                let calendar = Calendar.current
+                let year = calendar.component(.year, from: mostRecentPost.createdAt)
+                let month = calendar.component(.month, from: mostRecentPost.createdAt)
+                context["recentArchiveUrl"] = "/\(String(format: "%04d", year))/\(String(format: "%02d", month))/"
+            }
+        }
+        
         let content = indexTemplate.render(context, library: templateManager.getLibrary())
         return try renderLayout(
             content: content,
