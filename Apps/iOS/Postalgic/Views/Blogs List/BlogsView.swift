@@ -14,10 +14,9 @@ struct BlogsView: View {
     @State private var showingBlogForm = false
     @State private var showingHelpSheet = false
     @State private var showingIntroduction = false
-    @State private var navigationPath = NavigationPath()
 
     var body: some View {
-        NavigationStack(path: $navigationPath) {
+        NavigationStack {
             Group {
                 if blogs.isEmpty {
                     VStack(spacing: 12) {
@@ -46,7 +45,9 @@ struct BlogsView: View {
                     List {
                         ForEach(blogs.sorted(by: { $0.createdAt > $1.createdAt })) {
                             blog in
-                            NavigationLink(value: blog) {
+                            NavigationLink {
+                                BlogDashboardView(blog: blog)
+                            } label: {
                                 HStack {
                                     // Display favicon if available
                                     if let favicon = blog.favicon, let image = UIImage(data: favicon.data) {
@@ -106,13 +107,8 @@ struct BlogsView: View {
                 }
             }
             .navigationTitle("Your Blogs")
-            .navigationDestination(for: Blog.self) { blog in
-                BlogDashboardView(blog: blog)
-            }
             .sheet(isPresented: $showingBlogForm) {
-                BlogFormView { newBlog in
-                    navigationPath.append(newBlog)
-                }.interactiveDismissDisabled()
+                BlogFormView().interactiveDismissDisabled()
             }
             .onAppear {
                 if !UserDefaults.standard.bool(forKey: "hasSeenIntroduction") {
