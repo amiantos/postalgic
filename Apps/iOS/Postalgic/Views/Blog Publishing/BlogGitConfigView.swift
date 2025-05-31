@@ -11,6 +11,7 @@ import SwiftUI
 struct BlogGitConfigView: View {
     @Bindable var blog: Blog
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
     
     @State private var repositoryUrl: String = ""
     @State private var username: String = ""
@@ -91,6 +92,7 @@ struct BlogGitConfigView: View {
                         
                         blog.gitBranch = nil
                         blog.gitCommitMessage = nil
+                        try? modelContext.save()
                     }) {
                         Text("Clear Git Configuration")
                             .foregroundColor(.red)
@@ -142,6 +144,8 @@ struct BlogGitConfigView: View {
         
         blog.gitBranch = branch.trimmingCharacters(in: .whitespacesAndNewlines)
         blog.gitCommitMessage = commitMessage.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        try? modelContext.save()
     }
 }
 

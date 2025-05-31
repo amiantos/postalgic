@@ -11,6 +11,7 @@ import SwiftUI
 struct BlogFtpConfigView: View {
     @Bindable var blog: Blog
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
     
     @State private var host: String = ""
     @State private var port: String = "22"
@@ -114,6 +115,8 @@ struct BlogFtpConfigView: View {
         
         blog.ftpPath = remotePath.trimmingCharacters(in: .whitespacesAndNewlines)
         blog.ftpUseSFTP = true // Always set to true since we only support SFTP now
+        
+        try? modelContext.save()
     }
 }
 
