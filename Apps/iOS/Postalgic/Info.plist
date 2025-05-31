@@ -2,7 +2,11 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key> ITSAppUsesNonExemptEncryption </key>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Postalgic needs Photo Library access so that you can use your photos on your blog.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Postalgic uses biometrics to protect against unauthorized deletion of blogs.</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 </dict>
 </plist>
