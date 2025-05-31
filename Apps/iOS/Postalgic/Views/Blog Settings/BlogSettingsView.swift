@@ -5,6 +5,7 @@
 //  Created by Brad Root on 4/29/25.
 //
 
+import LocalAuthentication
 import SwiftData
 import SwiftUI
 
@@ -24,6 +25,8 @@ struct BlogSettingsView: View {
     @State private var showingThemesView = false
     @State private var showingDeleteAlert = false
     @State private var deleteConfirmationText = ""
+    @State private var authenticationError: String?
+    @State private var showingAuthError = false
     @State private var showingStubMigrationAlert = false
     @State private var showingStubMigrationSuccessAlert = false
     @State private var migratedStubCounts: (posts: Int, categories: Int, tags: Int) = (0, 0, 0)
@@ -107,7 +110,7 @@ struct BlogSettingsView: View {
                 }
 
                 Section {
-                    Button(action: { showingDeleteAlert = true }) {
+                    Button(action: { authenticateForDeletion() }) {
                         Label("Delete Blog", systemImage: "trash")
                             .foregroundStyle(.red)
                     }
@@ -189,6 +192,65 @@ struct BlogSettingsView: View {
             } else {
                 return Text("No content found requiring URL stubs.")
             }
+        }
+        .alert("Authentication Error", isPresented: $showingAuthError) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(authenticationError ?? "Authentication failed")
+        }
+    }
+    
+    private func authenticateForDeletion() {
+        let context = LAContext()
+        var error: NSError?
+        
+        // Check if biometric authentication is available
+        if context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error) {
+            let reason = "Authenticate to delete this blog"
+            
+            context.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: reason) { success, authError in
+                DispatchQueue.main.async {
+                    if success {
+                        // Authentication successful, show text confirmation
+                        showingDeleteAlert = true
+                    } else {
+                        // Biometric authentication failed, try passcode as fallback
+                        fallbackToPasscode()
+                    }
+                }
+            }
+        } else {
+            // Biometrics not available, try passcode directly
+            fallbackToPasscode()
+        }
+    }
+    
+    private func fallbackToPasscode() {
+        let context = LAContext()
+        var error: NSError?
+        
+        if context.canEvaluatePolicy(.deviceOwnerAuthentication, error: &error) {
+            let reason = "Authenticate to delete this blog"
+            
+            context.evaluatePolicy(.deviceOwnerAuthentication, localizedReason: reason) { success, authError in
+                DispatchQueue.main.async {
+                    if success {
+                        // Authentication successful, show text confirmation
+                        showingDeleteAlert = true
+                    } else {
+                        // Authentication failed
+                        if let error = authError {
+                            authenticationError = error.localizedDescription
+                        } else {
+                            authenticationError = "Authentication failed"
+                        }
+                        showingAuthError = true
+                    }
+                }
+            }
+        } else {
+            // No authentication available, proceed to text confirmation
+            showingDeleteAlert = true
         }
     }
     
