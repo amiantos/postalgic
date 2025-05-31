@@ -9,6 +9,15 @@ import Foundation
 import CommonCrypto
 import UIKit
 import SwiftData
+import ImageIO
+
+enum ImageFormat {
+    case png
+    case jpeg
+    case gif
+    case webp
+    case unknown
+}
 
 struct Utils {
     static func extractYouTubeId(from url: String) -> String? {
@@ -114,7 +123,7 @@ struct Utils {
         return resizedImage?.pngData()
     }
     
-    /// Optimizes and resizes an image to a maximum dimension of 1024 pixels
+    /// Optimizes and resizes an image to a maximum dimension of 1024 pixels while preserving format and transparency
     /// - Parameters:
     ///   - imageData: The original image data
     ///   - maxDimension: Maximum dimension (width or height) for the optimized image (default: 1024)
@@ -125,12 +134,27 @@ struct Utils {
             return nil
         }
 
+        // Detect original format by checking the data signature
+        let originalFormat = detectImageFormat(from: imageData)
+        
+        // Strip metadata first to remove EXIF/location data
+        let cleanedData = stripImageMetadata(from: imageData) ?? imageData
+
         // Calculate new dimensions, maintaining aspect ratio
         let originalSize = originalImage.size
 
-        // If both dimensions are already smaller than maxDimension, just compress
+        // If both dimensions are already smaller than maxDimension, just strip metadata and preserve format
         if originalSize.width <= maxDimension && originalSize.height <= maxDimension {
-            return originalImage.jpegData(compressionQuality: quality)
+            // For already-small images, preserve original format
+            if originalFormat == .png {
+                return cleanedData
+            } else if originalFormat == .gif {
+                // For GIFs that don't need resizing, keep original to preserve animation
+                return imageData // Return original data to preserve animation
+            } else {
+                // For JPEG and other formats, apply compression
+                return originalImage.jpegData(compressionQuality: quality)
+            }
         }
 
         // Determine which dimension is larger to constrain properly
@@ -149,14 +173,96 @@ struct Utils {
 
         let newSize = CGSize(width: newWidth, height: newHeight)
 
-        // Create a new renderer for resizing
+        // For GIF files, we can't easily preserve animation during resize, so convert to PNG to maintain transparency
+        if originalFormat == .gif {
+            UIGraphicsBeginImageContextWithOptions(newSize, false, 1.0)
+            originalImage.draw(in: CGRect(origin: .zero, size: newSize))
+            let resizedImage = UIGraphicsGetImageFromCurrentImageContext()
+            UIGraphicsEndImageContext()
+            
+            return resizedImage?.pngData()
+        }
+        
+        // For PNG files, preserve transparency
+        if originalFormat == .png {
+            UIGraphicsBeginImageContextWithOptions(newSize, false, 1.0)
+            originalImage.draw(in: CGRect(origin: .zero, size: newSize))
+            let resizedImage = UIGraphicsGetImageFromCurrentImageContext()
+            UIGraphicsEndImageContext()
+            
+            return resizedImage?.pngData()
+        }
+
+        // For all other formats (JPEG, WEBP, etc.), use JPEG with compression
         UIGraphicsBeginImageContextWithOptions(newSize, false, 1.0)
         originalImage.draw(in: CGRect(origin: .zero, size: newSize))
         let resizedImage = UIGraphicsGetImageFromCurrentImageContext()
         UIGraphicsEndImageContext()
 
-        // Convert to JPEG data with the specified quality
         return resizedImage?.jpegData(compressionQuality: quality)
+    }
+    
+    /// Detects the format of an image from its data signature
+    /// - Parameter imageData: The image data to analyze
+    /// - Returns: The detected image format
+    private static func detectImageFormat(from imageData: Data) -> ImageFormat {
+        guard imageData.count >= 4 else { return .unknown }
+        
+        let bytes = imageData.prefix(4).map { $0 }
+        
+        // PNG signature: 89 50 4E 47
+        if bytes.count >= 4 && bytes[0] == 0x89 && bytes[1] == 0x50 && bytes[2] == 0x4E && bytes[3] == 0x47 {
+            return .png
+        }
+        
+        // JPEG signature: FF D8
+        if bytes.count >= 2 && bytes[0] == 0xFF && bytes[1] == 0xD8 {
+            return .jpeg
+        }
+        
+        // GIF signature: 47 49 46
+        if bytes.count >= 3 && bytes[0] == 0x47 && bytes[1] == 0x49 && bytes[2] == 0x46 {
+            return .gif
+        }
+        
+        // WEBP signature: check for "WEBP" at offset 8
+        if imageData.count >= 12 {
+            let webpBytes = imageData.subdata(in: 8..<12).map { $0 }
+            if webpBytes[0] == 0x57 && webpBytes[1] == 0x45 && webpBytes[2] == 0x42 && webpBytes[3] == 0x50 {
+                return .webp
+            }
+        }
+        
+        return .unknown
+    }
+    
+    /// Strips metadata (EXIF, location, etc.) from image data
+    /// - Parameter imageData: The original image data
+    /// - Returns: Image data with metadata stripped, or nil if processing failed
+    private static func stripImageMetadata(from imageData: Data) -> Data? {
+        guard let source = CGImageSourceCreateWithData(imageData as CFData, nil),
+              let imageType = CGImageSourceGetType(source) else {
+            return nil
+        }
+        
+        let mutableData = NSMutableData()
+        guard let destination = CGImageDestinationCreateWithData(mutableData, imageType, 1, nil) else {
+            return nil
+        }
+        
+        // Create options to strip metadata
+        let options: [CFString: Any] = [
+            kCGImageDestinationLossyCompressionQuality: 0.8,
+            kCGImageDestinationMetadata: [:] // Empty metadata dictionary removes all metadata
+        ]
+        
+        CGImageDestinationAddImageFromSource(destination, source, 0, options as CFDictionary)
+        
+        if CGImageDestinationFinalize(destination) {
+            return mutableData as Data
+        }
+        
+        return nil
     }
 
     /// Generates a unique filename for an embed image
@@ -178,6 +284,48 @@ struct Utils {
             fileExtension = ext.lowercased()
         } else {
             fileExtension = "jpg"
+        }
+
+        return "embed-\(timestamp)-\(uuid)-\(orderString).\(fileExtension)"
+    }
+    
+    /// Generates a unique filename for an embed image based on image data format
+    /// - Parameters:
+    ///   - embed: The embed the image belongs to
+    ///   - imageData: The image data to detect format from
+    ///   - order: Order index of the image in the embed
+    /// - Returns: A unique filename with appropriate extension for the image format
+    static func generateImageFilename(for embed: Embed, imageData: Data, order: Int) -> String {
+        let timestamp = Int(Date().timeIntervalSince1970)
+        let uuid = UUID().uuidString.prefix(8)
+        let orderString = String(format: "%02d", order)
+
+        // Detect format and use appropriate extension
+        let format = detectImageFormat(from: imageData)
+        let fileExtension: String
+        
+        // Determine final format based on processing logic
+        switch format {
+        case .png:
+            fileExtension = "png"
+        case .gif:
+            // Check if GIF will need resizing
+            if let originalImage = UIImage(data: imageData) {
+                let originalSize = originalImage.size
+                if originalSize.width <= 1024 && originalSize.height <= 1024 {
+                    fileExtension = "gif" // Keep as GIF if no resizing needed
+                } else {
+                    fileExtension = "png" // Convert to PNG if resizing needed
+                }
+            } else {
+                fileExtension = "gif" // Default to GIF if we can't read the image
+            }
+        case .jpeg:
+            fileExtension = "jpg"
+        case .webp:
+            fileExtension = "jpg" // WEBP converted to JPEG
+        case .unknown:
+            fileExtension = "jpg" // Default fallback
         }
 
         return "embed-\(timestamp)-\(uuid)-\(orderString).\(fileExtension)"

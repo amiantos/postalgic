@@ -166,7 +166,7 @@ struct ImageEmbedView: View {
 
         // Add all selected images to the embed
         for (index, imageData) in selectedImageData.enumerated() {
-            let filename = Utils.generateImageFilename(for: embed, order: index)
+            let filename = Utils.generateImageFilename(for: embed, imageData: imageData, order: index)
             let embedImage = EmbedImage(
                 embed: embed,
                 imageData: imageData,
@@ -197,7 +197,7 @@ struct ImageEmbedView: View {
 
         // Add all selected images to the embed
         for (index, imageData) in selectedImageData.enumerated() {
-            let filename = Utils.generateImageFilename(for: existingEmbed, order: index)
+            let filename = Utils.generateImageFilename(for: existingEmbed, imageData: imageData, order: index)
             let embedImage = EmbedImage(
                 embed: existingEmbed,
                 imageData: imageData,
