@@ -1,6 +1,7 @@
 import SwiftUI
 import SwiftData
 import PhotosUI
+import UniformTypeIdentifiers
 
 struct ImageEmbedView: View {
     @Environment(\.modelContext) private var modelContext
@@ -15,6 +16,9 @@ struct ImageEmbedView: View {
     // For image picker
     @State private var selectedItems: [PhotosPickerItem] = []
     @State private var selectedImageData: [Data] = []
+    
+    // For file picker
+    @State private var showingFilePicker = false
 
     init(post: Post) {
         self.post = post
@@ -34,16 +38,30 @@ struct ImageEmbedView: View {
         NavigationStack {
             Form {
                 Section(header: Text("Select Images")) {
-                    PhotosPicker(
-                        selection: $selectedItems,
-                        matching: .images,
-                        photoLibrary: .shared()
-                    ) {
-                        Label(selectedImageData.isEmpty ? "Select Photos" : "Change Photos", systemImage: "photo.on.rectangle")
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.blue.opacity(0.1))
-                            .cornerRadius(8)
+                    VStack(spacing: 8) {
+                        PhotosPicker(
+                            selection: $selectedItems,
+                            matching: .images,
+                            photoLibrary: .shared()
+                        ) {
+                            Label("Select from Photos", systemImage: "photo.on.rectangle")
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .background(Color.blue.opacity(0.1))
+                                .cornerRadius(8)
+                        }
+                        
+                        Button(action: {
+                            showingFilePicker = true
+                        }) {
+                            Label("Select from Files", systemImage: "folder")
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .background(Color.green.opacity(0.1))
+                                .cornerRadius(8)
+                        }
+                        .foregroundColor(.primary)
+                        .buttonStyle(PlainButtonStyle())
                     }
                     .onChange(of: selectedItems) { oldValue, newValue in
                         Task {
@@ -143,6 +161,15 @@ struct ImageEmbedView: View {
                     .disabled(selectedImageData.isEmpty || isProcessingImages)
                 }
             }
+            .fileImporter(
+                isPresented: $showingFilePicker,
+                allowedContentTypes: [.image],
+                allowsMultipleSelection: true
+            ) { result in
+                Task {
+                    await handleFilePickerResult(result)
+                }
+            }
         }
     }
     
@@ -208,6 +235,40 @@ struct ImageEmbedView: View {
             existingEmbed.images.append(embedImage)
         }
         try? modelContext.save()
+    }
+    
+    private func handleFilePickerResult(_ result: Result<[URL], Error>) async {
+        switch result {
+        case .success(let urls):
+            isProcessingImages = true
+            selectedImageData = []
+            selectedItems = [] // Clear photo picker selection
+            
+            for url in urls {
+                if url.startAccessingSecurityScopedResource() {
+                    defer { url.stopAccessingSecurityScopedResource() }
+                    
+                    do {
+                        let data = try Data(contentsOf: url)
+                        // Optimize the image (constrained to 1024 pixels max dimension)
+                        if let optimizedData = Utils.optimizeImage(imageData: data, maxDimension: 1024) {
+                            await MainActor.run {
+                                selectedImageData.append(optimizedData)
+                            }
+                        }
+                    } catch {
+                        print("Error reading file: \(error)")
+                    }
+                }
+            }
+            
+            await MainActor.run {
+                isProcessingImages = false
+            }
+            
+        case .failure(let error):
+            print("File picker error: \(error)")
+        }
     }
 }
 
