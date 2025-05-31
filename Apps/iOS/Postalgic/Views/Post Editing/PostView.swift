@@ -244,9 +244,7 @@ struct PostView: View {
             // URL embed sheet
             .sheet(isPresented: $showingURLEmbed) {
                 URLEmbedView(post: post, onTitleUpdate: { newTitle in
-                    if post.title == nil || post.title!.isEmpty {
-                        post.title = newTitle
-                    }
+                    post.title = newTitle
                 })
             }
             // Image embed sheet
