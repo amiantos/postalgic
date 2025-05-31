@@ -115,30 +115,24 @@ class GitPublisher: Publisher {
             // Step 2: Copy the site files to the repository
             statusUpdate("Copying site files to repository...")
             
-            // Clear existing files in repository (except .git folder)
-            let repoContents = try fileManager.contentsOfDirectory(
-                at: tempRepoURL,
-                includingPropertiesForKeys: nil,
-                options: [.skipsHiddenFiles]
-            )
-            
-            for item in repoContents {
-                let lastComponent = item.lastPathComponent
-                if lastComponent != ".git" {
-                    try fileManager.removeItem(at: item)
-                }
-            }
-            
-            // Copy all files from the generated site to the repository
+            // Get list of files from the generated site
             let siteContents = try fileManager.contentsOfDirectory(
                 at: directoryURL,
                 includingPropertiesForKeys: nil,
                 options: [.skipsHiddenFiles]
             )
             
+            // Copy all files from the generated site to the repository
             for item in siteContents {
                 let destination = tempRepoURL.appendingPathComponent(item.lastPathComponent)
-                try fileManager.copyItem(at: item, to: destination)
+                
+                if fileManager.fileExists(atPath: destination.path) {
+                    // Replace existing file
+                    _ = try fileManager.replaceItem(at: destination, withItemAt: item, backupItemName: nil, options: [], resultingItemURL: nil)
+                } else {
+                    // Copy new file
+                    try fileManager.copyItem(at: item, to: destination)
+                }
             }
             
             // Step 3: Stage all changes
