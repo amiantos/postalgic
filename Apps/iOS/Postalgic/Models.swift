@@ -49,7 +49,7 @@ final class Blog {
     var publisherType: String?
 
     // AWS Configuration
-    var awsRegion: String?
+    var awsRegion: String? = "us-east-1"
     var awsS3Bucket: String?
     var awsCloudFrontDistId: String?
     var awsAccessKeyId: String?
