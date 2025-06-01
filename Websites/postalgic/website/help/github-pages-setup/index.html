@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta name="description" content="Step-by-step tutorial on setting up GitHub Pages to host your Postalgic blog">
+    <title>Setting Up GitHub Pages - Postalgic Help</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="../../favicon.png">
+    
+    <style>
+        /* ==========================================
+           CSS Variables & Reset
+           ========================================== */
+        :root {
+            --primary-color: #4a5568;
+            --accent-color: #FFA100;
+            --background-color: #efefef;
+            --background-outline-color: #efefef;
+            --text-color: #2d3748;
+            --light-gray: #dedede;
+            --medium-gray: #a0aec0;
+            --dark-gray: #4a5568;
+            --code-bg: #f7fafc;
+            --code-border: #e2e8f0;
+            --step-bg: #f0f9ff;
+            --step-border: #38bdf8;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        html {
+            overflow-y: scroll;
+            height: 100%;
+            font: 100%/1.5 sans-serif;
+            word-wrap: break-word;
+            margin: 0 auto;
+            padding: 1.5em;
+        }
+        
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--background-outline-color);
+        }
+        
+        a {
+            color: var(--accent-color);
+            text-decoration: none;
+        }
+        
+        a:hover {
+            text-decoration: underline;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: var(--background-color);
+            position: relative;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .breadcrumb {
+            padding: 1em 2em 0;
+            font-size: 0.9rem;
+            color: var(--medium-gray);
+        }
+        
+        .breadcrumb a {
+            color: var(--accent-color);
+        }
+        
+        header {
+            padding: 2em;
+            padding-bottom: 1em;
+            text-align: center;
+        }
+        
+        header h1 {
+            color: var(--primary-color);
+            font-size: 2.2rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        header .tagline {
+            color: var(--medium-gray);
+            font-size: 1.2rem;
+            font-style: italic;
+            margin-bottom: 0.5rem;
+        }
+        
+        .header-separator {
+            height: 28px;
+            width: 100%;
+            background-color: var(--accent-color);
+            --mask:
+              radial-gradient(10.96px at 50% calc(100% + 5.6px),#0000 calc(99% - 4px),#000 calc(101% - 4px) 99%,#0000 101%) calc(50% - 14px) calc(50% - 5.5px + .5px)/28px 11px repeat-x,
+              radial-gradient(10.96px at 50% -5.6px,#0000 calc(99% - 4px),#000 calc(101% - 4px) 99%,#0000 101%) 50% calc(50% + 5.5px)/28px 11px repeat-x;
+            -webkit-mask: var(--mask);
+            mask: var(--mask);
+            margin-top: 2em;
+        }
+        
+        main {
+            padding: 2em;
+            overflow: hidden;
+            margin-bottom: 30px;
+            flex: 1;
+        }
+        
+        section {
+            margin-bottom: 3rem;
+        }
+        
+        h1, h2, h3, h4 {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+        
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+        }
+        
+        h2 {
+            font-size: 1.6rem;
+            font-weight: 600;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #edf2f7;
+            margin-top: 2rem;
+        }
+        
+        h3 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-top: 1.5rem;
+        }
+        
+        h4 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-top: 1rem;
+        }
+        
+        p {
+            margin-bottom: 1rem;
+        }
+        
+        ul, ol {
+            margin: 1rem 0;
+            padding-left: 2rem;
+        }
+        
+        li {
+            margin-bottom: 0.5rem;
+        }
+        
+        code {
+            background-color: var(--code-bg);
+            padding: 0.2em 0.4em;
+            border-radius: 3px;
+            font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+            font-size: 0.9em;
+            border: 1px solid var(--code-border);
+        }
+        
+        pre {
+            background-color: var(--code-bg);
+            padding: 1rem;
+            border-radius: 6px;
+            border: 1px solid var(--code-border);
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+        
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            font-size: 0.85em;
+        }
+        
+        .step {
+            background-color: var(--step-bg);
+            border: 2px solid var(--step-border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+            position: relative;
+        }
+        
+        .step-number {
+            position: absolute;
+            top: -15px;
+            left: 20px;
+            background-color: var(--step-border);
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        
+        .step h3 {
+            margin-top: 0;
+            color: #0369a1;
+        }
+        
+        .highlight-box {
+            background-color: #faf4eb;
+            padding: 1.5rem;
+            border: 2px solid var(--accent-color);
+            margin: 1.5rem 0;
+            border-radius: 8px;
+            font-size: 1.05rem;
+        }
+        
+        .info-box {
+            background-color: #e6f3ff;
+            border: 1px solid #b3d9ff;
+            padding: 1rem;
+            border-radius: 6px;
+            margin: 1rem 0;
+        }
+        
+        .info-box strong {
+            color: #0066cc;
+        }
+        
+        .warning-box {
+            background-color: #fff3cd;
+            border: 1px solid #ffecb5;
+            padding: 1rem;
+            border-radius: 6px;
+            margin: 1rem 0;
+        }
+        
+        .warning-box strong {
+            color: #856404;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 2em;
+            color: var(--medium-gray);
+            font-size: 0.9rem;
+            margin-top: auto;
+            width: 100%;
+            border-top: 1px solid var(--light-gray);
+        }
+        
+        footer a {
+            color: var(--accent-color);
+        }
+        
+        @media (max-width: 900px) {
+            html {
+                padding: 0.6em;
+            }
+            
+            .container {
+                padding: 0;
+            }
+            
+            header, main, footer, .breadcrumb {
+                padding: 1em;
+            }
+            
+            header .tagline {
+                font-size: 1.1rem;
+            }
+            
+            h1 {
+                font-size: 1.8rem;
+            }
+            
+            h2 {
+                font-size: 1.4rem;
+            }
+            
+            .step {
+                padding: 1rem;
+                margin: 1.5rem 0;
+            }
+            
+            .step-number {
+                top: -12px;
+                left: 15px;
+                width: 24px;
+                height: 24px;
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="breadcrumb">
+            <a href="../../">Postalgic</a> → <a href="../">Help Center</a> → GitHub Pages Setup
+        </div>
+        
+        <header>
+            <h1>Setting Up GitHub Pages</h1>
+            <p class="tagline">Host your Postalgic blog for free with GitHub Pages</p>
+            <div class="header-separator"></div>
+        </header>
+        
+        <main>
+            <section>
+                <p>GitHub Pages is a free hosting service that's perfect for Postalgic blogs. It serves static websites directly from your GitHub repository, making it an ideal match for the static sites that Postalgic generates.</p>
+                
+                <div class="highlight-box">
+                    <strong>Why GitHub Pages?</strong><br>
+                    • Completely free hosting<br>
+                    • Custom domain support<br>
+                    • HTTPS included<br>
+                    • Git-based deployment<br>
+                    • Excellent uptime and performance
+                </div>
+            </section>
+
+            <section>
+                <h2>Prerequisites</h2>
+                <p>Before starting, make sure you have:</p>
+                <ul>
+                    <li>A <a href="https://github.com">GitHub account</a> (free)</li>
+                    <li>The Postalgic iOS app with a configured blog</li>
+                    <li>Git configured for publishing in Postalgic (we'll set this up)</li>
+                </ul>
+            </section>
+
+            <section>
+                <h2>Step-by-Step Setup</h2>
+
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <h3>Create a GitHub Repository</h3>
+                    <ol>
+                        <li>Go to <a href="https://github.com">GitHub.com</a> and sign in</li>
+                        <li>Click the <strong>"New"</strong> button or <strong>"+"</strong> icon to create a new repository</li>
+                        <li>Name your repository (e.g., <code>my-blog</code> or <code>your-username.github.io</code>)</li>
+                        <li>Make sure it's set to <strong>Public</strong></li>
+                        <li>Check <strong>"Add a README file"</strong></li>
+                        <li>Click <strong>"Create repository"</strong></li>
+                    </ol>
+                    
+                    <div class="info-box">
+                        <strong>Tip:</strong> If you name your repository <code>your-username.github.io</code>, your blog will be available at <code>https://your-username.github.io</code> directly.
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <h3>Enable GitHub Pages</h3>
+                    <ol>
+                        <li>In your new repository, click on <strong>"Settings"</strong> (in the top navigation)</li>
+                        <li>Scroll down to <strong>"Pages"</strong> in the left sidebar</li>
+                        <li>Under <strong>"Source"</strong>, select <strong>"Deploy from a branch"</strong></li>
+                        <li>Choose <strong>"main"</strong> as the branch</li>
+                        <li>Select <strong>"/ (root)"</strong> as the folder</li>
+                        <li>Click <strong>"Save"</strong></li>
+                    </ol>
+                    
+                    <p>GitHub will show you the URL where your site will be published (e.g., <code>https://your-username.github.io/my-blog</code>).</p>
+                </div>
+
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <h3>Create a Personal Access Token</h3>
+                    <p>Postalgic needs permission to push to your repository:</p>
+                    <ol>
+                        <li>Go to <strong>GitHub Settings</strong> → <strong>Developer settings</strong> → <strong>Personal access tokens</strong> → <strong>Tokens (classic)</strong></li>
+                        <li>Click <strong>"Generate new token"</strong> → <strong>"Generate new token (classic)"</strong></li>
+                        <li>Add a note like "Postalgic Blog Publishing"</li>
+                        <li>Set expiration (recommend 1 year or no expiration)</li>
+                        <li>Check the <strong>"repo"</strong> scope (this gives full repository access)</li>
+                        <li>Click <strong>"Generate token"</strong></li>
+                        <li><strong>Copy the token immediately</strong> - you won't see it again!</li>
+                    </ol>
+                    
+                    <div class="warning-box">
+                        <strong>Important:</strong> Store your token securely. You'll need it to configure Postalgic.
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div class="step-number">4</div>
+                    <h3>Configure Git Publishing in Postalgic</h3>
+                    <ol>
+                        <li>Open the Postalgic iOS app</li>
+                        <li>Go to your blog and tap <strong>"Publish"</strong></li>
+                        <li>Select <strong>"Git"</strong> as your publishing method</li>
+                        <li>Fill in the configuration:</li>
+                    </ol>
+                    
+                    <h4>Git Configuration Settings:</h4>
+                    <ul>
+                        <li><strong>Repository URL:</strong> <code>https://github.com/your-username/your-repo-name.git</code></li>
+                        <li><strong>Branch:</strong> <code>main</code></li>
+                        <li><strong>Username:</strong> Your GitHub username</li>
+                        <li><strong>Password/Token:</strong> The personal access token you created</li>
+                        <li><strong>Author Name:</strong> Your name (for commit messages)</li>
+                        <li><strong>Author Email:</strong> Your email address</li>
+                    </ul>
+                </div>
+
+                <div class="step">
+                    <div class="step-number">5</div>
+                    <h3>Configure Your Blog URL</h3>
+                    <p>Set your blog's URL to match your GitHub Pages site:</p>
+                    <ol>
+                        <li>In Postalgic, go to <strong>Blog Settings</strong></li>
+                        <li>Update the <strong>"Blog URL"</strong> field with your GitHub Pages URL</li>
+                        <li>For example: <code>https://your-username.github.io/my-blog</code></li>
+                        <li>This ensures links in your RSS feed and site navigation work correctly</li>
+                    </ol>
+                </div>
+
+                <div class="step">
+                    <div class="step-number">6</div>
+                    <h3>Publish Your First Post</h3>
+                    <ol>
+                        <li>Create a test post in Postalgic</li>
+                        <li>Go to the Publish screen</li>
+                        <li>Tap <strong>"Publish Blog"</strong></li>
+                        <li>Postalgic will generate your static site and push it to GitHub</li>
+                        <li>Wait a few minutes for GitHub Pages to build and deploy</li>
+                        <li>Visit your GitHub Pages URL to see your live blog!</li>
+                    </ol>
+                </div>
+            </section>
+
+            <section>
+                <h2>Custom Domain Setup (Optional)</h2>
+                <p>You can use your own domain name instead of the GitHub Pages subdomain:</p>
+                
+                <h3>DNS Configuration</h3>
+                <ol>
+                    <li>In your domain registrar's DNS settings, create a CNAME record</li>
+                    <li>Point your domain (e.g., <code>blog.example.com</code>) to <code>your-username.github.io</code></li>
+                    <li>For apex domains (e.g., <code>example.com</code>), create A records pointing to:
+                        <pre><code>185.199.108.153
+185.199.109.153
+185.199.110.153
+185.199.111.153</code></pre>
+                    </li>
+                </ol>
+                
+                <h3>GitHub Configuration</h3>
+                <ol>
+                    <li>In your repository, go to <strong>Settings</strong> → <strong>Pages</strong></li>
+                    <li>Under <strong>"Custom domain"</strong>, enter your domain</li>
+                    <li>Check <strong>"Enforce HTTPS"</strong> (after DNS propagates)</li>
+                    <li>GitHub will create a CNAME file in your repository</li>
+                </ol>
+                
+                <div class="info-box">
+                    <strong>Note:</strong> DNS changes can take up to 24 hours to propagate globally.
+                </div>
+            </section>
+
+            <section>
+                <h2>Troubleshooting</h2>
+                
+                <h3>Common Issues</h3>
+                
+                <h4>Authentication Failed</h4>
+                <ul>
+                    <li>Double-check your GitHub username and personal access token</li>
+                    <li>Ensure the token has <strong>"repo"</strong> scope permissions</li>
+                    <li>Verify the repository URL is correct</li>
+                </ul>
+                
+                <h4>Site Not Updating</h4>
+                <ul>
+                    <li>GitHub Pages can take a few minutes to update after each push</li>
+                    <li>Check the <strong>"Actions"</strong> tab in your repository for build status</li>
+                    <li>Clear your browser cache if changes don't appear</li>
+                </ul>
+                
+                <h4>404 Page Not Found</h4>
+                <ul>
+                    <li>Ensure GitHub Pages is enabled and pointing to the correct branch</li>
+                    <li>Verify your blog URL in Postalgic matches your GitHub Pages URL</li>
+                    <li>Check that your repository is public</li>
+                </ul>
+                
+                <h4>HTTPS Issues with Custom Domain</h4>
+                <ul>
+                    <li>Wait for DNS propagation (up to 24 hours)</li>
+                    <li>Disable and re-enable "Enforce HTTPS" in repository settings</li>
+                    <li>Ensure your CNAME record points to <code>username.github.io</code>, not the full repository URL</li>
+                </ul>
+            </section>
+
+            <section>
+                <h2>Benefits of GitHub Pages Hosting</h2>
+                <ul>
+                    <li><strong>Version Control:</strong> Every change to your blog is tracked in Git</li>
+                    <li><strong>Backup:</strong> Your entire blog is safely stored in GitHub</li>
+                    <li><strong>Collaboration:</strong> Others can contribute to your blog via pull requests</li>
+                    <li><strong>Performance:</strong> GitHub's CDN ensures fast loading worldwide</li>
+                    <li><strong>Security:</strong> Static sites are inherently secure with HTTPS included</li>
+                    <li><strong>Cost:</strong> Completely free for public repositories</li>
+                </ul>
+                
+                <div class="highlight-box">
+                    <strong>Perfect Match:</strong> GitHub Pages is specifically designed for static sites, making it an ideal hosting solution for Postalgic blogs.
+                </div>
+            </section>
+
+            <section>
+                <h2>Next Steps</h2>
+                <p>Once your blog is live on GitHub Pages:</p>
+                <ul>
+                    <li>Customize your blog's appearance using <a href="../templating-system/">Postalgic's templating system</a></li>
+                    <li>Learn about <a href="../markdown-support/">markdown formatting</a> for rich content</li>
+                    <li>Set up analytics (Google Analytics, Plausible, etc.) by editing your theme templates</li>
+                    <li>Share your RSS feed URL so others can follow your blog</li>
+                    <li>Consider setting up a custom domain for a more professional appearance</li>
+                </ul>
+            </section>
+        </main>
+
+        <footer>
+            <p>Postalgic &copy; 2023-2025 <a href="https://bradroot.me">Brad Root</a> | <a href="../../privacy/">Privacy Policy</a></p>
+        </footer>
+    </div>
+</body>
+</html>

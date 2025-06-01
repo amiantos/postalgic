@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta name="description" content="Learn how Postalgic's Mustache-based templating system works">
+    <title>Understanding the Templating System - Postalgic Help</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="../../favicon.png">
+    
+    <style>
+        /* ==========================================
+           CSS Variables & Reset
+           ========================================== */
+        :root {
+            --primary-color: #4a5568;
+            --accent-color: #FFA100;
+            --background-color: #efefef;
+            --background-outline-color: #efefef;
+            --text-color: #2d3748;
+            --light-gray: #dedede;
+            --medium-gray: #a0aec0;
+            --dark-gray: #4a5568;
+            --code-bg: #f7fafc;
+            --code-border: #e2e8f0;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        html {
+            overflow-y: scroll;
+            height: 100%;
+            font: 100%/1.5 sans-serif;
+            word-wrap: break-word;
+            margin: 0 auto;
+            padding: 1.5em;
+        }
+        
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--background-outline-color);
+        }
+        
+        a {
+            color: var(--accent-color);
+            text-decoration: none;
+        }
+        
+        a:hover {
+            text-decoration: underline;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: var(--background-color);
+            position: relative;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .breadcrumb {
+            padding: 1em 2em 0;
+            font-size: 0.9rem;
+            color: var(--medium-gray);
+        }
+        
+        .breadcrumb a {
+            color: var(--accent-color);
+        }
+        
+        header {
+            padding: 2em;
+            padding-bottom: 1em;
+            text-align: center;
+        }
+        
+        header h1 {
+            color: var(--primary-color);
+            font-size: 2.2rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        header .tagline {
+            color: var(--medium-gray);
+            font-size: 1.2rem;
+            font-style: italic;
+            margin-bottom: 0.5rem;
+        }
+        
+        .header-separator {
+            height: 28px;
+            width: 100%;
+            background-color: var(--accent-color);
+            --mask:
+              radial-gradient(10.96px at 50% calc(100% + 5.6px),#0000 calc(99% - 4px),#000 calc(101% - 4px) 99%,#0000 101%) calc(50% - 14px) calc(50% - 5.5px + .5px)/28px 11px repeat-x,
+              radial-gradient(10.96px at 50% -5.6px,#0000 calc(99% - 4px),#000 calc(101% - 4px) 99%,#0000 101%) 50% calc(50% + 5.5px)/28px 11px repeat-x;
+            -webkit-mask: var(--mask);
+            mask: var(--mask);
+            margin-top: 2em;
+        }
+        
+        main {
+            padding: 2em;
+            overflow: hidden;
+            margin-bottom: 30px;
+            flex: 1;
+        }
+        
+        section {
+            margin-bottom: 3rem;
+        }
+        
+        h1, h2, h3, h4 {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+        
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+        }
+        
+        h2 {
+            font-size: 1.6rem;
+            font-weight: 600;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #edf2f7;
+            margin-top: 2rem;
+        }
+        
+        h3 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-top: 1.5rem;
+        }
+        
+        h4 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-top: 1rem;
+        }
+        
+        p {
+            margin-bottom: 1rem;
+        }
+        
+        ul, ol {
+            margin: 1rem 0;
+            padding-left: 2rem;
+        }
+        
+        li {
+            margin-bottom: 0.5rem;
+        }
+        
+        code {
+            background-color: var(--code-bg);
+            padding: 0.2em 0.4em;
+            border-radius: 3px;
+            font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+            font-size: 0.9em;
+            border: 1px solid var(--code-border);
+        }
+        
+        pre {
+            background-color: var(--code-bg);
+            padding: 1rem;
+            border-radius: 6px;
+            border: 1px solid var(--code-border);
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+        
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            font-size: 0.85em;
+        }
+        
+        .highlight-box {
+            background-color: #faf4eb;
+            padding: 1.5rem;
+            border: 2px solid var(--accent-color);
+            margin: 1.5rem 0;
+            border-radius: 8px;
+            font-size: 1.05rem;
+        }
+        
+        .info-box {
+            background-color: #e6f3ff;
+            border: 1px solid #b3d9ff;
+            padding: 1rem;
+            border-radius: 6px;
+            margin: 1rem 0;
+        }
+        
+        .info-box strong {
+            color: #0066cc;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+        
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--light-gray);
+        }
+        
+        th {
+            background-color: var(--code-bg);
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+        
+        footer {
+            text-align: center;
+            padding: 2em;
+            color: var(--medium-gray);
+            font-size: 0.9rem;
+            margin-top: auto;
+            width: 100%;
+            border-top: 1px solid var(--light-gray);
+        }
+        
+        footer a {
+            color: var(--accent-color);
+        }
+        
+        @media (max-width: 900px) {
+            html {
+                padding: 0.6em;
+            }
+            
+            .container {
+                padding: 0;
+            }
+            
+            header, main, footer, .breadcrumb {
+                padding: 1em;
+            }
+            
+            header .tagline {
+                font-size: 1.1rem;
+            }
+            
+            h1 {
+                font-size: 1.8rem;
+            }
+            
+            h2 {
+                font-size: 1.4rem;
+            }
+            
+            pre {
+                font-size: 0.8em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="breadcrumb">
+            <a href="../../">Postalgic</a> → <a href="../">Help Center</a> → Templating System
+        </div>
+        
+        <header>
+            <h1>Understanding the Templating System</h1>
+            <p class="tagline">Learn how to customize your blog's appearance with Mustache templates</p>
+            <div class="header-separator"></div>
+        </header>
+        
+        <main>
+            <section>
+                <p>Postalgic uses the <strong>Mustache templating engine</strong> to generate your static blog sites. This powerful yet simple system allows you to customize every aspect of your blog's appearance and layout while maintaining the clean, fast performance of static sites.</p>
+            </section>
+            
+            <section>
+                <h2>How Templates Work</h2>
+                <p>When you publish your blog, Postalgic takes your posts and blog settings, combines them with your chosen theme's templates, and generates a complete static website. The templates define how your content is structured and styled.</p>
+                
+                <div class="highlight-box">
+                    <strong>Templates + Your Content = Static Website</strong><br>
+                    Mustache templates provide the structure, while your posts and settings provide the data.
+                </div>
+            </section>
+
+            <section>
+                <h2>Template Types</h2>
+                <p>Postalgic includes several template types, each serving a specific purpose:</p>
+                
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Template</th>
+                            <th>Purpose</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>layout</code></td>
+                            <td>Main page wrapper with HTML structure</td>
+                        </tr>
+                        <tr>
+                            <td><code>index</code></td>
+                            <td>Homepage listing your recent posts</td>
+                        </tr>
+                        <tr>
+                            <td><code>post</code></td>
+                            <td>Individual post pages and post list items</td>
+                        </tr>
+                        <tr>
+                            <td><code>archives</code></td>
+                            <td>Archives index page</td>
+                        </tr>
+                        <tr>
+                            <td><code>monthly-archive</code></td>
+                            <td>Monthly archive pages</td>
+                        </tr>
+                        <tr>
+                            <td><code>tags</code></td>
+                            <td>Tag index page</td>
+                        </tr>
+                        <tr>
+                            <td><code>tag</code></td>
+                            <td>Individual tag pages</td>
+                        </tr>
+                        <tr>
+                            <td><code>categories</code></td>
+                            <td>Category index page</td>
+                        </tr>
+                        <tr>
+                            <td><code>category</code></td>
+                            <td>Individual category pages</td>
+                        </tr>
+                        <tr>
+                            <td><code>css</code></td>
+                            <td>Stylesheet template</td>
+                        </tr>
+                        <tr>
+                            <td><code>rss</code></td>
+                            <td>RSS feed template</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <section>
+                <h2>Template Variables</h2>
+                <p>Templates use variables to insert your blog's content and settings. Variables are enclosed in double curly braces like <code>{{blogName}}</code>.</p>
+                
+                <h3>Blog Information Variables</h3>
+                <ul>
+                    <li><code>{{blogName}}</code> - Your blog's title</li>
+                    <li><code>{{blogUrl}}</code> - Your blog's URL</li>
+                    <li><code>{{blogTagline}}</code> - Your blog's subtitle</li>
+                    <li><code>{{blogAuthor}}</code> - Author name</li>
+                    <li><code>{{blogAuthorUrl}}</code> - Author website URL</li>
+                    <li><code>{{currentYear}}</code> - Current year</li>
+                    <li><code>{{buildDate}}</code> - When the site was generated</li>
+                </ul>
+                
+                <h3>Color & Style Variables</h3>
+                <ul>
+                    <li><code>{{accentColor}}</code> - Your theme's accent color</li>
+                    <li><code>{{backgroundColor}}</code> - Background color</li>
+                    <li><code>{{textColor}}</code> - Text color</li>
+                    <li><code>{{lightShade}}</code> - Light shade color</li>
+                    <li><code>{{mediumShade}}</code> - Medium shade color</li>
+                    <li><code>{{darkShade}}</code> - Dark shade color</li>
+                </ul>
+                
+                <h3>Post Variables</h3>
+                <ul>
+                    <li><code>{{displayTitle}}</code> - Post title or preview text</li>
+                    <li><code>{{contentHtml}}</code> - Post content as HTML</li>
+                    <li><code>{{formattedDate}}</code> - Human-readable post date</li>
+                    <li><code>{{urlPath}}</code> - Post URL path</li>
+                    <li><code>{{hasTitle}}</code> - Whether post has a title</li>
+                    <li><code>{{tags}}</code> - Array of post tags</li>
+                    <li><code>{{categoryName}}</code> - Post category</li>
+                </ul>
+            </section>
+
+            <section>
+                <h2>Mustache Syntax Basics</h2>
+                
+                <h3>Simple Variables</h3>
+                <p>Display a variable's value:</p>
+                <pre><code>&lt;h1&gt;{{blogName}}&lt;/h1&gt;</code></pre>
+                
+                <h3>Conditionals</h3>
+                <p>Show content only if a variable exists or is true:</p>
+                <pre><code>{{#hasTitle}}
+  &lt;h2&gt;{{displayTitle}}&lt;/h2&gt;
+{{/hasTitle}}
+
+{{^hasTitle}}
+  &lt;div class="no-title"&gt;{{contentHtml}}&lt;/div&gt;
+{{/hasTitle}}</code></pre>
+                
+                <div class="info-box">
+                    <strong>Note:</strong> Use <code>{{#variable}}</code> for "if exists" and <code>{{^variable}}</code> for "if not exists".
+                </div>
+                
+                <h3>Loops</h3>
+                <p>Repeat content for each item in an array:</p>
+                <pre><code>{{#posts}}
+  &lt;article&gt;
+    &lt;h2&gt;{{displayTitle}}&lt;/h2&gt;
+    &lt;div&gt;{{contentHtml}}&lt;/div&gt;
+  &lt;/article&gt;
+{{/posts}}</code></pre>
+                
+                <h3>Partials</h3>
+                <p>Include one template inside another:</p>
+                <pre><code>{{#posts}}
+  {{&gt; post}}
+{{/posts}}</code></pre>
+            </section>
+
+            <section>
+                <h2>Customizing Your Theme</h2>
+                
+                <h3>Using the Built-in Theme Editor</h3>
+                <ol>
+                    <li>Open the Postalgic iOS app</li>
+                    <li>Go to your blog's settings</li>
+                    <li>Navigate to <strong>Themes</strong></li>
+                    <li>Duplicate the default theme to create a custom version</li>
+                    <li>Edit individual template files using the built-in editor</li>
+                    <li>Apply your custom theme to your blog</li>
+                </ol>
+                
+                <h3>CSS Customization</h3>
+                <p>The CSS template uses CSS custom properties for easy theming:</p>
+                <pre><code>:root {
+  --accent-color: {{accentColor}};
+  --background-color: {{backgroundColor}};
+  --text-color: {{textColor}};
+}</code></pre>
+                
+                <h3>Example: Custom Post Layout</h3>
+                <p>Here's how you might customize the post template:</p>
+                <pre><code>&lt;article class="post"&gt;
+  {{#hasTitle}}
+    &lt;h1 class="post-title"&gt;{{displayTitle}}&lt;/h1&gt;
+  {{/hasTitle}}
+  
+  &lt;div class="post-meta"&gt;
+    &lt;time&gt;{{formattedDate}}&lt;/time&gt;
+    {{#hasCategory}}
+      in &lt;a href="{{categoryUrlPath}}"&gt;{{categoryName}}&lt;/a&gt;
+    {{/hasCategory}}
+  &lt;/div&gt;
+  
+  &lt;div class="post-content"&gt;
+    {{contentHtml}}
+  &lt;/div&gt;
+  
+  {{#hasTags}}
+    &lt;div class="post-tags"&gt;
+      {{#tags}}
+        &lt;a href="{{urlPath}}" class="tag"&gt;{{name}}&lt;/a&gt;
+      {{/tags}}
+    &lt;/div&gt;
+  {{/hasTags}}
+&lt;/article&gt;</code></pre>
+            </section>
+
+            <section>
+                <h2>Advanced Features</h2>
+                
+                <h3>Responsive Design</h3>
+                <p>The default theme includes mobile-friendly responsive design. You can customize breakpoints and mobile layouts in the CSS template.</p>
+                
+                <h3>SEO Integration</h3>
+                <p>Templates automatically generate SEO-friendly elements:</p>
+                <ul>
+                    <li>Meta descriptions and Open Graph tags</li>
+                    <li>Twitter Card metadata</li>
+                    <li>Structured sitemap.xml</li>
+                    <li>RSS 2.0 compliant feeds</li>
+                </ul>
+                
+                <h3>Embed Support</h3>
+                <p>Templates handle embedded content automatically:</p>
+                <ul>
+                    <li>YouTube videos with responsive iframes</li>
+                    <li>Link previews with metadata</li>
+                    <li>Image galleries with lightbox functionality</li>
+                </ul>
+            </section>
+
+            <section>
+                <h2>Tips for Template Customization</h2>
+                
+                <div class="info-box">
+                    <strong>Best Practices:</strong>
+                    <ul style="margin: 0.5rem 0;">
+                        <li>Start with small changes to the default theme</li>
+                        <li>Test your changes by generating a preview site</li>
+                        <li>Keep your templates simple and maintainable</li>
+                        <li>Use semantic HTML for better accessibility</li>
+                        <li>Optimize for fast loading on mobile devices</li>
+                    </ul>
+                </div>
+                
+                <p>Remember that Postalgic generates static sites, so your templates should focus on clean HTML, CSS, and minimal JavaScript. The simpler your templates, the faster your site will load for your readers.</p>
+            </section>
+        </main>
+
+        <footer>
+            <p>Postalgic &copy; 2023-2025 <a href="https://bradroot.me">Brad Root</a> | <a href="../../privacy/">Privacy Policy</a></p>
+        </footer>
+    </div>
+</body>
+</html>
