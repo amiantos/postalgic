@@ -489,7 +489,7 @@ class StaticSiteGenerator {
             throw SiteGeneratorError.noSiteDirectory
         }
 
-        let rssPath = siteDirectory.appendingPathComponent("rss.xml")
+        let rssPath = siteDirectory.appendingPathComponent("feed.xml")
         let sortedPosts = publishedPostsSorted()
         let limitedPosts = Array(sortedPosts.prefix(20))  // Get only the 20 most recent posts
 

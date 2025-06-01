@@ -60,7 +60,7 @@ class TemplateManager {
             {{/hasCustomMeta}}
 
             <link rel="stylesheet" href="/css/style.css">
-            <link rel="alternate" type="application/rss+xml" title="{{blogName}} RSS Feed" href="/rss.xml">
+            <link rel="alternate" type="application/rss+xml" title="{{blogName}} RSS Feed" href="/feed.xml">
             {{{customHead}}}
             <script>
             // Gallery functionality for image embeds
@@ -1451,7 +1451,7 @@ class TemplateManager {
         <feed xmlns="http://www.w3.org/2005/Atom" xml:base="{{blogUrl}}/">
             <title>{{blogName}}</title>
             <link href="{{blogUrl}}/" rel="alternate" type="text/html" />
-            <link href="{{blogUrl}}/rss.xml" rel="self" type="application/atom+xml" />
+            <link href="{{blogUrl}}/feed.xml" rel="self" type="application/atom+xml" />
             <id>{{blogUrl}}/</id>
             <updated>{{buildDate}}</updated>
             <subtitle>{{#blogTagline}}{{blogTagline}}{{/blogTagline}}{{^blogTagline}}Posts from {{blogName}}{{/blogTagline}}</subtitle>
