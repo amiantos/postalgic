@@ -175,6 +175,16 @@ struct BlogDashboardView: View {
                     Label("New Post", systemImage: "plus")
                 }
             }
+            
+            ToolbarItemGroup(placement: .topBarLeading) {
+                Button {
+                    if let url = URL(string: "https://postalgic.app/help") {
+                       UIApplication.shared.open(url)
+                    }
+                } label: {
+                    Label("Help", systemImage: "questionmark.circle")
+                }
+            }
         }
         .sheet(isPresented: $showingPostForm) {
             PostView(blog: blog).interactiveDismissDisabled()

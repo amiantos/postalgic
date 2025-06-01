@@ -248,7 +248,7 @@ h4 {
 
 ul, ol {
     margin: 1rem 0;
-    padding-left: 2rem;
+    padding-left: 0.8rem;
 }
 
 li {
@@ -627,8 +627,8 @@ footer a {
     }
     
     .nav-menu {
-        flex-direction: column;
-        gap: 0.5rem;
+        /* flex-direction: column; */
+        gap: 0rem;
     }
 
     header .tagline {

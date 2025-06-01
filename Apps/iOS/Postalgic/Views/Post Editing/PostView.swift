@@ -155,6 +155,15 @@ struct PostView: View {
                             dismiss()
                         }
                     }
+                    
+                    Button {
+                        if let url = URL(string: "https://postalgic.app/help/markdown-support/") {
+                           UIApplication.shared.open(url)
+                        }
+                    } label: {
+                        Label("Help", systemImage: "questionmark.circle")
+                    }
+                    
                 }
 
                 ToolbarItemGroup(placement: .topBarTrailing) {
@@ -270,6 +279,7 @@ struct PostView: View {
                                 showingDatePicker = false
                             }
                         }
+                        
                         ToolbarItem(placement: .confirmationAction) {
                             Button("Save") {
                                 // Update the post's date

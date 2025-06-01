@@ -115,6 +115,14 @@ struct ThemesView: View {
                     Button("Done") {
                         dismiss()
                     }
+                    
+                    Button {
+                        if let url = URL(string: "https://postalgic.app/help/templating-system/") {
+                           UIApplication.shared.open(url)
+                        }
+                    } label: {
+                        Label("Help", systemImage: "questionmark.circle")
+                    }
                 }
             }
             .navigationTitle("Themes")

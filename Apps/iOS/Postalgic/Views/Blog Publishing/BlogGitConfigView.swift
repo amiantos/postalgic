@@ -63,17 +63,10 @@ struct BlogGitConfigView: View {
                         
                         Text("• The branch will be created if it doesn't exist")
                             .font(.caption)
-                            
-                        Text("• For GitHub Pages, use 'gh-pages' as the branch")
-                            .font(.caption)
-                            
-                        Text("• For GitLab Pages, use 'main' for project sites or 'pages' for user/group sites")
-                            .font(.caption)
                     }
                     .padding(.vertical, 4)
                     
-                    Link("GitHub Pages Documentation", destination: URL(string: "https://pages.github.com/")!)
-                    Link("GitLab Pages Documentation", destination: URL(string: "https://docs.gitlab.com/ee/user/project/pages/")!)
+                    Link("GitHub Pages Tutorial", destination: URL(string: "https://postalgic.app/help/github-pages-setup/")!)
                 }
                 
                 Section(
