@@ -117,6 +117,19 @@
         }
         
         /* ==========================================
+           Navigation
+           ========================================== */
+        .breadcrumb {
+            padding: 1em 2em 0;
+            font-size: 0.9rem;
+            color: var(--medium-gray);
+        }
+        
+        .breadcrumb a {
+            color: var(--accent-color);
+        }
+        
+        /* ==========================================
            Header
            ========================================== */
         header {
@@ -305,7 +318,7 @@
                 padding: 0;
             }
             
-            header, main, footer {
+            header, main, footer, .breadcrumb {
                 padding: 1em;
             }
 
@@ -329,6 +342,10 @@
 </head>
 <body>
     <div class="container">
+        <div class="breadcrumb">
+            <a href="../">← Back to Postalgic</a>
+        </div>
+        
         <header>
             <img src="../postalgic-logo.png" alt="Postalgic Logo" class="logo">
             <h1>Privacy Policy</h1>

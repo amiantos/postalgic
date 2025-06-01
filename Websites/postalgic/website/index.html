@@ -113,6 +113,41 @@
         }
         
         /* ==========================================
+           Navigation
+           ========================================== */
+        nav {
+            text-align: center;
+            padding: 1em 2em 0;
+        }
+        
+        .nav-menu {
+            list-style: none;
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .nav-menu li {
+            margin: 0;
+        }
+        
+        .nav-menu a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            transition: background-color 0.3s ease;
+        }
+        
+        .nav-menu a:hover {
+            background-color: var(--light-gray);
+            text-decoration: none;
+        }
+        
+        /* ==========================================
            Header
            ========================================== */
         header {
@@ -325,8 +360,13 @@
                 padding: 0;
             }
             
-            header, main, footer {
+            header, main, footer, nav {
                 padding: 1em;
+            }
+            
+            .nav-menu {
+                flex-direction: column;
+                gap: 0.5rem;
             }
 
             header .tagline {
@@ -349,6 +389,14 @@
 </head>
 <body>
     <div class="container">
+        <nav>
+            <ul class="nav-menu">
+                <li><a href="help/">Help Center</a></li>
+                <li><a href="privacy/">Privacy Policy</a></li>
+                <li><a href="https://github.com/amiantos/postalgic">GitHub</a></li>
+            </ul>
+        </nav>
+        
         <header>
             <img src="postalgic-logo.png" alt="Postalgic Logo" class="logo">
             <p class="tagline">A pocket-sized, decentralized micro-blogging platform</p>
