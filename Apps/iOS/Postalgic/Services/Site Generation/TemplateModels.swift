@@ -15,8 +15,8 @@ struct PostTemplateData {
     let blog: Blog
     let markdownParser: MarkdownParser
     
-    // Method to convert to a dictionary for Mustache
-    func toDictionary() -> [String: Any] {
+    // Method to convert to a dictionary for Mustache with RSS-specific formatting
+    func toDictionary(forRSS: Bool = false) -> [String: Any] {
         var dict: [String: Any] = [
             "displayTitle": post.displayTitle,
             "hasTitle": post.title?.isEmpty == false,
@@ -31,13 +31,21 @@ struct PostTemplateData {
         
         // Handle embeds based on position
         if let embed = post.embed, embed.embedPosition == .above {
-            finalContent += embed.generateHtml() + "\n"
+            if forRSS {
+                finalContent += embed.generateRSSHtml(blog: blog) + "\n"
+            } else {
+                finalContent += embed.generateHtml() + "\n"
+            }
         }
         
         finalContent += postContent
         
         if let embed = post.embed, embed.embedPosition == .below {
-            finalContent += "\n" + embed.generateHtml()
+            if forRSS {
+                finalContent += "\n" + embed.generateRSSHtml(blog: blog)
+            } else {
+                finalContent += "\n" + embed.generateHtml()
+            }
         }
         
         dict["contentHtml"] = finalContent
@@ -209,6 +217,17 @@ struct TemplateDataConverter {
     static func convert(post: Post, blog: Blog, inList: Bool = true) -> [String: Any] {
         var result = PostTemplateData(post: post, blog: blog, markdownParser: markdownParser).toDictionary()
         result["inList"] = inList
+        return result
+    }
+    
+    /// Converts a Post to a dictionary for RSS feed template rendering with RSS-specific embed formatting
+    /// - Parameters:
+    ///   - post: The post to convert
+    ///   - blog: The blog the post belongs to
+    /// - Returns: Dictionary for RSS template rendering
+    static func convertForRSS(post: Post, blog: Blog) -> [String: Any] {
+        var result = PostTemplateData(post: post, blog: blog, markdownParser: markdownParser).toDictionary(forRSS: true)
+        result["inList"] = false
         return result
     }
     

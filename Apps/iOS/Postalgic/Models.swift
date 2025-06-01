@@ -374,6 +374,77 @@ final class Embed {
         return self.persistentModelID.stringRepresentation() ?? "\(self.hashValue)"
     }
     
+    // Generate RSS-friendly HTML for the embed based on type
+    func generateRSSHtml(blog: Blog) -> String {
+        switch embedType {
+        case .youtube:
+            // YouTube embeds work fine in RSS as-is
+            if let videoId = Utils.extractYouTubeId(from: url) {
+                return """
+                <div class="embed youtube-embed"><iframe width="560" height="315" src="https://www.youtube.com/embed/\(videoId)" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>
+                """
+            } else {
+                return "<!-- Invalid YouTube URL: \(url) -->"
+            }
+        case .link:
+            // Simplified link embed for RSS with inline styles
+            var html = """
+            <div style="border: 1px solid #ddd; border-radius: 8px; padding: 16px; margin: 16px 0;text-decoration: none;"><a href="\(url)" target="_blank" rel="noopener noreferrer" style="text-decoration: none;">
+            """
+            
+            if let title = title {
+                html += """
+                \(title)
+                """
+            }
+            
+            if let _ = imageData {
+                let imageFilename = "embed-\(url.hash).jpg"
+                let imageUrl = "\(blog.url)/images/embeds/\(imageFilename)"
+                html += """
+                <div style="margin: 8px 0;"><img src="\(imageUrl)" alt="\(title ?? "Link preview")" style="max-width: 100%; height: auto; border-radius: 4px;" /></div>
+                """
+            } else if let imageUrl = imageUrl {
+                html += """
+                <div style="margin: 8px 0;"><img src="\(imageUrl)" alt="\(title ?? "Link preview")" style="max-width: 100%; height: auto; border-radius: 4px;" /></div>
+                """
+            }
+            
+            if let description = embedDescription {
+                html += "\(description)<br/>"
+            }
+            
+            html += "<span style=\"font-size: 14px; color: #888; margin-top: 8px;\">\(url)</span></a></div>"
+            
+            return html
+            
+        case .image:
+            let sortedImages = images.sorted { $0.order < $1.order }
+            
+            if sortedImages.isEmpty {
+                return "<!-- No images available for this embed -->"
+            }
+            
+            var html = """
+            <div style="margin: 16px 0;">
+            """
+            
+            // For RSS, show all images as simple img tags
+            for (index, image) in sortedImages.enumerated() {
+                let imageUrl = "\(blog.url)/images/embeds/\(image.filename)"
+                html += """
+                <a href="\(imageUrl)" target="_blank"><img src="\(imageUrl)" alt="Image \(index + 1)" width="100%"/></a>
+                """
+            }
+            
+            html += """
+            </div>
+            """
+            
+            return html
+        }
+    }
+    
     // Generate HTML for the embed based on type
     func generateHtml() -> String {
         switch embedType {

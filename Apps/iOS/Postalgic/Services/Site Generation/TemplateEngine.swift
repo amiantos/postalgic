@@ -440,7 +440,7 @@ class TemplateEngine {
         let rssTemplate = try templateManager.getTemplate(for: "rss")
         
         var context = createBaseContext()
-        context["posts"] = posts.map { TemplateDataConverter.convert(post: $0, blog: blog) }
+        context["posts"] = posts.map { TemplateDataConverter.convertForRSS(post: $0, blog: blog) }
         
         return rssTemplate.render(context, library: templateManager.getLibrary())
     }
