@@ -344,10 +344,12 @@ struct MarkdownTextEditor: UIViewRepresentable {
         let quoteButton = UIBarButtonItem(image: UIImage(systemName: "text.quote"), style: .plain, target: context.coordinator, action: #selector(Coordinator.quoteTapped))
         let linkButton = UIBarButtonItem(image: UIImage(systemName: "link"), style: .plain, target: context.coordinator, action: #selector(Coordinator.linkTapped))
         let brButton = UIBarButtonItem(title: "BR", style: .plain, target: context.coordinator, action: #selector(Coordinator.brTapped))
+        let spacer = UIBarButtonItem(barButtonSystemItem: .fixedSpace, target: nil, action: nil)
+        spacer.width = 10
         let flexSpace = UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil)
         let doneButton = UIBarButtonItem(barButtonSystemItem: .done, target: context.coordinator, action: #selector(Coordinator.doneTapped))
         
-        toolbar.items = [boldButton, italicButton, quoteButton, linkButton, brButton, flexSpace, doneButton]
+        toolbar.items = [boldButton, spacer, italicButton, spacer, quoteButton, spacer, linkButton, spacer, brButton, flexSpace, doneButton]
         toolbar.sizeToFit()
         
         textView.inputAccessoryView = toolbar
