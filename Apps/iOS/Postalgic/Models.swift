@@ -887,13 +887,13 @@ final class PublishedFiles {
         
         let deleted = existingPaths.subtracting(newPaths).sorted()
         
-        // If the only changes are feed.xml and/or sitemap.xml, ignore them
+        // If the only changes are rss.xml and/or sitemap.xml, ignore them
         // as they don't need updates unless other content has changed
         if modified.count <= 2 && deleted.isEmpty {
-            let nonEssentialFiles = Set(["feed.xml", "sitemap.xml"])
+            let nonEssentialFiles = Set(["rss.xml", "sitemap.xml"])
             let modifiedSet = Set(modified)
             
-            // Check if all modified files are just feed.xml and/or sitemap.xml
+            // Check if all modified files are just rss.xml and/or sitemap.xml
             if modifiedSet.isSubset(of: nonEssentialFiles) {
                 // No real changes, so clear the modified list
                 modified = []
