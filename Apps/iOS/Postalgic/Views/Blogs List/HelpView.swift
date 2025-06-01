@@ -15,7 +15,11 @@ struct HelpView: View {
                 Section {
                     VStack(alignment: .leading) {
                         Text("What is Postalgic?").font(.title3).bold().padding([.top, .bottom], 8)
-                        Text("Postalgic is an all-in-one blogging client for your pocket. It allows you to create blogs, write posts, and then automatically generate the HTML for the site, and upload it to a host of your choosing. It's micro-blogging, fully decentralized in the way it should have always been for the past 25 years.").padding(.bottom, 8)
+                        Text("""
+                        Postalgic is an all-in-one blogging client for your pocket. It allows you to create blogs, write posts, and then automatically generate the HTML for the site, and upload it to a host of your choosing. It's micro-blogging, fully decentralized in the way it should have always been for the past 25 years.
+                        
+                        To learn more about Postalgic and how to use its features, visit the [Postalgic Help Center](https://postalgic.app/help).
+                        """).padding(.bottom, 8)
                     }
                 }
                 Section {
