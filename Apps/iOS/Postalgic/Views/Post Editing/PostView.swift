@@ -469,7 +469,22 @@ struct MarkdownTextEditor: UIViewRepresentable {
                     textView.replace(selectedRange, withText: quotedText)
                 }
             } else {
-                textView.insertText("> ")
+                // No selection: add > to start of current line
+                let currentPosition = textView.selectedTextRange?.start ?? textView.beginningOfDocument
+                let lineRange = textView.textRange(from: textView.beginningOfDocument, to: currentPosition)
+                let textBeforeCursor = textView.text(in: lineRange!) ?? ""
+                
+                // Find the start of the current line
+                let lines = textBeforeCursor.components(separatedBy: "\n")
+                let currentLineStartOffset = textBeforeCursor.count - (lines.last?.count ?? 0)
+                
+                if let startOfLine = textView.position(from: textView.beginningOfDocument, offset: currentLineStartOffset) {
+                    let rangeAtStartOfLine = textView.textRange(from: startOfLine, to: startOfLine)
+                    textView.selectedTextRange = rangeAtStartOfLine
+                    textView.insertText("> ")
+                } else {
+                    textView.insertText("> ")
+                }
             }
             
             text = textView.text
@@ -491,7 +506,24 @@ struct MarkdownTextEditor: UIViewRepresentable {
         
         @objc func brTapped() {
             guard let textView = textView else { return }
-            textView.insertText(" \\")
+            
+            // Find the end of the current line
+            let currentPosition = textView.selectedTextRange?.start ?? textView.beginningOfDocument
+            let endOfDocument = textView.endOfDocument
+            let textFromCursor = textView.textRange(from: currentPosition, to: endOfDocument)
+            let remainingText = textView.text(in: textFromCursor!) ?? ""
+            
+            // Find the next newline or end of document
+            let lines = remainingText.components(separatedBy: "\n")
+            let currentLineLength = lines.first?.count ?? 0
+            
+            if let endOfLine = textView.position(from: currentPosition, offset: currentLineLength) {
+                textView.selectedTextRange = textView.textRange(from: endOfLine, to: endOfLine)
+                textView.insertText(" \\")
+            } else {
+                textView.insertText(" \\")
+            }
+            
             text = textView.text
         }
         
