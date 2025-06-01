@@ -343,10 +343,11 @@ struct MarkdownTextEditor: UIViewRepresentable {
         let italicButton = UIBarButtonItem(image: UIImage(systemName: "italic"), style: .plain, target: context.coordinator, action: #selector(Coordinator.italicTapped))
         let quoteButton = UIBarButtonItem(image: UIImage(systemName: "text.quote"), style: .plain, target: context.coordinator, action: #selector(Coordinator.quoteTapped))
         let linkButton = UIBarButtonItem(image: UIImage(systemName: "link"), style: .plain, target: context.coordinator, action: #selector(Coordinator.linkTapped))
+        let brButton = UIBarButtonItem(title: "BR", style: .plain, target: context.coordinator, action: #selector(Coordinator.brTapped))
         let flexSpace = UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil)
         let doneButton = UIBarButtonItem(barButtonSystemItem: .done, target: context.coordinator, action: #selector(Coordinator.doneTapped))
         
-        toolbar.items = [boldButton, italicButton, quoteButton, linkButton, flexSpace, doneButton]
+        toolbar.items = [boldButton, italicButton, quoteButton, linkButton, brButton, flexSpace, doneButton]
         toolbar.sizeToFit()
         
         textView.inputAccessoryView = toolbar
@@ -444,10 +445,27 @@ struct MarkdownTextEditor: UIViewRepresentable {
             
             if let selectedRange = textView.selectedTextRange, !textView.selectedTextRange!.isEmpty {
                 let selectedText = textView.text(in: selectedRange) ?? ""
-                // Split by newlines and add > to each line
-                let lines = selectedText.split(separator: "\n")
-                let quotedText = lines.map { "> \($0)" }.joined(separator: "\n")
-                textView.replace(selectedRange, withText: quotedText)
+                let lines = selectedText.split(separator: "\n", omittingEmptySubsequences: false)
+                
+                if lines.count == 1 {
+                    // Single line: just add > to the start
+                    let quotedText = "> \(selectedText)"
+                    textView.replace(selectedRange, withText: quotedText)
+                } else {
+                    // Multiple lines: add > to first line and \ to end of first line, then \ to end of subsequent lines (except last)
+                    var quotedLines: [String] = []
+                    for (index, line) in lines.enumerated() {
+                        if index == 0 {
+                            quotedLines.append("> \(line) \\")
+                        } else if index == lines.count - 1 {
+                            quotedLines.append("\(line)")
+                        } else {
+                            quotedLines.append("\(line) \\")
+                        }
+                    }
+                    let quotedText = quotedLines.joined(separator: "\n")
+                    textView.replace(selectedRange, withText: quotedText)
+                }
             } else {
                 textView.insertText("> ")
             }
@@ -467,6 +485,12 @@ struct MarkdownTextEditor: UIViewRepresentable {
             }
             
             onShowLinkPrompt(selectedText, selectedRange)
+        }
+        
+        @objc func brTapped() {
+            guard let textView = textView else { return }
+            textView.insertText(" \\")
+            text = textView.text
         }
         
         @objc func doneTapped() {
