@@ -21,11 +21,12 @@ Online "social networks" have proven themselves incapable of nuturing meaningful
   - [x] Any SFTP Server
   - [x] Any Git Repository
 
-# Sample Sites
-- https://brad.postalgic.app
-- https://staires.org
+# Example Blogs
 - https://dev.postalgic.app
-- https://test.postalgic.app
+- https://ihavebeenfloated.org
+- https://staires.org
+- https://jozef.postalgic.app
+- https://bigbountycards.com
 
 # Credits
 - Postalgic is created and maintained by [Brad Root](https://github.com/amiantos)
