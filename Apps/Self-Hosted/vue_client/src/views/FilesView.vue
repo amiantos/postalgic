@@ -120,8 +120,8 @@ function formatFileSize(bytes) {
     <!-- Header -->
     <div class="flex items-center justify-between mb-6">
       <div>
-        <h2 class="text-xl font-bold text-gray-900">Files</h2>
-        <p class="text-gray-500 text-sm">{{ blogStore.staticFiles.length }} files</p>
+        <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100">Files</h2>
+        <p class="text-gray-500 dark:text-gray-400 text-sm">{{ blogStore.staticFiles.length }} files</p>
       </div>
       <button
         @click="triggerFileUpload"
@@ -140,15 +140,15 @@ function formatFileSize(bytes) {
     </div>
 
     <!-- Error -->
-    <div v-if="error" class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-800">
+    <div v-if="error" class="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-800 dark:text-red-400">
       {{ error }}
     </div>
 
     <!-- Favicon Section -->
-    <div class="bg-white rounded-lg border border-gray-200 p-6 mb-6">
-      <h3 class="font-medium text-gray-900 mb-4">Favicon</h3>
+    <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 mb-6">
+      <h3 class="font-medium text-gray-900 dark:text-gray-100 mb-4">Favicon</h3>
       <div class="flex items-center gap-4">
-        <div class="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden">
+        <div class="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center overflow-hidden">
           <img
             v-if="favicon"
             :src="favicon.url"
@@ -160,13 +160,13 @@ function formatFileSize(bytes) {
           </svg>
         </div>
         <div>
-          <p class="text-sm text-gray-600 mb-2">
+          <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">
             {{ favicon ? 'Current favicon' : 'No favicon set' }}
           </p>
           <button
             @click="triggerFaviconUpload"
             :disabled="uploading"
-            class="text-sm text-primary-600 hover:text-primary-700"
+            class="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300"
           >
             {{ favicon ? 'Change favicon' : 'Upload favicon' }}
           </button>
@@ -182,11 +182,11 @@ function formatFileSize(bytes) {
     </div>
 
     <!-- Social Share Image Section -->
-    <div class="bg-white rounded-lg border border-gray-200 p-6 mb-6">
-      <h3 class="font-medium text-gray-900 mb-2">Social Share Image</h3>
-      <p class="text-sm text-gray-500 mb-4">This image appears when your blog is shared on social media (Open Graph image).</p>
+    <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 mb-6">
+      <h3 class="font-medium text-gray-900 dark:text-gray-100 mb-2">Social Share Image</h3>
+      <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">This image appears when your blog is shared on social media (Open Graph image).</p>
       <div class="flex items-start gap-4">
-        <div class="w-32 h-20 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
+        <div class="w-32 h-20 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
           <img
             v-if="socialShareImage"
             :src="socialShareImage.url"
@@ -198,14 +198,14 @@ function formatFileSize(bytes) {
           </svg>
         </div>
         <div>
-          <p class="text-sm text-gray-600 mb-2">
+          <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">
             {{ socialShareImage ? 'Current social share image' : 'No social share image set' }}
           </p>
           <p class="text-xs text-gray-400 mb-2">Recommended size: 1200 x 630 pixels</p>
           <button
             @click="triggerSocialShareUpload"
             :disabled="uploading"
-            class="text-sm text-primary-600 hover:text-primary-700"
+            class="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300"
           >
             {{ socialShareImage ? 'Change image' : 'Upload image' }}
           </button>
@@ -221,25 +221,25 @@ function formatFileSize(bytes) {
     </div>
 
     <!-- Files List -->
-    <div class="bg-white rounded-lg border border-gray-200">
+    <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
       <div v-if="regularFiles.length === 0" class="p-8 text-center">
-        <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+        <div class="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
           <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
           </svg>
         </div>
-        <h3 class="text-lg font-medium text-gray-900 mb-2">No files yet</h3>
-        <p class="text-gray-500">Upload files to use in your blog.</p>
+        <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No files yet</h3>
+        <p class="text-gray-500 dark:text-gray-400">Upload files to use in your blog.</p>
       </div>
 
-      <div v-else class="divide-y divide-gray-200">
+      <div v-else class="divide-y divide-gray-200 dark:divide-gray-700">
         <div
           v-for="file in regularFiles"
           :key="file.id"
           class="p-4 flex items-center justify-between"
         >
           <div class="flex items-center gap-4">
-            <div class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden">
+            <div class="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center overflow-hidden">
               <img
                 v-if="file.isImage"
                 :src="file.url"
@@ -251,15 +251,15 @@ function formatFileSize(bytes) {
               </svg>
             </div>
             <div>
-              <p class="font-medium text-gray-900">{{ file.filename }}</p>
-              <p class="text-sm text-gray-500">{{ formatFileSize(file.size) }}</p>
+              <p class="font-medium text-gray-900 dark:text-gray-100">{{ file.filename }}</p>
+              <p class="text-sm text-gray-500 dark:text-gray-400">{{ formatFileSize(file.size) }}</p>
             </div>
           </div>
           <div class="flex items-center gap-2">
             <a
               :href="file.url"
               target="_blank"
-              class="p-2 text-gray-400 hover:text-gray-600"
+              class="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
             >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
@@ -267,7 +267,7 @@ function formatFileSize(bytes) {
             </a>
             <button
               @click="deleteFile(file.id)"
-              class="p-2 text-gray-400 hover:text-red-600"
+              class="p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400"
             >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />

@@ -28,3 +28,10 @@ input[type="color"]::-webkit-color-swatch {
   border: 1px solid #e5e7eb;
   border-radius: 4px;
 }
+
+/* Dark mode styles */
+@media (prefers-color-scheme: dark) {
+  input[type="color"]::-webkit-color-swatch {
+    border-color: #374151;
+  }
+}

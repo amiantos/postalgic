@@ -206,14 +206,14 @@ function cancel() {
 </script>
 
 <template>
-  <div class="bg-white rounded-lg border border-gray-200 p-4">
-    <h3 class="font-medium text-gray-900 mb-4">
+  <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+    <h3 class="font-medium text-gray-900 dark:text-gray-100 mb-4">
       {{ embed ? 'Edit Embed' : 'Add Embed' }}
     </h3>
 
     <!-- Embed Type Selector -->
     <div class="mb-4">
-      <label class="block text-sm font-medium text-gray-700 mb-2">Type</label>
+      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Type</label>
       <div class="flex gap-2">
         <button
           @click="embedType = 'youtube'"
@@ -221,7 +221,7 @@ function cancel() {
             'px-3 py-1.5 text-sm rounded-lg transition-colors',
             embedType === 'youtube'
               ? 'bg-primary-600 text-white'
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
           ]"
         >
           YouTube
@@ -232,7 +232,7 @@ function cancel() {
             'px-3 py-1.5 text-sm rounded-lg transition-colors',
             embedType === 'link'
               ? 'bg-primary-600 text-white'
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
           ]"
         >
           Link
@@ -243,7 +243,7 @@ function cancel() {
             'px-3 py-1.5 text-sm rounded-lg transition-colors',
             embedType === 'image'
               ? 'bg-primary-600 text-white'
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
           ]"
         >
           Images
@@ -253,18 +253,18 @@ function cancel() {
 
     <!-- URL Input (for YouTube and Link) -->
     <div v-if="embedType !== 'image'" class="mb-4">
-      <label class="block text-sm font-medium text-gray-700 mb-2">URL</label>
+      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">URL</label>
       <div class="flex gap-2">
         <input
           v-model="url"
           type="url"
-          class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm"
+          class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm"
           :placeholder="embedType === 'youtube' ? 'https://youtube.com/watch?v=...' : 'https://example.com/article'"
         />
         <button
           @click="fetchMetadata"
           :disabled="isLoading || !url.trim()"
-          class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50 text-sm"
+          class="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50 text-sm"
         >
           {{ isLoading ? 'Loading...' : 'Fetch' }}
         </button>
@@ -272,25 +272,25 @@ function cancel() {
     </div>
 
     <!-- Error Message -->
-    <div v-if="error" class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-800 text-sm">
+    <div v-if="error" class="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-800 dark:text-red-400 text-sm">
       {{ error }}
     </div>
 
     <!-- YouTube Preview -->
-    <div v-if="embedType === 'youtube' && hasMetadata" class="mb-4 p-3 bg-gray-50 rounded-lg">
-      <p class="text-sm font-medium text-gray-900">{{ metadata.title || 'YouTube Video' }}</p>
-      <p v-if="metadata.videoId" class="text-xs text-gray-500 mt-1">Video ID: {{ metadata.videoId }}</p>
+    <div v-if="embedType === 'youtube' && hasMetadata" class="mb-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+      <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ metadata.title || 'YouTube Video' }}</p>
+      <p v-if="metadata.videoId" class="text-xs text-gray-500 dark:text-gray-400 mt-1">Video ID: {{ metadata.videoId }}</p>
       <button
         v-if="metadata.title"
         @click="useAsPostTitle"
-        class="mt-2 text-xs text-primary-600 hover:text-primary-700"
+        class="mt-2 text-xs text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300"
       >
         Use as post title
       </button>
     </div>
 
     <!-- Link Preview -->
-    <div v-if="embedType === 'link' && hasMetadata" class="mb-4 p-3 bg-gray-50 rounded-lg">
+    <div v-if="embedType === 'link' && hasMetadata" class="mb-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
       <div class="flex gap-3">
         <img
           v-if="metadata.imageData || metadata.imageUrl"
@@ -299,14 +299,14 @@ function cancel() {
           alt=""
         />
         <div class="flex-1 min-w-0">
-          <p class="text-sm font-medium text-gray-900 truncate">{{ metadata.title || 'No title' }}</p>
-          <p v-if="metadata.description" class="text-xs text-gray-500 mt-1 line-clamp-2">
+          <p class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{{ metadata.title || 'No title' }}</p>
+          <p v-if="metadata.description" class="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
             {{ metadata.description }}
           </p>
           <button
             v-if="metadata.title"
             @click="useAsPostTitle"
-            class="mt-2 text-xs text-primary-600 hover:text-primary-700"
+            class="mt-2 text-xs text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300"
           >
             Use as post title
           </button>
@@ -316,7 +316,7 @@ function cancel() {
 
     <!-- Image Upload -->
     <div v-if="embedType === 'image'" class="mb-4">
-      <label class="block text-sm font-medium text-gray-700 mb-2">Images</label>
+      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Images</label>
 
       <!-- Image Grid -->
       <div v-if="images.length > 0" class="grid grid-cols-3 gap-2 mb-3">
@@ -375,7 +375,7 @@ function cancel() {
       />
       <button
         @click="imageInput?.click()"
-        class="w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 hover:border-primary-500 hover:text-primary-600 transition-colors text-sm"
+        class="w-full px-4 py-3 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-gray-500 dark:text-gray-400 hover:border-primary-500 dark:hover:border-primary-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors text-sm"
       >
         Click to add images
       </button>
@@ -383,10 +383,10 @@ function cancel() {
 
     <!-- Position Selector -->
     <div class="mb-4">
-      <label class="block text-sm font-medium text-gray-700 mb-2">Position</label>
+      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Position</label>
       <select
         v-model="position"
-        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm"
+        class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm"
       >
         <option value="above">Above content</option>
         <option value="below">Below content</option>
@@ -397,7 +397,7 @@ function cancel() {
     <div class="flex justify-end gap-2">
       <button
         @click="cancel"
-        class="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors text-sm"
+        class="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors text-sm"
       >
         Cancel
       </button>

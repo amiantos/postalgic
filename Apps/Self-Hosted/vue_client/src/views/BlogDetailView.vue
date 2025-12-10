@@ -46,18 +46,18 @@ function isActive(routeName) {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-50 flex">
+  <div class="min-h-screen bg-gray-50 dark:bg-gray-900 flex">
     <!-- Desktop Sidebar -->
-    <aside class="hidden md:flex md:flex-col md:w-64 bg-white border-r border-gray-200">
+    <aside class="hidden md:flex md:flex-col md:w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700">
       <!-- Header -->
-      <div class="p-4 border-b border-gray-200">
-        <router-link to="/" class="flex items-center gap-2 text-gray-500 hover:text-gray-700 mb-3">
+      <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+        <router-link to="/" class="flex items-center gap-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 mb-3">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
           </svg>
           <span class="text-sm">All Blogs</span>
         </router-link>
-        <h1 class="font-semibold text-gray-900 truncate">{{ blogStore.currentBlog?.name }}</h1>
+        <h1 class="font-semibold text-gray-900 dark:text-gray-100 truncate">{{ blogStore.currentBlog?.name }}</h1>
       </div>
 
       <!-- Navigation -->
@@ -69,8 +69,8 @@ function isActive(routeName) {
           :class="[
             'flex items-center gap-3 px-3 py-2 rounded-lg transition-colors',
             isActive(item.route)
-              ? 'bg-primary-50 text-primary-700'
-              : 'text-gray-600 hover:bg-gray-100'
+              ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
+              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
           ]"
         >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -82,17 +82,17 @@ function isActive(routeName) {
     </aside>
 
     <!-- Mobile Header -->
-    <div class="md:hidden fixed top-0 left-0 right-0 bg-white border-b border-gray-200 z-40">
+    <div class="md:hidden fixed top-0 left-0 right-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 z-40">
       <div class="flex items-center justify-between p-4">
         <div class="flex items-center gap-3">
-          <router-link to="/" class="text-gray-500 hover:text-gray-700">
+          <router-link to="/" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
             </svg>
           </router-link>
-          <h1 class="font-semibold text-gray-900 truncate">{{ blogStore.currentBlog?.name }}</h1>
+          <h1 class="font-semibold text-gray-900 dark:text-gray-100 truncate">{{ blogStore.currentBlog?.name }}</h1>
         </div>
-        <button @click="mobileMenuOpen = !mobileMenuOpen" class="p-2 text-gray-500">
+        <button @click="mobileMenuOpen = !mobileMenuOpen" class="p-2 text-gray-500 dark:text-gray-400">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
           </svg>
@@ -100,7 +100,7 @@ function isActive(routeName) {
       </div>
 
       <!-- Mobile Menu -->
-      <div v-if="mobileMenuOpen" class="border-t border-gray-200 bg-white">
+      <div v-if="mobileMenuOpen" class="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
         <nav class="p-2">
           <router-link
             v-for="item in navItems"
@@ -109,8 +109,8 @@ function isActive(routeName) {
             :class="[
               'flex items-center gap-3 px-3 py-2 rounded-lg transition-colors',
               isActive(item.route)
-                ? 'bg-primary-50 text-primary-700'
-                : 'text-gray-600 hover:bg-gray-100'
+                ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
+                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
             ]"
             @click="mobileMenuOpen = false"
           >

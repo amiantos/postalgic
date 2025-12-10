@@ -175,86 +175,86 @@ async function deleteBlog() {
 
 <template>
   <div class="p-6 max-w-2xl">
-    <h2 class="text-xl font-bold text-gray-900 mb-6">Blog Settings</h2>
+    <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-6">Blog Settings</h2>
 
     <!-- Messages -->
-    <div v-if="error" class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-800">
+    <div v-if="error" class="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-800 dark:text-red-400">
       {{ error }}
     </div>
-    <div v-if="success" class="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg text-green-800">
+    <div v-if="success" class="mb-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg text-green-800 dark:text-green-400">
       Settings saved successfully!
     </div>
 
     <form @submit.prevent="saveSettings" class="space-y-8">
       <!-- Basic Info -->
-      <section class="bg-white rounded-lg border border-gray-200 p-6">
-        <h3 class="text-lg font-medium text-gray-900 mb-4">Basic Information</h3>
+      <section class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+        <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Basic Information</h3>
         <div class="space-y-4">
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Blog Name</label>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Blog Name</label>
             <input
               v-model="form.name"
               type="text"
-              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
             />
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Blog URL</label>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Blog URL</label>
             <input
               v-model="form.url"
               type="url"
-              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
               placeholder="https://myblog.com"
             />
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Tagline</label>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tagline</label>
             <input
               v-model="form.tagline"
               type="text"
-              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
             />
           </div>
         </div>
       </section>
 
       <!-- Author Info -->
-      <section class="bg-white rounded-lg border border-gray-200 p-6">
-        <h3 class="text-lg font-medium text-gray-900 mb-4">Author Information</h3>
+      <section class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+        <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Author Information</h3>
         <div class="space-y-4">
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Author Name</label>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Author Name</label>
             <input
               v-model="form.authorName"
               type="text"
-              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
             />
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Author URL</label>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Author URL</label>
             <input
               v-model="form.authorUrl"
               type="url"
-              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
             />
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Author Email</label>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Author Email</label>
             <input
               v-model="form.authorEmail"
               type="email"
-              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
             />
           </div>
         </div>
       </section>
 
       <!-- Theme Colors -->
-      <section class="bg-white rounded-lg border border-gray-200 p-6">
-        <h3 class="text-lg font-medium text-gray-900 mb-4">Theme Colors</h3>
+      <section class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+        <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Theme Colors</h3>
         <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Accent Color</label>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Accent Color</label>
             <div class="flex items-center gap-2">
               <input
                 v-model="form.accentColor"
@@ -264,12 +264,12 @@ async function deleteBlog() {
               <input
                 v-model="form.accentColor"
                 type="text"
-                class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm"
               />
             </div>
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Background</label>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Background</label>
             <div class="flex items-center gap-2">
               <input
                 v-model="form.backgroundColor"
@@ -279,12 +279,12 @@ async function deleteBlog() {
               <input
                 v-model="form.backgroundColor"
                 type="text"
-                class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm"
               />
             </div>
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Text Color</label>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Text Color</label>
             <div class="flex items-center gap-2">
               <input
                 v-model="form.textColor"
@@ -294,12 +294,12 @@ async function deleteBlog() {
               <input
                 v-model="form.textColor"
                 type="text"
-                class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm"
               />
             </div>
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Light Shade</label>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Light Shade</label>
             <div class="flex items-center gap-2">
               <input
                 v-model="form.lightShade"
@@ -309,12 +309,12 @@ async function deleteBlog() {
               <input
                 v-model="form.lightShade"
                 type="text"
-                class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm"
               />
             </div>
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Medium Shade</label>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Medium Shade</label>
             <div class="flex items-center gap-2">
               <input
                 v-model="form.mediumShade"
@@ -324,12 +324,12 @@ async function deleteBlog() {
               <input
                 v-model="form.mediumShade"
                 type="text"
-                class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm"
               />
             </div>
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Dark Shade</label>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Dark Shade</label>
             <div class="flex items-center gap-2">
               <input
                 v-model="form.darkShade"
@@ -339,7 +339,7 @@ async function deleteBlog() {
               <input
                 v-model="form.darkShade"
                 type="text"
-                class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm"
               />
             </div>
           </div>
@@ -347,8 +347,8 @@ async function deleteBlog() {
 
         <!-- Color Preview -->
         <div class="mt-6">
-          <label class="block text-sm font-medium text-gray-700 mb-2">Preview</label>
-          <div class="rounded-lg overflow-hidden border border-gray-200">
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Preview</label>
+          <div class="rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
             <iframe
               :srcdoc="colorPreviewHtml"
               class="w-full border-0"
@@ -359,14 +359,14 @@ async function deleteBlog() {
       </section>
 
       <!-- Publishing Settings -->
-      <section class="bg-white rounded-lg border border-gray-200 p-6">
-        <h3 class="text-lg font-medium text-gray-900 mb-4">Publishing</h3>
+      <section class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+        <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Publishing</h3>
         <div class="space-y-4">
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Publisher Type</label>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Publisher Type</label>
             <select
               v-model="form.publisherType"
-              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
             >
               <option value="manual">Manual (Download ZIP)</option>
               <option value="aws">AWS S3</option>
@@ -376,49 +376,49 @@ async function deleteBlog() {
           </div>
 
           <!-- AWS Settings -->
-          <div v-if="form.publisherType === 'aws'" class="space-y-4 p-4 bg-gray-50 rounded-lg">
-            <h4 class="font-medium text-gray-900">AWS S3 Configuration</h4>
+          <div v-if="form.publisherType === 'aws'" class="space-y-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+            <h4 class="font-medium text-gray-900 dark:text-gray-100">AWS S3 Configuration</h4>
             <div class="grid grid-cols-2 gap-4">
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Region</label>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Region</label>
                 <input
                   v-model="form.awsRegion"
                   type="text"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   placeholder="us-east-1"
                 />
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">S3 Bucket</label>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">S3 Bucket</label>
                 <input
                   v-model="form.awsS3Bucket"
                   type="text"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   placeholder="my-blog-bucket"
                 />
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Access Key ID</label>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Access Key ID</label>
                 <input
                   v-model="form.awsAccessKeyId"
                   type="text"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                 />
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Secret Access Key</label>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Secret Access Key</label>
                 <input
                   v-model="form.awsSecretAccessKey"
                   type="password"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                 />
               </div>
               <div class="col-span-2">
-                <label class="block text-sm font-medium text-gray-700 mb-1">CloudFront Distribution ID</label>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">CloudFront Distribution ID</label>
                 <input
                   v-model="form.awsCloudFrontDistId"
                   type="text"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   placeholder="Optional - for cache invalidation"
                 />
               </div>
@@ -426,58 +426,58 @@ async function deleteBlog() {
           </div>
 
           <!-- SFTP Settings -->
-          <div v-if="form.publisherType === 'sftp'" class="space-y-4 p-4 bg-gray-50 rounded-lg">
-            <h4 class="font-medium text-gray-900">SFTP Configuration</h4>
+          <div v-if="form.publisherType === 'sftp'" class="space-y-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+            <h4 class="font-medium text-gray-900 dark:text-gray-100">SFTP Configuration</h4>
             <div class="grid grid-cols-2 gap-4">
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Host</label>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Host</label>
                 <input
                   v-model="form.ftpHost"
                   type="text"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   placeholder="sftp.example.com"
                 />
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Port</label>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Port</label>
                 <input
                   v-model.number="form.ftpPort"
                   type="number"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   placeholder="22"
                 />
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Username</label>
                 <input
                   v-model="form.ftpUsername"
                   type="text"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                 />
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
                 <input
                   v-model="form.ftpPassword"
                   type="password"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                 />
               </div>
               <div class="col-span-2">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Remote Path</label>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Remote Path</label>
                 <input
                   v-model="form.ftpPath"
                   type="text"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   placeholder="/var/www/html"
                 />
               </div>
               <div class="col-span-2">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Private Key (optional, alternative to password)</label>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Private Key (optional, alternative to password)</label>
                 <textarea
                   v-model="form.ftpPrivateKey"
                   rows="3"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 font-mono text-xs"
+                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 font-mono text-xs"
                   placeholder="-----BEGIN OPENSSH PRIVATE KEY-----..."
                 ></textarea>
               </div>
@@ -485,52 +485,52 @@ async function deleteBlog() {
           </div>
 
           <!-- Git Settings -->
-          <div v-if="form.publisherType === 'git'" class="space-y-4 p-4 bg-gray-50 rounded-lg">
-            <h4 class="font-medium text-gray-900">Git Configuration</h4>
+          <div v-if="form.publisherType === 'git'" class="space-y-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+            <h4 class="font-medium text-gray-900 dark:text-gray-100">Git Configuration</h4>
             <div class="space-y-4">
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Repository URL</label>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Repository URL</label>
                 <input
                   v-model="form.gitRepositoryUrl"
                   type="text"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   placeholder="https://github.com/username/repo.git"
                 />
               </div>
               <div class="grid grid-cols-2 gap-4">
                 <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Username</label>
                   <input
                     v-model="form.gitUsername"
                     type="text"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   />
                 </div>
                 <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Personal Access Token</label>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Personal Access Token</label>
                   <input
                     v-model="form.gitToken"
                     type="password"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   />
                 </div>
               </div>
               <div class="grid grid-cols-2 gap-4">
                 <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Branch</label>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Branch</label>
                   <input
                     v-model="form.gitBranch"
                     type="text"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                     placeholder="main"
                   />
                 </div>
                 <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Commit Message</label>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Commit Message</label>
                   <input
                     v-model="form.gitCommitMessage"
                     type="text"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                     placeholder="Update blog"
                   />
                 </div>
@@ -545,7 +545,7 @@ async function deleteBlog() {
         <button
           type="button"
           @click="deleteBlog"
-          class="px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+          class="px-4 py-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
         >
           Delete Blog
         </button>
