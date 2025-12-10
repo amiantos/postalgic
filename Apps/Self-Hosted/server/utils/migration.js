@@ -210,6 +210,41 @@ function migrateBlog(db, blogsDir, blogId) {
 
   // Migrate published files tracking
   migratePublishedFiles(db, blogDir, blogId);
+
+  // Move uploads to new location (data/uploads/{blogId}/)
+  moveUploads(blogDir, blogId);
+}
+
+/**
+ * Move uploads from old location to new location.
+ * Old: data/blogs/{blogId}/uploads/
+ * New: data/uploads/{blogId}/
+ */
+function moveUploads(blogDir, blogId) {
+  const oldUploadsDir = path.join(blogDir, 'uploads');
+  const dataRoot = path.dirname(path.dirname(blogDir)); // Go up from blogs/{blogId}
+  const newUploadsDir = path.join(dataRoot, 'uploads', blogId);
+
+  if (!fs.existsSync(oldUploadsDir)) return;
+
+  // Create new uploads directory
+  if (!fs.existsSync(newUploadsDir)) {
+    fs.mkdirSync(newUploadsDir, { recursive: true });
+  }
+
+  // Move all files
+  const files = fs.readdirSync(oldUploadsDir);
+  for (const file of files) {
+    const oldPath = path.join(oldUploadsDir, file);
+    const newPath = path.join(newUploadsDir, file);
+
+    // Only move files, not directories
+    if (fs.statSync(oldPath).isFile()) {
+      fs.renameSync(oldPath, newPath);
+    }
+  }
+
+  console.log(`[Migration] Moved ${files.length} uploads for blog ${blogId}`);
 }
 
 /**

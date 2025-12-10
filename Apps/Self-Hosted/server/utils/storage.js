@@ -885,6 +885,7 @@ class Storage {
       storedFilename: row.stored_filename,
       mimeType: row.mime_type,
       size: row.size,
+      isSpecialFile: !!row.special_file_type,
       specialFileType: row.special_file_type,
       createdAt: row.created_at
     };
