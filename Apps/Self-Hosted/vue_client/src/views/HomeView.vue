@@ -41,12 +41,20 @@ async function deleteBlog() {
             <h1 class="text-2xl font-bold text-gray-900">Postalgic</h1>
             <p class="text-gray-500 text-sm">Self-hosted static blog generator</p>
           </div>
-          <router-link
-            to="/blogs/new"
-            class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
-          >
-            New Blog
-          </router-link>
+          <div class="flex gap-2">
+            <router-link
+              to="/blogs/import"
+              class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              Import Blog
+            </router-link>
+            <router-link
+              to="/blogs/new"
+              class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+            >
+              New Blog
+            </router-link>
+          </div>
         </div>
       </div>
     </header>

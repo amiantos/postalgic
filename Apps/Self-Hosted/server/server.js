@@ -14,6 +14,7 @@ import staticFileRoutes from './routes/staticFiles.js';
 import publishRoutes from './routes/publish.js';
 import themeRoutes from './routes/themes.js';
 import metadataRoutes from './routes/metadata.js';
+import importRoutes from './routes/import.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -47,6 +48,7 @@ app.use('/api/blogs/:blogId/static-files', staticFileRoutes);
 app.use('/api/blogs/:blogId/publish', publishRoutes);
 app.use('/api/themes', themeRoutes);
 app.use('/api/metadata', metadataRoutes);
+app.use('/api/import', importRoutes);
 
 // Serve uploaded files
 app.use('/uploads', express.static(path.join(DATA_ROOT, 'uploads')));
