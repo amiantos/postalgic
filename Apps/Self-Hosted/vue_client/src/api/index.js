@@ -173,3 +173,8 @@ export const themeApi = {
   duplicate: (id, name) =>
     fetchApi(`/themes/${id}/duplicate`, { method: 'POST', body: JSON.stringify({ name }) })
 };
+
+// Metadata API
+export const metadataApi = {
+  fetch: (url) => fetchApi(`/metadata?url=${encodeURIComponent(url)}`)
+};

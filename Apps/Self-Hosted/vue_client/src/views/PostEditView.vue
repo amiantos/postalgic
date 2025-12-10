@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useBlogStore } from '@/stores/blog';
+import EmbedEditor from '@/components/EmbedEditor.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -17,12 +18,14 @@ const form = ref({
   isDraft: true,
   categoryId: null,
   tagIds: [],
+  embed: null,
   createdAt: new Date().toISOString().slice(0, 16)
 });
 
 const saving = ref(false);
 const error = ref(null);
 const newTag = ref('');
+const showEmbedEditor = ref(false);
 
 onMounted(async () => {
   if (!isNew.value) {
@@ -33,6 +36,7 @@ onMounted(async () => {
       isDraft: post.isDraft,
       categoryId: post.categoryId || null,
       tagIds: post.tagIds || [],
+      embed: post.embed || null,
       createdAt: new Date(post.createdAt).toISOString().slice(0, 16)
     };
   }
@@ -90,6 +94,39 @@ function toggleTag(tagId) {
   } else {
     form.value.tagIds.splice(index, 1);
   }
+}
+
+// Embed functions
+const embedLabel = computed(() => {
+  if (!form.value.embed) return 'Add Embed';
+  switch (form.value.embed.type) {
+    case 'youtube':
+      return 'YouTube Video';
+    case 'link':
+      return 'Link Embedded';
+    case 'image':
+      const count = form.value.embed.images?.length || 0;
+      return count === 1 ? '1 Image' : `${count} Images`;
+    default:
+      return 'Embed';
+  }
+});
+
+function handleEmbedSave(embedData) {
+  form.value.embed = embedData;
+  showEmbedEditor.value = false;
+}
+
+function handleEmbedCancel() {
+  showEmbedEditor.value = false;
+}
+
+function handleUseTitle(title) {
+  form.value.title = title;
+}
+
+function removeEmbed() {
+  form.value.embed = null;
 }
 </script>
 
@@ -246,6 +283,103 @@ function toggleTag(tagId) {
             >
               Add
             </button>
+          </div>
+        </div>
+
+        <!-- Embed -->
+        <div class="bg-white rounded-lg border border-gray-200 p-4">
+          <h3 class="font-medium text-gray-900 mb-3">Embed</h3>
+
+          <!-- Embed Editor -->
+          <EmbedEditor
+            v-if="showEmbedEditor"
+            :embed="form.embed"
+            :blog-id="blogId"
+            @save="handleEmbedSave"
+            @cancel="handleEmbedCancel"
+            @use-title="handleUseTitle"
+          />
+
+          <!-- Embed Preview / Add Button -->
+          <div v-else>
+            <!-- No Embed -->
+            <button
+              v-if="!form.embed"
+              @click="showEmbedEditor = true"
+              class="w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 hover:border-primary-500 hover:text-primary-600 transition-colors text-sm flex items-center justify-center gap-2"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+              </svg>
+              Add Embed
+            </button>
+
+            <!-- Has Embed - Show Preview -->
+            <div v-else>
+              <!-- YouTube Preview -->
+              <div v-if="form.embed.type === 'youtube'" class="p-3 bg-gray-50 rounded-lg">
+                <div class="flex items-center gap-2 text-sm">
+                  <svg class="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                  </svg>
+                  <span class="font-medium truncate">{{ form.embed.title || 'YouTube Video' }}</span>
+                </div>
+                <p class="text-xs text-gray-500 mt-1">Position: {{ form.embed.position === 'above' ? 'Above' : 'Below' }} content</p>
+              </div>
+
+              <!-- Link Preview -->
+              <div v-else-if="form.embed.type === 'link'" class="p-3 bg-gray-50 rounded-lg">
+                <div class="flex gap-2">
+                  <img
+                    v-if="form.embed.imageData || form.embed.imageUrl"
+                    :src="form.embed.imageData || form.embed.imageUrl"
+                    class="w-12 h-12 object-cover rounded"
+                    alt=""
+                  />
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium truncate">{{ form.embed.title || 'Link' }}</p>
+                    <p v-if="form.embed.description" class="text-xs text-gray-500 truncate">{{ form.embed.description }}</p>
+                  </div>
+                </div>
+                <p class="text-xs text-gray-500 mt-2">Position: {{ form.embed.position === 'above' ? 'Above' : 'Below' }} content</p>
+              </div>
+
+              <!-- Image Preview -->
+              <div v-else-if="form.embed.type === 'image'" class="p-3 bg-gray-50 rounded-lg">
+                <div class="flex gap-1 mb-2">
+                  <img
+                    v-for="(img, index) in form.embed.images?.slice(0, 4)"
+                    :key="index"
+                    :src="img.data"
+                    class="w-12 h-12 object-cover rounded"
+                    alt=""
+                  />
+                  <div
+                    v-if="form.embed.images?.length > 4"
+                    class="w-12 h-12 bg-gray-200 rounded flex items-center justify-center text-xs text-gray-600"
+                  >
+                    +{{ form.embed.images.length - 4 }}
+                  </div>
+                </div>
+                <p class="text-xs text-gray-500">{{ form.embed.images?.length || 0 }} image(s) - Position: {{ form.embed.position === 'above' ? 'Above' : 'Below' }} content</p>
+              </div>
+
+              <!-- Edit / Remove Buttons -->
+              <div class="flex gap-2 mt-3">
+                <button
+                  @click="showEmbedEditor = true"
+                  class="flex-1 px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 text-sm"
+                >
+                  Edit
+                </button>
+                <button
+                  @click="removeEmbed"
+                  class="px-3 py-1.5 text-red-600 hover:bg-red-50 rounded-lg text-sm"
+                >
+                  Remove
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>

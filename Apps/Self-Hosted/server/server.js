@@ -13,12 +13,13 @@ import sidebarRoutes from './routes/sidebar.js';
 import staticFileRoutes from './routes/staticFiles.js';
 import publishRoutes from './routes/publish.js';
 import themeRoutes from './routes/themes.js';
+import metadataRoutes from './routes/metadata.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = process.env.PORT || 8005;
+const PORT = process.env.PORT || 8010;
 
 // Data root directory
 const DATA_ROOT = path.resolve(__dirname, '../data');
@@ -45,6 +46,7 @@ app.use('/api/blogs/:blogId/sidebar', sidebarRoutes);
 app.use('/api/blogs/:blogId/static-files', staticFileRoutes);
 app.use('/api/blogs/:blogId/publish', publishRoutes);
 app.use('/api/themes', themeRoutes);
+app.use('/api/metadata', metadataRoutes);
 
 // Serve uploaded files
 app.use('/uploads', express.static(path.join(DATA_ROOT, 'uploads')));

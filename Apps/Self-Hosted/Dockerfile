@@ -37,11 +37,11 @@ COPY --from=vue-builder /app/vue_client/dist ./vue_client/dist
 RUN mkdir -p /app/data
 
 # Expose port
-EXPOSE 8005
+EXPOSE 8010
 
 # Set environment variables
 ENV NODE_ENV=production
-ENV PORT=8005
+ENV PORT=8010
 
 # Start the server
 CMD ["node", "server/server.js"]

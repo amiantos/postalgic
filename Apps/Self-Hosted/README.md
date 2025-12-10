@@ -24,7 +24,7 @@ cd Apps/Self-Hosted
 # Build and run with Docker Compose
 docker compose up -d
 
-# Access the app at http://localhost:8005
+# Access the app at http://localhost:8010
 ```
 
 ### Development Mode
@@ -36,8 +36,8 @@ npm run install:all
 # Start development servers (backend + frontend)
 npm run dev
 
-# Backend runs on http://localhost:8005
-# Frontend runs on http://localhost:5178 (with hot reload)
+# Backend runs on http://localhost:8010
+# Frontend runs on http://localhost:5188 (with hot reload)
 ```
 
 ### Manual Production Build
@@ -122,7 +122,7 @@ data/
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `PORT` | `8005` | Server port |
+| `PORT` | `8010` | Server port |
 | `NODE_ENV` | `development` | Environment mode |
 
 ## License

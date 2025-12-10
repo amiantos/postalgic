@@ -57,6 +57,11 @@ const routes = [
         component: () => import('./views/BlogSettingsView.vue')
       },
       {
+        path: 'themes',
+        name: 'themes',
+        component: () => import('./views/ThemesView.vue')
+      },
+      {
         path: 'publish',
         name: 'publish',
         component: () => import('./views/PublishView.vue')
