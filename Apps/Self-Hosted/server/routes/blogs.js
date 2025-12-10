@@ -55,12 +55,12 @@ router.post('/', (req, res) => {
       authorEmail: rest.authorEmail || '',
       // Theme settings
       themeIdentifier: rest.themeIdentifier || 'default',
-      accentColor: rest.accentColor || '#007AFF',
-      backgroundColor: rest.backgroundColor || '#FFFFFF',
-      textColor: rest.textColor || '#000000',
-      lightShade: rest.lightShade || '#F5F5F5',
-      mediumShade: rest.mediumShade || '#E0E0E0',
-      darkShade: rest.darkShade || '#333333',
+      accentColor: rest.accentColor || '#FFA100',
+      backgroundColor: rest.backgroundColor || '#efefef',
+      textColor: rest.textColor || '#2d3748',
+      lightShade: rest.lightShade || '#dedede',
+      mediumShade: rest.mediumShade || '#a0aec0',
+      darkShade: rest.darkShade || '#4a5568',
       // Publisher settings (stored but not used for secrets)
       publisherType: rest.publisherType || 'manual',
       // AWS settings

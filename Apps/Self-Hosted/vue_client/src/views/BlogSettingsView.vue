@@ -217,6 +217,156 @@ async function deleteBlog() {
         </div>
       </section>
 
+      <!-- Publishing Settings -->
+      <section class="bg-white rounded-lg border border-gray-200 p-6">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Publishing</h3>
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Publisher Type</label>
+            <select
+              v-model="form.publisherType"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+            >
+              <option value="manual">Manual (Download ZIP)</option>
+              <option value="aws">AWS S3</option>
+              <option value="sftp">SFTP</option>
+              <option value="git">Git (GitHub Pages, etc.)</option>
+            </select>
+          </div>
+
+          <!-- AWS Settings -->
+          <div v-if="form.publisherType === 'aws'" class="space-y-4 p-4 bg-gray-50 rounded-lg">
+            <h4 class="font-medium text-gray-900">AWS S3 Configuration</h4>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Region</label>
+                <input
+                  v-model="form.awsRegion"
+                  type="text"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  placeholder="us-east-1"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">S3 Bucket</label>
+                <input
+                  v-model="form.awsS3Bucket"
+                  type="text"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  placeholder="my-blog-bucket"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Access Key ID</label>
+                <input
+                  v-model="form.awsAccessKeyId"
+                  type="text"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">CloudFront Distribution ID</label>
+                <input
+                  v-model="form.awsCloudFrontDistId"
+                  type="text"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  placeholder="Optional"
+                />
+              </div>
+            </div>
+            <p class="text-xs text-gray-500">Secret Access Key will be entered when publishing for security.</p>
+          </div>
+
+          <!-- SFTP Settings -->
+          <div v-if="form.publisherType === 'sftp'" class="space-y-4 p-4 bg-gray-50 rounded-lg">
+            <h4 class="font-medium text-gray-900">SFTP Configuration</h4>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Host</label>
+                <input
+                  v-model="form.ftpHost"
+                  type="text"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  placeholder="sftp.example.com"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Port</label>
+                <input
+                  v-model.number="form.ftpPort"
+                  type="number"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  placeholder="22"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                <input
+                  v-model="form.ftpUsername"
+                  type="text"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Remote Path</label>
+                <input
+                  v-model="form.ftpPath"
+                  type="text"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  placeholder="/var/www/html"
+                />
+              </div>
+            </div>
+            <p class="text-xs text-gray-500">Password or private key will be entered when publishing for security.</p>
+          </div>
+
+          <!-- Git Settings -->
+          <div v-if="form.publisherType === 'git'" class="space-y-4 p-4 bg-gray-50 rounded-lg">
+            <h4 class="font-medium text-gray-900">Git Configuration</h4>
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Repository URL</label>
+                <input
+                  v-model="form.gitRepositoryUrl"
+                  type="text"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  placeholder="https://github.com/username/repo.git"
+                />
+              </div>
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                  <input
+                    v-model="form.gitUsername"
+                    type="text"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Branch</label>
+                  <input
+                    v-model="form.gitBranch"
+                    type="text"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    placeholder="main"
+                  />
+                </div>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Commit Message</label>
+                <input
+                  v-model="form.gitCommitMessage"
+                  type="text"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  placeholder="Update blog"
+                />
+              </div>
+            </div>
+            <p class="text-xs text-gray-500">Personal access token will be entered when publishing for security.</p>
+          </div>
+        </div>
+      </section>
+
       <!-- Save Button -->
       <div class="flex justify-between">
         <button

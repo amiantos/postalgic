@@ -118,12 +118,12 @@ function buildBaseContext(blog, categories, tags, sidebarObjects, templates) {
     blogAuthorEmail: blog.authorEmail || '',
     currentYear,
     buildDate,
-    accentColor: blog.accentColor || '#007AFF',
-    backgroundColor: blog.backgroundColor || '#FFFFFF',
-    textColor: blog.textColor || '#000000',
-    lightShade: blog.lightShade || '#F5F5F5',
-    mediumShade: blog.mediumShade || '#E0E0E0',
-    darkShade: blog.darkShade || '#333333',
+    accentColor: blog.accentColor || '#FFA100',
+    backgroundColor: blog.backgroundColor || '#efefef',
+    textColor: blog.textColor || '#2d3748',
+    lightShade: blog.lightShade || '#dedede',
+    mediumShade: blog.mediumShade || '#a0aec0',
+    darkShade: blog.darkShade || '#4a5568',
     hasTags: tags.length > 0,
     hasCategories: categories.length > 0,
     sidebarContent
@@ -298,12 +298,12 @@ function writeBinaryFile(outputDir, relativePath, buffer, fileHashes) {
  */
 async function generateCSS(outputDir, templates, blog, fileHashes) {
   const cssContext = {
-    accentColor: blog.accentColor || '#007AFF',
-    backgroundColor: blog.backgroundColor || '#FFFFFF',
-    textColor: blog.textColor || '#000000',
-    lightShade: blog.lightShade || '#F5F5F5',
-    mediumShade: blog.mediumShade || '#E0E0E0',
-    darkShade: blog.darkShade || '#333333'
+    accentColor: blog.accentColor || '#FFA100',
+    backgroundColor: blog.backgroundColor || '#efefef',
+    textColor: blog.textColor || '#2d3748',
+    lightShade: blog.lightShade || '#dedede',
+    mediumShade: blog.mediumShade || '#a0aec0',
+    darkShade: blog.darkShade || '#4a5568'
   };
 
   const css = Mustache.render(templates.css, cssContext);

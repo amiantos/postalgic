@@ -153,7 +153,23 @@ export const publishApi = {
   changes: (blogId) =>
     fetchApi(`/blogs/${blogId}/publish/changes`, { method: 'POST' }),
   markPublished: (blogId) =>
-    fetchApi(`/blogs/${blogId}/publish/mark-published`, { method: 'POST' })
+    fetchApi(`/blogs/${blogId}/publish/mark-published`, { method: 'POST' }),
+  // Publisher-specific endpoints
+  publishToAWS: (blogId, secretAccessKey) =>
+    fetchApi(`/blogs/${blogId}/publish/aws`, {
+      method: 'POST',
+      body: JSON.stringify({ secretAccessKey })
+    }),
+  publishToSFTP: (blogId, credentials) =>
+    fetchApi(`/blogs/${blogId}/publish/sftp`, {
+      method: 'POST',
+      body: JSON.stringify(credentials)
+    }),
+  publishToGit: (blogId, token) =>
+    fetchApi(`/blogs/${blogId}/publish/git`, {
+      method: 'POST',
+      body: JSON.stringify({ token })
+    })
 };
 
 // Theme API

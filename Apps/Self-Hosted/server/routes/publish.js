@@ -3,6 +3,7 @@ import path from 'path';
 import Storage from '../utils/storage.js';
 import { generateSite } from '../services/siteGenerator.js';
 import { createZipArchive } from '../services/archiver.js';
+import { AWSPublisher, SFTPPublisher, GitPublisher } from '../services/publishers/index.js';
 
 const router = express.Router({ mergeParams: true });
 
@@ -192,6 +193,188 @@ router.post('/mark-published', async (req, res) => {
       lastPublishedDate: new Date().toISOString()
     });
   } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/blogs/:blogId/publish/aws - Publish to AWS S3
+router.post('/aws', async (req, res) => {
+  try {
+    const storage = getStorage(req);
+    const { blogId } = req.params;
+
+    const blog = storage.getBlog(blogId);
+    if (!blog) {
+      return res.status(404).json({ error: 'Blog not found' });
+    }
+
+    // Get AWS credentials from request body (not stored in blog for security)
+    const { secretAccessKey } = req.body;
+
+    if (!blog.awsS3Bucket || !blog.awsRegion || !blog.awsAccessKeyId) {
+      return res.status(400).json({
+        error: 'AWS configuration incomplete. Please set bucket, region, and access key ID in settings.'
+      });
+    }
+
+    if (!secretAccessKey) {
+      return res.status(400).json({
+        error: 'AWS secret access key is required'
+      });
+    }
+
+    // Generate site first
+    const generateResult = await generateSite(storage, blogId);
+
+    // Create publisher
+    const publisher = new AWSPublisher({
+      bucket: blog.awsS3Bucket,
+      region: blog.awsRegion,
+      cloudFrontDistId: blog.awsCloudFrontDistId,
+      accessKeyId: blog.awsAccessKeyId,
+      secretAccessKey
+    });
+
+    // Publish
+    const result = await publisher.publish(generateResult.outputDir);
+
+    // Save published state
+    storage.savePublishedFiles(blogId, {
+      publisherType: 'aws',
+      lastPublishedDate: new Date().toISOString(),
+      fileHashes: generateResult.fileHashes
+    });
+
+    res.json({
+      success: true,
+      message: `Published to S3: ${result.uploaded} uploaded, ${result.deleted} deleted`,
+      ...result
+    });
+  } catch (error) {
+    console.error('AWS publish error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/blogs/:blogId/publish/sftp - Publish via SFTP
+router.post('/sftp', async (req, res) => {
+  try {
+    const storage = getStorage(req);
+    const { blogId } = req.params;
+
+    const blog = storage.getBlog(blogId);
+    if (!blog) {
+      return res.status(404).json({ error: 'Blog not found' });
+    }
+
+    // Get password/key from request body (not stored for security)
+    const { password, privateKey } = req.body;
+
+    if (!blog.ftpHost || !blog.ftpUsername) {
+      return res.status(400).json({
+        error: 'SFTP configuration incomplete. Please set host and username in settings.'
+      });
+    }
+
+    if (!password && !privateKey) {
+      return res.status(400).json({
+        error: 'Either password or private key is required'
+      });
+    }
+
+    // Generate site first
+    const generateResult = await generateSite(storage, blogId);
+
+    // Create publisher
+    const publisher = new SFTPPublisher({
+      host: blog.ftpHost,
+      port: blog.ftpPort || 22,
+      username: blog.ftpUsername,
+      password,
+      privateKey,
+      remotePath: blog.ftpPath || '/'
+    });
+
+    // Publish
+    const result = await publisher.publish(generateResult.outputDir);
+
+    // Save published state
+    storage.savePublishedFiles(blogId, {
+      publisherType: 'sftp',
+      lastPublishedDate: new Date().toISOString(),
+      fileHashes: generateResult.fileHashes
+    });
+
+    res.json({
+      success: true,
+      message: `Published via SFTP: ${result.uploaded} uploaded, ${result.deleted} deleted`,
+      ...result
+    });
+  } catch (error) {
+    console.error('SFTP publish error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/blogs/:blogId/publish/git - Publish to Git repository
+router.post('/git', async (req, res) => {
+  try {
+    const storage = getStorage(req);
+    const { blogId } = req.params;
+
+    const blog = storage.getBlog(blogId);
+    if (!blog) {
+      return res.status(404).json({ error: 'Blog not found' });
+    }
+
+    // Get token from request body (not stored for security)
+    const { token } = req.body;
+
+    if (!blog.gitRepositoryUrl || !blog.gitUsername) {
+      return res.status(400).json({
+        error: 'Git configuration incomplete. Please set repository URL and username in settings.'
+      });
+    }
+
+    if (!token) {
+      return res.status(400).json({
+        error: 'Git personal access token is required'
+      });
+    }
+
+    // Generate site first
+    const generateResult = await generateSite(storage, blogId);
+
+    // Create publisher
+    const publisher = new GitPublisher({
+      repositoryUrl: blog.gitRepositoryUrl,
+      username: blog.gitUsername,
+      token,
+      branch: blog.gitBranch || 'main',
+      commitMessage: blog.gitCommitMessage || 'Update blog',
+      authorName: blog.authorName || 'Postalgic',
+      authorEmail: blog.authorEmail || 'postalgic@localhost'
+    });
+
+    // Publish
+    const result = await publisher.publish(generateResult.outputDir);
+
+    // Save published state
+    storage.savePublishedFiles(blogId, {
+      publisherType: 'git',
+      lastPublishedDate: new Date().toISOString(),
+      fileHashes: generateResult.fileHashes
+    });
+
+    res.json({
+      success: true,
+      message: result.committed
+        ? `Published to Git: ${result.summary.changed} files changed`
+        : 'No changes to publish',
+      ...result
+    });
+  } catch (error) {
+    console.error('Git publish error:', error);
     res.status(500).json({ error: error.message });
   }
 });
