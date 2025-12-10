@@ -50,8 +50,12 @@ app.use('/api/themes', themeRoutes);
 app.use('/api/metadata', metadataRoutes);
 app.use('/api/import', importRoutes);
 
-// Serve uploaded files
-app.use('/uploads', express.static(path.join(DATA_ROOT, 'uploads')));
+// Serve uploaded files from blog-specific directories
+// Files are stored at data/blogs/{blogId}/uploads/ and served at /uploads/{blogId}/
+app.use('/uploads/:blogId', (req, res, next) => {
+  const blogUploadsPath = path.join(DATA_ROOT, 'blogs', req.params.blogId, 'uploads');
+  express.static(blogUploadsPath)(req, res, next);
+});
 
 // Serve generated sites for preview
 app.use('/preview', express.static(path.join(DATA_ROOT, 'generated')));
