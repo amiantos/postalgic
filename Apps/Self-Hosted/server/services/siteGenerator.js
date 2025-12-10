@@ -34,11 +34,21 @@ export async function generateSite(storage, blogId) {
   }
 
   // Get all data
-  const posts = storage.getAllPosts(blogId, false); // Published only
+  const rawPosts = storage.getAllPosts(blogId, false); // Published only
   const categories = storage.getAllCategories(blogId);
   const tags = storage.getAllTags(blogId);
   const sidebarObjects = storage.getAllSidebarObjects(blogId);
   const staticFiles = storage.getAllStaticFiles(blogId);
+
+  // Populate posts with category and tag objects (storage returns IDs only)
+  const categoryMap = new Map(categories.map(c => [c.id, c]));
+  const tagMap = new Map(tags.map(t => [t.id, t]));
+
+  const posts = rawPosts.map(post => ({
+    ...post,
+    category: post.categoryId ? categoryMap.get(post.categoryId) : null,
+    tags: (post.tagIds || []).map(id => tagMap.get(id)).filter(Boolean)
+  }));
 
   // Get theme templates
   let templates = getDefaultTemplates();
@@ -54,13 +64,13 @@ export async function generateSite(storage, blogId) {
   const fileHashes = {};
 
   // Build base context
-  const baseContext = buildBaseContext(blog, categories, tags, sidebarObjects, templates);
+  const baseContext = buildBaseContext(blog, categories, tags, sidebarObjects, staticFiles, templates);
 
   // Generate CSS
   await generateCSS(outputDir, templates, blog, fileHashes);
 
   // Copy static files and generate favicons
-  await copyStaticFiles(outputDir, storage, blogId, staticFiles, fileHashes);
+  await copyStaticFiles(outputDir, storage, blogId, staticFiles, posts, fileHashes);
 
   // Generate pages
   await generateIndexPage(outputDir, templates, baseContext, posts, fileHashes);
@@ -85,29 +95,39 @@ export async function generateSite(storage, blogId) {
 /**
  * Build the base context shared across all pages
  */
-function buildBaseContext(blog, categories, tags, sidebarObjects, templates) {
+function buildBaseContext(blog, categories, tags, sidebarObjects, staticFiles, templates) {
   const currentYear = new Date().getFullYear();
   const buildDate = new Date().toISOString();
 
-  // Generate sidebar HTML
-  const sidebarContent = sidebarObjects.map(obj => {
-    if (obj.type === 'text') {
-      return `<div class="sidebar-text">
-        <h2>${escapeHtml(obj.title)}</h2>
-        <div>${marked(obj.content || '')}</div>
-      </div>`;
-    } else if (obj.type === 'linkList') {
-      const links = (obj.links || [])
-        .sort((a, b) => a.order - b.order)
-        .map(link => `<li><a href="${escapeHtml(link.url)}">${escapeHtml(link.title)}</a></li>`)
-        .join('\n');
-      return `<div class="sidebar-links">
-        <h2>${escapeHtml(obj.title)}</h2>
-        <ul>${links}</ul>
-      </div>`;
-    }
-    return '';
-  }).join('\n');
+  // Generate sidebar HTML (matching iOS output exactly)
+  const sidebarContent = sidebarObjects
+    .sort((a, b) => a.order - b.order)
+    .map(obj => {
+      if (obj.type === 'text') {
+        const contentHtml = marked(obj.content || '');
+        return `<div class="sidebar-text">
+    <h2>${obj.title}</h2>
+    <div class="sidebar-text-content">
+        ${contentHtml}
+    </div>
+</div>`;
+      } else if (obj.type === 'linkList') {
+        const links = (obj.links || [])
+          .sort((a, b) => a.order - b.order)
+          .map(link => `<li><a href="${link.url}">${link.title}</a></li>\n`)
+          .join('');
+        return `<div class="sidebar-links">
+    <h2>${obj.title}</h2>
+    <ul>
+        ${links}
+    </ul>
+</div>`;
+      }
+      return '';
+    }).join('');
+
+  // Check if social share image exists
+  const hasSocialShareImage = staticFiles.some(f => f.specialFileType === 'social-share');
 
   return {
     blogName: blog.name,
@@ -126,6 +146,7 @@ function buildBaseContext(blog, categories, tags, sidebarObjects, templates) {
     darkShade: blog.darkShade || '#4a5568',
     hasTags: tags.length > 0,
     hasCategories: categories.length > 0,
+    hasSocialShareImage,
     sidebarContent
   };
 }
@@ -139,13 +160,13 @@ function buildPostContext(post, baseContext, inList = false) {
   // Convert markdown to HTML
   let contentHtml = marked(post.content || '');
 
-  // Insert embed HTML
+  // Insert embed HTML (with newlines matching iOS)
   if (post.embed) {
     const embedHtml = generateEmbedHtml(post.embed, post.id);
     if (post.embed.position === 'above') {
-      contentHtml = embedHtml + contentHtml;
+      contentHtml = embedHtml + '\n' + contentHtml;
     } else {
-      contentHtml = contentHtml + embedHtml;
+      contentHtml = contentHtml + '\n' + embedHtml;
     }
   }
 
@@ -198,66 +219,137 @@ function generateEmbedHtml(embed, postId) {
   }
 
   if (embed.type === 'link') {
-    const imageHtml = embed.imageUrl
-      ? `<div class="link-image"><img src="${escapeHtml(embed.imageUrl)}" alt=""></div>`
+    // Use stored imageFilename if available, otherwise fall back to imageUrl
+    let imageSrc = null;
+    if (embed.imageFilename) {
+      imageSrc = `/images/embeds/${embed.imageFilename}`;
+    } else if (embed.imageUrl && !embed.imageUrl.startsWith('file://')) {
+      imageSrc = embed.imageUrl;
+    }
+
+    const imageHtml = imageSrc
+      ? `<div class="link-image"><img src="${imageSrc}" alt="${embed.title || ''}"></div>`
       : '';
     return `<div class="embed link-embed">
-      <a href="${escapeHtml(embed.url)}">
+    <a href="${embed.url}" target="_blank" rel="noopener noreferrer">
         ${imageHtml}
-        <div class="link-title">${escapeHtml(embed.title || '')}</div>
-        <div class="link-description">${escapeHtml(embed.description || '')}</div>
-        <div class="link-url">${escapeHtml(embed.url)}</div>
-      </a>
-    </div>`;
+        <div class="link-title">${embed.title || ''}</div>
+        <div class="link-description">${embed.description || ''}</div>
+        <div class="link-url">${embed.url}</div>
+    </a>
+</div>`;
   }
 
   if (embed.type === 'image' && embed.images && embed.images.length > 0) {
+    const embedId = embed.identifier || postId;
     if (embed.images.length === 1) {
       const img = embed.images[0];
       return `<div class="embed image-embed single-image">
-        <a href="/images/embeds/${img.filename}" class="lightbox-trigger" data-lightbox="embed-${postId}">
-          <img src="/images/embeds/${img.filename}" class="embed-image" alt="">
-        </a>
-      </div>`;
+    <a href="/images/embeds/${img.filename}" class="lightbox-trigger" data-lightbox="embed-${embedId}" data-title="">
+        <img src="/images/embeds/${img.filename}" class="embed-image" alt="">
+    </a>
+</div>`;
     }
 
     const slides = embed.images.map((img, index) => `
-      <div class="gallery-slide">
-        <a href="/images/embeds/${img.filename}" class="lightbox-trigger" data-lightbox="embed-${postId}">
-          <img src="/images/embeds/${img.filename}" alt="">
-        </a>
-      </div>
-    `).join('');
+        <div class="gallery-slide">
+            <a href="/images/embeds/${img.filename}" class="lightbox-trigger" data-lightbox="embed-${embedId}" data-title="">
+                <img src="/images/embeds/${img.filename}" alt="">
+            </a>
+        </div>`).join('');
 
     const dots = embed.images.map((_, index) => `
-      <span class="gallery-dot" onclick="showSlide('gallery-${postId}', ${index})"></span>
-    `).join('');
+            <span class="gallery-dot" onclick="showSlide('gallery-${embedId}', ${index})"></span>`).join('');
 
-    return `<div class="embed image-embed gallery" id="gallery-${postId}">
-      <div class="gallery-container">
-        ${slides}
+    return `<div class="embed image-embed gallery" id="gallery-${embedId}">
+    <div class="gallery-container">${slides}
         <div class="gallery-nav">
-          <button class="gallery-prev" onclick="prevSlide('gallery-${postId}')">❮</button>
-          <button class="gallery-next" onclick="nextSlide('gallery-${postId}')">❯</button>
+            <button class="gallery-prev" onclick="prevSlide('gallery-${embedId}')">❮</button>
+            <button class="gallery-next" onclick="nextSlide('gallery-${embedId}')">❯</button>
         </div>
-      </div>
-      <div class="gallery-dots">${dots}</div>
-    </div>`;
+    </div>
+    <div class="gallery-dots">${dots}
+    </div>
+</div>
+<script>initGallery('gallery-${embedId}');</script>`;
   }
 
   return '';
 }
 
 /**
+ * Generate common meta tags for head (favicons, social share, etc.)
+ * This matches iOS behavior where these are added to customHead for all pages
+ */
+function generateCommonHeadMeta(baseContext) {
+  const blogUrl = baseContext.blogUrl;
+  let meta = `<meta name="apple-mobile-web-app-title" content="${baseContext.blogName}"/>`;
+  meta += `<link rel="icon" href="/favicon-32x32.png" sizes="32x32" type="image/png">\n`;
+  meta += `<link rel="icon" href="/favicon-192x192.png" sizes="192x192" type="image/png">\n`;
+  meta += `<link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180">\n`;
+
+  if (baseContext.hasSocialShareImage) {
+    meta += `<meta property="og:image" content="${blogUrl}/social-share.png">\n`;
+    meta += `<meta name="twitter:image" content="${blogUrl}/social-share.png">\n`;
+  }
+
+  meta += `<link rel="sitemap" type="application/xml" title="Sitemap" href="/sitemap.xml" />`;
+  return meta;
+}
+
+/**
+ * Generate custom meta tags for a post page (matching iOS output)
+ */
+function generatePostMeta(post, baseContext) {
+  const blogUrl = baseContext.blogUrl;
+  const postUrl = `${blogUrl}/${formatDatePath(post.createdAt)}/${post.stub}`;
+  const pageTitle = `${post.title || getExcerpt(post.content, 50)} - ${baseContext.blogName}`;
+
+  // Generate description from post content (excerpt)
+  const description = getExcerpt(post.content, 200);
+
+  let meta = `<meta name="apple-mobile-web-app-title" content="${baseContext.blogName}"/>`;
+  meta += `<link rel="icon" href="/favicon-32x32.png" sizes="32x32" type="image/png">\n`;
+  meta += `<link rel="icon" href="/favicon-192x192.png" sizes="192x192" type="image/png">\n`;
+  meta += `<link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180">\n`;
+
+  if (baseContext.hasSocialShareImage) {
+    meta += `<meta property="og:image" content="${blogUrl}/social-share.png">\n`;
+    meta += `<meta name="twitter:image" content="${blogUrl}/social-share.png">\n`;
+  }
+
+  meta += `<!-- Primary Meta Tags -->\n`;
+  meta += `<meta name="description" content="${escapeHtml(description)}">\n\n`;
+  meta += `<!-- Open Graph / Facebook -->\n`;
+  meta += `<meta property="og:type" content="article">\n`;
+  meta += `<meta property="og:url" content="${postUrl}">\n`;
+  meta += `<meta property="og:title" content="${escapeHtml(pageTitle)}">\n`;
+  meta += `<meta property="og:description" content="${escapeHtml(description)}">\n\n`;
+  meta += `<!-- Twitter -->\n`;
+  meta += `<meta property="twitter:card" content="${baseContext.hasSocialShareImage ? 'summary_large_image' : 'summary'}">\n`;
+  meta += `<meta property="twitter:url" content="${postUrl}">\n`;
+  meta += `<meta property="twitter:title" content="${escapeHtml(pageTitle)}">\n`;
+  meta += `<meta property="twitter:description" content="${escapeHtml(description)}">`;
+
+  return meta;
+}
+
+/**
  * Render a template with layout
  */
-function renderWithLayout(templates, baseContext, pageTitle, content, customMeta = null) {
+function renderWithLayout(templates, baseContext, pageTitle, content, customMeta = null, isHomePage = false) {
+  // If no custom meta provided, generate common head meta (favicons, social share, sitemap)
+  const customHead = customMeta || generateCommonHeadMeta(baseContext);
+
+  // Home page uses just blog name as title, other pages use "pageTitle - blogName"
+  const finalPageTitle = isHomePage ? baseContext.blogName : `${pageTitle} - ${baseContext.blogName}`;
+
   const context = {
     ...baseContext,
-    pageTitle: `${pageTitle} - ${baseContext.blogName}`,
+    pageTitle: finalPageTitle,
     content,
     hasCustomMeta: !!customMeta,
-    customHead: customMeta || ''
+    customHead
   };
 
   return Mustache.render(templates.layout, context, { post: templates.post });
@@ -311,13 +403,13 @@ async function generateCSS(outputDir, templates, blog, fileHashes) {
 }
 
 /**
- * Copy static files
+ * Copy static files and embed images
  */
-async function copyStaticFiles(outputDir, storage, blogId, staticFiles, fileHashes) {
+async function copyStaticFiles(outputDir, storage, blogId, staticFiles, posts, fileHashes) {
   // Create directories
   fs.mkdirSync(path.join(outputDir, 'images', 'embeds'), { recursive: true });
 
-  // Copy static files
+  // Copy static files (favicon, social-share, etc.)
   for (const file of staticFiles) {
     const buffer = storage.getStaticFileBuffer(blogId, file.id);
     if (!buffer) continue;
@@ -337,6 +429,38 @@ async function copyStaticFiles(outputDir, storage, blogId, staticFiles, fileHash
     } else {
       // Regular static file
       writeBinaryFile(outputDir, file.filename, buffer, fileHashes);
+    }
+  }
+
+  // Copy embed images from posts (both image embeds and link embed preview images)
+  const copiedEmbedImages = new Set();
+
+  for (const post of posts) {
+    if (!post.embed) continue;
+
+    // Image embeds - copy all gallery images
+    if (post.embed.type === 'image' && post.embed.images) {
+      for (const img of post.embed.images) {
+        if (copiedEmbedImages.has(img.filename)) continue;
+
+        const buffer = storage.getEmbedImageBuffer(blogId, img.filename);
+        if (buffer) {
+          writeBinaryFile(outputDir, `images/embeds/${img.filename}`, buffer, fileHashes);
+          copiedEmbedImages.add(img.filename);
+        }
+      }
+    }
+
+    // Link embeds - copy preview image if stored locally
+    if (post.embed.type === 'link' && post.embed.imageFilename) {
+      const filename = post.embed.imageFilename;
+      if (!copiedEmbedImages.has(filename)) {
+        const buffer = storage.getEmbedImageBuffer(blogId, filename);
+        if (buffer) {
+          writeBinaryFile(outputDir, `images/embeds/${filename}`, buffer, fileHashes);
+          copiedEmbedImages.add(filename);
+        }
+      }
     }
   }
 }
@@ -366,7 +490,7 @@ async function generateIndexPage(outputDir, templates, baseContext, posts, fileH
     recentArchiveUrl
   }, { post: templates.post });
 
-  const html = renderWithLayout(templates, baseContext, 'Home', indexContent);
+  const html = renderWithLayout(templates, baseContext, 'Home', indexContent, null, true);
   writeFile(outputDir, 'index.html', html, fileHashes);
 }
 
@@ -377,7 +501,8 @@ async function generatePostPages(outputDir, templates, baseContext, posts, stora
   for (const post of posts) {
     const postContext = buildPostContext(post, baseContext, false);
     const postContent = Mustache.render(templates.post, postContext);
-    const html = renderWithLayout(templates, baseContext, postContext.displayTitle, postContent);
+    const customMeta = generatePostMeta(post, baseContext);
+    const html = renderWithLayout(templates, baseContext, postContext.displayTitle, postContent, customMeta);
 
     const postPath = `${formatDatePath(post.createdAt)}/${post.stub}/index.html`;
     writeFile(outputDir, postPath, html, fileHashes);

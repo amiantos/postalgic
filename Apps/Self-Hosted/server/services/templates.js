@@ -17,9 +17,15 @@ export function getDefaultTemplates() {
     <meta property="og:title" content="{{pageTitle}}">
     <meta property="og:description" content="{{#blogTagline}}{{blogTagline}}{{/blogTagline}}{{^blogTagline}}Posts from {{blogName}}{{/blogTagline}}">
     <meta property="og:type" content="website">
-    <meta property="og:url" content="{{blogUrl}}">
-
+    <meta property="og:url" content="{{{blogUrl}}}">
+    {{#hasSocialShareImage}}
+    <meta property="og:image" content="{{{blogUrl}}}/social-share.png">
+    <meta name="twitter:image" content="{{{blogUrl}}}/social-share.png">
+    <meta property="twitter:card" content="summary_large_image">
+    {{/hasSocialShareImage}}
+    {{^hasSocialShareImage}}
     <meta property="twitter:card" content="summary">
+    {{/hasSocialShareImage}}
     <meta property="twitter:title" content="{{pageTitle}}">
     <meta property="twitter:description" content="{{#blogTagline}}{{blogTagline}}{{/blogTagline}}{{^blogTagline}}Posts from {{blogName}}{{/blogTagline}}">
     {{/hasCustomMeta}}
@@ -250,7 +256,7 @@ export function getDefaultTemplates() {
         </div>
 
         <footer>
-            <p>&copy; {{currentYear}} {{blogName}}{{#blogAuthor}} by {{#blogAuthorUrl}}<a href="{{blogAuthorUrl}}">{{blogAuthor}}</a>{{/blogAuthorUrl}}{{^blogAuthorUrl}}{{blogAuthor}}{{/blogAuthorUrl}}{{/blogAuthor}}. Generated with <a href="https://postalgic.app">Postalgic</a>.</p>
+            <p>&copy; {{currentYear}} {{blogName}}{{#blogAuthor}} by {{#blogAuthorUrl}}<a href="{{{blogAuthorUrl}}}">{{blogAuthor}}</a>{{/blogAuthorUrl}}{{^blogAuthorUrl}}{{blogAuthor}}{{/blogAuthorUrl}}{{/blogAuthor}}. Generated with <a href="https://postalgic.app">Postalgic</a>.</p>
         </footer>
     </div>
 
@@ -289,10 +295,10 @@ export function getDefaultTemplates() {
         {{^inList}}<h1>{{displayTitle}}</h1>{{/inList}}
     {{/hasTitle}}
 
-    <div class="post-date"><a href="/{{urlPath}}/">{{formattedDate}}</a></div>
+    <div class="post-date"><a href="/{{{urlPath}}}/">{{formattedDate}}</a></div>
 
     {{#blogAuthor}}
-        <div class="post-author"> by {{#blogAuthorUrl}}<a href="{{blogAuthorUrl}}">{{blogAuthor}}</a>{{/blogAuthorUrl}}{{^blogAuthorUrl}}{{blogAuthor}}{{/blogAuthorUrl}}</div>
+        <div class="post-author"> by {{#blogAuthorUrl}}<a href="{{{blogAuthorUrl}}}">{{blogAuthor}}</a>{{/blogAuthorUrl}}{{^blogAuthorUrl}}{{blogAuthor}}{{/blogAuthorUrl}}</div>
     {{/blogAuthor}}
 
     <div class="post-content">
@@ -302,15 +308,13 @@ export function getDefaultTemplates() {
     <div>
     {{#hasCategory}}
         <div class="post-category">
-            <a href="/categories/{{categoryUrlPath}}/">{{categoryName}}</a>
+            <a href="/categories/{{{categoryUrlPath}}}/">{{categoryName}}</a>
         </div>
     {{/hasCategory}}
 
     {{#hasTags}}
         <div class="post-tags">
-            {{#tags}}
-                <a href="/tags/{{urlPath}}/" class="tag">#{{name}}</a>
-            {{/tags}}
+            {{#tags}}<a href="/tags/{{{urlPath}}}/" class="tag">#{{name}}</a> {{/tags}}
         </div>
     {{/hasTags}}
     </div>
@@ -323,7 +327,7 @@ export function getDefaultTemplates() {
 {{/posts}}
 {{#hasMorePosts}}
 <div class="archives-link">
-    <a href="{{#recentArchiveUrl}}{{recentArchiveUrl}}{{/recentArchiveUrl}}{{^recentArchiveUrl}}/archives{{/recentArchiveUrl}}">← View more posts in the archives</a>
+    <a href="{{#recentArchiveUrl}}{{{recentArchiveUrl}}}{{/recentArchiveUrl}}{{^recentArchiveUrl}}/archives{{/recentArchiveUrl}}">← View more posts in the archives</a>
 </div>
 {{/hasMorePosts}}`,
 
@@ -359,10 +363,10 @@ export function getDefaultTemplates() {
 {{#hasPreviousMonth}}{{#hasNextMonth}}
 <nav class="month-navigation">
     <div class="nav-previous">
-        <a href="{{previousMonthUrl}}">&larr; {{previousMonthName}} {{previousYear}}</a>
+        <a href="{{{previousMonthUrl}}}">&larr; {{previousMonthName}} {{previousYear}}</a>
     </div>
     <div class="nav-next">
-        <a href="{{nextMonthUrl}}">{{nextMonthName}} {{nextYear}} &rarr;</a>
+        <a href="{{{nextMonthUrl}}}">{{nextMonthName}} {{nextYear}} &rarr;</a>
     </div>
 </nav>
 {{/hasNextMonth}}{{/hasPreviousMonth}}
@@ -370,7 +374,7 @@ export function getDefaultTemplates() {
 {{#hasPreviousMonth}}{{^hasNextMonth}}
 <nav class="month-navigation">
     <div class="nav-previous">
-        <a href="{{previousMonthUrl}}">&larr; {{previousMonthName}} {{previousYear}}</a>
+        <a href="{{{previousMonthUrl}}}">&larr; {{previousMonthName}} {{previousYear}}</a>
     </div>
 </nav>
 {{/hasNextMonth}}{{/hasPreviousMonth}}
@@ -378,7 +382,7 @@ export function getDefaultTemplates() {
 {{^hasPreviousMonth}}{{#hasNextMonth}}
 <nav class="month-navigation">
     <div class="nav-next">
-        <a href="{{nextMonthUrl}}">{{nextMonthName}} {{nextYear}} &rarr;</a>
+        <a href="{{{nextMonthUrl}}}">{{nextMonthName}} {{nextYear}} &rarr;</a>
     </div>
 </nav>
 {{/hasNextMonth}}{{/hasPreviousMonth}}`,
@@ -407,12 +411,12 @@ export function getDefaultTemplates() {
 <nav class="pagination-navigation">
     {{#hasPreviousPage}}
     <div class="nav-previous">
-        <a href="{{previousPageUrl}}">&larr; Previous</a>
+        <a href="{{{previousPageUrl}}}">&larr; Previous</a>
     </div>
     {{/hasPreviousPage}}
     {{#hasNextPage}}
     <div class="nav-next">
-        <a href="{{nextPageUrl}}">Next &rarr;</a>
+        <a href="{{{nextPageUrl}}}">Next &rarr;</a>
     </div>
     {{/hasNextPage}}
 </nav>
@@ -444,12 +448,12 @@ export function getDefaultTemplates() {
 <nav class="pagination-navigation">
     {{#hasPreviousPage}}
     <div class="nav-previous">
-        <a href="{{previousPageUrl}}">&larr; Previous</a>
+        <a href="{{{previousPageUrl}}}">&larr; Previous</a>
     </div>
     {{/hasPreviousPage}}
     {{#hasNextPage}}
     <div class="nav-next">
-        <a href="{{nextPageUrl}}">Next &rarr;</a>
+        <a href="{{{nextPageUrl}}}">Next &rarr;</a>
     </div>
     {{/hasNextPage}}
 </nav>
@@ -1377,7 +1381,7 @@ footer {
 <rss version="2.0">
     <channel>
         <title>{{blogName}}</title>
-        <link>{{blogUrl}}/</link>
+        <link>{{{blogUrl}}}/</link>
         <description>{{#blogTagline}}{{blogTagline}}{{/blogTagline}}{{^blogTagline}}Posts from {{blogName}}{{/blogTagline}}</description>
         <lastBuildDate>{{buildDate}}</lastBuildDate>
         <generator>Postalgic</generator>
@@ -1389,10 +1393,10 @@ footer {
         {{#posts}}
         <item>
             <title>{{displayTitle}}</title>
-            <link>{{blogUrl}}/{{urlPath}}/</link>
+            <link>{{{blogUrl}}}/{{{urlPath}}}/</link>
             <description><![CDATA[{{{contentHtml}}}]]></description>
             <pubDate>{{published}}</pubDate>
-            <guid isPermaLink="true">{{blogUrl}}/{{urlPath}}/</guid>
+            <guid isPermaLink="true">{{{blogUrl}}}/{{{urlPath}}}/</guid>
             {{#blogAuthor}}
             {{#blogAuthorEmail}}
             <author>{{blogAuthorEmail}} ({{blogAuthor}})</author>
@@ -1409,30 +1413,30 @@ footer {
     robots: `User-agent: *
 Allow: /
 
-Sitemap: {{blogUrl}}/sitemap.xml`,
+Sitemap: {{{blogUrl}}}/sitemap.xml`,
 
     sitemap: `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
-        <loc>{{blogUrl}}/</loc>
+        <loc>{{{blogUrl}}}/</loc>
         <lastmod>{{buildDate}}</lastmod>
         <changefreq>weekly</changefreq>
         <priority>1.0</priority>
     </url>
     <url>
-        <loc>{{blogUrl}}/archives/</loc>
+        <loc>{{{blogUrl}}}/archives/</loc>
         <lastmod>{{buildDate}}</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
     <url>
-        <loc>{{blogUrl}}/tags/</loc>
+        <loc>{{{blogUrl}}}/tags/</loc>
         <lastmod>{{buildDate}}</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.7</priority>
     </url>
     <url>
-        <loc>{{blogUrl}}/categories/</loc>
+        <loc>{{{blogUrl}}}/categories/</loc>
         <lastmod>{{buildDate}}</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.7</priority>
@@ -1440,7 +1444,7 @@ Sitemap: {{blogUrl}}/sitemap.xml`,
 
     {{#posts}}
     <url>
-        <loc>{{blogUrl}}/{{urlPath}}/</loc>
+        <loc>{{{blogUrl}}}/{{{urlPath}}}/</loc>
         <lastmod>{{lastmod}}</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.6</priority>
@@ -1449,7 +1453,7 @@ Sitemap: {{blogUrl}}/sitemap.xml`,
 
     {{#tags}}
     <url>
-        <loc>{{blogUrl}}/tags/{{urlPath}}/</loc>
+        <loc>{{{blogUrl}}}/tags/{{{urlPath}}}/</loc>
         <lastmod>{{lastmod}}</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.5</priority>
@@ -1458,7 +1462,7 @@ Sitemap: {{blogUrl}}/sitemap.xml`,
 
     {{#categories}}
     <url>
-        <loc>{{blogUrl}}/categories/{{urlPath}}/</loc>
+        <loc>{{{blogUrl}}}/categories/{{{urlPath}}}/</loc>
         <lastmod>{{lastmod}}</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.5</priority>
@@ -1467,7 +1471,7 @@ Sitemap: {{blogUrl}}/sitemap.xml`,
 
     {{#monthlyArchives}}
     <url>
-        <loc>{{blogUrl}}{{url}}</loc>
+        <loc>{{{blogUrl}}}{{{url}}}</loc>
         <lastmod>{{lastmod}}</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.6</priority>

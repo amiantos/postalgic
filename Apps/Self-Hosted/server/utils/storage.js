@@ -538,6 +538,13 @@ class Storage {
     return fs.readFileSync(filePath);
   }
 
+  getEmbedImageBuffer(blogId, filename) {
+    const filePath = path.join(this.getBlogUploadsDir(blogId), filename);
+    if (!fs.existsSync(filePath)) return null;
+
+    return fs.readFileSync(filePath);
+  }
+
   // ============ Published Files Tracking ============
 
   getPublishedFilesPath(blogId) {
