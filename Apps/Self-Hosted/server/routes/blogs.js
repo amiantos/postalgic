@@ -61,22 +61,25 @@ router.post('/', (req, res) => {
       lightShade: rest.lightShade || '#dedede',
       mediumShade: rest.mediumShade || '#a0aec0',
       darkShade: rest.darkShade || '#4a5568',
-      // Publisher settings (stored but not used for secrets)
+      // Publisher settings
       publisherType: rest.publisherType || 'manual',
       // AWS settings
       awsRegion: rest.awsRegion || '',
       awsS3Bucket: rest.awsS3Bucket || '',
       awsCloudFrontDistId: rest.awsCloudFrontDistId || '',
       awsAccessKeyId: rest.awsAccessKeyId || '',
-      // FTP settings
+      awsSecretAccessKey: rest.awsSecretAccessKey || '',
+      // SFTP settings
       ftpHost: rest.ftpHost || '',
       ftpPort: rest.ftpPort || 22,
       ftpUsername: rest.ftpUsername || '',
+      ftpPassword: rest.ftpPassword || '',
+      ftpPrivateKey: rest.ftpPrivateKey || '',
       ftpPath: rest.ftpPath || '',
-      ftpUseSFTP: rest.ftpUseSFTP !== false,
       // Git settings
       gitRepositoryUrl: rest.gitRepositoryUrl || '',
       gitUsername: rest.gitUsername || '',
+      gitToken: rest.gitToken || '',
       gitBranch: rest.gitBranch || 'main',
       gitCommitMessage: rest.gitCommitMessage || 'Update blog'
     };

@@ -208,18 +208,9 @@ router.post('/aws', async (req, res) => {
       return res.status(404).json({ error: 'Blog not found' });
     }
 
-    // Get AWS credentials from request body (not stored in blog for security)
-    const { secretAccessKey } = req.body;
-
-    if (!blog.awsS3Bucket || !blog.awsRegion || !blog.awsAccessKeyId) {
+    if (!blog.awsS3Bucket || !blog.awsRegion || !blog.awsAccessKeyId || !blog.awsSecretAccessKey) {
       return res.status(400).json({
-        error: 'AWS configuration incomplete. Please set bucket, region, and access key ID in settings.'
-      });
-    }
-
-    if (!secretAccessKey) {
-      return res.status(400).json({
-        error: 'AWS secret access key is required'
+        error: 'AWS configuration incomplete. Please set bucket, region, access key ID, and secret access key in settings.'
       });
     }
 
@@ -232,7 +223,7 @@ router.post('/aws', async (req, res) => {
       region: blog.awsRegion,
       cloudFrontDistId: blog.awsCloudFrontDistId,
       accessKeyId: blog.awsAccessKeyId,
-      secretAccessKey
+      secretAccessKey: blog.awsSecretAccessKey
     });
 
     // Publish
@@ -267,18 +258,15 @@ router.post('/sftp', async (req, res) => {
       return res.status(404).json({ error: 'Blog not found' });
     }
 
-    // Get password/key from request body (not stored for security)
-    const { password, privateKey } = req.body;
-
     if (!blog.ftpHost || !blog.ftpUsername) {
       return res.status(400).json({
         error: 'SFTP configuration incomplete. Please set host and username in settings.'
       });
     }
 
-    if (!password && !privateKey) {
+    if (!blog.ftpPassword && !blog.ftpPrivateKey) {
       return res.status(400).json({
-        error: 'Either password or private key is required'
+        error: 'SFTP credentials incomplete. Please set password or private key in settings.'
       });
     }
 
@@ -290,8 +278,8 @@ router.post('/sftp', async (req, res) => {
       host: blog.ftpHost,
       port: blog.ftpPort || 22,
       username: blog.ftpUsername,
-      password,
-      privateKey,
+      password: blog.ftpPassword,
+      privateKey: blog.ftpPrivateKey,
       remotePath: blog.ftpPath || '/'
     });
 
@@ -327,18 +315,9 @@ router.post('/git', async (req, res) => {
       return res.status(404).json({ error: 'Blog not found' });
     }
 
-    // Get token from request body (not stored for security)
-    const { token } = req.body;
-
-    if (!blog.gitRepositoryUrl || !blog.gitUsername) {
+    if (!blog.gitRepositoryUrl || !blog.gitUsername || !blog.gitToken) {
       return res.status(400).json({
-        error: 'Git configuration incomplete. Please set repository URL and username in settings.'
-      });
-    }
-
-    if (!token) {
-      return res.status(400).json({
-        error: 'Git personal access token is required'
+        error: 'Git configuration incomplete. Please set repository URL, username, and personal access token in settings.'
       });
     }
 
@@ -349,7 +328,7 @@ router.post('/git', async (req, res) => {
     const publisher = new GitPublisher({
       repositoryUrl: blog.gitRepositoryUrl,
       username: blog.gitUsername,
-      token,
+      token: blog.gitToken,
       branch: blog.gitBranch || 'main',
       commitMessage: blog.gitCommitMessage || 'Update blog',
       authorName: blog.authorName || 'Postalgic',

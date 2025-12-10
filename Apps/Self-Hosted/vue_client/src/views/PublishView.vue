@@ -19,12 +19,6 @@ const previewUrl = ref(null);
 const publishStatus = ref(null);
 const changes = ref(null);
 
-// Credentials (not stored, entered at publish time)
-const awsSecretKey = ref('');
-const sftpPassword = ref('');
-const sftpPrivateKey = ref('');
-const gitToken = ref('');
-
 onMounted(async () => {
   await loadStatus();
 });
@@ -82,19 +76,13 @@ async function downloadSite() {
 }
 
 async function publishToAWS() {
-  if (!awsSecretKey.value) {
-    error.value = 'AWS Secret Access Key is required';
-    return;
-  }
-
   publishing.value = true;
   error.value = null;
   successMessage.value = null;
 
   try {
-    const result = await publishApi.publishToAWS(blogId.value, awsSecretKey.value);
+    const result = await publishApi.publishToAWS(blogId.value);
     successMessage.value = result.message;
-    awsSecretKey.value = '';
     await loadStatus();
   } catch (e) {
     error.value = e.message;
@@ -104,24 +92,13 @@ async function publishToAWS() {
 }
 
 async function publishToSFTP() {
-  if (!sftpPassword.value && !sftpPrivateKey.value) {
-    error.value = 'Password or Private Key is required';
-    return;
-  }
-
   publishing.value = true;
   error.value = null;
   successMessage.value = null;
 
   try {
-    const credentials = {};
-    if (sftpPassword.value) credentials.password = sftpPassword.value;
-    if (sftpPrivateKey.value) credentials.privateKey = sftpPrivateKey.value;
-
-    const result = await publishApi.publishToSFTP(blogId.value, credentials);
+    const result = await publishApi.publishToSFTP(blogId.value);
     successMessage.value = result.message;
-    sftpPassword.value = '';
-    sftpPrivateKey.value = '';
     await loadStatus();
   } catch (e) {
     error.value = e.message;
@@ -131,19 +108,13 @@ async function publishToSFTP() {
 }
 
 async function publishToGit() {
-  if (!gitToken.value) {
-    error.value = 'Git Personal Access Token is required';
-    return;
-  }
-
   publishing.value = true;
   error.value = null;
   successMessage.value = null;
 
   try {
-    const result = await publishApi.publishToGit(blogId.value, gitToken.value);
+    const result = await publishApi.publishToGit(blogId.value);
     successMessage.value = result.message;
-    gitToken.value = '';
     await loadStatus();
   } catch (e) {
     error.value = e.message;
@@ -291,81 +262,45 @@ function getPublisherLabel(type) {
       </div>
 
       <!-- AWS Publish -->
-      <div v-if="publisherType === 'aws'" class="p-4 bg-gray-50 rounded-lg space-y-3">
+      <div v-if="publisherType === 'aws'" class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
         <div>
           <p class="font-medium text-gray-900">2. Publish to AWS S3</p>
           <p class="text-sm text-gray-500">Upload directly to your S3 bucket</p>
         </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Secret Access Key</label>
-          <input
-            v-model="awsSecretKey"
-            type="password"
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-            placeholder="Enter your AWS secret access key"
-          />
-        </div>
         <button
           @click="publishToAWS"
           :disabled="publishing || blogStore.publishedPosts.length === 0"
-          class="w-full px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50"
+          class="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50"
         >
           {{ publishing ? 'Publishing...' : 'Publish to S3' }}
         </button>
       </div>
 
       <!-- SFTP Publish -->
-      <div v-if="publisherType === 'sftp'" class="p-4 bg-gray-50 rounded-lg space-y-3">
+      <div v-if="publisherType === 'sftp'" class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
         <div>
           <p class="font-medium text-gray-900">2. Publish via SFTP</p>
           <p class="text-sm text-gray-500">Upload directly to your server</p>
         </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
-          <input
-            v-model="sftpPassword"
-            type="password"
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-            placeholder="Enter your SFTP password"
-          />
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Or Private Key</label>
-          <textarea
-            v-model="sftpPrivateKey"
-            rows="3"
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 font-mono text-xs"
-            placeholder="Paste your private key here..."
-          ></textarea>
-        </div>
         <button
           @click="publishToSFTP"
           :disabled="publishing || blogStore.publishedPosts.length === 0"
-          class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+          class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
         >
           {{ publishing ? 'Publishing...' : 'Publish via SFTP' }}
         </button>
       </div>
 
       <!-- Git Publish -->
-      <div v-if="publisherType === 'git'" class="p-4 bg-gray-50 rounded-lg space-y-3">
+      <div v-if="publisherType === 'git'" class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
         <div>
           <p class="font-medium text-gray-900">2. Publish to Git</p>
           <p class="text-sm text-gray-500">Push to your Git repository</p>
         </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Personal Access Token</label>
-          <input
-            v-model="gitToken"
-            type="password"
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-            placeholder="Enter your Git personal access token"
-          />
-        </div>
         <button
           @click="publishToGit"
           :disabled="publishing || blogStore.publishedPosts.length === 0"
-          class="w-full px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition-colors disabled:opacity-50"
+          class="px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition-colors disabled:opacity-50"
         >
           {{ publishing ? 'Publishing...' : 'Push to Git' }}
         </button>
@@ -406,24 +341,24 @@ function getPublisherLabel(type) {
         <ol class="text-sm text-gray-600 space-y-2 list-decimal list-inside">
           <li>Configure your AWS S3 bucket and credentials in Settings</li>
           <li>Generate and preview your site</li>
-          <li>Enter your secret access key and click Publish</li>
-          <li>Files are uploaded to S3 and CloudFront cache is invalidated (if configured)</li>
+          <li>Click Publish to upload to S3</li>
+          <li>CloudFront cache is automatically invalidated (if configured)</li>
         </ol>
       </div>
       <div v-else-if="publisherType === 'sftp'">
         <ol class="text-sm text-gray-600 space-y-2 list-decimal list-inside">
           <li>Configure your SFTP connection details in Settings</li>
           <li>Generate and preview your site</li>
-          <li>Enter your password or private key and click Publish</li>
-          <li>Files are uploaded directly to your server</li>
+          <li>Click Publish to upload to your server</li>
+          <li>Files are synced directly to your remote path</li>
         </ol>
       </div>
       <div v-else-if="publisherType === 'git'">
         <ol class="text-sm text-gray-600 space-y-2 list-decimal list-inside">
           <li>Configure your Git repository URL and credentials in Settings</li>
           <li>Generate and preview your site</li>
-          <li>Enter your personal access token and click Publish</li>
-          <li>Changes are committed and pushed to your repository</li>
+          <li>Click Publish to commit and push changes</li>
+          <li>Your site is deployed via GitHub Pages or similar</li>
         </ol>
       </div>
     </div>

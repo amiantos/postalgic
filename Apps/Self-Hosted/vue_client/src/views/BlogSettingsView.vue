@@ -265,16 +265,23 @@ async function deleteBlog() {
                 />
               </div>
               <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Secret Access Key</label>
+                <input
+                  v-model="form.awsSecretAccessKey"
+                  type="password"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                />
+              </div>
+              <div class="col-span-2">
                 <label class="block text-sm font-medium text-gray-700 mb-1">CloudFront Distribution ID</label>
                 <input
                   v-model="form.awsCloudFrontDistId"
                   type="text"
                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                  placeholder="Optional"
+                  placeholder="Optional - for cache invalidation"
                 />
               </div>
             </div>
-            <p class="text-xs text-gray-500">Secret Access Key will be entered when publishing for security.</p>
           </div>
 
           <!-- SFTP Settings -->
@@ -308,6 +315,14 @@ async function deleteBlog() {
                 />
               </div>
               <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                <input
+                  v-model="form.ftpPassword"
+                  type="password"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                />
+              </div>
+              <div class="col-span-2">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Remote Path</label>
                 <input
                   v-model="form.ftpPath"
@@ -316,8 +331,16 @@ async function deleteBlog() {
                   placeholder="/var/www/html"
                 />
               </div>
+              <div class="col-span-2">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Private Key (optional, alternative to password)</label>
+                <textarea
+                  v-model="form.ftpPrivateKey"
+                  rows="3"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 font-mono text-xs"
+                  placeholder="-----BEGIN OPENSSH PRIVATE KEY-----..."
+                ></textarea>
+              </div>
             </div>
-            <p class="text-xs text-gray-500">Password or private key will be entered when publishing for security.</p>
           </div>
 
           <!-- Git Settings -->
@@ -343,6 +366,16 @@ async function deleteBlog() {
                   />
                 </div>
                 <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Personal Access Token</label>
+                  <input
+                    v-model="form.gitToken"
+                    type="password"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  />
+                </div>
+              </div>
+              <div class="grid grid-cols-2 gap-4">
+                <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1">Branch</label>
                   <input
                     v-model="form.gitBranch"
@@ -351,18 +384,17 @@ async function deleteBlog() {
                     placeholder="main"
                   />
                 </div>
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Commit Message</label>
-                <input
-                  v-model="form.gitCommitMessage"
-                  type="text"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                  placeholder="Update blog"
-                />
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Commit Message</label>
+                  <input
+                    v-model="form.gitCommitMessage"
+                    type="text"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    placeholder="Update blog"
+                  />
+                </div>
               </div>
             </div>
-            <p class="text-xs text-gray-500">Personal access token will be entered when publishing for security.</p>
           </div>
         </div>
       </section>
