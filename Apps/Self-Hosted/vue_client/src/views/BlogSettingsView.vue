@@ -20,6 +20,135 @@ watch(() => blogStore.currentBlog, (blog) => {
   }
 }, { immediate: true });
 
+const colorPreviewHtml = computed(() => {
+  const accentColor = form.value.accentColor || '#FFA100';
+  const backgroundColor = form.value.backgroundColor || '#efefef';
+  const textColor = form.value.textColor || '#2d3748';
+  const lightShade = form.value.lightShade || '#dedede';
+  const mediumShade = form.value.mediumShade || '#a0aec0';
+  const darkShade = form.value.darkShade || '#4a5568';
+
+  return `<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        :root {
+            --accent-color: ${accentColor};
+            --background-color: ${backgroundColor};
+            --text-color: ${textColor};
+            --light-shade: ${lightShade};
+            --medium-shade: ${mediumShade};
+            --dark-shade: ${darkShade};
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            padding: 12px;
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        a {
+            color: var(--accent-color);
+            text-decoration: none;
+        }
+
+        .header-separator {
+            height: 28px;
+            width: 100%;
+            background-color: var(--accent-color);
+            --mask:
+              radial-gradient(10.96px at 50% calc(100% + 5.6px),#0000 calc(99% - 4px),#000 calc(101% - 4px) 99%,#0000 101%) calc(50% - 14px) calc(50% - 5.5px + .5px)/28px 11px repeat-x,
+              radial-gradient(10.96px at 50% -5.6px,#0000 calc(99% - 4px),#000 calc(101% - 4px) 99%,#0000 101%) 50% calc(50% + 5.5px)/28px 11px repeat-x;
+            -webkit-mask: var(--mask);
+            mask: var(--mask);
+            margin: 15px 0;
+        }
+
+        .category, .tag {
+            display: inline-block;
+            margin-right: 5px;
+        }
+
+        .category a {
+            display: inline-block;
+            color: white;
+            background-color: var(--accent-color);
+            border: 1px solid var(--accent-color);
+            padding: 3px 8px;
+            border-radius: 1em;
+            font-size: 0.8em;
+        }
+
+        .tag a {
+            display: inline-block;
+            color: var(--accent-color);
+            background-color: var(--background-color);
+            border: 1px solid var(--accent-color);
+            padding: 3px 8px;
+            border-radius: 1em;
+            font-size: 0.8em;
+        }
+
+        .section {
+            margin-bottom: 20px;
+        }
+
+        h3 {
+            margin-bottom: 8px;
+            color: var(--dark-shade);
+        }
+
+        h2 {
+            color: var(--text-color);
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-bottom: 0px;
+            margin-top: 10px;
+        }
+
+        .post-date {
+            color: var(--medium-shade);
+            font-size: 0.9em;
+            display: inline-block;
+            margin-top: 0px;
+        }
+
+        .menu-button {
+            display: block;
+            padding: 8px 0;
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: var(--dark-shade);
+            text-decoration: none;
+        }
+
+        .menu-sample {
+            margin-bottom: 25px;
+            border-bottom: 1px solid var(--light-shade);
+        }
+    </style>
+</head>
+<body>
+    <div class="section">
+        <h2>Example Post Title</h2>
+        <div class="post-date">May 24, 2025 at 1:50 AM</div>
+
+        <p>This is regular text on your blog, and <a href="#">this is a link</a> to demonstrate how the accent color looks.</p>
+        <div class="category"><a href="#">Category Name</a></div>
+        <div class="tag"><a href="#">#tag name</a></div>
+        <div class="header-separator"></div>
+        <div class="menu-sample">
+            <a class="menu-button">Menu Nav Item</a>
+        </div>
+    </div>
+</body>
+</html>`;
+});
+
 async function saveSettings() {
   saving.value = true;
   error.value = null;
@@ -219,52 +348,12 @@ async function deleteBlog() {
         <!-- Color Preview -->
         <div class="mt-6">
           <label class="block text-sm font-medium text-gray-700 mb-2">Preview</label>
-          <div
-            class="rounded-lg overflow-hidden border border-gray-200"
-            :style="{ backgroundColor: form.backgroundColor || '#ffffff' }"
-          >
-            <div class="p-4">
-              <h4
-                class="text-lg font-bold mb-2"
-                :style="{ color: form.accentColor || '#007AFF' }"
-              >
-                Blog Title
-              </h4>
-              <p
-                class="text-sm mb-3"
-                :style="{ color: form.textColor || '#000000' }"
-              >
-                This is how your body text will look. It uses the text color you've selected.
-              </p>
-              <div class="flex gap-2 mb-3">
-                <span
-                  class="px-2 py-1 rounded text-xs"
-                  :style="{ backgroundColor: form.lightShade || '#F2F2F7', color: form.textColor || '#000000' }"
-                >
-                  Light Shade
-                </span>
-                <span
-                  class="px-2 py-1 rounded text-xs"
-                  :style="{ backgroundColor: form.mediumShade || '#E5E5EA', color: form.textColor || '#000000' }"
-                >
-                  Medium Shade
-                </span>
-                <span
-                  class="px-2 py-1 rounded text-xs"
-                  :style="{ backgroundColor: form.darkShade || '#D1D1D6', color: form.textColor || '#000000' }"
-                >
-                  Dark Shade
-                </span>
-              </div>
-              <a
-                href="#"
-                class="text-sm underline"
-                :style="{ color: form.accentColor || '#007AFF' }"
-                @click.prevent
-              >
-                This is a link using your accent color
-              </a>
-            </div>
+          <div class="rounded-lg overflow-hidden border border-gray-200">
+            <iframe
+              :srcdoc="colorPreviewHtml"
+              class="w-full border-0"
+              style="height: 340px;"
+            ></iframe>
           </div>
         </div>
       </section>
