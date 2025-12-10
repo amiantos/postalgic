@@ -75,13 +75,13 @@ async function downloadSite() {
   }
 }
 
-async function publishToAWS() {
+async function publishToAWS(forceUploadAll = false) {
   publishing.value = true;
   error.value = null;
   successMessage.value = null;
 
   try {
-    const result = await publishApi.publishToAWS(blogId.value);
+    const result = await publishApi.publishToAWS(blogId.value, { forceUploadAll });
     successMessage.value = result.message;
     await loadStatus();
   } catch (e) {
@@ -267,13 +267,23 @@ function getPublisherLabel(type) {
           <p class="font-medium text-gray-900">2. Publish to AWS S3</p>
           <p class="text-sm text-gray-500">Upload directly to your S3 bucket</p>
         </div>
-        <button
-          @click="publishToAWS"
-          :disabled="publishing || blogStore.publishedPosts.length === 0"
-          class="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50"
-        >
-          {{ publishing ? 'Publishing...' : 'Publish to S3' }}
-        </button>
+        <div class="flex gap-2">
+          <button
+            @click="publishToAWS(false)"
+            :disabled="publishing || blogStore.publishedPosts.length === 0"
+            class="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50"
+          >
+            {{ publishing ? 'Publishing...' : 'Publish' }}
+          </button>
+          <button
+            @click="publishToAWS(true)"
+            :disabled="publishing || blogStore.publishedPosts.length === 0"
+            class="px-4 py-2 bg-orange-800 text-white rounded-lg hover:bg-orange-900 transition-colors disabled:opacity-50"
+            title="Re-upload all files, even if they already exist in S3"
+          >
+            {{ publishing ? 'Publishing...' : 'Full Publish' }}
+          </button>
+        </div>
       </div>
 
       <!-- SFTP Publish -->

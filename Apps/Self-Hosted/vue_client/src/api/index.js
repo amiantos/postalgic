@@ -155,8 +155,8 @@ export const publishApi = {
   markPublished: (blogId) =>
     fetchApi(`/blogs/${blogId}/publish/mark-published`, { method: 'POST' }),
   // Publisher-specific endpoints
-  publishToAWS: (blogId) =>
-    fetchApi(`/blogs/${blogId}/publish/aws`, { method: 'POST' }),
+  publishToAWS: (blogId, options = {}) =>
+    fetchApi(`/blogs/${blogId}/publish/aws`, { method: 'POST', body: JSON.stringify(options) }),
   publishToSFTP: (blogId) =>
     fetchApi(`/blogs/${blogId}/publish/sftp`, { method: 'POST' }),
   publishToGit: (blogId) =>
