@@ -7,7 +7,8 @@ import {
   formatDate,
   formatShortDate,
   getExcerpt,
-  extractYouTubeId
+  extractYouTubeId,
+  generateEmbedFilename
 } from '../utils/helpers.js';
 
 const router = express.Router({ mergeParams: true });
@@ -115,7 +116,7 @@ router.post('/', (req, res) => {
       isDraft: isDraft !== false,
       categoryId: categoryId || null,
       tagIds: tagIds || [],
-      embed: processEmbed(embed),
+      embed: processEmbed(embed, storage, blogId),
       createdAt: createdAt || new Date().toISOString()
     };
 
@@ -160,7 +161,7 @@ router.put('/:id', (req, res) => {
     };
 
     if (rest.embed !== undefined) {
-      updateData.embed = processEmbed(rest.embed);
+      updateData.embed = processEmbed(rest.embed, storage, blogId);
     }
 
     const post = storage.updatePost(blogId, id, updateData);
@@ -187,7 +188,7 @@ router.delete('/:id', (req, res) => {
 });
 
 // Helper: Process embed data
-function processEmbed(embed) {
+function processEmbed(embed, storage, blogId) {
   if (!embed) return null;
 
   const processed = {
@@ -204,10 +205,53 @@ function processEmbed(embed) {
     processed.imageUrl = embed.imageUrl || '';
     processed.imageData = embed.imageData || null;
   } else if (embed.type === 'image') {
-    processed.images = embed.images || [];
+    // Process images - save base64 data to disk if present
+    processed.images = (embed.images || []).map((img, index) => {
+      // If image has base64 data, save it to disk
+      if (img.data && img.data.startsWith('data:')) {
+        const savedFilename = saveEmbedImageFromBase64(storage, blogId, img.data, img.filename, index);
+        return {
+          filename: savedFilename,
+          order: img.order ?? index
+        };
+      }
+      // Otherwise, use existing filename (already saved or imported)
+      return {
+        filename: img.filename,
+        order: img.order ?? index
+      };
+    });
   }
 
   return processed;
+}
+
+// Helper: Save base64 image data to disk and return the saved filename
+function saveEmbedImageFromBase64(storage, blogId, dataUrl, originalFilename, index) {
+  // Parse the data URL to get the mime type and data
+  const matches = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
+  if (!matches) {
+    console.warn('Invalid data URL format for embed image');
+    return originalFilename;
+  }
+
+  const mimeType = matches[1];
+  const base64Data = matches[2];
+  const buffer = Buffer.from(base64Data, 'base64');
+
+  // Determine file extension from mime type
+  let ext = 'jpg';
+  if (mimeType === 'image/png') ext = 'png';
+  else if (mimeType === 'image/gif') ext = 'gif';
+  else if (mimeType === 'image/webp') ext = 'webp';
+
+  // Generate a unique filename for the embed image
+  const filename = generateEmbedFilename(ext, index);
+
+  // Save to disk
+  storage.saveEmbedImage(blogId, filename, buffer);
+
+  return filename;
 }
 
 // Helper: Enrich post with computed properties

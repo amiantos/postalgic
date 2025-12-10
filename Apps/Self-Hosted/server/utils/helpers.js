@@ -252,3 +252,14 @@ export function getFileExtension(filename) {
   const parts = filename.split('.');
   return parts.length > 1 ? parts.pop().toLowerCase() : '';
 }
+
+/**
+ * Generate a unique filename for embed images
+ * Matches iOS format: embed-{timestamp}-{random}-{index}.{ext}
+ */
+export function generateEmbedFilename(ext, index = 0) {
+  const timestamp = Math.floor(Date.now() / 1000);
+  const random = crypto.randomBytes(4).toString('hex').toUpperCase();
+  const paddedIndex = String(index).padStart(2, '0');
+  return `embed-${timestamp}-${random}-${paddedIndex}.${ext}`;
+}
