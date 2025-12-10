@@ -33,8 +33,14 @@ export const blogApi = {
 
 // Post API
 export const postApi = {
-  list: (blogId, includeDrafts = true) =>
-    fetchApi(`/blogs/${blogId}/posts?includeDrafts=${includeDrafts}`),
+  list: (blogId, includeDrafts = true, search = '', sort = 'date_desc') => {
+    const params = new URLSearchParams({
+      includeDrafts: includeDrafts.toString(),
+      sort
+    });
+    if (search) params.append('search', search);
+    return fetchApi(`/blogs/${blogId}/posts?${params.toString()}`);
+  },
   get: (blogId, postId) => fetchApi(`/blogs/${blogId}/posts/${postId}`),
   create: (blogId, data) =>
     fetchApi(`/blogs/${blogId}/posts`, { method: 'POST', body: JSON.stringify(data) }),

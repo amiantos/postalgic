@@ -17,13 +17,29 @@ function getStorage(req) {
 }
 
 // GET /api/blogs/:blogId/posts - List all posts
+// Query params:
+//   - includeDrafts: 'true' to include drafts
+//   - search: search term for title, content, category, tags
+//   - sort: 'date_desc' (default), 'date_asc', 'title_asc', 'title_desc'
 router.get('/', (req, res) => {
   try {
     const storage = getStorage(req);
     const { blogId } = req.params;
     const includeDrafts = req.query.includeDrafts === 'true';
+    const search = req.query.search || '';
+    const sort = req.query.sort || 'date_desc';
 
-    const posts = storage.getAllPosts(blogId, includeDrafts);
+    let posts;
+
+    // Use searchPosts if there's a search term, otherwise use getAllPosts
+    if (search.trim()) {
+      posts = storage.searchPosts(blogId, search, { includeDrafts, sort });
+    } else {
+      posts = storage.getAllPosts(blogId, includeDrafts);
+
+      // Apply sorting for non-search queries
+      posts = sortPosts(posts, sort);
+    }
 
     // Enrich posts with computed properties
     const enrichedPosts = posts.map(post => enrichPost(post, storage, blogId));
@@ -33,6 +49,29 @@ router.get('/', (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+// Helper: Sort posts
+function sortPosts(posts, sort) {
+  switch (sort) {
+    case 'date_asc':
+      return posts.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+    case 'title_asc':
+      return posts.sort((a, b) => {
+        const titleA = a.title || a.content;
+        const titleB = b.title || b.content;
+        return titleA.localeCompare(titleB);
+      });
+    case 'title_desc':
+      return posts.sort((a, b) => {
+        const titleA = a.title || a.content;
+        const titleB = b.title || b.content;
+        return titleB.localeCompare(titleA);
+      });
+    case 'date_desc':
+    default:
+      return posts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  }
+}
 
 // GET /api/blogs/:blogId/posts/:id - Get single post
 router.get('/:id', (req, res) => {

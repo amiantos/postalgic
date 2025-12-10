@@ -68,10 +68,11 @@ export const useBlogStore = defineStore('blog', () => {
   }
 
   // Posts
-  async function fetchPosts(blogId) {
+  async function fetchPosts(blogId, options = {}) {
     loading.value = true;
     try {
-      posts.value = await postApi.list(blogId, true);
+      const { includeDrafts = true, search = '', sort = 'date_desc' } = options;
+      posts.value = await postApi.list(blogId, includeDrafts, search, sort);
     } catch (e) {
       error.value = e.message;
     } finally {

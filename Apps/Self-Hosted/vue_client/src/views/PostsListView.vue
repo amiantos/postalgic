@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useBlogStore } from '@/stores/blog';
 
@@ -10,16 +10,57 @@ const blogStore = useBlogStore();
 const showDeleteModal = ref(false);
 const postToDelete = ref(null);
 const filter = ref('all'); // 'all', 'published', 'draft'
+const searchText = ref('');
+const sortOption = ref('date_desc');
+let searchTimeout = null;
+
+const sortOptions = [
+  { value: 'date_desc', label: 'Date (newest)' },
+  { value: 'date_asc', label: 'Date (oldest)' },
+  { value: 'title_asc', label: 'Title (A-Z)' },
+  { value: 'title_desc', label: 'Title (Z-A)' }
+];
 
 const blogId = computed(() => route.params.blogId);
 
+// Fetch posts when search/sort changes (with debounce for search)
+watch([searchText, sortOption], () => {
+  if (searchTimeout) clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    fetchPosts();
+  }, 300);
+});
+
+// Fetch posts when filter changes (immediate)
+watch(filter, () => {
+  fetchPosts();
+});
+
+async function fetchPosts() {
+  const includeDrafts = filter.value === 'all' || filter.value === 'draft';
+  await blogStore.fetchPosts(blogId.value, {
+    includeDrafts,
+    search: searchText.value,
+    sort: sortOption.value
+  });
+}
+
 const filteredPosts = computed(() => {
+  // Filter is now handled server-side, but we still filter drafts client-side
+  // because we fetch with includeDrafts=true for 'all' and 'draft' filters
   if (filter.value === 'published') {
-    return blogStore.publishedPosts;
+    return blogStore.posts.filter(p => !p.isDraft);
   } else if (filter.value === 'draft') {
-    return blogStore.draftPosts;
+    return blogStore.posts.filter(p => p.isDraft);
   }
   return blogStore.posts;
+});
+
+const postCounts = computed(() => {
+  const all = blogStore.posts.length;
+  const published = blogStore.posts.filter(p => !p.isDraft).length;
+  const drafts = blogStore.posts.filter(p => p.isDraft).length;
+  return { all, published, drafts };
 });
 
 function navigateToPost(postId) {
@@ -42,6 +83,10 @@ async function deletePost() {
     postToDelete.value = null;
   }
 }
+
+function clearSearch() {
+  searchText.value = '';
+}
 </script>
 
 <template>
@@ -51,8 +96,8 @@ async function deletePost() {
       <div>
         <h2 class="text-xl font-bold text-gray-900">Posts</h2>
         <p class="text-gray-500 text-sm">
-          {{ blogStore.posts.length }} total
-          ({{ blogStore.publishedPosts.length }} published, {{ blogStore.draftPosts.length }} drafts)
+          {{ postCounts.all }} total
+          ({{ postCounts.published }} published, {{ postCounts.drafts }} drafts)
         </p>
       </div>
       <button
@@ -63,37 +108,95 @@ async function deletePost() {
       </button>
     </div>
 
+    <!-- Search and Sort Bar -->
+    <div class="flex flex-col sm:flex-row gap-4 mb-4">
+      <!-- Search Input -->
+      <div class="relative flex-1">
+        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+        <input
+          v-model="searchText"
+          type="text"
+          placeholder="Search posts..."
+          class="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+        />
+        <button
+          v-if="searchText"
+          @click="clearSearch"
+          class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Sort Dropdown -->
+      <div class="relative">
+        <select
+          v-model="sortOption"
+          class="appearance-none px-4 py-2 pr-10 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 cursor-pointer"
+        >
+          <option v-for="opt in sortOptions" :key="opt.value" :value="opt.value">
+            {{ opt.label }}
+          </option>
+        </select>
+        <svg class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg>
+      </div>
+    </div>
+
     <!-- Filters -->
-    <div class="flex gap-2 mb-6">
-      <button
-        v-for="f in ['all', 'published', 'draft']"
-        :key="f"
-        @click="filter = f"
-        :class="[
-          'px-3 py-1 rounded-full text-sm transition-colors',
-          filter === f
-            ? 'bg-primary-100 text-primary-700'
-            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-        ]"
-      >
-        {{ f.charAt(0).toUpperCase() + f.slice(1) }}
-      </button>
+    <div class="flex items-center justify-between mb-6">
+      <div class="flex gap-2">
+        <button
+          v-for="f in ['all', 'published', 'draft']"
+          :key="f"
+          @click="filter = f"
+          :class="[
+            'px-3 py-1 rounded-full text-sm transition-colors',
+            filter === f
+              ? 'bg-primary-100 text-primary-700'
+              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+          ]"
+        >
+          {{ f.charAt(0).toUpperCase() + f.slice(1) }}
+        </button>
+      </div>
+      <span class="text-sm text-gray-500">
+        {{ filteredPosts.length }} posts
+      </span>
     </div>
 
     <!-- Empty State -->
     <div v-if="filteredPosts.length === 0" class="text-center py-12 bg-white rounded-lg border border-gray-200">
       <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
         <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          <path v-if="searchText" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
         </svg>
       </div>
-      <h3 class="text-lg font-medium text-gray-900 mb-2">No posts yet</h3>
-      <p class="text-gray-500 mb-6">Create your first post to get started.</p>
+      <h3 class="text-lg font-medium text-gray-900 mb-2">
+        {{ searchText ? 'No matching posts' : 'No posts yet' }}
+      </h3>
+      <p class="text-gray-500 mb-6">
+        {{ searchText ? 'Try a different search term' : 'Create your first post to get started.' }}
+      </p>
       <button
+        v-if="!searchText"
         @click="createNewPost"
         class="inline-flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
       >
         Create Post
+      </button>
+      <button
+        v-else
+        @click="clearSearch"
+        class="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+      >
+        Clear Search
       </button>
     </div>
 

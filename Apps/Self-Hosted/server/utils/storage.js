@@ -1,48 +1,30 @@
 import fs from 'fs';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
+import { getDatabase } from './database.js';
 
 /**
- * File-based storage utility for managing blog data.
- * Data is stored as JSON files in a structured directory hierarchy.
+ * SQLite-based storage utility for managing blog data.
+ * Binary files (uploads) remain on disk, metadata is stored in SQLite.
  *
- * Structure:
+ * Directory structure for binary files:
  * data/
- *   blogs/
+ *   uploads/
  *     {blogId}/
- *       blog.json          - Blog metadata and settings
- *       posts/
- *         {postId}.json    - Individual post data
- *       categories/
- *         {categoryId}.json
- *       tags/
- *         {tagId}.json
- *       sidebar/
- *         {objectId}.json
- *       static-files/
- *         {fileId}.json    - File metadata
- *       uploads/
- *         {filename}       - Actual file data
- *       published-files.json - Hash tracking for smart publish
- *   themes/
- *     {themeId}.json       - Custom theme templates
+ *       {storedFilename}     - Actual file data
  *   generated/
- *     {blogId}/            - Generated site files for preview
+ *     {blogId}/              - Generated site files for preview
  */
 
 class Storage {
   constructor(dataRoot) {
     this.dataRoot = dataRoot;
-    this.blogsDir = path.join(dataRoot, 'blogs');
-    this.themesDir = path.join(dataRoot, 'themes');
-    this.generatedDir = path.join(dataRoot, 'generated');
     this.uploadsDir = path.join(dataRoot, 'uploads');
+    this.generatedDir = path.join(dataRoot, 'generated');
 
     // Ensure directories exist
-    this.ensureDir(this.blogsDir);
-    this.ensureDir(this.themesDir);
-    this.ensureDir(this.generatedDir);
     this.ensureDir(this.uploadsDir);
+    this.ensureDir(this.generatedDir);
   }
 
   ensureDir(dir) {
@@ -53,443 +35,780 @@ class Storage {
 
   // ============ Blog Operations ============
 
-  getBlogDir(blogId) {
-    return path.join(this.blogsDir, blogId);
+  getBlogUploadsDir(blogId) {
+    return path.join(this.uploadsDir, blogId);
   }
 
   getAllBlogs() {
-    if (!fs.existsSync(this.blogsDir)) return [];
+    const db = getDatabase();
+    const rows = db.prepare(`
+      SELECT * FROM blogs ORDER BY created_at DESC
+    `).all();
 
-    const blogDirs = fs.readdirSync(this.blogsDir, { withFileTypes: true })
-      .filter(dirent => dirent.isDirectory())
-      .map(dirent => dirent.name);
-
-    return blogDirs
-      .map(blogId => this.getBlog(blogId))
-      .filter(blog => blog !== null)
-      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    return rows.map(row => this.mapBlogRow(row));
   }
 
   getBlog(blogId) {
-    const blogFile = path.join(this.getBlogDir(blogId), 'blog.json');
-    if (!fs.existsSync(blogFile)) return null;
-
-    try {
-      const data = JSON.parse(fs.readFileSync(blogFile, 'utf-8'));
-      return { id: blogId, ...data };
-    } catch (e) {
-      console.error(`Error reading blog ${blogId}:`, e);
-      return null;
-    }
+    const db = getDatabase();
+    const row = db.prepare('SELECT * FROM blogs WHERE id = ?').get(blogId);
+    return row ? this.mapBlogRow(row) : null;
   }
 
   createBlog(blogData) {
+    const db = getDatabase();
     const blogId = uuidv4();
-    const blogDir = this.getBlogDir(blogId);
+    const now = new Date().toISOString();
 
-    this.ensureDir(blogDir);
-    this.ensureDir(path.join(blogDir, 'posts'));
-    this.ensureDir(path.join(blogDir, 'categories'));
-    this.ensureDir(path.join(blogDir, 'tags'));
-    this.ensureDir(path.join(blogDir, 'sidebar'));
-    this.ensureDir(path.join(blogDir, 'static-files'));
-    this.ensureDir(path.join(blogDir, 'uploads'));
+    // Ensure uploads directory for this blog
+    this.ensureDir(this.getBlogUploadsDir(blogId));
 
-    const blog = {
-      ...blogData,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
+    const stmt = db.prepare(`
+      INSERT INTO blogs (
+        id, name, url, tagline, author_name, author_url, author_email,
+        theme_identifier, accent_color, background_color, text_color,
+        light_shade, medium_shade, dark_shade, publisher_type,
+        aws_region, aws_s3_bucket, aws_cloudfront_dist_id,
+        aws_access_key_id, aws_secret_access_key,
+        ftp_host, ftp_port, ftp_username, ftp_password, ftp_private_key, ftp_path,
+        git_repository_url, git_username, git_token, git_branch, git_commit_message,
+        created_at, updated_at
+      ) VALUES (
+        ?, ?, ?, ?, ?, ?, ?,
+        ?, ?, ?, ?,
+        ?, ?, ?, ?,
+        ?, ?, ?,
+        ?, ?,
+        ?, ?, ?, ?, ?, ?,
+        ?, ?, ?, ?, ?,
+        ?, ?
+      )
+    `);
 
-    fs.writeFileSync(
-      path.join(blogDir, 'blog.json'),
-      JSON.stringify(blog, null, 2)
+    stmt.run(
+      blogId,
+      blogData.name || 'Untitled Blog',
+      blogData.url || null,
+      blogData.tagline || null,
+      blogData.authorName || null,
+      blogData.authorUrl || null,
+      blogData.authorEmail || null,
+      blogData.themeIdentifier || 'default',
+      blogData.accentColor || null,
+      blogData.backgroundColor || null,
+      blogData.textColor || null,
+      blogData.lightShade || null,
+      blogData.mediumShade || null,
+      blogData.darkShade || null,
+      blogData.publisherType || 'manual',
+      blogData.awsRegion || null,
+      blogData.awsS3Bucket || null,
+      blogData.awsCloudFrontDistId || null,
+      blogData.awsAccessKeyId || null,
+      blogData.awsSecretAccessKey || null,
+      blogData.ftpHost || null,
+      blogData.ftpPort || 22,
+      blogData.ftpUsername || null,
+      blogData.ftpPassword || null,
+      blogData.ftpPrivateKey || null,
+      blogData.ftpPath || null,
+      blogData.gitRepositoryUrl || null,
+      blogData.gitUsername || null,
+      blogData.gitToken || null,
+      blogData.gitBranch || 'main',
+      blogData.gitCommitMessage || null,
+      now,
+      now
     );
 
-    return { id: blogId, ...blog };
+    return this.getBlog(blogId);
   }
 
   updateBlog(blogId, blogData) {
-    const blogDir = this.getBlogDir(blogId);
-    const blogFile = path.join(blogDir, 'blog.json');
-
-    if (!fs.existsSync(blogFile)) {
+    const db = getDatabase();
+    const existing = this.getBlog(blogId);
+    if (!existing) {
       throw new Error(`Blog ${blogId} not found`);
     }
 
-    const existing = JSON.parse(fs.readFileSync(blogFile, 'utf-8'));
-    const updated = {
-      ...existing,
-      ...blogData,
-      updatedAt: new Date().toISOString()
-    };
+    const now = new Date().toISOString();
+    const merged = { ...existing, ...blogData, updatedAt: now };
 
-    fs.writeFileSync(blogFile, JSON.stringify(updated, null, 2));
-    return { id: blogId, ...updated };
+    const stmt = db.prepare(`
+      UPDATE blogs SET
+        name = ?, url = ?, tagline = ?,
+        author_name = ?, author_url = ?, author_email = ?,
+        theme_identifier = ?, accent_color = ?, background_color = ?,
+        text_color = ?, light_shade = ?, medium_shade = ?, dark_shade = ?,
+        publisher_type = ?,
+        aws_region = ?, aws_s3_bucket = ?, aws_cloudfront_dist_id = ?,
+        aws_access_key_id = ?, aws_secret_access_key = ?,
+        ftp_host = ?, ftp_port = ?, ftp_username = ?, ftp_password = ?,
+        ftp_private_key = ?, ftp_path = ?,
+        git_repository_url = ?, git_username = ?, git_token = ?,
+        git_branch = ?, git_commit_message = ?,
+        updated_at = ?
+      WHERE id = ?
+    `);
+
+    stmt.run(
+      merged.name,
+      merged.url,
+      merged.tagline,
+      merged.authorName,
+      merged.authorUrl,
+      merged.authorEmail,
+      merged.themeIdentifier,
+      merged.accentColor,
+      merged.backgroundColor,
+      merged.textColor,
+      merged.lightShade,
+      merged.mediumShade,
+      merged.darkShade,
+      merged.publisherType,
+      merged.awsRegion,
+      merged.awsS3Bucket,
+      merged.awsCloudFrontDistId,
+      merged.awsAccessKeyId,
+      merged.awsSecretAccessKey,
+      merged.ftpHost,
+      merged.ftpPort,
+      merged.ftpUsername,
+      merged.ftpPassword,
+      merged.ftpPrivateKey,
+      merged.ftpPath,
+      merged.gitRepositoryUrl,
+      merged.gitUsername,
+      merged.gitToken,
+      merged.gitBranch,
+      merged.gitCommitMessage,
+      now,
+      blogId
+    );
+
+    return this.getBlog(blogId);
   }
 
   deleteBlog(blogId) {
-    const blogDir = this.getBlogDir(blogId);
-    if (fs.existsSync(blogDir)) {
-      fs.rmSync(blogDir, { recursive: true });
+    const db = getDatabase();
+
+    // Delete from database (cascades to related tables)
+    db.prepare('DELETE FROM blogs WHERE id = ?').run(blogId);
+
+    // Delete uploads directory
+    const uploadsDir = this.getBlogUploadsDir(blogId);
+    if (fs.existsSync(uploadsDir)) {
+      fs.rmSync(uploadsDir, { recursive: true });
     }
+
+    // Delete generated site
+    const generatedDir = this.getGeneratedSiteDir(blogId);
+    if (fs.existsSync(generatedDir)) {
+      fs.rmSync(generatedDir, { recursive: true });
+    }
+  }
+
+  mapBlogRow(row) {
+    return {
+      id: row.id,
+      name: row.name,
+      url: row.url,
+      tagline: row.tagline,
+      authorName: row.author_name,
+      authorUrl: row.author_url,
+      authorEmail: row.author_email,
+      themeIdentifier: row.theme_identifier,
+      accentColor: row.accent_color,
+      backgroundColor: row.background_color,
+      textColor: row.text_color,
+      lightShade: row.light_shade,
+      mediumShade: row.medium_shade,
+      darkShade: row.dark_shade,
+      publisherType: row.publisher_type,
+      awsRegion: row.aws_region,
+      awsS3Bucket: row.aws_s3_bucket,
+      awsCloudFrontDistId: row.aws_cloudfront_dist_id,
+      awsAccessKeyId: row.aws_access_key_id,
+      awsSecretAccessKey: row.aws_secret_access_key,
+      ftpHost: row.ftp_host,
+      ftpPort: row.ftp_port,
+      ftpUsername: row.ftp_username,
+      ftpPassword: row.ftp_password,
+      ftpPrivateKey: row.ftp_private_key,
+      ftpPath: row.ftp_path,
+      gitRepositoryUrl: row.git_repository_url,
+      gitUsername: row.git_username,
+      gitToken: row.git_token,
+      gitBranch: row.git_branch,
+      gitCommitMessage: row.git_commit_message,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at
+    };
   }
 
   // ============ Post Operations ============
 
-  getPostsDir(blogId) {
-    return path.join(this.getBlogDir(blogId), 'posts');
-  }
-
   getAllPosts(blogId, includeDrafts = false) {
-    const postsDir = this.getPostsDir(blogId);
-    if (!fs.existsSync(postsDir)) return [];
+    const db = getDatabase();
+    let query = 'SELECT * FROM posts WHERE blog_id = ?';
+    if (!includeDrafts) {
+      query += ' AND is_draft = 0';
+    }
+    query += ' ORDER BY created_at DESC';
 
-    const postFiles = fs.readdirSync(postsDir)
-      .filter(f => f.endsWith('.json'));
-
-    const posts = postFiles
-      .map(f => {
-        const postId = f.replace('.json', '');
-        return this.getPost(blogId, postId);
-      })
-      .filter(post => post !== null)
-      .filter(post => includeDrafts || !post.isDraft)
-      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
-    return posts;
+    const rows = db.prepare(query).all(blogId);
+    return rows.map(row => this.mapPostRow(row));
   }
 
   getPost(blogId, postId) {
-    const postFile = path.join(this.getPostsDir(blogId), `${postId}.json`);
-    if (!fs.existsSync(postFile)) return null;
-
-    try {
-      const data = JSON.parse(fs.readFileSync(postFile, 'utf-8'));
-      return { id: postId, ...data };
-    } catch (e) {
-      console.error(`Error reading post ${postId}:`, e);
-      return null;
-    }
+    const db = getDatabase();
+    const row = db.prepare('SELECT * FROM posts WHERE id = ? AND blog_id = ?').get(postId, blogId);
+    return row ? this.mapPostRow(row) : null;
   }
 
   createPost(blogId, postData) {
+    const db = getDatabase();
     const postId = uuidv4();
-    const postsDir = this.getPostsDir(blogId);
-    this.ensureDir(postsDir);
+    const now = new Date().toISOString();
 
-    const post = {
-      ...postData,
-      createdAt: postData.createdAt || new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
+    // Handle embed data
+    let embedType = null;
+    let embedPosition = null;
+    let embedData = null;
 
-    fs.writeFileSync(
-      path.join(postsDir, `${postId}.json`),
-      JSON.stringify(post, null, 2)
+    if (postData.embed) {
+      embedType = postData.embed.type || null;
+      embedPosition = postData.embed.position || 'below';
+      embedData = JSON.stringify(postData.embed);
+    }
+
+    const stmt = db.prepare(`
+      INSERT INTO posts (
+        id, blog_id, title, content, stub, is_draft, category_id,
+        embed_type, embed_position, embed_data, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    stmt.run(
+      postId,
+      blogId,
+      postData.title || null,
+      postData.content || '',
+      postData.stub || postId,
+      postData.isDraft ? 1 : 0,
+      postData.categoryId || null,
+      embedType,
+      embedPosition,
+      embedData,
+      postData.createdAt || now,
+      now
     );
 
-    return { id: postId, ...post };
+    // Handle tags
+    if (postData.tagIds && Array.isArray(postData.tagIds)) {
+      const insertPostTag = db.prepare('INSERT OR IGNORE INTO post_tags (post_id, tag_id) VALUES (?, ?)');
+      for (const tagId of postData.tagIds) {
+        insertPostTag.run(postId, tagId);
+      }
+    }
+
+    return this.getPost(blogId, postId);
   }
 
   updatePost(blogId, postId, postData) {
-    const postFile = path.join(this.getPostsDir(blogId), `${postId}.json`);
-
-    if (!fs.existsSync(postFile)) {
+    const db = getDatabase();
+    const existing = this.getPost(blogId, postId);
+    if (!existing) {
       throw new Error(`Post ${postId} not found`);
     }
 
-    const existing = JSON.parse(fs.readFileSync(postFile, 'utf-8'));
-    const updated = {
-      ...existing,
-      ...postData,
-      updatedAt: new Date().toISOString()
-    };
+    const now = new Date().toISOString();
 
-    fs.writeFileSync(postFile, JSON.stringify(updated, null, 2));
-    return { id: postId, ...updated };
+    // Handle embed data
+    let embedType = null;
+    let embedPosition = null;
+    let embedData = null;
+
+    if (postData.embed) {
+      embedType = postData.embed.type || null;
+      embedPosition = postData.embed.position || 'below';
+      embedData = JSON.stringify(postData.embed);
+    } else if (postData.embed === null) {
+      // Explicitly removing embed
+      embedType = null;
+      embedPosition = null;
+      embedData = null;
+    } else if (existing.embed) {
+      // Keep existing embed if not provided
+      embedType = existing.embed.type || null;
+      embedPosition = existing.embed.position || 'below';
+      embedData = JSON.stringify(existing.embed);
+    }
+
+    const stmt = db.prepare(`
+      UPDATE posts SET
+        title = ?, content = ?, stub = ?, is_draft = ?, category_id = ?,
+        embed_type = ?, embed_position = ?, embed_data = ?, updated_at = ?
+      WHERE id = ? AND blog_id = ?
+    `);
+
+    stmt.run(
+      postData.title !== undefined ? postData.title : existing.title,
+      postData.content !== undefined ? postData.content : existing.content,
+      postData.stub !== undefined ? postData.stub : existing.stub,
+      postData.isDraft !== undefined ? (postData.isDraft ? 1 : 0) : (existing.isDraft ? 1 : 0),
+      postData.categoryId !== undefined ? postData.categoryId : existing.categoryId,
+      embedType,
+      embedPosition,
+      embedData,
+      now,
+      postId,
+      blogId
+    );
+
+    // Update tags if provided
+    if (postData.tagIds !== undefined) {
+      // Remove existing tags
+      db.prepare('DELETE FROM post_tags WHERE post_id = ?').run(postId);
+
+      // Add new tags
+      if (Array.isArray(postData.tagIds)) {
+        const insertPostTag = db.prepare('INSERT OR IGNORE INTO post_tags (post_id, tag_id) VALUES (?, ?)');
+        for (const tagId of postData.tagIds) {
+          insertPostTag.run(postId, tagId);
+        }
+      }
+    }
+
+    return this.getPost(blogId, postId);
   }
 
   deletePost(blogId, postId) {
-    const postFile = path.join(this.getPostsDir(blogId), `${postId}.json`);
-    if (fs.existsSync(postFile)) {
-      fs.unlinkSync(postFile);
+    const db = getDatabase();
+    db.prepare('DELETE FROM posts WHERE id = ? AND blog_id = ?').run(postId, blogId);
+  }
+
+  mapPostRow(row) {
+    const db = getDatabase();
+
+    // Get tag IDs for this post
+    const tagRows = db.prepare('SELECT tag_id FROM post_tags WHERE post_id = ?').all(row.id);
+    const tagIds = tagRows.map(r => r.tag_id);
+
+    // Parse embed data
+    let embed = null;
+    if (row.embed_data) {
+      try {
+        embed = JSON.parse(row.embed_data);
+      } catch (e) {
+        console.error('Error parsing embed data:', e);
+      }
     }
+
+    return {
+      id: row.id,
+      title: row.title,
+      content: row.content,
+      stub: row.stub,
+      isDraft: row.is_draft === 1,
+      categoryId: row.category_id,
+      tagIds: tagIds,
+      embed: embed,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at
+    };
+  }
+
+  // ============ Post Search (for FTS) ============
+
+  searchPosts(blogId, searchTerm, options = {}) {
+    const db = getDatabase();
+    const { includeDrafts = true, sort = 'date_desc' } = options;
+
+    // Build the search query using FTS5
+    // Also search in category names and tag names
+    let query = `
+      SELECT DISTINCT p.* FROM posts p
+      LEFT JOIN categories c ON p.category_id = c.id
+      LEFT JOIN post_tags pt ON p.id = pt.post_id
+      LEFT JOIN tags t ON pt.tag_id = t.id
+      WHERE p.blog_id = ?
+    `;
+
+    const params = [blogId];
+
+    if (!includeDrafts) {
+      query += ' AND p.is_draft = 0';
+    }
+
+    if (searchTerm && searchTerm.trim()) {
+      const term = `%${searchTerm.trim()}%`;
+      query += ` AND (
+        p.title LIKE ? COLLATE NOCASE
+        OR p.content LIKE ? COLLATE NOCASE
+        OR c.name LIKE ? COLLATE NOCASE
+        OR t.name LIKE ? COLLATE NOCASE
+      )`;
+      params.push(term, term, term, term);
+    }
+
+    // Add sorting
+    switch (sort) {
+      case 'date_asc':
+        query += ' ORDER BY p.created_at ASC';
+        break;
+      case 'title_asc':
+        query += ' ORDER BY COALESCE(p.title, p.content) ASC';
+        break;
+      case 'title_desc':
+        query += ' ORDER BY COALESCE(p.title, p.content) DESC';
+        break;
+      case 'date_desc':
+      default:
+        query += ' ORDER BY p.created_at DESC';
+    }
+
+    const rows = db.prepare(query).all(...params);
+    return rows.map(row => this.mapPostRow(row));
   }
 
   // ============ Category Operations ============
 
-  getCategoriesDir(blogId) {
-    return path.join(this.getBlogDir(blogId), 'categories');
-  }
-
   getAllCategories(blogId) {
-    const categoriesDir = this.getCategoriesDir(blogId);
-    if (!fs.existsSync(categoriesDir)) return [];
+    const db = getDatabase();
+    const rows = db.prepare(`
+      SELECT * FROM categories WHERE blog_id = ? ORDER BY name ASC
+    `).all(blogId);
 
-    const categoryFiles = fs.readdirSync(categoriesDir)
-      .filter(f => f.endsWith('.json'));
-
-    return categoryFiles
-      .map(f => {
-        const categoryId = f.replace('.json', '');
-        return this.getCategory(blogId, categoryId);
-      })
-      .filter(category => category !== null)
-      .sort((a, b) => a.name.localeCompare(b.name));
+    return rows.map(row => this.mapCategoryRow(row));
   }
 
   getCategory(blogId, categoryId) {
-    const categoryFile = path.join(this.getCategoriesDir(blogId), `${categoryId}.json`);
-    if (!fs.existsSync(categoryFile)) return null;
-
-    try {
-      const data = JSON.parse(fs.readFileSync(categoryFile, 'utf-8'));
-      return { id: categoryId, ...data };
-    } catch (e) {
-      console.error(`Error reading category ${categoryId}:`, e);
-      return null;
-    }
+    const db = getDatabase();
+    const row = db.prepare('SELECT * FROM categories WHERE id = ? AND blog_id = ?').get(categoryId, blogId);
+    return row ? this.mapCategoryRow(row) : null;
   }
 
   createCategory(blogId, categoryData) {
+    const db = getDatabase();
     const categoryId = uuidv4();
-    const categoriesDir = this.getCategoriesDir(blogId);
-    this.ensureDir(categoriesDir);
+    const now = new Date().toISOString();
 
-    const category = {
-      ...categoryData,
-      createdAt: new Date().toISOString()
-    };
+    const stmt = db.prepare(`
+      INSERT INTO categories (id, blog_id, name, description, stub, created_at)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `);
 
-    fs.writeFileSync(
-      path.join(categoriesDir, `${categoryId}.json`),
-      JSON.stringify(category, null, 2)
+    stmt.run(
+      categoryId,
+      blogId,
+      categoryData.name || 'Untitled',
+      categoryData.description || null,
+      categoryData.stub || categoryId,
+      now
     );
 
-    return { id: categoryId, ...category };
+    return this.getCategory(blogId, categoryId);
   }
 
   updateCategory(blogId, categoryId, categoryData) {
-    const categoryFile = path.join(this.getCategoriesDir(blogId), `${categoryId}.json`);
-
-    if (!fs.existsSync(categoryFile)) {
+    const db = getDatabase();
+    const existing = this.getCategory(blogId, categoryId);
+    if (!existing) {
       throw new Error(`Category ${categoryId} not found`);
     }
 
-    const existing = JSON.parse(fs.readFileSync(categoryFile, 'utf-8'));
-    const updated = { ...existing, ...categoryData };
+    const stmt = db.prepare(`
+      UPDATE categories SET name = ?, description = ?, stub = ?
+      WHERE id = ? AND blog_id = ?
+    `);
 
-    fs.writeFileSync(categoryFile, JSON.stringify(updated, null, 2));
-    return { id: categoryId, ...updated };
+    stmt.run(
+      categoryData.name !== undefined ? categoryData.name : existing.name,
+      categoryData.description !== undefined ? categoryData.description : existing.description,
+      categoryData.stub !== undefined ? categoryData.stub : existing.stub,
+      categoryId,
+      blogId
+    );
+
+    return this.getCategory(blogId, categoryId);
   }
 
   deleteCategory(blogId, categoryId) {
-    const categoryFile = path.join(this.getCategoriesDir(blogId), `${categoryId}.json`);
-    if (fs.existsSync(categoryFile)) {
-      fs.unlinkSync(categoryFile);
-    }
+    const db = getDatabase();
+    // Note: Posts with this category will have category_id set to NULL due to ON DELETE SET NULL
+    db.prepare('DELETE FROM categories WHERE id = ? AND blog_id = ?').run(categoryId, blogId);
+  }
+
+  getCategoryPostCount(blogId, categoryId) {
+    const db = getDatabase();
+    const result = db.prepare(`
+      SELECT COUNT(*) as count FROM posts WHERE blog_id = ? AND category_id = ? AND is_draft = 0
+    `).get(blogId, categoryId);
+    return result.count;
+  }
+
+  mapCategoryRow(row) {
+    return {
+      id: row.id,
+      name: row.name,
+      description: row.description,
+      stub: row.stub,
+      createdAt: row.created_at
+    };
   }
 
   // ============ Tag Operations ============
 
-  getTagsDir(blogId) {
-    return path.join(this.getBlogDir(blogId), 'tags');
-  }
-
   getAllTags(blogId) {
-    const tagsDir = this.getTagsDir(blogId);
-    if (!fs.existsSync(tagsDir)) return [];
+    const db = getDatabase();
+    const rows = db.prepare(`
+      SELECT * FROM tags WHERE blog_id = ? ORDER BY name ASC
+    `).all(blogId);
 
-    const tagFiles = fs.readdirSync(tagsDir)
-      .filter(f => f.endsWith('.json'));
-
-    return tagFiles
-      .map(f => {
-        const tagId = f.replace('.json', '');
-        return this.getTag(blogId, tagId);
-      })
-      .filter(tag => tag !== null)
-      .sort((a, b) => a.name.localeCompare(b.name));
+    return rows.map(row => this.mapTagRow(row));
   }
 
   getTag(blogId, tagId) {
-    const tagFile = path.join(this.getTagsDir(blogId), `${tagId}.json`);
-    if (!fs.existsSync(tagFile)) return null;
-
-    try {
-      const data = JSON.parse(fs.readFileSync(tagFile, 'utf-8'));
-      return { id: tagId, ...data };
-    } catch (e) {
-      console.error(`Error reading tag ${tagId}:`, e);
-      return null;
-    }
+    const db = getDatabase();
+    const row = db.prepare('SELECT * FROM tags WHERE id = ? AND blog_id = ?').get(tagId, blogId);
+    return row ? this.mapTagRow(row) : null;
   }
 
   createTag(blogId, tagData) {
+    const db = getDatabase();
     const tagId = uuidv4();
-    const tagsDir = this.getTagsDir(blogId);
-    this.ensureDir(tagsDir);
+    const now = new Date().toISOString();
 
-    const tag = {
-      ...tagData,
-      name: tagData.name.toLowerCase(),
-      createdAt: new Date().toISOString()
-    };
+    const stmt = db.prepare(`
+      INSERT INTO tags (id, blog_id, name, stub, created_at)
+      VALUES (?, ?, ?, ?, ?)
+    `);
 
-    fs.writeFileSync(
-      path.join(tagsDir, `${tagId}.json`),
-      JSON.stringify(tag, null, 2)
+    stmt.run(
+      tagId,
+      blogId,
+      (tagData.name || 'untitled').toLowerCase(),
+      tagData.stub || tagId,
+      now
     );
 
-    return { id: tagId, ...tag };
+    return this.getTag(blogId, tagId);
   }
 
   updateTag(blogId, tagId, tagData) {
-    const tagFile = path.join(this.getTagsDir(blogId), `${tagId}.json`);
-
-    if (!fs.existsSync(tagFile)) {
+    const db = getDatabase();
+    const existing = this.getTag(blogId, tagId);
+    if (!existing) {
       throw new Error(`Tag ${tagId} not found`);
     }
 
-    const existing = JSON.parse(fs.readFileSync(tagFile, 'utf-8'));
-    const updated = { ...existing, ...tagData };
+    const stmt = db.prepare(`
+      UPDATE tags SET name = ?, stub = ?
+      WHERE id = ? AND blog_id = ?
+    `);
 
-    fs.writeFileSync(tagFile, JSON.stringify(updated, null, 2));
-    return { id: tagId, ...updated };
+    stmt.run(
+      tagData.name !== undefined ? tagData.name.toLowerCase() : existing.name,
+      tagData.stub !== undefined ? tagData.stub : existing.stub,
+      tagId,
+      blogId
+    );
+
+    return this.getTag(blogId, tagId);
   }
 
   deleteTag(blogId, tagId) {
-    const tagFile = path.join(this.getTagsDir(blogId), `${tagId}.json`);
-    if (fs.existsSync(tagFile)) {
-      fs.unlinkSync(tagFile);
-    }
+    const db = getDatabase();
+    // Note: post_tags entries will be deleted due to ON DELETE CASCADE
+    db.prepare('DELETE FROM tags WHERE id = ? AND blog_id = ?').run(tagId, blogId);
+  }
+
+  getTagPostCount(blogId, tagId) {
+    const db = getDatabase();
+    const result = db.prepare(`
+      SELECT COUNT(*) as count FROM post_tags pt
+      JOIN posts p ON pt.post_id = p.id
+      WHERE pt.tag_id = ? AND p.blog_id = ? AND p.is_draft = 0
+    `).get(tagId, blogId);
+    return result.count;
+  }
+
+  mapTagRow(row) {
+    return {
+      id: row.id,
+      name: row.name,
+      stub: row.stub,
+      createdAt: row.created_at
+    };
   }
 
   // ============ Sidebar Object Operations ============
 
-  getSidebarDir(blogId) {
-    return path.join(this.getBlogDir(blogId), 'sidebar');
-  }
-
   getAllSidebarObjects(blogId) {
-    const sidebarDir = this.getSidebarDir(blogId);
-    if (!fs.existsSync(sidebarDir)) return [];
+    const db = getDatabase();
+    const rows = db.prepare(`
+      SELECT * FROM sidebar_objects WHERE blog_id = ? ORDER BY sort_order ASC
+    `).all(blogId);
 
-    const sidebarFiles = fs.readdirSync(sidebarDir)
-      .filter(f => f.endsWith('.json'));
-
-    return sidebarFiles
-      .map(f => {
-        const objectId = f.replace('.json', '');
-        return this.getSidebarObject(blogId, objectId);
-      })
-      .filter(obj => obj !== null)
-      .sort((a, b) => a.order - b.order);
+    return rows.map(row => this.mapSidebarObjectRow(row));
   }
 
   getSidebarObject(blogId, objectId) {
-    const objectFile = path.join(this.getSidebarDir(blogId), `${objectId}.json`);
-    if (!fs.existsSync(objectFile)) return null;
-
-    try {
-      const data = JSON.parse(fs.readFileSync(objectFile, 'utf-8'));
-      return { id: objectId, ...data };
-    } catch (e) {
-      console.error(`Error reading sidebar object ${objectId}:`, e);
-      return null;
-    }
+    const db = getDatabase();
+    const row = db.prepare('SELECT * FROM sidebar_objects WHERE id = ? AND blog_id = ?').get(objectId, blogId);
+    return row ? this.mapSidebarObjectRow(row) : null;
   }
 
   createSidebarObject(blogId, objectData) {
+    const db = getDatabase();
     const objectId = uuidv4();
-    const sidebarDir = this.getSidebarDir(blogId);
-    this.ensureDir(sidebarDir);
+    const now = new Date().toISOString();
 
-    const existing = this.getAllSidebarObjects(blogId);
-    const maxOrder = existing.length > 0
-      ? Math.max(...existing.map(o => o.order))
-      : -1;
+    // Get max order
+    const maxOrder = db.prepare(`
+      SELECT COALESCE(MAX(sort_order), -1) as max_order FROM sidebar_objects WHERE blog_id = ?
+    `).get(blogId).max_order;
 
-    const sidebarObject = {
-      ...objectData,
-      order: objectData.order ?? maxOrder + 1,
-      createdAt: new Date().toISOString()
-    };
+    const stmt = db.prepare(`
+      INSERT INTO sidebar_objects (id, blog_id, title, type, content, sort_order, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `);
 
-    fs.writeFileSync(
-      path.join(sidebarDir, `${objectId}.json`),
-      JSON.stringify(sidebarObject, null, 2)
+    stmt.run(
+      objectId,
+      blogId,
+      objectData.title || 'Untitled',
+      objectData.type || 'text',
+      objectData.content || null,
+      objectData.order ?? maxOrder + 1,
+      now
     );
 
-    return { id: objectId, ...sidebarObject };
+    // Handle links for linkList type
+    if (objectData.type === 'linkList' && Array.isArray(objectData.links)) {
+      const insertLink = db.prepare(`
+        INSERT INTO sidebar_links (id, sidebar_object_id, title, url, sort_order)
+        VALUES (?, ?, ?, ?, ?)
+      `);
+
+      for (let i = 0; i < objectData.links.length; i++) {
+        const link = objectData.links[i];
+        insertLink.run(
+          uuidv4(),
+          objectId,
+          link.title || 'Untitled',
+          link.url || '',
+          link.order ?? i
+        );
+      }
+    }
+
+    return this.getSidebarObject(blogId, objectId);
   }
 
   updateSidebarObject(blogId, objectId, objectData) {
-    const objectFile = path.join(this.getSidebarDir(blogId), `${objectId}.json`);
-
-    if (!fs.existsSync(objectFile)) {
+    const db = getDatabase();
+    const existing = this.getSidebarObject(blogId, objectId);
+    if (!existing) {
       throw new Error(`Sidebar object ${objectId} not found`);
     }
 
-    const existing = JSON.parse(fs.readFileSync(objectFile, 'utf-8'));
-    const updated = { ...existing, ...objectData };
+    const stmt = db.prepare(`
+      UPDATE sidebar_objects SET title = ?, type = ?, content = ?, sort_order = ?
+      WHERE id = ? AND blog_id = ?
+    `);
 
-    fs.writeFileSync(objectFile, JSON.stringify(updated, null, 2));
-    return { id: objectId, ...updated };
+    stmt.run(
+      objectData.title !== undefined ? objectData.title : existing.title,
+      objectData.type !== undefined ? objectData.type : existing.type,
+      objectData.content !== undefined ? objectData.content : existing.content,
+      objectData.order !== undefined ? objectData.order : existing.order,
+      objectId,
+      blogId
+    );
+
+    // Update links if provided
+    if (objectData.links !== undefined) {
+      // Remove existing links
+      db.prepare('DELETE FROM sidebar_links WHERE sidebar_object_id = ?').run(objectId);
+
+      // Add new links
+      if (Array.isArray(objectData.links)) {
+        const insertLink = db.prepare(`
+          INSERT INTO sidebar_links (id, sidebar_object_id, title, url, sort_order)
+          VALUES (?, ?, ?, ?, ?)
+        `);
+
+        for (let i = 0; i < objectData.links.length; i++) {
+          const link = objectData.links[i];
+          insertLink.run(
+            uuidv4(),
+            objectId,
+            link.title || 'Untitled',
+            link.url || '',
+            link.order ?? i
+          );
+        }
+      }
+    }
+
+    return this.getSidebarObject(blogId, objectId);
   }
 
   deleteSidebarObject(blogId, objectId) {
-    const objectFile = path.join(this.getSidebarDir(blogId), `${objectId}.json`);
-    if (fs.existsSync(objectFile)) {
-      fs.unlinkSync(objectFile);
+    const db = getDatabase();
+    // Links will be deleted due to ON DELETE CASCADE
+    db.prepare('DELETE FROM sidebar_objects WHERE id = ? AND blog_id = ?').run(objectId, blogId);
+  }
+
+  mapSidebarObjectRow(row) {
+    const db = getDatabase();
+
+    // Get links for linkList type
+    let links = [];
+    if (row.type === 'linkList') {
+      const linkRows = db.prepare(`
+        SELECT * FROM sidebar_links WHERE sidebar_object_id = ? ORDER BY sort_order ASC
+      `).all(row.id);
+
+      links = linkRows.map(l => ({
+        title: l.title,
+        url: l.url,
+        order: l.sort_order
+      }));
     }
+
+    return {
+      id: row.id,
+      title: row.title,
+      type: row.type,
+      content: row.content,
+      order: row.sort_order,
+      links: links,
+      createdAt: row.created_at
+    };
   }
 
   // ============ Static File Operations ============
 
-  getStaticFilesDir(blogId) {
-    return path.join(this.getBlogDir(blogId), 'static-files');
-  }
-
-  getBlogUploadsDir(blogId) {
-    return path.join(this.getBlogDir(blogId), 'uploads');
-  }
-
   getAllStaticFiles(blogId) {
-    const staticFilesDir = this.getStaticFilesDir(blogId);
-    if (!fs.existsSync(staticFilesDir)) return [];
-
-    const metaFiles = fs.readdirSync(staticFilesDir)
-      .filter(f => f.endsWith('.json'));
-
-    return metaFiles
-      .map(f => {
-        const fileId = f.replace('.json', '');
-        return this.getStaticFile(blogId, fileId);
-      })
-      .filter(file => file !== null);
+    const db = getDatabase();
+    const rows = db.prepare('SELECT * FROM static_files WHERE blog_id = ?').all(blogId);
+    return rows.map(row => this.mapStaticFileRow(row));
   }
 
   getStaticFile(blogId, fileId) {
-    const metaFile = path.join(this.getStaticFilesDir(blogId), `${fileId}.json`);
-    if (!fs.existsSync(metaFile)) return null;
-
-    try {
-      const data = JSON.parse(fs.readFileSync(metaFile, 'utf-8'));
-      return { id: fileId, ...data };
-    } catch (e) {
-      console.error(`Error reading static file ${fileId}:`, e);
-      return null;
-    }
+    const db = getDatabase();
+    const row = db.prepare('SELECT * FROM static_files WHERE id = ? AND blog_id = ?').get(fileId, blogId);
+    return row ? this.mapStaticFileRow(row) : null;
   }
 
   createStaticFile(blogId, fileData, fileBuffer) {
+    const db = getDatabase();
     const fileId = uuidv4();
-    const staticFilesDir = this.getStaticFilesDir(blogId);
+    const now = new Date().toISOString();
     const uploadsDir = this.getBlogUploadsDir(blogId);
 
-    this.ensureDir(staticFilesDir);
     this.ensureDir(uploadsDir);
 
     // Save file data
@@ -497,34 +816,38 @@ class Storage {
     fs.writeFileSync(path.join(uploadsDir, storedFilename), fileBuffer);
 
     // Save metadata
-    const metadata = {
-      ...fileData,
-      storedFilename,
-      createdAt: new Date().toISOString()
-    };
+    const stmt = db.prepare(`
+      INSERT INTO static_files (id, blog_id, filename, stored_filename, mime_type, size, special_file_type, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `);
 
-    fs.writeFileSync(
-      path.join(staticFilesDir, `${fileId}.json`),
-      JSON.stringify(metadata, null, 2)
+    stmt.run(
+      fileId,
+      blogId,
+      fileData.filename || 'unknown',
+      storedFilename,
+      fileData.mimeType || null,
+      fileData.size || fileBuffer.length,
+      fileData.specialFileType || null,
+      now
     );
 
-    return { id: fileId, ...metadata };
+    return this.getStaticFile(blogId, fileId);
   }
 
   deleteStaticFile(blogId, fileId) {
-    const metaFile = path.join(this.getStaticFilesDir(blogId), `${fileId}.json`);
+    const db = getDatabase();
+    const staticFile = this.getStaticFile(blogId, fileId);
 
-    if (fs.existsSync(metaFile)) {
-      const metadata = JSON.parse(fs.readFileSync(metaFile, 'utf-8'));
-
+    if (staticFile) {
       // Delete actual file
-      const filePath = path.join(this.getBlogUploadsDir(blogId), metadata.storedFilename);
+      const filePath = path.join(this.getBlogUploadsDir(blogId), staticFile.storedFilename);
       if (fs.existsSync(filePath)) {
         fs.unlinkSync(filePath);
       }
 
       // Delete metadata
-      fs.unlinkSync(metaFile);
+      db.prepare('DELETE FROM static_files WHERE id = ? AND blog_id = ?').run(fileId, blogId);
     }
   }
 
@@ -545,95 +868,131 @@ class Storage {
     return fs.readFileSync(filePath);
   }
 
-  // ============ Published Files Tracking ============
+  // Save embed image to disk (for image embeds)
+  saveEmbedImage(blogId, filename, buffer) {
+    const uploadsDir = this.getBlogUploadsDir(blogId);
+    this.ensureDir(uploadsDir);
 
-  getPublishedFilesPath(blogId) {
-    return path.join(this.getBlogDir(blogId), 'published-files.json');
+    const filePath = path.join(uploadsDir, filename);
+    fs.writeFileSync(filePath, buffer);
+    return filename;
   }
 
+  mapStaticFileRow(row) {
+    return {
+      id: row.id,
+      filename: row.filename,
+      storedFilename: row.stored_filename,
+      mimeType: row.mime_type,
+      size: row.size,
+      specialFileType: row.special_file_type,
+      createdAt: row.created_at
+    };
+  }
+
+  // ============ Published Files Tracking ============
+
   getPublishedFiles(blogId) {
-    const filePath = this.getPublishedFilesPath(blogId);
-    if (!fs.existsSync(filePath)) {
+    const db = getDatabase();
+    const row = db.prepare('SELECT * FROM published_files WHERE blog_id = ?').get(blogId);
+
+    if (!row) {
       return { fileHashes: {}, lastPublishedDate: null };
     }
 
-    try {
-      return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-    } catch (e) {
-      return { fileHashes: {}, lastPublishedDate: null };
-    }
+    return {
+      publisherType: row.publisher_type,
+      lastPublishedDate: row.last_published_at,
+      fileHashes: row.file_hashes ? JSON.parse(row.file_hashes) : {}
+    };
   }
 
   savePublishedFiles(blogId, publishedData) {
-    const filePath = this.getPublishedFilesPath(blogId);
-    fs.writeFileSync(filePath, JSON.stringify(publishedData, null, 2));
+    const db = getDatabase();
+
+    const stmt = db.prepare(`
+      INSERT OR REPLACE INTO published_files (blog_id, publisher_type, last_published_at, file_hashes)
+      VALUES (?, ?, ?, ?)
+    `);
+
+    stmt.run(
+      blogId,
+      publishedData.publisherType || null,
+      publishedData.lastPublishedDate || new Date().toISOString(),
+      JSON.stringify(publishedData.fileHashes || {})
+    );
   }
 
   // ============ Theme Operations ============
 
   getAllThemes() {
-    if (!fs.existsSync(this.themesDir)) return [];
-
-    const themeFiles = fs.readdirSync(this.themesDir)
-      .filter(f => f.endsWith('.json'));
-
-    return themeFiles
-      .map(f => {
-        const themeId = f.replace('.json', '');
-        return this.getTheme(themeId);
-      })
-      .filter(theme => theme !== null);
+    const db = getDatabase();
+    const rows = db.prepare('SELECT * FROM themes').all();
+    return rows.map(row => this.mapThemeRow(row));
   }
 
   getTheme(themeId) {
-    const themeFile = path.join(this.themesDir, `${themeId}.json`);
-    if (!fs.existsSync(themeFile)) return null;
-
-    try {
-      const data = JSON.parse(fs.readFileSync(themeFile, 'utf-8'));
-      return { id: themeId, ...data };
-    } catch (e) {
-      console.error(`Error reading theme ${themeId}:`, e);
-      return null;
-    }
+    const db = getDatabase();
+    const row = db.prepare('SELECT * FROM themes WHERE id = ? OR identifier = ?').get(themeId, themeId);
+    return row ? this.mapThemeRow(row) : null;
   }
 
   createTheme(themeData) {
+    const db = getDatabase();
     const themeId = uuidv4();
-    this.ensureDir(this.themesDir);
+    const now = new Date().toISOString();
 
-    const theme = {
-      ...themeData,
-      createdAt: new Date().toISOString()
-    };
+    const stmt = db.prepare(`
+      INSERT INTO themes (id, name, identifier, templates, created_at)
+      VALUES (?, ?, ?, ?, ?)
+    `);
 
-    fs.writeFileSync(
-      path.join(this.themesDir, `${themeId}.json`),
-      JSON.stringify(theme, null, 2)
+    stmt.run(
+      themeId,
+      themeData.name || 'Custom Theme',
+      themeData.identifier || themeId,
+      JSON.stringify(themeData.templates || {}),
+      now
     );
 
-    return { id: themeId, ...theme };
+    return this.getTheme(themeId);
   }
 
   updateTheme(themeId, themeData) {
-    const themeFile = path.join(this.themesDir, `${themeId}.json`);
-
-    if (!fs.existsSync(themeFile)) {
+    const db = getDatabase();
+    const existing = this.getTheme(themeId);
+    if (!existing) {
       throw new Error(`Theme ${themeId} not found`);
     }
 
-    const existing = JSON.parse(fs.readFileSync(themeFile, 'utf-8'));
-    const updated = { ...existing, ...themeData };
+    const stmt = db.prepare(`
+      UPDATE themes SET name = ?, identifier = ?, templates = ?
+      WHERE id = ?
+    `);
 
-    fs.writeFileSync(themeFile, JSON.stringify(updated, null, 2));
-    return { id: themeId, ...updated };
+    stmt.run(
+      themeData.name !== undefined ? themeData.name : existing.name,
+      themeData.identifier !== undefined ? themeData.identifier : existing.identifier,
+      themeData.templates !== undefined ? JSON.stringify(themeData.templates) : JSON.stringify(existing.templates),
+      existing.id
+    );
+
+    return this.getTheme(existing.id);
   }
 
   deleteTheme(themeId) {
-    const themeFile = path.join(this.themesDir, `${themeId}.json`);
-    if (fs.existsSync(themeFile)) {
-      fs.unlinkSync(themeFile);
-    }
+    const db = getDatabase();
+    db.prepare('DELETE FROM themes WHERE id = ?').run(themeId);
+  }
+
+  mapThemeRow(row) {
+    return {
+      id: row.id,
+      name: row.name,
+      identifier: row.identifier,
+      templates: row.templates ? JSON.parse(row.templates) : {},
+      createdAt: row.created_at
+    };
   }
 
   // ============ Generated Site Directory ============

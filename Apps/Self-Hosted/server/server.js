@@ -4,6 +4,10 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
 
+// Database
+import { initDatabase } from './utils/database.js';
+import { needsMigration, runMigration } from './utils/migration.js';
+
 // Routes
 import blogRoutes from './routes/blogs.js';
 import postRoutes from './routes/posts.js';
@@ -30,6 +34,16 @@ if (!fs.existsSync(DATA_ROOT)) {
   fs.mkdirSync(DATA_ROOT, { recursive: true });
 }
 
+// Initialize SQLite database
+console.log('Initializing database...');
+initDatabase(DATA_ROOT);
+
+// Check for and run migration from JSON to SQLite
+if (needsMigration(DATA_ROOT)) {
+  console.log('Migrating existing data from JSON to SQLite...');
+  runMigration(DATA_ROOT);
+}
+
 // Middleware
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
@@ -51,9 +65,9 @@ app.use('/api/metadata', metadataRoutes);
 app.use('/api/import', importRoutes);
 
 // Serve uploaded files from blog-specific directories
-// Files are stored at data/blogs/{blogId}/uploads/ and served at /uploads/{blogId}/
+// Files are stored at data/uploads/{blogId}/ and served at /uploads/{blogId}/
 app.use('/uploads/:blogId', (req, res, next) => {
-  const blogUploadsPath = path.join(DATA_ROOT, 'blogs', req.params.blogId, 'uploads');
+  const blogUploadsPath = path.join(DATA_ROOT, 'uploads', req.params.blogId);
   express.static(blogUploadsPath)(req, res, next);
 });
 
