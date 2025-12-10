@@ -1,0 +1,29 @@
+{
+  "name": "postalgic-self-hosted",
+  "version": "1.0.0",
+  "description": "A self-hosted static blog generator",
+  "main": "server/server.js",
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently \"npm run server:dev\" \"npm run client:dev\"",
+    "server:dev": "nodemon server/server.js",
+    "client:dev": "npm run dev --prefix vue_client",
+    "client:build": "npm run build --prefix vue_client",
+    "install:all": "npm install && npm install --prefix vue_client",
+    "start": "node server/server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.0",
+    "marked": "^15.0.0",
+    "multer": "^1.4.5-lts.1",
+    "mustache": "^4.2.0",
+    "sharp": "^0.33.5",
+    "uuid": "^10.0.0",
+    "archiver": "^7.0.1"
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.1",
+    "nodemon": "^3.1.7"
+  }
+}
