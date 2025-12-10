@@ -9,6 +9,7 @@ const blogStore = useBlogStore();
 const blogId = computed(() => route.params.blogId);
 const fileInput = ref(null);
 const faviconInput = ref(null);
+const socialShareInput = ref(null);
 const uploading = ref(false);
 const error = ref(null);
 
@@ -24,12 +25,20 @@ const favicon = computed(() =>
   blogStore.staticFiles.find(f => f.specialFileType === 'favicon')
 );
 
+const socialShareImage = computed(() =>
+  blogStore.staticFiles.find(f => f.specialFileType === 'social-share')
+);
+
 function triggerFileUpload() {
   fileInput.value?.click();
 }
 
 function triggerFaviconUpload() {
   faviconInput.value?.click();
+}
+
+function triggerSocialShareUpload() {
+  socialShareInput.value?.click();
 }
 
 async function handleFileUpload(event) {
@@ -62,6 +71,27 @@ async function handleFaviconUpload(event) {
     await blogStore.uploadStaticFile(blogId.value, file, {
       isSpecialFile: true,
       specialFileType: 'favicon'
+    });
+    await blogStore.fetchStaticFiles(blogId.value);
+  } catch (e) {
+    error.value = e.message;
+  } finally {
+    uploading.value = false;
+    event.target.value = '';
+  }
+}
+
+async function handleSocialShareUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  uploading.value = true;
+  error.value = null;
+
+  try {
+    await blogStore.uploadStaticFile(blogId.value, file, {
+      isSpecialFile: true,
+      specialFileType: 'social-share'
     });
     await blogStore.fetchStaticFiles(blogId.value);
   } catch (e) {
@@ -146,6 +176,45 @@ function formatFileSize(bytes) {
             accept="image/*"
             class="hidden"
             @change="handleFaviconUpload"
+          />
+        </div>
+      </div>
+    </div>
+
+    <!-- Social Share Image Section -->
+    <div class="bg-white rounded-lg border border-gray-200 p-6 mb-6">
+      <h3 class="font-medium text-gray-900 mb-2">Social Share Image</h3>
+      <p class="text-sm text-gray-500 mb-4">This image appears when your blog is shared on social media (Open Graph image).</p>
+      <div class="flex items-start gap-4">
+        <div class="w-32 h-20 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
+          <img
+            v-if="socialShareImage"
+            :src="socialShareImage.url"
+            alt="Social Share Image"
+            class="w-full h-full object-cover"
+          />
+          <svg v-else class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+        </div>
+        <div>
+          <p class="text-sm text-gray-600 mb-2">
+            {{ socialShareImage ? 'Current social share image' : 'No social share image set' }}
+          </p>
+          <p class="text-xs text-gray-400 mb-2">Recommended size: 1200 x 630 pixels</p>
+          <button
+            @click="triggerSocialShareUpload"
+            :disabled="uploading"
+            class="text-sm text-primary-600 hover:text-primary-700"
+          >
+            {{ socialShareImage ? 'Change image' : 'Upload image' }}
+          </button>
+          <input
+            ref="socialShareInput"
+            type="file"
+            accept="image/*"
+            class="hidden"
+            @change="handleSocialShareUpload"
           />
         </div>
       </div>

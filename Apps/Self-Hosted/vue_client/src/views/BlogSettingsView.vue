@@ -215,6 +215,58 @@ async function deleteBlog() {
             </div>
           </div>
         </div>
+
+        <!-- Color Preview -->
+        <div class="mt-6">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Preview</label>
+          <div
+            class="rounded-lg overflow-hidden border border-gray-200"
+            :style="{ backgroundColor: form.backgroundColor || '#ffffff' }"
+          >
+            <div class="p-4">
+              <h4
+                class="text-lg font-bold mb-2"
+                :style="{ color: form.accentColor || '#007AFF' }"
+              >
+                Blog Title
+              </h4>
+              <p
+                class="text-sm mb-3"
+                :style="{ color: form.textColor || '#000000' }"
+              >
+                This is how your body text will look. It uses the text color you've selected.
+              </p>
+              <div class="flex gap-2 mb-3">
+                <span
+                  class="px-2 py-1 rounded text-xs"
+                  :style="{ backgroundColor: form.lightShade || '#F2F2F7', color: form.textColor || '#000000' }"
+                >
+                  Light Shade
+                </span>
+                <span
+                  class="px-2 py-1 rounded text-xs"
+                  :style="{ backgroundColor: form.mediumShade || '#E5E5EA', color: form.textColor || '#000000' }"
+                >
+                  Medium Shade
+                </span>
+                <span
+                  class="px-2 py-1 rounded text-xs"
+                  :style="{ backgroundColor: form.darkShade || '#D1D1D6', color: form.textColor || '#000000' }"
+                >
+                  Dark Shade
+                </span>
+              </div>
+              <a
+                href="#"
+                class="text-sm underline"
+                :style="{ color: form.accentColor || '#007AFF' }"
+                @click.prevent
+              >
+                This is a link using your accent color
+              </a>
+            </div>
+          </div>
+        </div>
       </section>
 
       <!-- Publishing Settings -->
