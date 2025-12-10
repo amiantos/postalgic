@@ -53,6 +53,7 @@ export class AWSPublisher {
    */
   async publish(sourceDir, onProgress = null, options = {}) {
     const { forceUploadAll = false, currentHashes = {}, previousHashes = {} } = options;
+    this.forceUploadAll = forceUploadAll; // Store for use in invalidation
     console.log('[AWS Publisher] Starting publish from:', sourceDir);
     console.log('[AWS Publisher] Force upload all:', forceUploadAll);
     console.log('[AWS Publisher] Using hash-based change detection:', Object.keys(previousHashes).length > 0);
@@ -257,8 +258,8 @@ export class AWSPublisher {
       return;
     }
 
-    // CloudFront has a limit on paths, use /* for large invalidations
-    const invalidationPaths = paths.length > 100
+    // Use /* for full publish or when there are many paths (CloudFront limit)
+    const invalidationPaths = (this.forceUploadAll || paths.length > 100)
       ? ['/*']
       : paths.map(p => p.startsWith('/') ? p : '/' + p);
 
