@@ -261,6 +261,7 @@ router.post('/sftp', async (req, res) => {
   try {
     const storage = getStorage(req);
     const { blogId } = req.params;
+    const { forceUploadAll = false } = req.body || {};
 
     const blog = storage.getBlog(blogId);
     if (!blog) {
@@ -282,6 +283,10 @@ router.post('/sftp', async (req, res) => {
     // Generate site first
     const generateResult = await generateSite(storage, blogId);
 
+    // Get previous published file hashes for change detection
+    const publishedFiles = storage.getPublishedFiles(blogId);
+    const previousHashes = publishedFiles.fileHashes || {};
+
     // Create publisher
     const publisher = new SFTPPublisher({
       host: blog.ftpHost,
@@ -292,8 +297,12 @@ router.post('/sftp', async (req, res) => {
       remotePath: blog.ftpPath || '/'
     });
 
-    // Publish
-    const result = await publisher.publish(generateResult.outputDir);
+    // Publish with hash-based change detection
+    const result = await publisher.publish(generateResult.outputDir, null, {
+      forceUploadAll,
+      currentHashes: generateResult.fileHashes,
+      previousHashes
+    });
 
     // Save published state
     storage.savePublishedFiles(blogId, {

@@ -20,10 +20,19 @@ export class SFTPPublisher {
    * Publish files via SFTP
    * @param {string} sourceDir - Directory containing files to upload
    * @param {function} onProgress - Progress callback (current, total, filename)
+   * @param {Object} options - Publishing options
+   * @param {boolean} options.forceUploadAll - Force upload all files
+   * @param {Object} options.currentHashes - Current file hashes from site generator
+   * @param {Object} options.previousHashes - Previous file hashes from last publish
    * @returns {Promise<Object>} - Result with uploaded and deleted file counts
    */
-  async publish(sourceDir, onProgress = null) {
+  async publish(sourceDir, onProgress = null, options = {}) {
+    const { forceUploadAll = false, currentHashes = {}, previousHashes = {} } = options;
     const sftp = new SftpClient();
+
+    console.log('[SFTP Publisher] Starting publish to:', `${this.host}:${this.port}${this.remotePath}`);
+    console.log('[SFTP Publisher] Force upload all:', forceUploadAll);
+    console.log('[SFTP Publisher] Using hash-based change detection:', Object.keys(previousHashes).length > 0);
 
     try {
       // Connect to SFTP server
@@ -39,27 +48,57 @@ export class SFTPPublisher {
         connectionConfig.password = this.password;
       }
 
+      console.log('[SFTP Publisher] Connecting...');
       await sftp.connect(connectionConfig);
+      console.log('[SFTP Publisher] Connected successfully');
 
       // Ensure remote directory exists
       await this.ensureRemoteDir(sftp, this.remotePath);
 
       // Get local files
+      console.log('[SFTP Publisher] Scanning local files...');
       const localFiles = this.getLocalFiles(sourceDir);
+      console.log(`[SFTP Publisher] Found ${localFiles.length} local files`);
 
       // Get remote files
+      console.log('[SFTP Publisher] Listing remote files...');
       const remoteFiles = await this.listRemoteFiles(sftp, this.remotePath);
+      console.log(`[SFTP Publisher] Found ${remoteFiles.length} remote files`);
 
       const filesToUpload = [];
       const filesToDelete = [];
 
-      // Find files to upload (new or modified by size)
+      // Find files to upload (new or modified)
       for (const localFile of localFiles) {
-        const remotePath = this.normalizeRemotePath(localFile.key);
         const remoteFile = remoteFiles.find(f => f.key === localFile.key);
 
-        if (!remoteFile || remoteFile.size !== localFile.size) {
+        if (forceUploadAll) {
+          // Force upload all files
           filesToUpload.push(localFile);
+        } else if (!remoteFile) {
+          // New file - doesn't exist on remote
+          console.log(`[SFTP Publisher] New file: ${localFile.key}`);
+          filesToUpload.push(localFile);
+        } else if (Object.keys(previousHashes).length > 0) {
+          // Use hash comparison if we have previous hashes
+          const currentHash = currentHashes[localFile.key];
+          const previousHash = previousHashes[localFile.key];
+
+          if (!previousHash) {
+            // File exists on remote but we don't have a previous hash - upload it
+            console.log(`[SFTP Publisher] No previous hash for: ${localFile.key}`);
+            filesToUpload.push(localFile);
+          } else if (currentHash !== previousHash) {
+            // File content has changed
+            console.log(`[SFTP Publisher] Modified file: ${localFile.key}`);
+            filesToUpload.push(localFile);
+          }
+        } else {
+          // Fallback to size comparison if no hashes available
+          if (remoteFile.size !== localFile.size) {
+            console.log(`[SFTP Publisher] Size changed: ${localFile.key}`);
+            filesToUpload.push(localFile);
+          }
         }
       }
 
@@ -72,6 +111,8 @@ export class SFTPPublisher {
           }
         }
       }
+
+      console.log(`[SFTP Publisher] Files to upload: ${filesToUpload.length}, Files to delete: ${filesToDelete.length}`);
 
       const totalOperations = filesToUpload.length + filesToDelete.length;
       let currentOperation = 0;
@@ -90,7 +131,19 @@ export class SFTPPublisher {
         await this.ensureRemoteDir(sftp, remoteDir);
 
         // Upload file
-        await sftp.put(file.fullPath, remotePath);
+        console.log(`[SFTP Publisher] Uploading (${currentOperation}/${filesToUpload.length}): ${file.key}`);
+        try {
+          await sftp.put(file.fullPath, remotePath);
+        } catch (uploadError) {
+          console.error(`[SFTP Publisher] Failed to upload ${file.key}:`, uploadError.message);
+          throw uploadError;
+        }
+      }
+
+      if (filesToUpload.length > 0) {
+        console.log('[SFTP Publisher] All uploads completed successfully');
+      } else {
+        console.log('[SFTP Publisher] No files needed uploading (all up to date)');
       }
 
       // Delete removed files
@@ -101,16 +154,19 @@ export class SFTPPublisher {
         }
 
         const remotePath = path.posix.join(this.remotePath, file.key);
+        console.log(`[SFTP Publisher] Deleting: ${file.key}`);
         try {
           await sftp.delete(remotePath);
         } catch (err) {
           // File might already be deleted, ignore
-          console.warn(`Could not delete ${remotePath}: ${err.message}`);
+          console.warn(`[SFTP Publisher] Could not delete ${remotePath}: ${err.message}`);
         }
       }
 
       // Clean up empty directories
       await this.cleanEmptyDirs(sftp, this.remotePath);
+
+      console.log(`[SFTP Publisher] Publish complete: ${filesToUpload.length} uploaded, ${filesToDelete.length} deleted, ${localFiles.length} total`);
 
       return {
         uploaded: filesToUpload.length,

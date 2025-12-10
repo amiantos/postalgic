@@ -91,13 +91,13 @@ async function publishToAWS(forceUploadAll = false) {
   }
 }
 
-async function publishToSFTP() {
+async function publishToSFTP(forceUploadAll = false) {
   publishing.value = true;
   error.value = null;
   successMessage.value = null;
 
   try {
-    const result = await publishApi.publishToSFTP(blogId.value);
+    const result = await publishApi.publishToSFTP(blogId.value, { forceUploadAll });
     successMessage.value = result.message;
     await loadStatus();
   } catch (e) {
@@ -292,13 +292,23 @@ function getPublisherLabel(type) {
           <p class="font-medium text-gray-900">2. Publish via SFTP</p>
           <p class="text-sm text-gray-500">Upload directly to your server</p>
         </div>
-        <button
-          @click="publishToSFTP"
-          :disabled="publishing || blogStore.publishedPosts.length === 0"
-          class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
-        >
-          {{ publishing ? 'Publishing...' : 'Publish via SFTP' }}
-        </button>
+        <div class="flex gap-2">
+          <button
+            @click="publishToSFTP(false)"
+            :disabled="publishing || blogStore.publishedPosts.length === 0"
+            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+          >
+            {{ publishing ? 'Publishing...' : 'Publish' }}
+          </button>
+          <button
+            @click="publishToSFTP(true)"
+            :disabled="publishing || blogStore.publishedPosts.length === 0"
+            class="px-4 py-2 bg-blue-800 text-white rounded-lg hover:bg-blue-900 transition-colors disabled:opacity-50"
+            title="Re-upload all files, even if they already exist on the server"
+          >
+            {{ publishing ? 'Publishing...' : 'Full Publish' }}
+          </button>
+        </div>
       </div>
 
       <!-- Git Publish -->
