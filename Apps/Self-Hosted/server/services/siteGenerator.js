@@ -572,12 +572,13 @@ async function generateMonthlyArchivePages(outputDir, templates, baseContext, po
 
   for (const post of posts) {
     const date = new Date(post.createdAt);
-    const key = `${date.getFullYear()}-${date.getMonth() + 1}`;
+    const month = date.getMonth() + 1;
+    const key = `${date.getFullYear()}-${String(month).padStart(2, '0')}`;
 
     if (!grouped[key]) {
       grouped[key] = {
         year: date.getFullYear(),
-        month: date.getMonth() + 1,
+        month: month,
         posts: []
       };
     }
@@ -601,21 +602,22 @@ async function generateMonthlyArchivePages(outputDir, templates, baseContext, po
       posts: postsContext
     };
 
-    // Add navigation
+    // Add navigation (sortedKeys is reverse chronological: newest first)
+    // i - 1 = newer month (next →), i + 1 = older month (← previous)
     if (i > 0) {
-      const prev = grouped[sortedKeys[i - 1]];
+      const newer = grouped[sortedKeys[i - 1]];
       context.hasNextMonth = true;
-      context.nextMonthUrl = `/${prev.year}/${String(prev.month).padStart(2, '0')}/`;
-      context.nextMonthName = new Date(prev.year, prev.month - 1).toLocaleDateString('en-US', { month: 'long' });
-      context.nextYear = prev.year;
+      context.nextMonthUrl = `/${newer.year}/${String(newer.month).padStart(2, '0')}/`;
+      context.nextMonthName = new Date(newer.year, newer.month - 1).toLocaleDateString('en-US', { month: 'long' });
+      context.nextYear = newer.year;
     }
 
     if (i < sortedKeys.length - 1) {
-      const next = grouped[sortedKeys[i + 1]];
+      const older = grouped[sortedKeys[i + 1]];
       context.hasPreviousMonth = true;
-      context.previousMonthUrl = `/${next.year}/${String(next.month).padStart(2, '0')}/`;
-      context.previousMonthName = new Date(next.year, next.month - 1).toLocaleDateString('en-US', { month: 'long' });
-      context.previousYear = next.year;
+      context.previousMonthUrl = `/${older.year}/${String(older.month).padStart(2, '0')}/`;
+      context.previousMonthName = new Date(older.year, older.month - 1).toLocaleDateString('en-US', { month: 'long' });
+      context.previousYear = older.year;
     }
 
     const monthContent = Mustache.render(templates['monthly-archive'], context, { post: templates.post });
