@@ -260,6 +260,7 @@ function enrichPost(post, storage, blogId) {
     ...post,
     urlPath: `${formatDatePath(post.createdAt)}/${post.stub}`,
     displayTitle: post.title || getExcerpt(post.content, 50),
+    excerpt: getExcerpt(post.content, 280),
     formattedDate: formatDate(post.createdAt),
     shortFormattedDate: formatShortDate(post.createdAt)
   };

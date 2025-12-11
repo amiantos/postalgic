@@ -2,6 +2,7 @@
 import { ref, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useBlogStore } from '@/stores/blog';
+import { marked } from 'marked';
 
 const route = useRoute();
 const router = useRouter();
@@ -86,6 +87,33 @@ async function deletePost() {
 
 function clearSearch() {
   searchText.value = '';
+}
+
+function getEmbedImageUrl(filename) {
+  if (!filename) return '';
+  return `/uploads/${blogId.value}/${filename}`;
+}
+
+function renderMarkdown(content) {
+  if (!content) return '';
+  return marked(content);
+}
+
+function extractYouTubeId(url) {
+  if (!url) return null;
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/live\/)([^&\n?#]+)/,
+    /youtube\.com\/shorts\/([^&\n?#]+)/
+  ];
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match) return match[1];
+  }
+  return null;
+}
+
+function getYouTubeVideoId(embed) {
+  return embed.videoId || extractYouTubeId(embed.url);
 }
 </script>
 
@@ -201,52 +229,164 @@ function clearSearch() {
     </div>
 
     <!-- Posts List -->
-    <div v-else class="space-y-3">
+    <div v-else class="space-y-4">
       <div
         v-for="post in filteredPosts"
         :key="post.id"
-        class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 hover:shadow-md transition-shadow cursor-pointer"
+        class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 hover:shadow-md transition-shadow cursor-pointer"
         @click="navigateToPost(post.id)"
       >
-        <div class="flex items-start justify-between">
-          <div class="flex-1 min-w-0">
-            <div class="flex items-center gap-2 mb-1">
-              <h3 class="font-medium text-gray-900 dark:text-gray-100 truncate">{{ post.displayTitle }}</h3>
-              <span
-                v-if="post.isDraft"
-                class="px-2 py-0.5 text-xs bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 rounded-full"
-              >
-                Draft
-              </span>
+        <!-- Date and Draft Badge -->
+        <div class="flex items-center justify-between mb-2">
+          <p class="text-sm text-gray-500 dark:text-gray-400">{{ post.shortFormattedDate }}</p>
+          <div class="flex items-center gap-2">
+            <span
+              v-if="post.isDraft"
+              class="px-2 py-0.5 text-xs bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 rounded-full"
+            >
+              Draft
+            </span>
+            <button
+              @click.stop="confirmDelete(post)"
+              class="p-1.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Title (if exists) -->
+        <h3 v-if="post.title" class="font-semibold text-gray-900 dark:text-gray-100 mb-2">{{ post.title }}</h3>
+
+        <!-- Embed (above position) -->
+        <div v-if="post.embed && post.embed.position === 'above'" class="mb-3">
+          <!-- YouTube Embed -->
+          <div v-if="post.embed.type === 'youtube' && getYouTubeVideoId(post.embed)" class="aspect-video bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden">
+            <iframe
+              :src="`https://www.youtube.com/embed/${getYouTubeVideoId(post.embed)}`"
+              class="w-full h-full"
+              frameborder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowfullscreen
+            ></iframe>
+          </div>
+
+          <!-- Link Embed -->
+          <a
+            v-else-if="post.embed.type === 'link'"
+            :href="post.embed.url"
+            @click.stop
+            target="_blank"
+            rel="noopener noreferrer"
+            class="flex gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+          >
+            <img
+              v-if="post.embed.imageData || post.embed.imageUrl"
+              :src="post.embed.imageData || post.embed.imageUrl"
+              class="w-20 h-20 object-cover rounded shrink-0"
+              alt=""
+            />
+            <div v-else class="w-20 h-20 bg-gray-200 dark:bg-gray-600 rounded shrink-0 flex items-center justify-center">
+              <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+              </svg>
             </div>
-            <p class="text-sm text-gray-500 dark:text-gray-400">{{ post.shortFormattedDate }}</p>
-            <div class="flex items-center gap-2 mt-2">
-              <span
-                v-if="post.category"
-                class="px-2 py-0.5 text-xs bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 rounded-full"
-              >
-                {{ post.category.name }}
-              </span>
-              <span
-                v-for="tag in post.tags?.slice(0, 3)"
-                :key="tag.id"
-                class="px-2 py-0.5 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-full"
-              >
-                #{{ tag.name }}
-              </span>
-              <span v-if="post.tags?.length > 3" class="text-xs text-gray-400">
-                +{{ post.tags.length - 3 }} more
-              </span>
+            <div class="flex-1 min-w-0">
+              <p v-if="post.embed.title" class="font-medium text-gray-900 dark:text-gray-100 line-clamp-2">{{ post.embed.title }}</p>
+              <p v-if="post.embed.description" class="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 mt-1">{{ post.embed.description }}</p>
+              <p class="text-xs text-primary-600 dark:text-primary-400 mt-1 truncate">{{ post.embed.url }}</p>
+            </div>
+          </a>
+
+          <!-- Image Embed -->
+          <div v-else-if="post.embed.type === 'image' && post.embed.images?.length > 0" class="rounded-lg overflow-hidden">
+            <img
+              :src="getEmbedImageUrl(post.embed.images[0]?.filename)"
+              class="w-full max-h-80 object-contain bg-gray-100 dark:bg-gray-700"
+              alt=""
+            />
+            <div v-if="post.embed.images.length > 1" class="mt-1 text-xs text-gray-500 dark:text-gray-400 text-center">
+              +{{ post.embed.images.length - 1 }} more image{{ post.embed.images.length > 2 ? 's' : '' }}
             </div>
           </div>
-          <button
-            @click.stop="confirmDelete(post)"
-            class="p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+        </div>
+
+        <!-- Content -->
+        <div v-if="post.content" class="prose prose-sm dark:prose-invert max-w-none text-gray-700 dark:text-gray-300" v-html="renderMarkdown(post.content)"></div>
+
+        <!-- Embed (below position) -->
+        <div v-if="post.embed && post.embed.position === 'below'" class="mt-3">
+          <!-- YouTube Embed -->
+          <div v-if="post.embed.type === 'youtube' && getYouTubeVideoId(post.embed)" class="aspect-video bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden">
+            <iframe
+              :src="`https://www.youtube.com/embed/${getYouTubeVideoId(post.embed)}`"
+              class="w-full h-full"
+              frameborder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowfullscreen
+            ></iframe>
+          </div>
+
+          <!-- Link Embed -->
+          <a
+            v-else-if="post.embed.type === 'link'"
+            :href="post.embed.url"
+            @click.stop
+            target="_blank"
+            rel="noopener noreferrer"
+            class="flex gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
           >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
-          </button>
+            <img
+              v-if="post.embed.imageData || post.embed.imageUrl"
+              :src="post.embed.imageData || post.embed.imageUrl"
+              class="w-20 h-20 object-cover rounded shrink-0"
+              alt=""
+            />
+            <div v-else class="w-20 h-20 bg-gray-200 dark:bg-gray-600 rounded shrink-0 flex items-center justify-center">
+              <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+              </svg>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p v-if="post.embed.title" class="font-medium text-gray-900 dark:text-gray-100 line-clamp-2">{{ post.embed.title }}</p>
+              <p v-if="post.embed.description" class="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 mt-1">{{ post.embed.description }}</p>
+              <p class="text-xs text-primary-600 dark:text-primary-400 mt-1 truncate">{{ post.embed.url }}</p>
+            </div>
+          </a>
+
+          <!-- Image Embed -->
+          <div v-else-if="post.embed.type === 'image' && post.embed.images?.length > 0" class="rounded-lg overflow-hidden">
+            <img
+              :src="getEmbedImageUrl(post.embed.images[0]?.filename)"
+              class="w-full max-h-80 object-contain bg-gray-100 dark:bg-gray-700"
+              alt=""
+            />
+            <div v-if="post.embed.images.length > 1" class="mt-1 text-xs text-gray-500 dark:text-gray-400 text-center">
+              +{{ post.embed.images.length - 1 }} more image{{ post.embed.images.length > 2 ? 's' : '' }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Category and Tags -->
+        <div v-if="post.category || post.tags?.length > 0" class="flex items-center gap-2 mt-3 flex-wrap">
+          <span
+            v-if="post.category"
+            class="px-2 py-0.5 text-xs bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 rounded-full"
+          >
+            {{ post.category.name }}
+          </span>
+          <span
+            v-for="tag in post.tags?.slice(0, 2)"
+            :key="tag.id"
+            class="px-2 py-0.5 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-full"
+          >
+            #{{ tag.name }}
+          </span>
+          <span v-if="post.tags?.length > 2" class="text-xs text-gray-400">
+            +{{ post.tags.length - 2 }} more
+          </span>
         </div>
       </div>
     </div>
