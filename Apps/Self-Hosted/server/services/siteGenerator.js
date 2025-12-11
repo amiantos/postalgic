@@ -180,19 +180,20 @@ function buildPostContext(post, baseContext, inList = false) {
     contentHtml,
     inList,
     lastmod: formatISO8601Date(post.updatedAt || post.createdAt),
-    published: formatRFC822Date(post.createdAt)
+    published: formatRFC822Date(post.createdAt),
+    // Explicitly set per-post tag/category flags (don't inherit from baseContext)
+    hasTags: post.tags && post.tags.length > 0,
+    hasCategory: !!post.category,
   };
 
-  // Add category
+  // Add category details
   if (post.category) {
-    context.hasCategory = true;
     context.categoryName = post.category.name;
     context.categoryUrlPath = post.category.stub;
   }
 
-  // Add tags
+  // Add tag details
   if (post.tags && post.tags.length > 0) {
-    context.hasTags = true;
     context.tags = post.tags.map(tag => ({
       name: tag.name,
       urlPath: tag.stub
