@@ -1,0 +1,24 @@
+<h1>Posts tagged with "{{tagName}}"</h1>
+<p class="tag-meta">{{totalPosts}} {{postCountText}} with this tag{{#hasPagination}} (showing page {{currentPage}} of {{totalPages}}){{/hasPagination}}</p>
+<div class="archive-separator"></div>
+
+<div class="post-list">
+    {{#posts}}
+        {{> post}}
+    {{/posts}}
+</div>
+
+{{#hasPagination}}
+<nav class="pagination-navigation">
+    {{#hasPreviousPage}}
+    <div class="nav-previous">
+        <a href="{{{previousPageUrl}}}">&larr; Previous</a>
+    </div>
+    {{/hasPreviousPage}}
+    {{#hasNextPage}}
+    <div class="nav-next">
+        <a href="{{{nextPageUrl}}}">Next &rarr;</a>
+    </div>
+    {{/hasNextPage}}
+</nav>
+{{/hasPagination}}
