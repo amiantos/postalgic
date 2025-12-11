@@ -215,6 +215,61 @@ async function deleteBlog() {
               class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
             />
           </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Timezone</label>
+            <select
+              v-model="form.timezone"
+              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+            >
+              <option value="UTC">UTC</option>
+              <optgroup label="Americas">
+                <option value="America/New_York">Eastern Time (US & Canada)</option>
+                <option value="America/Chicago">Central Time (US & Canada)</option>
+                <option value="America/Denver">Mountain Time (US & Canada)</option>
+                <option value="America/Los_Angeles">Pacific Time (US & Canada)</option>
+                <option value="America/Anchorage">Alaska</option>
+                <option value="Pacific/Honolulu">Hawaii</option>
+                <option value="America/Phoenix">Arizona</option>
+                <option value="America/Toronto">Toronto</option>
+                <option value="America/Vancouver">Vancouver</option>
+                <option value="America/Mexico_City">Mexico City</option>
+                <option value="America/Sao_Paulo">São Paulo</option>
+                <option value="America/Buenos_Aires">Buenos Aires</option>
+              </optgroup>
+              <optgroup label="Europe">
+                <option value="Europe/London">London</option>
+                <option value="Europe/Paris">Paris</option>
+                <option value="Europe/Berlin">Berlin</option>
+                <option value="Europe/Amsterdam">Amsterdam</option>
+                <option value="Europe/Madrid">Madrid</option>
+                <option value="Europe/Rome">Rome</option>
+                <option value="Europe/Stockholm">Stockholm</option>
+                <option value="Europe/Moscow">Moscow</option>
+              </optgroup>
+              <optgroup label="Asia">
+                <option value="Asia/Tokyo">Tokyo</option>
+                <option value="Asia/Shanghai">Shanghai</option>
+                <option value="Asia/Hong_Kong">Hong Kong</option>
+                <option value="Asia/Singapore">Singapore</option>
+                <option value="Asia/Seoul">Seoul</option>
+                <option value="Asia/Kolkata">Mumbai/Kolkata</option>
+                <option value="Asia/Dubai">Dubai</option>
+                <option value="Asia/Bangkok">Bangkok</option>
+              </optgroup>
+              <optgroup label="Pacific">
+                <option value="Australia/Sydney">Sydney</option>
+                <option value="Australia/Melbourne">Melbourne</option>
+                <option value="Australia/Perth">Perth</option>
+                <option value="Pacific/Auckland">Auckland</option>
+              </optgroup>
+              <optgroup label="Africa">
+                <option value="Africa/Johannesburg">Johannesburg</option>
+                <option value="Africa/Cairo">Cairo</option>
+                <option value="Africa/Lagos">Lagos</option>
+              </optgroup>
+            </select>
+            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Dates on your published blog will display in this timezone</p>
+          </div>
         </div>
       </section>
 

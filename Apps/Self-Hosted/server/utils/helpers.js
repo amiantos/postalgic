@@ -59,23 +59,40 @@ export function makeStubUnique(stub, existingStubs, currentId = null) {
 }
 
 /**
+ * Get date parts (year, month, day) in a specific timezone
+ */
+export function getDatePartsInTimezone(dateString, timezone = 'UTC') {
+  const date = new Date(dateString);
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: timezone,
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric'
+  });
+  const parts = formatter.formatToParts(date);
+  return {
+    year: parseInt(parts.find(p => p.type === 'year').value),
+    month: parseInt(parts.find(p => p.type === 'month').value),
+    day: parseInt(parts.find(p => p.type === 'day').value)
+  };
+}
+
+/**
  * Format date for URL path (yyyy/MM/dd)
  */
-export function formatDatePath(dateString) {
-  const date = new Date(dateString);
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}/${month}/${day}`;
+export function formatDatePath(dateString, timezone = 'UTC') {
+  const { year, month, day } = getDatePartsInTimezone(dateString, timezone);
+  return `${year}/${String(month).padStart(2, '0')}/${String(day).padStart(2, '0')}`;
 }
 
 /**
  * Format date for display
  */
-export function formatDate(dateString, options = {}) {
+export function formatDate(dateString, timezone = 'UTC', options = {}) {
   const date = new Date(dateString);
 
   const defaultOptions = {
+    timeZone: timezone,
     year: 'numeric',
     month: 'long',
     day: 'numeric',
@@ -89,9 +106,10 @@ export function formatDate(dateString, options = {}) {
 /**
  * Format date for short display
  */
-export function formatShortDate(dateString) {
+export function formatShortDate(dateString, timezone = 'UTC') {
   const date = new Date(dateString);
   return date.toLocaleDateString('en-US', {
+    timeZone: timezone,
     year: 'numeric',
     month: 'short',
     day: 'numeric'
@@ -117,9 +135,9 @@ export function formatISO8601Date(dateString) {
 /**
  * Get month name from date
  */
-export function getMonthName(dateString) {
+export function getMonthName(dateString, timezone = 'UTC') {
   const date = new Date(dateString);
-  return date.toLocaleDateString('en-US', { month: 'long' });
+  return date.toLocaleDateString('en-US', { timeZone: timezone, month: 'long' });
 }
 
 /**

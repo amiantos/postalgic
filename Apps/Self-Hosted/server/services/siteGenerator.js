@@ -11,6 +11,7 @@ import {
   formatRFC822Date,
   formatISO8601Date,
   getMonthName,
+  getDatePartsInTimezone,
   calculateHash,
   calculateBufferHash,
   getExcerpt,
@@ -136,6 +137,7 @@ function buildBaseContext(blog, categories, tags, sidebarObjects, staticFiles, t
     blogAuthor: blog.authorName || '',
     blogAuthorUrl: blog.authorUrl || '',
     blogAuthorEmail: blog.authorEmail || '',
+    timezone: blog.timezone || 'UTC',
     currentYear,
     buildDate,
     accentColor: blog.accentColor || '#FFA100',
@@ -155,7 +157,8 @@ function buildBaseContext(blog, categories, tags, sidebarObjects, staticFiles, t
  * Build post context for rendering
  */
 function buildPostContext(post, baseContext, inList = false) {
-  const urlPath = `${formatDatePath(post.createdAt)}/${post.stub}`;
+  const timezone = baseContext.timezone || 'UTC';
+  const urlPath = `${formatDatePath(post.createdAt, timezone)}/${post.stub}`;
 
   // Convert markdown to HTML
   let contentHtml = marked(post.content || '');
@@ -174,8 +177,8 @@ function buildPostContext(post, baseContext, inList = false) {
     ...baseContext,
     displayTitle: post.title || getExcerpt(post.content, 50),
     hasTitle: !!post.title,
-    formattedDate: formatDate(post.createdAt),
-    shortFormattedDate: formatShortDate(post.createdAt),
+    formattedDate: formatDate(post.createdAt, timezone),
+    shortFormattedDate: formatShortDate(post.createdAt, timezone),
     urlPath,
     contentHtml,
     inList,
@@ -303,7 +306,8 @@ function generateCommonHeadMeta(baseContext) {
  */
 function generatePostMeta(post, baseContext) {
   const blogUrl = baseContext.blogUrl;
-  const postUrl = `${blogUrl}/${formatDatePath(post.createdAt)}/${post.stub}`;
+  const timezone = baseContext.timezone || 'UTC';
+  const postUrl = `${blogUrl}/${formatDatePath(post.createdAt, timezone)}/${post.stub}`;
   const pageTitle = `${post.title || getExcerpt(post.content, 50)} - ${baseContext.blogName}`;
 
   // Generate description from post content (excerpt)
@@ -476,13 +480,12 @@ async function generateIndexPage(outputDir, templates, baseContext, posts, fileH
   const postsContext = recentPosts.map(post => buildPostContext(post, baseContext, true));
 
   // Get most recent archive URL
+  const timezone = baseContext.timezone || 'UTC';
   let recentArchiveUrl = '/archives/';
   if (posts.length > 0) {
     const mostRecent = posts[0];
-    const date = new Date(mostRecent.createdAt);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    recentArchiveUrl = `/${year}/${month}/`;
+    const { year, month } = getDatePartsInTimezone(mostRecent.createdAt, timezone);
+    recentArchiveUrl = `/${year}/${String(month).padStart(2, '0')}/`;
   }
 
   const indexContent = Mustache.render(templates.index, {
@@ -499,13 +502,14 @@ async function generateIndexPage(outputDir, templates, baseContext, posts, fileH
  * Generate individual post pages
  */
 async function generatePostPages(outputDir, templates, baseContext, posts, storage, blogId, fileHashes) {
+  const timezone = baseContext.timezone || 'UTC';
   for (const post of posts) {
     const postContext = buildPostContext(post, baseContext, false);
     const postContent = Mustache.render(templates.post, postContext);
     const customMeta = generatePostMeta(post, baseContext);
     const html = renderWithLayout(templates, baseContext, postContext.displayTitle, postContent, customMeta);
 
-    const postPath = `${formatDatePath(post.createdAt)}/${post.stub}/index.html`;
+    const postPath = `${formatDatePath(post.createdAt, timezone)}/${post.stub}/index.html`;
     writeFile(outputDir, postPath, html, fileHashes);
   }
 }
@@ -514,13 +518,13 @@ async function generatePostPages(outputDir, templates, baseContext, posts, stora
  * Generate archives page
  */
 async function generateArchivesPage(outputDir, templates, baseContext, posts, fileHashes) {
-  // Group posts by year and month
+  const timezone = baseContext.timezone || 'UTC';
+
+  // Group posts by year and month (using timezone)
   const grouped = {};
 
   for (const post of posts) {
-    const date = new Date(post.createdAt);
-    const year = date.getFullYear();
-    const month = date.getMonth() + 1;
+    const { year, month } = getDatePartsInTimezone(post.createdAt, timezone);
 
     if (!grouped[year]) {
       grouped[year] = {};
@@ -539,18 +543,20 @@ async function generateArchivesPage(outputDir, templates, baseContext, posts, fi
         .sort((a, b) => b - a)
         .map(month => {
           const monthPosts = grouped[year][month].map(post => {
+            const { day } = getDatePartsInTimezone(post.createdAt, timezone);
             const date = new Date(post.createdAt);
             return {
               displayTitle: post.title || getExcerpt(post.content, 50),
-              urlPath: `${formatDatePath(post.createdAt)}/${post.stub}`,
-              dayPadded: String(date.getDate()).padStart(2, '0'),
-              monthAbbr: date.toLocaleDateString('en-US', { month: 'short' })
+              urlPath: `${formatDatePath(post.createdAt, timezone)}/${post.stub}`,
+              dayPadded: String(day).padStart(2, '0'),
+              monthAbbr: date.toLocaleDateString('en-US', { timeZone: timezone, month: 'short' })
             };
           });
 
-          const date = new Date(parseInt(year), parseInt(month) - 1);
+          // Create a date in the correct month for display
+          const monthDate = new Date(parseInt(year), parseInt(month) - 1, 1);
           return {
-            monthName: date.toLocaleDateString('en-US', { month: 'long' }),
+            monthName: monthDate.toLocaleDateString('en-US', { month: 'long' }),
             monthPadded: String(month).padStart(2, '0'),
             posts: monthPosts
           };
@@ -568,17 +574,18 @@ async function generateArchivesPage(outputDir, templates, baseContext, posts, fi
  * Generate monthly archive pages
  */
 async function generateMonthlyArchivePages(outputDir, templates, baseContext, posts, fileHashes) {
-  // Group posts by year/month
+  const timezone = baseContext.timezone || 'UTC';
+
+  // Group posts by year/month (using timezone)
   const grouped = {};
 
   for (const post of posts) {
-    const date = new Date(post.createdAt);
-    const month = date.getMonth() + 1;
-    const key = `${date.getFullYear()}-${String(month).padStart(2, '0')}`;
+    const { year, month } = getDatePartsInTimezone(post.createdAt, timezone);
+    const key = `${year}-${String(month).padStart(2, '0')}`;
 
     if (!grouped[key]) {
       grouped[key] = {
-        year: date.getFullYear(),
+        year: year,
         month: month,
         posts: []
       };
@@ -777,9 +784,10 @@ async function generateRobotsTxt(outputDir, templates, baseContext, fileHashes) 
  */
 async function generateSitemap(outputDir, templates, baseContext, posts, tags, categories, fileHashes) {
   const now = formatISO8601Date(new Date());
+  const timezone = baseContext.timezone || 'UTC';
 
   const postsData = posts.map(post => ({
-    urlPath: `${formatDatePath(post.createdAt)}/${post.stub}`,
+    urlPath: `${formatDatePath(post.createdAt, timezone)}/${post.stub}`,
     lastmod: formatISO8601Date(post.updatedAt || post.createdAt)
   }));
 
@@ -797,16 +805,16 @@ async function generateSitemap(outputDir, templates, baseContext, posts, tags, c
       lastmod: now
     }));
 
-  // Monthly archives
+  // Monthly archives (using timezone)
   const monthlyArchives = [];
   const seenMonths = new Set();
   for (const post of posts) {
-    const date = new Date(post.createdAt);
-    const key = `${date.getFullYear()}-${date.getMonth() + 1}`;
+    const { year, month } = getDatePartsInTimezone(post.createdAt, timezone);
+    const key = `${year}-${month}`;
     if (!seenMonths.has(key)) {
       seenMonths.add(key);
       monthlyArchives.push({
-        url: `/${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/`,
+        url: `/${year}/${String(month).padStart(2, '0')}/`,
         lastmod: formatISO8601Date(post.updatedAt || post.createdAt)
       });
     }

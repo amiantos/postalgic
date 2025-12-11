@@ -122,6 +122,17 @@ function extractYouTubeId(url) {
 function getYouTubeVideoId(embed) {
   return embed.videoId || extractYouTubeId(embed.url);
 }
+
+function formatLocalDateTime(dateString) {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit'
+  });
+}
 </script>
 
 <template>
@@ -245,7 +256,7 @@ function getYouTubeVideoId(embed) {
       >
         <!-- Date and Draft Badge -->
         <div class="flex items-center justify-between mb-2">
-          <p class="text-sm text-gray-500 dark:text-gray-400">{{ post.shortFormattedDate }}</p>
+          <p class="text-sm text-gray-500 dark:text-gray-400">{{ formatLocalDateTime(post.createdAt) }}</p>
           <div class="flex items-center gap-2">
             <span
               v-if="post.isDraft"

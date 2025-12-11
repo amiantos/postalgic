@@ -71,7 +71,7 @@ class Storage {
         aws_access_key_id, aws_secret_access_key,
         ftp_host, ftp_port, ftp_username, ftp_password, ftp_private_key, ftp_path,
         git_repository_url, git_username, git_token, git_branch, git_commit_message,
-        created_at, updated_at
+        timezone, created_at, updated_at
       ) VALUES (
         ?, ?, ?, ?, ?, ?, ?,
         ?, ?, ?, ?,
@@ -80,7 +80,7 @@ class Storage {
         ?, ?,
         ?, ?, ?, ?, ?, ?,
         ?, ?, ?, ?, ?,
-        ?, ?
+        ?, ?, ?
       )
     `);
 
@@ -116,6 +116,7 @@ class Storage {
       blogData.gitToken || null,
       blogData.gitBranch || 'main',
       blogData.gitCommitMessage || null,
+      blogData.timezone || 'UTC',
       now,
       now
     );
@@ -146,7 +147,7 @@ class Storage {
         ftp_private_key = ?, ftp_path = ?,
         git_repository_url = ?, git_username = ?, git_token = ?,
         git_branch = ?, git_commit_message = ?,
-        updated_at = ?
+        timezone = ?, updated_at = ?
       WHERE id = ?
     `);
 
@@ -181,6 +182,7 @@ class Storage {
       merged.gitToken,
       merged.gitBranch,
       merged.gitCommitMessage,
+      merged.timezone || 'UTC',
       now,
       blogId
     );
@@ -240,6 +242,7 @@ class Storage {
       gitToken: row.git_token,
       gitBranch: row.git_branch,
       gitCommitMessage: row.git_commit_message,
+      timezone: row.timezone || 'UTC',
       createdAt: row.created_at,
       updatedAt: row.updated_at
     };
@@ -347,7 +350,7 @@ class Storage {
     const stmt = db.prepare(`
       UPDATE posts SET
         title = ?, content = ?, stub = ?, is_draft = ?, category_id = ?,
-        embed_type = ?, embed_position = ?, embed_data = ?, updated_at = ?
+        embed_type = ?, embed_position = ?, embed_data = ?, created_at = ?, updated_at = ?
       WHERE id = ? AND blog_id = ?
     `);
 
@@ -360,6 +363,7 @@ class Storage {
       embedType,
       embedPosition,
       embedData,
+      postData.createdAt !== undefined ? postData.createdAt : existing.createdAt,
       now,
       postId,
       blogId

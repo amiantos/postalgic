@@ -12,6 +12,17 @@ const blogId = computed(() => route.params.blogId);
 const postId = computed(() => route.params.postId);
 const isNew = computed(() => !postId.value);
 
+// Convert a Date to local datetime-local format (YYYY-MM-DDTHH:MM)
+function toLocalDateTimeString(date) {
+  const d = new Date(date);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  const hours = String(d.getHours()).padStart(2, '0');
+  const minutes = String(d.getMinutes()).padStart(2, '0');
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
+
 const form = ref({
   title: '',
   content: '',
@@ -19,7 +30,7 @@ const form = ref({
   categoryId: null,
   tagIds: [],
   embed: null,
-  createdAt: new Date().toISOString().slice(0, 16)
+  createdAt: toLocalDateTimeString(new Date())
 });
 
 const saving = ref(false);
@@ -37,7 +48,7 @@ onMounted(async () => {
       categoryId: post.categoryId || null,
       tagIds: post.tagIds || [],
       embed: post.embed || null,
-      createdAt: new Date(post.createdAt).toISOString().slice(0, 16)
+      createdAt: toLocalDateTimeString(new Date(post.createdAt))
     };
   }
 });

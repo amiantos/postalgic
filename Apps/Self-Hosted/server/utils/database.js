@@ -59,6 +59,21 @@ export function closeDatabase() {
 }
 
 /**
+ * Run database migrations for existing databases.
+ * @param {Database} database - The database instance
+ */
+function runMigrations(database) {
+  // Check if timezone column exists in blogs table
+  const columns = database.prepare(`PRAGMA table_info(blogs)`).all();
+  const hasTimezone = columns.some(col => col.name === 'timezone');
+
+  if (!hasTimezone) {
+    console.log('[Database] Running migration: adding timezone column to blogs table');
+    database.exec(`ALTER TABLE blogs ADD COLUMN timezone TEXT DEFAULT 'UTC'`);
+  }
+}
+
+/**
  * Create the database schema if it doesn't exist.
  * @param {Database} database - The database instance
  */
@@ -69,7 +84,9 @@ function createSchema(database) {
   `).get();
 
   if (tableExists) {
-    return; // Schema already exists
+    // Run migrations for existing databases
+    runMigrations(database);
+    return;
   }
 
   console.log('[Database] Creating schema...');
@@ -108,6 +125,7 @@ function createSchema(database) {
       git_token TEXT,
       git_branch TEXT DEFAULT 'main',
       git_commit_message TEXT,
+      timezone TEXT DEFAULT 'UTC',
       created_at TEXT NOT NULL,
       updated_at TEXT
     );
