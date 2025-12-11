@@ -312,9 +312,11 @@ class BlogExportService {
             // Export embed if present
             var exportEmbed: ExportEmbed? = nil
             if let embed = post.embed {
-                // Export embed image data if present (for link embeds)
+                // Export embed image data if present (for link embeds only, and only if not empty)
                 var imageFilename: String? = nil
-                if let imageData = embed.imageData {
+                if embed.embedType == .link,
+                   let imageData = embed.imageData,
+                   !imageData.isEmpty {
                     imageFilename = "embed-\(embed.url.hash).jpg"
                     try imageData.write(to: exportDir.appendingPathComponent("embed-images/\(imageFilename!)"))
                 }
