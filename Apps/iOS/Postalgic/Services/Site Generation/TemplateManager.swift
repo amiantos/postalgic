@@ -771,6 +771,12 @@ class TemplateManager {
             text-decoration: underline;
         }
 
+        .post-content hr {
+            border: none;
+            border-top: 1px solid var(--light-shade);
+            margin: 2em 0;
+        }
+
         .post-date {
             color: var(--medium-shade);
             font-size: 0.9em;
