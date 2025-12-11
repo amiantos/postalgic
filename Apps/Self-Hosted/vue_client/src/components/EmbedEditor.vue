@@ -28,6 +28,7 @@ const metadata = ref({
   description: null,
   imageUrl: null,
   imageData: null,
+  imageFilename: null,
   videoId: null
 });
 
@@ -52,7 +53,8 @@ onMounted(() => {
         title: props.embed.title || null,
         description: props.embed.description || null,
         imageUrl: props.embed.imageUrl || null,
-        imageData: props.embed.imageData || null
+        imageData: props.embed.imageData || null,
+        imageFilename: props.embed.imageFilename || null
       };
     } else if (props.embed.type === 'image') {
       images.value = props.embed.images || [];
@@ -73,9 +75,17 @@ const hasMetadata = computed(() => {
     return metadata.value.title || metadata.value.videoId;
   }
   if (embedType.value === 'link') {
-    return metadata.value.title || metadata.value.description || metadata.value.imageUrl;
+    return metadata.value.title || metadata.value.description || metadata.value.imageUrl || metadata.value.imageFilename;
   }
   return false;
+});
+
+// Compute the image source for link embeds, supporting imageData, imageUrl, or imageFilename
+const linkImageSrc = computed(() => {
+  if (metadata.value.imageData) return metadata.value.imageData;
+  if (metadata.value.imageFilename) return `/uploads/${props.blogId}/${metadata.value.imageFilename}`;
+  if (metadata.value.imageUrl && !metadata.value.imageUrl.startsWith('file://')) return metadata.value.imageUrl;
+  return null;
 });
 
 // Watch for type changes to reset state
@@ -193,6 +203,7 @@ function save() {
     embedData.description = metadata.value.description;
     embedData.imageUrl = metadata.value.imageUrl;
     embedData.imageData = metadata.value.imageData;
+    embedData.imageFilename = metadata.value.imageFilename;
   } else if (embedType.value === 'image') {
     embedData.images = images.value;
   }
@@ -293,8 +304,8 @@ function cancel() {
     <div v-if="embedType === 'link' && hasMetadata" class="mb-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
       <div class="flex gap-3">
         <img
-          v-if="metadata.imageData || metadata.imageUrl"
-          :src="metadata.imageData || metadata.imageUrl"
+          v-if="linkImageSrc"
+          :src="linkImageSrc"
           class="w-20 h-20 object-cover rounded"
           alt=""
         />

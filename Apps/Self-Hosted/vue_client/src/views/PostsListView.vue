@@ -94,6 +94,13 @@ function getEmbedImageUrl(filename) {
   return `/uploads/${blogId.value}/${filename}`;
 }
 
+function getLinkEmbedImageSrc(embed) {
+  if (embed.imageData) return embed.imageData;
+  if (embed.imageFilename) return `/uploads/${blogId.value}/${embed.imageFilename}`;
+  if (embed.imageUrl && !embed.imageUrl.startsWith('file://')) return embed.imageUrl;
+  return null;
+}
+
 function renderMarkdown(content) {
   if (!content) return '';
   return marked(content);
@@ -283,8 +290,8 @@ function getYouTubeVideoId(embed) {
             class="flex gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
           >
             <img
-              v-if="post.embed.imageData || post.embed.imageUrl"
-              :src="post.embed.imageData || post.embed.imageUrl"
+              v-if="getLinkEmbedImageSrc(post.embed)"
+              :src="getLinkEmbedImageSrc(post.embed)"
               class="w-20 h-20 object-cover rounded shrink-0"
               alt=""
             />
@@ -339,8 +346,8 @@ function getYouTubeVideoId(embed) {
             class="flex gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
           >
             <img
-              v-if="post.embed.imageData || post.embed.imageUrl"
-              :src="post.embed.imageData || post.embed.imageUrl"
+              v-if="getLinkEmbedImageSrc(post.embed)"
+              :src="getLinkEmbedImageSrc(post.embed)"
               class="w-20 h-20 object-cover rounded shrink-0"
               alt=""
             />

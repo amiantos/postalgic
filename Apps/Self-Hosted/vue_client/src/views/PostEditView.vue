@@ -331,8 +331,8 @@ function removeEmbed() {
               <div v-else-if="form.embed.type === 'link'" class="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                 <div class="flex gap-2">
                   <img
-                    v-if="form.embed.imageData || form.embed.imageUrl"
-                    :src="form.embed.imageData || form.embed.imageUrl"
+                    v-if="form.embed.imageData || form.embed.imageFilename || (form.embed.imageUrl && !form.embed.imageUrl.startsWith('file://'))"
+                    :src="form.embed.imageData || (form.embed.imageFilename ? `/uploads/${blogId}/${form.embed.imageFilename}` : form.embed.imageUrl)"
                     class="w-12 h-12 object-cover rounded"
                     alt=""
                   />
