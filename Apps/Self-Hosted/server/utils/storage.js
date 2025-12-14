@@ -1000,6 +1000,79 @@ class Storage {
     };
   }
 
+  // ============ Sync Configuration ============
+
+  getSyncConfig(blogId) {
+    const db = getDatabase();
+    const row = db.prepare('SELECT * FROM sync_config WHERE blog_id = ?').get(blogId);
+
+    if (!row) {
+      return {
+        syncEnabled: false,
+        syncPassword: null,
+        lastSyncedVersion: 0,
+        lastSyncedAt: null,
+        localFileHashes: {}
+      };
+    }
+
+    return {
+      blogId: row.blog_id,
+      syncEnabled: !!row.sync_enabled,
+      syncPassword: row.sync_password,
+      lastSyncedVersion: row.last_synced_version || 0,
+      lastSyncedAt: row.last_synced_at,
+      localFileHashes: row.local_file_hashes ? JSON.parse(row.local_file_hashes) : {},
+      createdAt: row.created_at
+    };
+  }
+
+  saveSyncConfig(blogId, syncConfig) {
+    const db = getDatabase();
+
+    const stmt = db.prepare(`
+      INSERT OR REPLACE INTO sync_config
+        (blog_id, sync_enabled, sync_password, last_synced_version, last_synced_at, local_file_hashes, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, COALESCE((SELECT created_at FROM sync_config WHERE blog_id = ?), datetime('now')))
+    `);
+
+    stmt.run(
+      blogId,
+      syncConfig.syncEnabled ? 1 : 0,
+      syncConfig.syncPassword || null,
+      syncConfig.lastSyncedVersion || 0,
+      syncConfig.lastSyncedAt || null,
+      JSON.stringify(syncConfig.localFileHashes || {}),
+      blogId
+    );
+  }
+
+  updateSyncVersion(blogId, version, fileHashes) {
+    const db = getDatabase();
+    const existing = this.getSyncConfig(blogId);
+
+    const stmt = db.prepare(`
+      INSERT OR REPLACE INTO sync_config
+        (blog_id, sync_enabled, sync_password, last_synced_version, last_synced_at, local_file_hashes, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, COALESCE((SELECT created_at FROM sync_config WHERE blog_id = ?), datetime('now')))
+    `);
+
+    stmt.run(
+      blogId,
+      existing.syncEnabled ? 1 : 0,
+      existing.syncPassword,
+      version,
+      new Date().toISOString(),
+      JSON.stringify(fileHashes || {}),
+      blogId
+    );
+  }
+
+  deleteSyncConfig(blogId) {
+    const db = getDatabase();
+    db.prepare('DELETE FROM sync_config WHERE blog_id = ?').run(blogId);
+  }
+
   // ============ Generated Site Directory ============
 
   getGeneratedSiteDir(blogId) {

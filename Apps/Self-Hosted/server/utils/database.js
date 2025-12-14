@@ -71,6 +71,26 @@ function runMigrations(database) {
     console.log('[Database] Running migration: adding timezone column to blogs table');
     database.exec(`ALTER TABLE blogs ADD COLUMN timezone TEXT DEFAULT 'UTC'`);
   }
+
+  // Check if sync_config table exists
+  const syncConfigExists = database.prepare(`
+    SELECT name FROM sqlite_master WHERE type='table' AND name='sync_config'
+  `).get();
+
+  if (!syncConfigExists) {
+    console.log('[Database] Running migration: creating sync_config table');
+    database.exec(`
+      CREATE TABLE IF NOT EXISTS sync_config (
+        blog_id TEXT PRIMARY KEY REFERENCES blogs(id) ON DELETE CASCADE,
+        sync_enabled INTEGER DEFAULT 0,
+        sync_password TEXT,
+        last_synced_version INTEGER DEFAULT 0,
+        last_synced_at TEXT,
+        local_file_hashes TEXT,
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      )
+    `);
+  }
 }
 
 /**
@@ -223,6 +243,17 @@ function createSchema(database) {
       publisher_type TEXT,
       last_published_at TEXT,
       file_hashes TEXT
+    );
+
+    -- Sync configuration
+    CREATE TABLE sync_config (
+      blog_id TEXT PRIMARY KEY REFERENCES blogs(id) ON DELETE CASCADE,
+      sync_enabled INTEGER DEFAULT 0,
+      sync_password TEXT,
+      last_synced_version INTEGER DEFAULT 0,
+      last_synced_at TEXT,
+      local_file_hashes TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
 
     -- Indexes for performance

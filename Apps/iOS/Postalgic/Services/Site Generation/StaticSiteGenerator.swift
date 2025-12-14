@@ -357,6 +357,33 @@ class StaticSiteGenerator {
         try generateRobotsTxt()
         try generateSitemap()
 
+        // Generate sync directory if sync is enabled
+        if blog.syncEnabled, let syncPassword = blog.getSyncPassword() {
+            NotificationCenter.default.post(
+                name: .publishStatusUpdated,
+                object: "Generating sync data..."
+            )
+            do {
+                _ = try SyncDataGenerator.generateSyncDirectory(
+                    for: blog,
+                    in: siteDirectory,
+                    password: syncPassword
+                ) { statusMessage in
+                    NotificationCenter.default.post(
+                        name: .publishStatusUpdated,
+                        object: statusMessage
+                    )
+                }
+            } catch {
+                print("⚠️ Failed to generate sync data: \(error)")
+                // Don't fail the whole publish - sync is optional
+                NotificationCenter.default.post(
+                    name: .publishStatusUpdated,
+                    object: "Warning: Sync data generation failed: \(error.localizedDescription)"
+                )
+            }
+        }
+
         // Get the appropriate publisher based on blog configuration
         var publisher: Publisher
         

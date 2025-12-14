@@ -66,7 +66,13 @@ final class Blog {
     var gitUsername: String?
     var gitBranch: String?
     var gitCommitMessage: String?
-    
+
+    // Sync Configuration
+    var syncEnabled: Bool = false
+    var lastSyncedVersion: Int = 0
+    var lastSyncedAt: Date?
+    var localSyncHashes: [String: String] = [:]  // For tracking local sync state
+
     // Future Netlify Configuration
     // var netlifyToken: String?
     // var netlifySiteId: String?
@@ -130,12 +136,17 @@ final class Blog {
     var hasGitConfigured: Bool {
         // Check if we have the password in keychain or still in the model
         let hasPassword = KeychainService.passwordExists(for: persistentModelID, type: .git)
-        
-        return gitRepositoryUrl != nil && !gitRepositoryUrl!.isEmpty 
-            && gitUsername != nil && !gitUsername!.isEmpty 
+
+        return gitRepositoryUrl != nil && !gitRepositoryUrl!.isEmpty
+            && gitUsername != nil && !gitUsername!.isEmpty
             && hasPassword && gitBranch != nil && !gitBranch!.isEmpty
     }
-    
+
+    var hasSyncConfigured: Bool {
+        // Sync is configured if enabled and has a password set
+        return syncEnabled && KeychainService.passwordExists(for: persistentModelID, type: .syncPassword)
+    }
+
     var currentPublisherType: PublisherType {
         return PublisherType(rawValue: publisherType ?? "") ?? .none
     }
