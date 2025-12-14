@@ -299,37 +299,31 @@ export async function importBlog(storage, baseUrl, password, onProgress = () => 
  * Creates a post from sync data
  */
 function createPost(storage, blogId, syncPost, categoryMap, tagMap, isDraft) {
-  // Build embed data if present
-  let embedType = null;
-  let embedPosition = null;
-  let embedData = null;
+  // Build embed object if present (storage.createPost expects postData.embed)
+  let embed = null;
 
   if (syncPost.embed) {
-    const embed = syncPost.embed;
-    embedType = embed.type.toLowerCase();
-    if (embedType === 'youtube') embedType = 'youtube';
-    else if (embedType === 'link') embedType = 'link';
-    else if (embedType === 'image') embedType = 'image';
+    const srcEmbed = syncPost.embed;
+    const embedType = srcEmbed.type.toLowerCase();
 
-    embedPosition = (embed.position || 'above').toLowerCase();
+    embed = {
+      type: embedType,
+      position: (srcEmbed.position || 'above').toLowerCase()
+    };
 
     if (embedType === 'youtube') {
-      embedData = { url: embed.url };
+      embed.url = srcEmbed.url;
     } else if (embedType === 'link') {
-      embedData = {
-        url: embed.url,
-        title: embed.title,
-        description: embed.description,
-        imageUrl: embed.imageUrl,
-        imageFilename: embed.imageFilename
-      };
+      embed.url = srcEmbed.url;
+      embed.title = srcEmbed.title;
+      embed.description = srcEmbed.description;
+      embed.imageUrl = srcEmbed.imageUrl;
+      embed.imageFilename = srcEmbed.imageFilename;
     } else if (embedType === 'image') {
-      embedData = {
-        images: embed.images.map(img => ({
-          filename: img.filename,
-          order: img.order
-        }))
-      };
+      embed.images = srcEmbed.images.map(img => ({
+        filename: img.filename,
+        order: img.order
+      }));
     }
   }
 
@@ -348,9 +342,7 @@ function createPost(storage, blogId, syncPost, categoryMap, tagMap, isDraft) {
     isDraft: isDraft,
     categoryId: categoryId,
     tagIds: tagIds,
-    embedType: embedType,
-    embedPosition: embedPosition,
-    embedData: embedData,
+    embed: embed,
     createdAt: syncPost.createdAt
   });
 
