@@ -234,23 +234,14 @@ export async function importBlog(storage, baseUrl, password, onProgress = () => 
     filesDownloaded++;
     const syncSidebar = JSON.parse(sidebarData.toString());
 
-    const sidebar = storage.createSidebarObject(blogId, {
+    // Links are passed inline to createSidebarObject
+    storage.createSidebarObject(blogId, {
       title: syncSidebar.title,
       type: syncSidebar.type,
       content: syncSidebar.content || null,
-      order: syncSidebar.order
+      order: syncSidebar.order,
+      links: syncSidebar.links || []
     });
-
-    // Create links if it's a link list
-    if (syncSidebar.links) {
-      for (const syncLink of syncSidebar.links) {
-        storage.createSidebarLink(sidebar.id, {
-          title: syncLink.title,
-          url: syncLink.url,
-          order: syncLink.order
-        });
-      }
-    }
   }
 
   // Step 10: Download and create static files
