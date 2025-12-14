@@ -42,12 +42,30 @@ async function deleteBlog() {
             <p class="text-gray-500 dark:text-gray-400 text-sm">Self-hosted static blog generator</p>
           </div>
           <div class="flex gap-2">
-            <router-link
-              to="/blogs/import"
-              class="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-            >
-              Import Blog
-            </router-link>
+            <div class="relative group">
+              <button
+                class="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors inline-flex items-center gap-1"
+              >
+                Import Blog
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              <div class="absolute right-0 mt-1 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 hidden group-hover:block z-10">
+                <router-link
+                  to="/blogs/import"
+                  class="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                >
+                  From ZIP File
+                </router-link>
+                <router-link
+                  to="/blogs/import-from-url"
+                  class="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                >
+                  From URL
+                </router-link>
+              </div>
+            </div>
             <router-link
               to="/blogs/new"
               class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"

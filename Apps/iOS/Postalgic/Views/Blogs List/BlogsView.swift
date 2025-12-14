@@ -12,6 +12,7 @@ struct BlogsView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var blogs: [Blog]
     @State private var showingBlogForm = false
+    @State private var showingImportFromURL = false
     @State private var showingHelpSheet = false
     @State private var showingIntroduction = false
 
@@ -32,11 +33,18 @@ struct BlogsView: View {
                             .font(.subheadline)
                             .foregroundColor(.secondary)
                             .multilineTextAlignment(.center)
-                        
-                        Button(action: { showingBlogForm = true }) {
-                            Text("Create Blog")
+
+                        HStack(spacing: 12) {
+                            Button(action: { showingBlogForm = true }) {
+                                Text("Create Blog")
+                            }
+                            .buttonStyle(.borderedProminent)
+
+                            Button(action: { showingImportFromURL = true }) {
+                                Text("Import from URL")
+                            }
+                            .buttonStyle(.bordered)
                         }
-                        .buttonStyle(.borderedProminent)
                         .padding(.top, 8)
                     }
                     .padding()
@@ -86,7 +94,14 @@ struct BlogsView: View {
             }
             .toolbar {
                 ToolbarItem {
-                    Button(action: { showingBlogForm = true }) {
+                    Menu {
+                        Button(action: { showingBlogForm = true }) {
+                            Label("Create New Blog", systemImage: "plus")
+                        }
+                        Button(action: { showingImportFromURL = true }) {
+                            Label("Import from URL", systemImage: "arrow.down.circle")
+                        }
+                    } label: {
                         Label("Add Blog", systemImage: "plus")
                     }
                 }
@@ -96,7 +111,7 @@ struct BlogsView: View {
                     } label: {
                         Label("Help", systemImage: "questionmark.circle")
                     }
-                    
+
                     #if DEBUG
                     Button {
                         showingIntroduction = true
@@ -109,6 +124,9 @@ struct BlogsView: View {
             .navigationTitle("Your Blogs")
             .sheet(isPresented: $showingBlogForm) {
                 BlogFormView().interactiveDismissDisabled()
+            }
+            .sheet(isPresented: $showingImportFromURL) {
+                ImportFromURLView()
             }
             .onAppear {
                 if !UserDefaults.standard.bool(forKey: "hasSeenIntroduction") {

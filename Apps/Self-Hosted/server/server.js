@@ -19,6 +19,7 @@ import publishRoutes from './routes/publish.js';
 import themeRoutes from './routes/themes.js';
 import metadataRoutes from './routes/metadata.js';
 import importRoutes from './routes/import.js';
+import syncRoutes from './routes/sync.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -63,6 +64,7 @@ app.use('/api/blogs/:blogId/publish', publishRoutes);
 app.use('/api/themes', themeRoutes);
 app.use('/api/metadata', metadataRoutes);
 app.use('/api/import', importRoutes);
+app.use('/api/sync', syncRoutes);
 
 // Serve uploaded files from blog-specific directories
 // Files are stored at data/uploads/{blogId}/ and served at /uploads/{blogId}/
