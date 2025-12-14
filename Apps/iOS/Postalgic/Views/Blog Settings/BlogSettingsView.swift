@@ -32,6 +32,7 @@ struct BlogSettingsView: View {
     @State private var migratedStubCounts: (posts: Int, categories: Int, tags: Int) = (0, 0, 0)
     @State private var showingStaticFiles = false
     @State private var showingExportView = false
+    @State private var showingSyncSettings = false
 
     var body: some View {
         NavigationStack {
@@ -98,6 +99,19 @@ struct BlogSettingsView: View {
                     }
 
                     Button {
+                        showingSyncSettings = true
+                    } label: {
+                        HStack {
+                            Label("Sync Settings", systemImage: "arrow.triangle.2.circlepath")
+                            Spacer()
+                            if blog.syncEnabled {
+                                Text("On")
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                    }
+
+                    Button {
                         showingExportView = true
                     } label: {
                         Label("Export Blog", systemImage: "square.and.arrow.up")
@@ -161,6 +175,9 @@ struct BlogSettingsView: View {
         }
         .sheet(isPresented: $showingExportView) {
             ExportBlogView(blog: blog)
+        }
+        .sheet(isPresented: $showingSyncSettings) {
+            SyncSettingsView(blog: blog)
         }
         .alert("Delete Blog", isPresented: $showingDeleteAlert) {
             TextField("Type 'delete' to confirm", text: $deleteConfirmationText)
