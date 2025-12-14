@@ -251,15 +251,14 @@ export async function importBlog(storage, baseUrl, password, onProgress = () => 
   const staticFilesIndex = JSON.parse(staticFilesIndexData.toString());
 
   for (const fileEntry of staticFilesIndex.files) {
-    const fileData = await downloadFile(`${normalizedUrl}/sync/static-files/${fileEntry.filename}`);
+    const fileBuffer = await downloadFile(`${normalizedUrl}/sync/static-files/${fileEntry.filename}`);
     filesDownloaded++;
 
     storage.createStaticFile(blogId, {
       filename: fileEntry.filename,
       mimeType: fileEntry.mimeType,
-      specialFileType: fileEntry.specialFileType || null,
-      buffer: fileData
-    });
+      specialFileType: fileEntry.specialFileType || null
+    }, fileBuffer);
     onProgress({ step: 'Downloading static files...', downloaded: filesDownloaded, total: totalFiles });
   }
 
