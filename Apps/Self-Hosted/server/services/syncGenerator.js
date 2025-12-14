@@ -242,12 +242,12 @@ export async function generateSyncDirectory(storage, blogId, outputDir, password
   const uploadsDir = storage.getBlogUploadsDir(blogId);
 
   for (const post of allPosts) {
-    if (post.embedType && post.embedData) {
-      const embedData = typeof post.embedData === 'string' ? JSON.parse(post.embedData) : post.embedData;
+    if (post.embed) {
+      const embed = post.embed;
 
       // Handle link embed images
-      if (post.embedType === 'link' && embedData.imageFilename) {
-        const imageFilename = embedData.imageFilename;
+      if (embed.type === 'link' && embed.imageFilename) {
+        const imageFilename = embed.imageFilename;
         const sourcePath = path.join(uploadsDir, imageFilename);
         if (fs.existsSync(sourcePath)) {
           const imageBuffer = fs.readFileSync(sourcePath);
@@ -259,8 +259,8 @@ export async function generateSyncDirectory(storage, blogId, outputDir, password
       }
 
       // Handle image embed images
-      if (post.embedType === 'image' && embedData.images) {
-        for (const image of embedData.images) {
+      if (embed.type === 'image' && embed.images) {
+        for (const image of embed.images) {
           const sourcePath = path.join(uploadsDir, image.filename);
           if (fs.existsSync(sourcePath)) {
             const imageBuffer = fs.readFileSync(sourcePath);
@@ -351,41 +351,42 @@ export async function generateSyncDirectory(storage, blogId, outputDir, password
 function createSyncPost(post, storage, blogId) {
   let embed = null;
 
-  if (post.embedType && post.embedData) {
-    const embedData = typeof post.embedData === 'string' ? JSON.parse(post.embedData) : post.embedData;
+  if (post.embed) {
+    const srcEmbed = post.embed;
+    const embedType = (srcEmbed.type || '').toLowerCase();
 
-    if (post.embedType === 'youtube') {
+    if (embedType === 'youtube') {
       embed = {
         type: 'YouTube',
-        position: post.embedPosition || 'above',
-        url: embedData.url || '',
+        position: srcEmbed.position || 'above',
+        url: srcEmbed.url || '',
         title: null,
         description: null,
         imageUrl: null,
         imageFilename: null,
         images: []
       };
-    } else if (post.embedType === 'link') {
+    } else if (embedType === 'link') {
       embed = {
         type: 'Link',
-        position: post.embedPosition || 'above',
-        url: embedData.url || '',
-        title: embedData.title || null,
-        description: embedData.description || null,
-        imageUrl: embedData.imageUrl || null,
-        imageFilename: embedData.imageFilename || null,
+        position: srcEmbed.position || 'above',
+        url: srcEmbed.url || '',
+        title: srcEmbed.title || null,
+        description: srcEmbed.description || null,
+        imageUrl: srcEmbed.imageUrl || null,
+        imageFilename: srcEmbed.imageFilename || null,
         images: []
       };
-    } else if (post.embedType === 'image') {
+    } else if (embedType === 'image') {
       embed = {
         type: 'Image',
-        position: post.embedPosition || 'above',
+        position: srcEmbed.position || 'above',
         url: '',
         title: null,
         description: null,
         imageUrl: null,
         imageFilename: null,
-        images: (embedData.images || []).map(img => ({
+        images: (srcEmbed.images || []).map(img => ({
           filename: img.filename,
           order: img.order || 0
         }))
