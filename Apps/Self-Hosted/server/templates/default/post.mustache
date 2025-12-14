@@ -1,0 +1,32 @@
+<article class="post-item">
+    {{#hasTitle}}
+        {{#inList}}<h2>{{displayTitle}}</h2>{{/inList}}
+        {{^inList}}<h1>{{displayTitle}}</h1>{{/inList}}
+    {{/hasTitle}}
+
+    <div class="post-date"><a href="/{{{urlPath}}}/">{{formattedDate}}</a></div>
+
+    {{#blogAuthor}}
+        <div class="post-author"> by {{#blogAuthorUrl}}<a href="{{{blogAuthorUrl}}}">{{blogAuthor}}</a>{{/blogAuthorUrl}}{{^blogAuthorUrl}}{{blogAuthor}}{{/blogAuthorUrl}}</div>
+    {{/blogAuthor}}
+
+    <div class="post-content">
+        {{{contentHtml}}}
+    </div>
+
+    <div>
+    {{#hasCategory}}
+        <div class="post-category">
+            <a href="/categories/{{{categoryUrlPath}}}/">{{categoryName}}</a>
+        </div>
+    {{/hasCategory}}
+
+    {{#hasTags}}
+        <div class="post-tags">
+            {{#tags}}<a href="/tags/{{{urlPath}}}/" class="tag">#{{name}}</a> {{/tags}}
+        </div>
+    {{/hasTags}}
+    </div>
+
+</article>
+<div class="post-separator"></div>

@@ -1,0 +1,10 @@
+node_modules
+vue_client/node_modules
+vue_client/dist
+data
+*.log
+.git
+.gitignore
+.env
+.env.*
+README.md

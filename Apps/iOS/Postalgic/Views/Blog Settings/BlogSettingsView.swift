@@ -31,7 +31,8 @@ struct BlogSettingsView: View {
     @State private var showingStubMigrationSuccessAlert = false
     @State private var migratedStubCounts: (posts: Int, categories: Int, tags: Int) = (0, 0, 0)
     @State private var showingStaticFiles = false
-    
+    @State private var showingExportView = false
+
     var body: some View {
         NavigationStack {
             List {
@@ -95,6 +96,12 @@ struct BlogSettingsView: View {
                     } label: {
                         Label("Publishing Settings", systemImage: "document.badge.gearshape")
                     }
+
+                    Button {
+                        showingExportView = true
+                    } label: {
+                        Label("Export Blog", systemImage: "square.and.arrow.up")
+                    }
                 } header: {
                     Text("Publishing").foregroundStyle(.secondary)
                 }
@@ -151,6 +158,9 @@ struct BlogSettingsView: View {
         }
         .sheet(isPresented: $showingStaticFiles) {
             StaticFilesView(blog: blog)
+        }
+        .sheet(isPresented: $showingExportView) {
+            ExportBlogView(blog: blog)
         }
         .alert("Delete Blog", isPresented: $showingDeleteAlert) {
             TextField("Type 'delete' to confirm", text: $deleteConfirmationText)

@@ -1,0 +1,25 @@
+<h1>Posts in category "{{categoryName}}"</h1>
+{{#hasDescription}}<p class="category-description">{{description}}</p>{{/hasDescription}}
+<p class="category-meta">{{totalPosts}} {{postCountText}} in this category{{#hasPagination}} (showing page {{currentPage}} of {{totalPages}}){{/hasPagination}}</p>
+<div class="archive-separator"></div>
+
+<div class="post-list">
+    {{#posts}}
+        {{> post}}
+    {{/posts}}
+</div>
+
+{{#hasPagination}}
+<nav class="pagination-navigation">
+    {{#hasPreviousPage}}
+    <div class="nav-previous">
+        <a href="{{{previousPageUrl}}}">&larr; Previous</a>
+    </div>
+    {{/hasPreviousPage}}
+    {{#hasNextPage}}
+    <div class="nav-next">
+        <a href="{{{nextPageUrl}}}">Next &rarr;</a>
+    </div>
+    {{/hasNextPage}}
+</nav>
+{{/hasPagination}}

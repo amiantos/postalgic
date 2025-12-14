@@ -1,0 +1,11 @@
+services:
+  postalgic:
+    build: .
+    ports:
+      - "8010:8010"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - NODE_ENV=production
+      - PORT=8010
+    restart: unless-stopped
