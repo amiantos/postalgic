@@ -5,7 +5,6 @@
 
 import fs from 'fs';
 import path from 'path';
-import { v4 as uuidv4 } from 'uuid';
 import syncEncryption from './syncEncryption.js';
 
 /**
@@ -89,9 +88,7 @@ export async function importBlog(storage, baseUrl, password, onProgress = () => 
   const syncBlog = JSON.parse(blogData.toString());
 
   // Step 3: Create the blog
-  const blogId = uuidv4();
   const blog = storage.createBlog({
-    id: blogId,
     name: syncBlog.name,
     url: syncBlog.url || '',
     tagline: syncBlog.tagline || '',
@@ -107,6 +104,9 @@ export async function importBlog(storage, baseUrl, password, onProgress = () => 
     mediumShade: syncBlog.colors?.mediumShade,
     darkShade: syncBlog.colors?.darkShade
   });
+
+  // Use the ID from the created blog
+  const blogId = blog.id;
 
   // Enable sync and store config
   storage.saveSyncConfig(blogId, {

@@ -103,7 +103,7 @@ router.get('/blogs/:blogId/status', (req, res) => {
     const syncConfig = storage.getSyncConfig(blogId);
 
     res.json({
-      enabled: syncConfig.syncEnabled,
+      syncEnabled: syncConfig.syncEnabled,
       lastSyncedAt: syncConfig.lastSyncedAt,
       lastSyncedVersion: syncConfig.lastSyncedVersion,
       hasPassword: !!syncConfig.syncPassword
