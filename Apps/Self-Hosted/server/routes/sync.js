@@ -6,7 +6,7 @@
 import express from 'express';
 import Storage from '../utils/storage.js';
 import { fetchManifest, importBlog } from '../services/syncImporter.js';
-import { checkForChanges } from '../services/syncChecker.js';
+import { checkForChanges, categorizeChanges, extractEntityId } from '../services/syncChecker.js';
 import { pullChanges } from '../services/incrementalSync.js';
 
 const router = express.Router();
@@ -214,7 +214,65 @@ router.post('/blogs/:blogId/check-changes', async (req, res) => {
       return res.status(400).json({ error: 'Blog URL is not configured' });
     }
 
+    console.log('[Sync Check] Starting change check for blog:', blogId);
+    console.log('[Sync Check] Blog URL:', blog.url);
+
     const changeSet = await checkForChanges(storage, blogId, blog.url);
+
+    console.log('[Sync Check] Local version:', changeSet.localVersion);
+    console.log('[Sync Check] Remote version:', changeSet.remoteVersion);
+    console.log('[Sync Check] Has changes:', changeSet.hasChanges);
+
+    // Categorize changes by entity type
+    const categorized = categorizeChanges(changeSet);
+
+    // Build detailed change info with entity IDs
+    const buildDetailedChanges = (category, entityType) => {
+      const result = { new: [], modified: [], deleted: [] };
+
+      for (const file of category.new) {
+        const id = extractEntityId(file.path);
+        result.new.push({ id, path: file.path, hash: file.hash });
+        console.log(`[Sync Check] NEW ${entityType}: ${file.path} (hash: ${file.hash?.substring(0, 8)}...)`);
+      }
+
+      for (const file of category.modified) {
+        const id = extractEntityId(file.path);
+        result.modified.push({ id, path: file.path, hash: file.hash, oldHash: file.oldHash });
+        console.log(`[Sync Check] MODIFIED ${entityType}: ${file.path} (hash: ${file.hash?.substring(0, 8)}... <- ${file.oldHash?.substring(0, 8)}...)`);
+      }
+
+      for (const file of category.deleted) {
+        const id = extractEntityId(file.path);
+        result.deleted.push({ id, path: file.path });
+        console.log(`[Sync Check] DELETED ${entityType}: ${file.path}`);
+      }
+
+      return result;
+    };
+
+    const details = {
+      blog: buildDetailedChanges(categorized.blog, 'blog'),
+      categories: buildDetailedChanges(categorized.categories, 'category'),
+      tags: buildDetailedChanges(categorized.tags, 'tag'),
+      posts: buildDetailedChanges(categorized.posts, 'post'),
+      drafts: buildDetailedChanges(categorized.drafts, 'draft'),
+      sidebar: buildDetailedChanges(categorized.sidebar, 'sidebar'),
+      staticFiles: buildDetailedChanges(categorized.staticFiles, 'staticFile'),
+      embedImages: buildDetailedChanges(categorized.embedImages, 'embedImage'),
+      themes: buildDetailedChanges(categorized.themes, 'theme')
+    };
+
+    // Log local file hashes for debugging
+    const syncConfig = storage.getSyncConfig(blogId);
+    console.log('[Sync Check] Local hashes count:', Object.keys(syncConfig.localFileHashes || {}).length);
+    if (syncConfig.localFileHashes) {
+      console.log('[Sync Check] Local hashes sample:');
+      const entries = Object.entries(syncConfig.localFileHashes).slice(0, 5);
+      for (const [path, hash] of entries) {
+        console.log(`  ${path}: ${hash?.substring(0, 8)}...`);
+      }
+    }
 
     res.json({
       hasChanges: changeSet.hasChanges,
@@ -225,6 +283,7 @@ router.post('/blogs/:blogId/check-changes', async (req, res) => {
         modified: changeSet.modifiedFiles.length,
         deleted: changeSet.deletedFiles.length
       },
+      details,
       blogName: changeSet.manifest?.blogName,
       lastModified: changeSet.manifest?.lastModified
     });

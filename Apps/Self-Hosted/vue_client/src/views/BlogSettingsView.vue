@@ -158,6 +158,19 @@ async function pullChanges() {
   }
 }
 
+// Helper to check if a category has any changes
+function hasChangesInCategory(category) {
+  if (!category) return false;
+  return (category.new?.length > 0) || (category.modified?.length > 0) || (category.deleted?.length > 0);
+}
+
+// Helper to truncate long IDs for display
+function truncateId(id) {
+  if (!id) return 'unknown';
+  if (id.length <= 20) return id;
+  return id.substring(0, 8) + '...' + id.substring(id.length - 8);
+}
+
 const colorPreviewHtml = computed(() => {
   const accentColor = form.value.accentColor || '#FFA100';
   const backgroundColor = form.value.backgroundColor || '#efefef';
@@ -902,9 +915,138 @@ async function deleteBlog() {
                   </svg>
                   <span class="font-medium text-gray-900 dark:text-gray-100">Changes available</span>
                 </div>
+
+                <!-- Version info -->
+                <div class="text-xs text-gray-500 dark:text-gray-400 font-mono">
+                  Local v{{ syncCheckResult.localVersion }} → Remote v{{ syncCheckResult.remoteVersion }}
+                </div>
+
+                <!-- Summary -->
                 <p class="text-sm text-gray-600 dark:text-gray-400">
                   {{ syncCheckResult.summary.new }} new, {{ syncCheckResult.summary.modified }} modified, {{ syncCheckResult.summary.deleted }} deleted
                 </p>
+
+                <!-- Detailed breakdown -->
+                <div v-if="syncCheckResult.details" class="mt-3 space-y-2 text-xs border-t border-gray-200 dark:border-gray-600 pt-3">
+                  <div class="font-medium text-gray-700 dark:text-gray-300 mb-2">Detailed Changes:</div>
+
+                  <!-- Blog settings -->
+                  <div v-if="hasChangesInCategory(syncCheckResult.details.blog)" class="pl-2 border-l-2 border-blue-400">
+                    <div class="font-medium text-gray-800 dark:text-gray-200">Blog Settings</div>
+                    <div v-for="item in syncCheckResult.details.blog.modified" :key="item.path" class="text-yellow-600 dark:text-yellow-400">
+                      ⟳ Modified
+                    </div>
+                  </div>
+
+                  <!-- Categories -->
+                  <div v-if="hasChangesInCategory(syncCheckResult.details.categories)" class="pl-2 border-l-2 border-purple-400">
+                    <div class="font-medium text-gray-800 dark:text-gray-200">Categories</div>
+                    <div v-for="item in syncCheckResult.details.categories.new" :key="item.path" class="text-green-600 dark:text-green-400">
+                      + New: {{ item.id }}
+                    </div>
+                    <div v-for="item in syncCheckResult.details.categories.modified" :key="item.path" class="text-yellow-600 dark:text-yellow-400">
+                      ⟳ Modified: {{ item.id }}
+                    </div>
+                    <div v-for="item in syncCheckResult.details.categories.deleted" :key="item.path" class="text-red-600 dark:text-red-400">
+                      − Deleted: {{ item.id }}
+                    </div>
+                  </div>
+
+                  <!-- Tags -->
+                  <div v-if="hasChangesInCategory(syncCheckResult.details.tags)" class="pl-2 border-l-2 border-pink-400">
+                    <div class="font-medium text-gray-800 dark:text-gray-200">Tags</div>
+                    <div v-for="item in syncCheckResult.details.tags.new" :key="item.path" class="text-green-600 dark:text-green-400">
+                      + New: {{ item.id }}
+                    </div>
+                    <div v-for="item in syncCheckResult.details.tags.modified" :key="item.path" class="text-yellow-600 dark:text-yellow-400">
+                      ⟳ Modified: {{ item.id }}
+                    </div>
+                    <div v-for="item in syncCheckResult.details.tags.deleted" :key="item.path" class="text-red-600 dark:text-red-400">
+                      − Deleted: {{ item.id }}
+                    </div>
+                  </div>
+
+                  <!-- Posts -->
+                  <div v-if="hasChangesInCategory(syncCheckResult.details.posts)" class="pl-2 border-l-2 border-green-400">
+                    <div class="font-medium text-gray-800 dark:text-gray-200">Posts</div>
+                    <div v-for="item in syncCheckResult.details.posts.new" :key="item.path" class="text-green-600 dark:text-green-400 truncate" :title="item.id">
+                      + New: {{ truncateId(item.id) }}
+                    </div>
+                    <div v-for="item in syncCheckResult.details.posts.modified" :key="item.path" class="text-yellow-600 dark:text-yellow-400 truncate" :title="item.id">
+                      ⟳ Modified: {{ truncateId(item.id) }}
+                    </div>
+                    <div v-for="item in syncCheckResult.details.posts.deleted" :key="item.path" class="text-red-600 dark:text-red-400 truncate" :title="item.id">
+                      − Deleted: {{ truncateId(item.id) }}
+                    </div>
+                  </div>
+
+                  <!-- Drafts -->
+                  <div v-if="hasChangesInCategory(syncCheckResult.details.drafts)" class="pl-2 border-l-2 border-orange-400">
+                    <div class="font-medium text-gray-800 dark:text-gray-200">Drafts (encrypted)</div>
+                    <div v-for="item in syncCheckResult.details.drafts.new" :key="item.path" class="text-green-600 dark:text-green-400 truncate" :title="item.id">
+                      + New: {{ truncateId(item.id) }}
+                    </div>
+                    <div v-for="item in syncCheckResult.details.drafts.modified" :key="item.path" class="text-yellow-600 dark:text-yellow-400 truncate" :title="item.id">
+                      ⟳ Modified: {{ truncateId(item.id) }}
+                    </div>
+                    <div v-for="item in syncCheckResult.details.drafts.deleted" :key="item.path" class="text-red-600 dark:text-red-400 truncate" :title="item.id">
+                      − Deleted: {{ truncateId(item.id) }}
+                    </div>
+                  </div>
+
+                  <!-- Sidebar -->
+                  <div v-if="hasChangesInCategory(syncCheckResult.details.sidebar)" class="pl-2 border-l-2 border-indigo-400">
+                    <div class="font-medium text-gray-800 dark:text-gray-200">Sidebar Objects</div>
+                    <div v-for="item in syncCheckResult.details.sidebar.new" :key="item.path" class="text-green-600 dark:text-green-400 truncate" :title="item.id">
+                      + New: {{ truncateId(item.id) }}
+                    </div>
+                    <div v-for="item in syncCheckResult.details.sidebar.modified" :key="item.path" class="text-yellow-600 dark:text-yellow-400 truncate" :title="item.id">
+                      ⟳ Modified: {{ truncateId(item.id) }}
+                    </div>
+                    <div v-for="item in syncCheckResult.details.sidebar.deleted" :key="item.path" class="text-red-600 dark:text-red-400 truncate" :title="item.id">
+                      − Deleted: {{ truncateId(item.id) }}
+                    </div>
+                  </div>
+
+                  <!-- Static Files -->
+                  <div v-if="hasChangesInCategory(syncCheckResult.details.staticFiles)" class="pl-2 border-l-2 border-cyan-400">
+                    <div class="font-medium text-gray-800 dark:text-gray-200">Static Files</div>
+                    <div v-for="item in syncCheckResult.details.staticFiles.new" :key="item.path" class="text-green-600 dark:text-green-400 truncate" :title="item.path">
+                      + New: {{ item.path.split('/').pop() }}
+                    </div>
+                    <div v-for="item in syncCheckResult.details.staticFiles.modified" :key="item.path" class="text-yellow-600 dark:text-yellow-400 truncate" :title="item.path">
+                      ⟳ Modified: {{ item.path.split('/').pop() }}
+                    </div>
+                    <div v-for="item in syncCheckResult.details.staticFiles.deleted" :key="item.path" class="text-red-600 dark:text-red-400 truncate" :title="item.path">
+                      − Deleted: {{ item.path.split('/').pop() }}
+                    </div>
+                  </div>
+
+                  <!-- Embed Images -->
+                  <div v-if="hasChangesInCategory(syncCheckResult.details.embedImages)" class="pl-2 border-l-2 border-teal-400">
+                    <div class="font-medium text-gray-800 dark:text-gray-200">Embed Images</div>
+                    <div class="text-gray-600 dark:text-gray-400">
+                      {{ syncCheckResult.details.embedImages.new.length }} new,
+                      {{ syncCheckResult.details.embedImages.modified.length }} modified,
+                      {{ syncCheckResult.details.embedImages.deleted.length }} deleted
+                    </div>
+                  </div>
+
+                  <!-- Themes -->
+                  <div v-if="hasChangesInCategory(syncCheckResult.details.themes)" class="pl-2 border-l-2 border-amber-400">
+                    <div class="font-medium text-gray-800 dark:text-gray-200">Themes</div>
+                    <div v-for="item in syncCheckResult.details.themes.new" :key="item.path" class="text-green-600 dark:text-green-400">
+                      + New: {{ item.id }}
+                    </div>
+                    <div v-for="item in syncCheckResult.details.themes.modified" :key="item.path" class="text-yellow-600 dark:text-yellow-400">
+                      ⟳ Modified: {{ item.id }}
+                    </div>
+                    <div v-for="item in syncCheckResult.details.themes.deleted" :key="item.path" class="text-red-600 dark:text-red-400">
+                      − Deleted: {{ item.id }}
+                    </div>
+                  </div>
+                </div>
+
                 <button
                   type="button"
                   @click="pullChanges"
@@ -917,7 +1059,7 @@ async function deleteBlog() {
                 <svg class="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                 </svg>
-                <span class="text-gray-700 dark:text-gray-300">Up to date</span>
+                <span class="text-gray-700 dark:text-gray-300">Up to date (v{{ syncCheckResult.localVersion }})</span>
               </div>
             </div>
 
