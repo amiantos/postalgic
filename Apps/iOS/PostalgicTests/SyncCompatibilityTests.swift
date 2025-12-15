@@ -150,12 +150,12 @@ struct SyncCompatibilityTests {
         blog.themeIdentifier = fixture.blog.themeIdentifier
 
         // Create a map of testId to real model objects
-        var categoryMap: [String: Category] = [:]
-        var tagMap: [String: Tag] = [:]
+        var categoryMap: [String: Postalgic.Category] = [:]
+        var tagMap: [String: Postalgic.Tag] = [:]
 
         // Create categories
         for catData in fixture.categories {
-            let category = Category(blog: blog, name: catData.name, stub: catData.stub)
+            let category = Postalgic.Category(blog: blog, name: catData.name, stub: catData.stub)
             category.categoryDescription = catData.description
             blog.categories.append(category)
             categoryMap[catData.testId] = category
@@ -163,7 +163,7 @@ struct SyncCompatibilityTests {
 
         // Create tags
         for tagData in fixture.tags {
-            let tag = Tag(blog: blog, name: tagData.name, stub: tagData.stub)
+            let tag = Postalgic.Tag(blog: blog, name: tagData.name, stub: tagData.stub)
             blog.tags.append(tag)
             tagMap[tagData.testId] = tag
         }
@@ -217,15 +217,15 @@ struct SyncCompatibilityTests {
             let objType: SidebarObjectType = sidebarData.type == "text" ? .text : .linkList
             let sidebarObj = SidebarObject(
                 blog: blog,
-                type: objType,
                 title: sidebarData.title,
+                type: objType,
                 order: sidebarData.order
             )
             sidebarObj.content = sidebarData.content
 
             if let links = sidebarData.links {
                 for linkData in links {
-                    let link = SidebarLink(
+                    let link = LinkItem(
                         sidebarObject: sidebarObj,
                         title: linkData.title,
                         url: linkData.url,
