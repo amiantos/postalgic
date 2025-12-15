@@ -198,7 +198,12 @@ export const syncApi = {
   disable: (blogId) =>
     fetchApi(`/sync/blogs/${blogId}/disable`, { method: 'POST' }),
   updatePassword: (blogId, password) =>
-    fetchApi(`/sync/blogs/${blogId}/password`, { method: 'POST', body: JSON.stringify({ password }) })
+    fetchApi(`/sync/blogs/${blogId}/password`, { method: 'POST', body: JSON.stringify({ password }) }),
+  // Sync Down (Pull) endpoints
+  checkChanges: (blogId) =>
+    fetchApi(`/sync/blogs/${blogId}/check-changes`, { method: 'POST' }),
+  pull: (blogId, password = null) =>
+    fetchApi(`/sync/blogs/${blogId}/pull`, { method: 'POST', body: JSON.stringify({ password }) })
 };
 
 // Import API

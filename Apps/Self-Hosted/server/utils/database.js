@@ -91,6 +91,37 @@ function runMigrations(database) {
       )
     `);
   }
+
+  // Migration: Add sync_id columns for incremental sync support
+  const postColumns = database.prepare(`PRAGMA table_info(posts)`).all();
+  if (!postColumns.some(col => col.name === 'sync_id')) {
+    console.log('[Database] Running migration: adding sync_id column to posts table');
+    database.exec(`ALTER TABLE posts ADD COLUMN sync_id TEXT`);
+  }
+
+  const categoryColumns = database.prepare(`PRAGMA table_info(categories)`).all();
+  if (!categoryColumns.some(col => col.name === 'sync_id')) {
+    console.log('[Database] Running migration: adding sync_id column to categories table');
+    database.exec(`ALTER TABLE categories ADD COLUMN sync_id TEXT`);
+  }
+
+  const tagColumns = database.prepare(`PRAGMA table_info(tags)`).all();
+  if (!tagColumns.some(col => col.name === 'sync_id')) {
+    console.log('[Database] Running migration: adding sync_id column to tags table');
+    database.exec(`ALTER TABLE tags ADD COLUMN sync_id TEXT`);
+  }
+
+  const sidebarColumns = database.prepare(`PRAGMA table_info(sidebar_objects)`).all();
+  if (!sidebarColumns.some(col => col.name === 'sync_id')) {
+    console.log('[Database] Running migration: adding sync_id column to sidebar_objects table');
+    database.exec(`ALTER TABLE sidebar_objects ADD COLUMN sync_id TEXT`);
+  }
+
+  const staticFileColumns = database.prepare(`PRAGMA table_info(static_files)`).all();
+  if (!staticFileColumns.some(col => col.name === 'sync_id')) {
+    console.log('[Database] Running migration: adding sync_id column to static_files table');
+    database.exec(`ALTER TABLE static_files ADD COLUMN sync_id TEXT`);
+  }
 }
 
 /**
@@ -157,6 +188,7 @@ function createSchema(database) {
       name TEXT NOT NULL,
       description TEXT,
       stub TEXT NOT NULL,
+      sync_id TEXT,
       created_at TEXT NOT NULL,
       UNIQUE(blog_id, stub)
     );
@@ -167,6 +199,7 @@ function createSchema(database) {
       blog_id TEXT NOT NULL REFERENCES blogs(id) ON DELETE CASCADE,
       name TEXT NOT NULL,
       stub TEXT NOT NULL,
+      sync_id TEXT,
       created_at TEXT NOT NULL,
       UNIQUE(blog_id, stub),
       UNIQUE(blog_id, name)
@@ -184,6 +217,7 @@ function createSchema(database) {
       embed_type TEXT,
       embed_position TEXT,
       embed_data TEXT,
+      sync_id TEXT,
       created_at TEXT NOT NULL,
       updated_at TEXT,
       UNIQUE(blog_id, stub)
@@ -204,6 +238,7 @@ function createSchema(database) {
       type TEXT NOT NULL,
       content TEXT,
       sort_order INTEGER DEFAULT 0,
+      sync_id TEXT,
       created_at TEXT NOT NULL
     );
 
@@ -225,6 +260,7 @@ function createSchema(database) {
       mime_type TEXT,
       size INTEGER,
       special_file_type TEXT,
+      sync_id TEXT,
       created_at TEXT NOT NULL
     );
 

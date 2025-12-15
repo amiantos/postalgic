@@ -25,6 +25,14 @@ const showPassword = ref(false);
 const showConfirmPassword = ref(false);
 const changingPassword = ref(false);
 
+// Sync Down state
+const checkingChanges = ref(false);
+const syncingDown = ref(false);
+const syncCheckResult = ref(null);
+const syncDownResult = ref(null);
+const syncDownError = ref(null);
+const syncDownProgress = ref(null);
+
 watch(() => blogStore.currentBlog, (blog) => {
   if (blog) {
     form.value = { ...blog };
@@ -113,6 +121,40 @@ async function changePassword() {
     await fetchSyncConfig();
   } catch (e) {
     syncError.value = e.message;
+  }
+}
+
+async function checkForChanges() {
+  checkingChanges.value = true;
+  syncDownError.value = null;
+  syncCheckResult.value = null;
+  syncDownResult.value = null;
+
+  try {
+    const result = await syncApi.checkChanges(blogId.value);
+    syncCheckResult.value = result;
+  } catch (e) {
+    syncDownError.value = e.message;
+  } finally {
+    checkingChanges.value = false;
+  }
+}
+
+async function pullChanges() {
+  syncingDown.value = true;
+  syncDownError.value = null;
+  syncDownProgress.value = 'Starting sync...';
+
+  try {
+    const result = await syncApi.pull(blogId.value, syncPassword.value || undefined);
+    syncDownResult.value = result;
+    syncCheckResult.value = null;
+    await fetchSyncConfig();
+  } catch (e) {
+    syncDownError.value = e.message;
+  } finally {
+    syncingDown.value = false;
+    syncDownProgress.value = null;
   }
 }
 
@@ -808,6 +850,92 @@ async function deleteBlog() {
                 Update Password
               </button>
             </div>
+          </div>
+
+          <!-- Sync Down Section -->
+          <div v-if="form.url" class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
+            <h4 class="font-medium text-gray-900 dark:text-gray-100 mb-3">Sync Down</h4>
+            <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">
+              Pull changes from your published site to update this instance.
+            </p>
+
+            <!-- Sync Down Error -->
+            <div v-if="syncDownError" class="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-800 dark:text-red-400">
+              {{ syncDownError }}
+            </div>
+
+            <!-- Sync Down Result -->
+            <div v-if="syncDownResult" class="mb-4 p-3 rounded-lg" :class="syncDownResult.success ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800' : 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800'">
+              <div class="flex items-center gap-2">
+                <svg v-if="syncDownResult.success" class="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                <svg v-else class="w-5 h-5 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                <span :class="syncDownResult.success ? 'text-green-800 dark:text-green-400' : 'text-red-800 dark:text-red-400'">
+                  {{ syncDownResult.message }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Checking Changes -->
+            <div v-if="checkingChanges" class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+              <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-primary-600"></div>
+              <span class="text-gray-700 dark:text-gray-300">Checking for changes...</span>
+            </div>
+
+            <!-- Syncing -->
+            <div v-else-if="syncingDown" class="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+              <div class="flex items-center gap-3">
+                <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-primary-600"></div>
+                <span class="text-gray-700 dark:text-gray-300">{{ syncDownProgress || 'Syncing...' }}</span>
+              </div>
+            </div>
+
+            <!-- Check Result -->
+            <div v-else-if="syncCheckResult" class="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+              <div v-if="syncCheckResult.hasChanges" class="space-y-3">
+                <div class="flex items-center gap-2">
+                  <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                  </svg>
+                  <span class="font-medium text-gray-900 dark:text-gray-100">Changes available</span>
+                </div>
+                <p class="text-sm text-gray-600 dark:text-gray-400">
+                  {{ syncCheckResult.summary.new }} new, {{ syncCheckResult.summary.modified }} modified, {{ syncCheckResult.summary.deleted }} deleted
+                </p>
+                <button
+                  type="button"
+                  @click="pullChanges"
+                  class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+                >
+                  Pull Changes
+                </button>
+              </div>
+              <div v-else class="flex items-center gap-2">
+                <svg class="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                <span class="text-gray-700 dark:text-gray-300">Up to date</span>
+              </div>
+            </div>
+
+            <!-- Default: Check for Changes button -->
+            <div v-else>
+              <button
+                type="button"
+                @click="checkForChanges"
+                class="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+              >
+                Check for Changes
+              </button>
+            </div>
+          </div>
+          <div v-else class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
+            <p class="text-sm text-gray-500 dark:text-gray-400">
+              Set a Blog URL to enable sync down functionality.
+            </p>
           </div>
         </div>
 

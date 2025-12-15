@@ -23,6 +23,14 @@ struct SyncSettingsView: View {
     @State private var errorMessage: String?
     @State private var showingDisableConfirmation = false
 
+    // Sync Down state
+    @State private var isCheckingChanges = false
+    @State private var isSyncing = false
+    @State private var syncCheckResult: SyncCheckResult?
+    @State private var syncProgress: IncrementalSyncProgress?
+    @State private var syncResult: IncrementalSyncResult?
+    @State private var syncError: String?
+
     init(blog: Blog) {
         self.blog = blog
         _syncEnabled = State(initialValue: blog.syncEnabled)
@@ -63,6 +71,84 @@ struct SyncSettingsView: View {
                         } else {
                             Text("Sync data will be generated when you publish your blog.")
                         }
+                    }
+
+                    // Sync Down section
+                    Section {
+                        if isCheckingChanges {
+                            HStack {
+                                ProgressView()
+                                    .padding(.trailing, 8)
+                                Text("Checking for changes...")
+                            }
+                        } else if isSyncing {
+                            VStack(alignment: .leading, spacing: 8) {
+                                HStack {
+                                    ProgressView()
+                                        .padding(.trailing, 8)
+                                    Text(syncProgress?.step ?? "Syncing...")
+                                }
+                                if let progress = syncProgress {
+                                    ProgressView(value: progress.progress)
+                                }
+                            }
+                        } else if let result = syncResult {
+                            HStack {
+                                Image(systemName: result.success ? "checkmark.circle.fill" : "xmark.circle.fill")
+                                    .foregroundColor(result.success ? .green : .red)
+                                Text(result.message)
+                            }
+                        } else if let checkResult = syncCheckResult {
+                            if checkResult.hasChanges {
+                                VStack(alignment: .leading, spacing: 8) {
+                                    HStack {
+                                        Image(systemName: "arrow.down.circle.fill")
+                                            .foregroundColor(.blue)
+                                        Text("Changes available")
+                                    }
+                                    Text(checkResult.changeSummary)
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+
+                                    Button {
+                                        Task { await pullChanges() }
+                                    } label: {
+                                        HStack {
+                                            Spacer()
+                                            Label("Pull Changes", systemImage: "arrow.down.circle")
+                                            Spacer()
+                                        }
+                                    }
+                                    .buttonStyle(.borderedProminent)
+                                }
+                            } else {
+                                HStack {
+                                    Image(systemName: "checkmark.circle.fill")
+                                        .foregroundColor(.green)
+                                    Text("Up to date")
+                                }
+                            }
+                        } else {
+                            Button {
+                                Task { await checkForChanges() }
+                            } label: {
+                                HStack {
+                                    Spacer()
+                                    Label("Check for Changes", systemImage: "arrow.triangle.2.circlepath")
+                                    Spacer()
+                                }
+                            }
+                        }
+
+                        if let error = syncError {
+                            Text(error)
+                                .foregroundColor(.red)
+                                .font(.caption)
+                        }
+                    } header: {
+                        Text("Sync Down")
+                    } footer: {
+                        Text("Pull changes from your published site to update this device.")
                     }
 
                     Section {
@@ -215,6 +301,53 @@ struct SyncSettingsView: View {
         blog.syncEnabled = false
         try? modelContext.save()
         syncEnabled = false
+    }
+
+    private func checkForChanges() async {
+        isCheckingChanges = true
+        syncError = nil
+        syncCheckResult = nil
+        syncResult = nil
+
+        do {
+            let result = try await SyncChecker.checkForChanges(blog: blog)
+            await MainActor.run {
+                syncCheckResult = result
+                isCheckingChanges = false
+            }
+        } catch {
+            await MainActor.run {
+                syncError = error.localizedDescription
+                isCheckingChanges = false
+            }
+        }
+    }
+
+    private func pullChanges() async {
+        isSyncing = true
+        syncError = nil
+
+        do {
+            let result = try await IncrementalSync.pullChanges(
+                blog: blog,
+                modelContext: modelContext
+            ) { progress in
+                Task { @MainActor in
+                    syncProgress = progress
+                }
+            }
+
+            await MainActor.run {
+                syncResult = result
+                syncCheckResult = nil
+                isSyncing = false
+            }
+        } catch {
+            await MainActor.run {
+                syncError = error.localizedDescription
+                isSyncing = false
+            }
+        }
     }
 }
 
