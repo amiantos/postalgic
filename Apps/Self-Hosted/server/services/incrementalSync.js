@@ -419,10 +419,15 @@ export async function pullChanges(storage, blogId, syncUrl, password, onProgress
 
   // Step 10: Update sync state
   const newHashes = {};
+  const newContentHashes = {};
   for (const [filePath, fileInfo] of Object.entries(manifest.files)) {
     newHashes[filePath] = fileInfo.hash;
+    // Store content hashes for encrypted files (for consistent comparison)
+    if (fileInfo.contentHash) {
+      newContentHashes[filePath] = fileInfo.contentHash;
+    }
   }
-  storage.updateSyncVersion(blogId, manifest.syncVersion, newHashes);
+  storage.updateSyncVersion(blogId, manifest.syncVersion, newHashes, newContentHashes);
 
   onProgress({ step: 'Sync complete!', phase: 'complete', progress: 1 });
 

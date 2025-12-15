@@ -1022,7 +1022,8 @@ class Storage {
         syncPassword: null,
         lastSyncedVersion: 0,
         lastSyncedAt: null,
-        localFileHashes: {}
+        localFileHashes: {},
+        localContentHashes: {}
       };
     }
 
@@ -1033,6 +1034,7 @@ class Storage {
       lastSyncedVersion: row.last_synced_version || 0,
       lastSyncedAt: row.last_synced_at,
       localFileHashes: row.local_file_hashes ? JSON.parse(row.local_file_hashes) : {},
+      localContentHashes: row.local_content_hashes ? JSON.parse(row.local_content_hashes) : {},
       createdAt: row.created_at
     };
   }
@@ -1042,8 +1044,8 @@ class Storage {
 
     const stmt = db.prepare(`
       INSERT OR REPLACE INTO sync_config
-        (blog_id, sync_enabled, sync_password, last_synced_version, last_synced_at, local_file_hashes, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, COALESCE((SELECT created_at FROM sync_config WHERE blog_id = ?), datetime('now')))
+        (blog_id, sync_enabled, sync_password, last_synced_version, last_synced_at, local_file_hashes, local_content_hashes, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, COALESCE((SELECT created_at FROM sync_config WHERE blog_id = ?), datetime('now')))
     `);
 
     stmt.run(
@@ -1053,18 +1055,19 @@ class Storage {
       syncConfig.lastSyncedVersion || 0,
       syncConfig.lastSyncedAt || null,
       JSON.stringify(syncConfig.localFileHashes || {}),
+      JSON.stringify(syncConfig.localContentHashes || {}),
       blogId
     );
   }
 
-  updateSyncVersion(blogId, version, fileHashes) {
+  updateSyncVersion(blogId, version, fileHashes, contentHashes = {}) {
     const db = getDatabase();
     const existing = this.getSyncConfig(blogId);
 
     const stmt = db.prepare(`
       INSERT OR REPLACE INTO sync_config
-        (blog_id, sync_enabled, sync_password, last_synced_version, last_synced_at, local_file_hashes, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, COALESCE((SELECT created_at FROM sync_config WHERE blog_id = ?), datetime('now')))
+        (blog_id, sync_enabled, sync_password, last_synced_version, last_synced_at, local_file_hashes, local_content_hashes, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, COALESCE((SELECT created_at FROM sync_config WHERE blog_id = ?), datetime('now')))
     `);
 
     stmt.run(
@@ -1074,6 +1077,7 @@ class Storage {
       version,
       new Date().toISOString(),
       JSON.stringify(fileHashes || {}),
+      JSON.stringify(contentHashes || {}),
       blogId
     );
   }

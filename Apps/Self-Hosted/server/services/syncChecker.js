@@ -19,6 +19,7 @@ export async function checkForChanges(storage, blogId, syncUrl) {
   const syncConfig = storage.getSyncConfig(blogId);
   const localVersion = syncConfig.lastSyncedVersion || 0;
   const localHashes = syncConfig.localFileHashes || {};
+  const localContentHashes = syncConfig.localContentHashes || {};
 
   // Fetch remote manifest
   const manifest = await fetchManifest(syncUrl);
@@ -50,20 +51,32 @@ export async function checkForChanges(storage, blogId, syncUrl) {
       newFiles.push({
         path: filePath,
         hash: fileInfo.hash,
+        contentHash: fileInfo.contentHash,
         size: fileInfo.size,
         encrypted: fileInfo.encrypted,
         iv: fileInfo.iv
       });
-    } else if (localHashes[filePath] !== fileInfo.hash) {
-      // Modified file
-      modifiedFiles.push({
-        path: filePath,
-        hash: fileInfo.hash,
-        size: fileInfo.size,
-        encrypted: fileInfo.encrypted,
-        iv: fileInfo.iv,
-        oldHash: localHashes[filePath]
-      });
+    } else {
+      // For encrypted files (drafts), compare contentHash if available
+      // This prevents false positives from random IV changes
+      const localHash = localHashes[filePath];
+      const localContentHash = localContentHashes?.[filePath];
+      const remoteHash = fileInfo.contentHash || fileInfo.hash;
+      const compareHash = localContentHash || localHash;
+
+      if (compareHash !== remoteHash) {
+        // Modified file
+        modifiedFiles.push({
+          path: filePath,
+          hash: fileInfo.hash,
+          contentHash: fileInfo.contentHash,
+          size: fileInfo.size,
+          encrypted: fileInfo.encrypted,
+          iv: fileInfo.iv,
+          oldHash: localHash,
+          oldContentHash: localContentHash
+        });
+      }
     }
   }
 

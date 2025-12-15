@@ -182,18 +182,24 @@ export async function generateSyncDirectory(storage, blogId, outputDir, password
 
   // === Generate drafts (encrypted) ===
   const draftIndex = { drafts: [] };
+  const draftContentHashes = {}; // Store plaintext content hashes for comparison
   for (const draft of drafts) {
     const stableId = getStableSyncId(draft);
     const draftData = createSyncPost(draft, stableId, categoryIdMap, tagIdMap);
+    const draftJson = JSON.stringify(draftData, null, 2);
+    // Calculate content hash BEFORE encryption (for consistent comparison)
+    const contentHash = calculateHash(draftJson);
     const { ciphertext, iv } = syncEncryption.encryptJSON(draftData, password, salt);
     fs.writeFileSync(path.join(syncDir, 'drafts', `${stableId}.json.enc`), ciphertext);
     const hash = calculateBufferHash(ciphertext);
     fileHashes[`drafts/${stableId}.json.enc`] = hash;
     draftIVs[`drafts/${stableId}.json.enc`] = syncEncryption.base64Encode(iv);
+    draftContentHashes[`drafts/${stableId}.json.enc`] = contentHash;
 
     draftIndex.drafts.push({
       id: stableId,
       hash,
+      contentHash, // Include content hash in index for comparison
       modified: draft.updatedAt || draft.createdAt
     });
   }
@@ -334,10 +340,14 @@ export async function generateSyncDirectory(storage, blogId, outputDir, password
       }
     }
 
-    // Add IV for encrypted files
+    // Add IV and contentHash for encrypted files
     if (draftIVs[filePath]) {
       fileInfo.encrypted = true;
       fileInfo.iv = draftIVs[filePath];
+      // Add content hash for drafts (hash of plaintext for consistent comparison)
+      if (draftContentHashes[filePath]) {
+        fileInfo.contentHash = draftContentHashes[filePath];
+      }
     }
 
     manifestFiles[filePath] = fileInfo;

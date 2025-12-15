@@ -122,6 +122,13 @@ function runMigrations(database) {
     console.log('[Database] Running migration: adding sync_id column to static_files table');
     database.exec(`ALTER TABLE static_files ADD COLUMN sync_id TEXT`);
   }
+
+  // Migration: Add local_content_hashes column for encrypted file comparison
+  const syncConfigColumns = database.prepare(`PRAGMA table_info(sync_config)`).all();
+  if (!syncConfigColumns.some(col => col.name === 'local_content_hashes')) {
+    console.log('[Database] Running migration: adding local_content_hashes column to sync_config table');
+    database.exec(`ALTER TABLE sync_config ADD COLUMN local_content_hashes TEXT`);
+  }
 }
 
 /**
@@ -289,6 +296,7 @@ function createSchema(database) {
       last_synced_version INTEGER DEFAULT 0,
       last_synced_at TEXT,
       local_file_hashes TEXT,
+      local_content_hashes TEXT,
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
 
