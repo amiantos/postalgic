@@ -31,6 +31,21 @@ class SyncDataGenerator {
         }
     }
 
+    /// Converts a SwiftData persistent model ID to a safe filename-compatible string
+    /// The persistentModelID.stringRepresentation() returns URLs like:
+    /// "x-coredata://UUID/EntityName/rowID" which contain slashes
+    /// This function creates a safe, consistent identifier
+    private static func safeId(from persistentModelID: PersistentIdentifier) -> String {
+        guard let stringRep = persistentModelID.stringRepresentation() else {
+            return UUID().uuidString
+        }
+        // Replace unsafe characters with dashes to create a valid filename
+        // x-coredata://UUID/Entity/p123 -> x-coredata--UUID-Entity-p123
+        return stringRep
+            .replacingOccurrences(of: "://", with: "--")
+            .replacingOccurrences(of: "/", with: "-")
+    }
+
     // MARK: - Sync Data Models
 
     struct SyncManifest: Codable {
@@ -259,13 +274,13 @@ class SyncDataGenerator {
 
         // Generate category IDs
         for category in blog.categories {
-            let id = category.persistentModelID.stringRepresentation() ?? UUID().uuidString
+            let id = safeId(from: category.persistentModelID)
             categoryIdMap[id] = id
         }
 
         // Generate tag IDs
         for tag in blog.tags {
-            let id = tag.persistentModelID.stringRepresentation() ?? UUID().uuidString
+            let id = safeId(from: tag.persistentModelID)
             tagIdMap[id] = id
         }
 
@@ -299,7 +314,7 @@ class SyncDataGenerator {
         var categoryIndexEntries: [SyncCategoryIndex.CategoryIndexEntry] = []
 
         for category in blog.categories {
-            let id = category.persistentModelID.stringRepresentation() ?? UUID().uuidString
+            let id = safeId(from: category.persistentModelID)
             let syncCategory = SyncCategory(
                 id: id,
                 name: category.name,
@@ -331,7 +346,7 @@ class SyncDataGenerator {
         var tagIndexEntries: [SyncTagIndex.TagIndexEntry] = []
 
         for tag in blog.tags {
-            let id = tag.persistentModelID.stringRepresentation() ?? UUID().uuidString
+            let id = safeId(from: tag.persistentModelID)
             let syncTag = SyncTag(
                 id: id,
                 name: tag.name,
@@ -363,7 +378,7 @@ class SyncDataGenerator {
         var postIndexEntries: [SyncPostIndex.PostIndexEntry] = []
 
         for post in publishedPosts {
-            let id = post.persistentModelID.stringRepresentation() ?? UUID().uuidString
+            let id = safeId(from: post.persistentModelID)
             statusUpdate("Generating post: \(post.stub ?? id)...")
 
             do {
@@ -399,7 +414,7 @@ class SyncDataGenerator {
         var draftIVs: [String: String] = [:] // Store IVs for manifest
 
         for draft in drafts {
-            let id = draft.persistentModelID.stringRepresentation() ?? UUID().uuidString
+            let id = safeId(from: draft.persistentModelID)
             let syncPost = try createSyncPost(from: draft, categoryIdMap: categoryIdMap, tagIdMap: tagIdMap)
             let postData = try encoder.encode(syncPost)
 
@@ -433,7 +448,7 @@ class SyncDataGenerator {
         var sidebarIndexEntries: [SyncSidebarIndex.SidebarIndexEntry] = []
 
         for sidebarObject in blog.sidebarObjects {
-            let id = sidebarObject.persistentModelID.stringRepresentation() ?? UUID().uuidString
+            let id = safeId(from: sidebarObject.persistentModelID)
 
             var links: [SyncLink]? = nil
             if sidebarObject.objectType == .linkList {
@@ -616,17 +631,17 @@ class SyncDataGenerator {
         categoryIdMap: [String: String],
         tagIdMap: [String: String]
     ) throws -> SyncPost {
-        let postId = post.persistentModelID.stringRepresentation() ?? UUID().uuidString
+        let postId = safeId(from: post.persistentModelID)
 
         // Get category ID if exists
         var categoryId: String? = nil
         if let category = post.category {
-            categoryId = category.persistentModelID.stringRepresentation()
+            categoryId = safeId(from: category.persistentModelID)
         }
 
         // Get tag IDs
-        let tagIds = post.tags.compactMap { tag -> String? in
-            return tag.persistentModelID.stringRepresentation()
+        let tagIds = post.tags.map { tag in
+            safeId(from: tag.persistentModelID)
         }
 
         // Build embed if exists
