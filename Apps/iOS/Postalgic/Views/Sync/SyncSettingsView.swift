@@ -54,7 +54,8 @@ struct SyncSettingsView: View {
                                 syncEnabled = false
                             } else if newValue {
                                 enableSync()
-                            } else {
+                            } else if blog.syncEnabled {
+                                // Only show disable confirmation if sync is actually enabled
                                 showingDisableConfirmation = true
                             }
                         }
