@@ -314,6 +314,64 @@ describe('Sync Data Compatibility', () => {
         }
       }
     });
+
+    it('should have contentHash for encrypted files', () => {
+      const manifest = JSON.parse(
+        fs.readFileSync(path.join(syncOutputDir, 'sync', 'manifest.json'), 'utf8')
+      );
+
+      const sha256Regex = /^[a-f0-9]{64}$/;
+      let encryptedFilesCount = 0;
+
+      for (const [filePath, fileInfo] of Object.entries(manifest.files)) {
+        if (fileInfo.encrypted) {
+          encryptedFilesCount++;
+          // Each encrypted file should have a contentHash
+          expect(fileInfo.contentHash).toBeDefined();
+          expect(fileInfo.contentHash).toMatch(sha256Regex);
+          // contentHash should be different from hash (since hash is of ciphertext)
+          expect(fileInfo.contentHash).not.toBe(fileInfo.hash);
+        }
+      }
+
+      // We should have at least some encrypted files
+      expect(encryptedFilesCount).toBeGreaterThan(0);
+    });
+
+    it('should have stable contentHash across multiple generations', async () => {
+      // Generate sync data a second time
+      const syncOutputDir2 = path.join(testDir, 'output2');
+      fs.mkdirSync(syncOutputDir2, { recursive: true });
+
+      await generateSyncDirectory(
+        storage,
+        blogId,
+        syncOutputDir2,
+        canonicalBlog.encryption.testPassword
+      );
+
+      // Load both manifests
+      const manifest1 = JSON.parse(
+        fs.readFileSync(path.join(syncOutputDir, 'sync', 'manifest.json'), 'utf8')
+      );
+      const manifest2 = JSON.parse(
+        fs.readFileSync(path.join(syncOutputDir2, 'sync', 'manifest.json'), 'utf8')
+      );
+
+      // For encrypted files, contentHash should be the same even though hash differs
+      for (const [filePath, fileInfo1] of Object.entries(manifest1.files)) {
+        if (fileInfo1.encrypted) {
+          const fileInfo2 = manifest2.files[filePath];
+          expect(fileInfo2).toBeDefined();
+
+          // contentHash should be stable
+          expect(fileInfo1.contentHash).toBe(fileInfo2.contentHash);
+
+          // Regular hash (of ciphertext) should differ due to random IV
+          expect(fileInfo1.hash).not.toBe(fileInfo2.hash);
+        }
+      }
+    });
   });
 
   describe('Post Structure', () => {

@@ -72,6 +72,7 @@ final class Blog {
     var lastSyncedVersion: Int = 0
     var lastSyncedAt: Date?
     var localSyncHashes: [String: String] = [:]  // For tracking local sync state
+    var localContentHashes: [String: String] = [:]  // Content hashes for encrypted files (hash of plaintext)
 
     // Future Netlify Configuration
     // var netlifyToken: String?

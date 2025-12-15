@@ -454,10 +454,16 @@ class IncrementalSync {
         blog.lastSyncedAt = Date()
 
         var newHashes: [String: String] = [:]
+        var newContentHashes: [String: String] = [:]
         for (path, fileInfo) in manifest.files {
             newHashes[path] = fileInfo.hash
+            // Store contentHash for encrypted files (allows change detection without IV false positives)
+            if let contentHash = fileInfo.contentHash {
+                newContentHashes[path] = contentHash
+            }
         }
         blog.localSyncHashes = newHashes
+        blog.localContentHashes = newContentHashes
 
         // Save changes
         try modelContext.save()

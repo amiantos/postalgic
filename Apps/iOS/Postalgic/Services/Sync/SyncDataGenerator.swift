@@ -94,6 +94,7 @@ class SyncDataGenerator {
             var modified: String?
             var encrypted: Bool?
             var iv: String?
+            var contentHash: String?  // Hash of plaintext before encryption (for drafts)
         }
     }
 
@@ -436,10 +437,16 @@ class SyncDataGenerator {
         let drafts = blog.posts.filter { $0.isDraft }
         var draftIndexEntries: [SyncDraftIndex.DraftIndexEntry] = []
         var draftIVs: [String: String] = [:] // Store IVs for manifest
+        var draftContentHashes: [String: String] = [:] // Store contentHash (hash of plaintext before encryption)
 
         for draft in drafts {
             let stableId = getStableSyncId(for: draft)
             let syncPost = try createSyncPost(from: draft, stableId: stableId, categoryIdMap: categoryIdMap, tagIdMap: tagIdMap)
+
+            // Calculate content hash BEFORE encryption
+            // This allows change detection without false positives from random IV
+            let draftData = try encoder.encode(syncPost)
+            let contentHash = draftData.sha256Hash()
 
             // Encrypt the draft
             let (ciphertext, iv) = try SyncEncryption.encryptJSON(syncPost, password: password, salt: salt)
@@ -448,10 +455,11 @@ class SyncDataGenerator {
             let hash = ciphertext.sha256Hash()
             fileHashes["drafts/\(stableId).json.enc"] = hash
             draftIVs["drafts/\(stableId).json.enc"] = SyncEncryption.base64Encode(iv)
+            draftContentHashes["drafts/\(stableId).json.enc"] = contentHash
 
             draftIndexEntries.append(SyncDraftIndex.DraftIndexEntry(
                 id: stableId,
-                hash: hash,
+                hash: contentHash, // Use contentHash for stable comparison (ciphertext hash is in manifest)
                 modified: isoFormatter.string(from: draft.createdAt)
             ))
         }
@@ -459,11 +467,17 @@ class SyncDataGenerator {
         // Encrypt draft index
         if !draftIndexEntries.isEmpty {
             let draftIndex = SyncDraftIndex(drafts: draftIndexEntries)
+
+            // Calculate content hash for draft index before encryption
+            let draftIndexData = try encoder.encode(draftIndex)
+            let draftIndexContentHash = draftIndexData.sha256Hash()
+
             let (indexCiphertext, indexIV) = try SyncEncryption.encryptJSON(draftIndex, password: password, salt: salt)
             let draftIndexPath = syncDirectory.appendingPathComponent("drafts/index.json.enc")
             try indexCiphertext.write(to: draftIndexPath)
             fileHashes["drafts/index.json.enc"] = indexCiphertext.sha256Hash()
             draftIVs["drafts/index.json.enc"] = SyncEncryption.base64Encode(indexIV)
+            draftContentHashes["drafts/index.json.enc"] = draftIndexContentHash
         }
 
         // MARK: Generate sidebar objects
@@ -604,10 +618,15 @@ class SyncDataGenerator {
                 size: 0 // We'll update this
             )
 
-            // Add IV for encrypted files
+            // Add IV and contentHash for encrypted files
             if let iv = draftIVs[path] {
                 fileInfo.encrypted = true
                 fileInfo.iv = iv
+                // Add contentHash for encrypted files (hash of plaintext before encryption)
+                // This allows change detection without false positives from random IV
+                if let contentHash = draftContentHashes[path] {
+                    fileInfo.contentHash = contentHash
+                }
             }
 
             manifestFiles[path] = fileInfo

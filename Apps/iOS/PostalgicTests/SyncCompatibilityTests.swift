@@ -515,6 +515,117 @@ struct SyncCompatibilityTests {
             #expect(hash.contains(sha256Regex), "Hash should be valid SHA-256: \(hash)")
         }
     }
+
+    @Test func testEncryptedFilesHaveContentHash() async throws {
+        let fixture = try Self.loadCanonicalBlog()
+        let blog = createTestBlogFromFixture(fixture)
+
+        blog.syncEnabled = true
+        blog.setSyncPassword(fixture.encryption.testPassword)
+
+        let tempDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent("sync-test-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+
+        defer {
+            try? FileManager.default.removeItem(at: tempDir)
+        }
+
+        _ = try SyncDataGenerator.generateSyncDirectory(
+            for: blog,
+            in: tempDir,
+            password: fixture.encryption.testPassword
+        ) { _ in }
+
+        // Check manifest for contentHash on encrypted files
+        let manifestPath = tempDir.appendingPathComponent("sync/manifest.json")
+        let manifestData = try Data(contentsOf: manifestPath)
+        let manifest = try JSONSerialization.jsonObject(with: manifestData) as? [String: Any]
+        let files = manifest?["files"] as? [String: [String: Any]] ?? [:]
+
+        // SHA-256 produces 64 hex characters
+        let sha256Regex = try! Regex(#"^[a-f0-9]{64}$"#)
+
+        // Find all encrypted files (drafts)
+        var encryptedFilesCount = 0
+        for (path, fileInfo) in files {
+            let isEncrypted = fileInfo["encrypted"] as? Bool ?? false
+            if isEncrypted {
+                encryptedFilesCount += 1
+                let contentHash = fileInfo["contentHash"] as? String ?? ""
+                #expect(!contentHash.isEmpty, "Encrypted file \(path) should have contentHash")
+                #expect(contentHash.contains(sha256Regex), "contentHash should be valid SHA-256: \(contentHash)")
+
+                // contentHash should be different from hash (since hash is of ciphertext)
+                let hash = fileInfo["hash"] as? String ?? ""
+                #expect(contentHash != hash, "contentHash should differ from hash (ciphertext hash) for \(path)")
+            }
+        }
+
+        // We should have at least the draft index file encrypted
+        #expect(encryptedFilesCount > 0, "Should have at least one encrypted file")
+    }
+
+    @Test func testContentHashIsStableAcrossMultipleGenerations() async throws {
+        let fixture = try Self.loadCanonicalBlog()
+        let blog = createTestBlogFromFixture(fixture)
+
+        blog.syncEnabled = true
+        blog.setSyncPassword(fixture.encryption.testPassword)
+
+        // Generate sync data twice
+        let tempDir1 = FileManager.default.temporaryDirectory
+            .appendingPathComponent("sync-test-1-\(UUID().uuidString)")
+        let tempDir2 = FileManager.default.temporaryDirectory
+            .appendingPathComponent("sync-test-2-\(UUID().uuidString)")
+
+        try FileManager.default.createDirectory(at: tempDir1, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: tempDir2, withIntermediateDirectories: true)
+
+        defer {
+            try? FileManager.default.removeItem(at: tempDir1)
+            try? FileManager.default.removeItem(at: tempDir2)
+        }
+
+        _ = try SyncDataGenerator.generateSyncDirectory(
+            for: blog,
+            in: tempDir1,
+            password: fixture.encryption.testPassword
+        ) { _ in }
+
+        _ = try SyncDataGenerator.generateSyncDirectory(
+            for: blog,
+            in: tempDir2,
+            password: fixture.encryption.testPassword
+        ) { _ in }
+
+        // Load both manifests
+        let manifestData1 = try Data(contentsOf: tempDir1.appendingPathComponent("sync/manifest.json"))
+        let manifestData2 = try Data(contentsOf: tempDir2.appendingPathComponent("sync/manifest.json"))
+
+        let manifest1 = try JSONSerialization.jsonObject(with: manifestData1) as? [String: Any]
+        let manifest2 = try JSONSerialization.jsonObject(with: manifestData2) as? [String: Any]
+
+        let files1 = manifest1?["files"] as? [String: [String: Any]] ?? [:]
+        let files2 = manifest2?["files"] as? [String: [String: Any]] ?? [:]
+
+        // Compare contentHash for encrypted files - they should be the same
+        // even though the ciphertext hash will differ (due to random IV)
+        for (path, fileInfo1) in files1 {
+            let isEncrypted = fileInfo1["encrypted"] as? Bool ?? false
+            if isEncrypted {
+                let contentHash1 = fileInfo1["contentHash"] as? String ?? ""
+                let contentHash2 = (files2[path])?["contentHash"] as? String ?? ""
+
+                #expect(contentHash1 == contentHash2, "contentHash should be stable for \(path)")
+
+                // The regular hash (of ciphertext) should be different due to random IV
+                let hash1 = fileInfo1["hash"] as? String ?? ""
+                let hash2 = (files2[path])?["hash"] as? String ?? ""
+                #expect(hash1 != hash2, "Ciphertext hash should differ due to random IV for \(path)")
+            }
+        }
+    }
 }
 
 /// Helper class to locate the bundle

@@ -198,18 +198,22 @@ export async function generateSyncDirectory(storage, blogId, outputDir, password
 
     draftIndex.drafts.push({
       id: stableId,
-      hash,
-      contentHash, // Include content hash in index for comparison
+      hash: contentHash, // Use contentHash for stable comparison (ciphertext hash is in manifest)
       modified: draft.updatedAt || draft.createdAt
     });
   }
 
   // Encrypt draft index if there are drafts
   if (drafts.length > 0) {
+    // Calculate content hash for draft index before encryption
+    const draftIndexJson = JSON.stringify(draftIndex, null, 2);
+    const draftIndexContentHash = calculateHash(draftIndexJson);
+
     const { ciphertext, iv } = syncEncryption.encryptJSON(draftIndex, password, salt);
     fs.writeFileSync(path.join(syncDir, 'drafts', 'index.json.enc'), ciphertext);
     fileHashes['drafts/index.json.enc'] = calculateBufferHash(ciphertext);
     draftIVs['drafts/index.json.enc'] = syncEncryption.base64Encode(iv);
+    draftContentHashes['drafts/index.json.enc'] = draftIndexContentHash;
   }
 
   // === Generate sidebar objects ===

@@ -21,10 +21,12 @@ struct SyncCheckResult {
     struct ChangedFile {
         let path: String
         let hash: String
+        let contentHash: String?  // Hash of plaintext before encryption (for drafts)
         let size: Int?
         let encrypted: Bool
         let iv: String?
         let oldHash: String?
+        let oldContentHash: String?
     }
 
     /// Check if there are entity-level changes (excluding indexes)
@@ -109,6 +111,7 @@ class SyncChecker {
         // Get local sync state
         let localVersion = blog.lastSyncedVersion
         let localHashes = blog.localSyncHashes
+        let localContentHashes = blog.localContentHashes
 
         // Fetch remote manifest
         let manifest = try await SyncImporter.fetchManifest(from: syncUrl)
@@ -140,21 +143,34 @@ class SyncChecker {
                 newFiles.append(SyncCheckResult.ChangedFile(
                     path: filePath,
                     hash: fileInfo.hash,
+                    contentHash: fileInfo.contentHash,
                     size: fileInfo.size,
                     encrypted: fileInfo.encrypted ?? false,
                     iv: fileInfo.iv,
-                    oldHash: nil
+                    oldHash: nil,
+                    oldContentHash: nil
                 ))
-            } else if localHashes[filePath] != fileInfo.hash {
-                // Modified file
-                modifiedFiles.append(SyncCheckResult.ChangedFile(
-                    path: filePath,
-                    hash: fileInfo.hash,
-                    size: fileInfo.size,
-                    encrypted: fileInfo.encrypted ?? false,
-                    iv: fileInfo.iv,
-                    oldHash: localHashes[filePath]
-                ))
+            } else {
+                // For encrypted files (drafts), compare contentHash if available
+                // This prevents false positives from random IV changes
+                let localHash = localHashes[filePath]
+                let localContentHash = localContentHashes[filePath]
+                let remoteHash = fileInfo.contentHash ?? fileInfo.hash
+                let compareHash = localContentHash ?? localHash
+
+                if compareHash != remoteHash {
+                    // Modified file
+                    modifiedFiles.append(SyncCheckResult.ChangedFile(
+                        path: filePath,
+                        hash: fileInfo.hash,
+                        contentHash: fileInfo.contentHash,
+                        size: fileInfo.size,
+                        encrypted: fileInfo.encrypted ?? false,
+                        iv: fileInfo.iv,
+                        oldHash: localHashes[filePath],
+                        oldContentHash: localContentHash
+                    ))
+                }
             }
         }
 
@@ -164,10 +180,12 @@ class SyncChecker {
                 deletedFiles.append(SyncCheckResult.ChangedFile(
                     path: filePath,
                     hash: hash,
+                    contentHash: localContentHashes[filePath],
                     size: nil,
                     encrypted: false,
                     iv: nil,
-                    oldHash: hash
+                    oldHash: hash,
+                    oldContentHash: localContentHashes[filePath]
                 ))
             }
         }

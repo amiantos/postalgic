@@ -457,6 +457,7 @@ struct ChangePasswordView: View {
 
         // Reset sync hashes since password changed
         blog.localSyncHashes = [:]
+        blog.localContentHashes = [:]
         blog.lastSyncedVersion = 0
 
         try? modelContext.save()

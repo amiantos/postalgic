@@ -65,6 +65,7 @@ class SyncImporter {
             let modified: String?
             let encrypted: Bool?
             let iv: String?
+            let contentHash: String?  // Hash of plaintext before encryption (for drafts)
         }
     }
 
@@ -371,10 +372,16 @@ class SyncImporter {
 
         // Store local file hashes for future sync
         var localHashes: [String: String] = [:]
+        var localContentHashes: [String: String] = [:]
         for (path, fileInfo) in manifest.files {
             localHashes[path] = fileInfo.hash
+            // Store contentHash for encrypted files (allows change detection without IV false positives)
+            if let contentHash = fileInfo.contentHash {
+                localContentHashes[path] = contentHash
+            }
         }
         blog.localSyncHashes = localHashes
+        blog.localContentHashes = localContentHashes
 
         progressUpdate(ImportProgress(currentStep: "Import complete!", filesDownloaded: totalFiles, totalFiles: totalFiles, isComplete: true))
 
