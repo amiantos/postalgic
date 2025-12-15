@@ -205,6 +205,7 @@ class SyncImporter {
             let category = Category(blog: blog, name: syncCategory.name)
             category.categoryDescription = syncCategory.description
             category.stub = syncCategory.stub
+            category.syncId = syncCategory.id  // Store remote ID for incremental sync matching
             if let createdAt = parseDate(syncCategory.createdAt) {
                 category.createdAt = createdAt
             }
@@ -226,6 +227,7 @@ class SyncImporter {
 
             let tag = Tag(blog: blog, name: syncTag.name)
             tag.stub = syncTag.stub
+            tag.syncId = syncTag.id  // Store remote ID for incremental sync matching
             if let createdAt = parseDate(syncTag.createdAt) {
                 tag.createdAt = createdAt
             }
@@ -317,6 +319,7 @@ class SyncImporter {
             let sidebarType: SidebarObjectType = syncSidebar.type == "linkList" ? .linkList : .text
             let sidebar = SidebarObject(blog: blog, title: syncSidebar.title, type: sidebarType, order: syncSidebar.order)
             sidebar.content = syncSidebar.content
+            sidebar.syncId = syncSidebar.id  // Store remote ID for incremental sync matching
             modelContext.insert(sidebar)
 
             // Create links if it's a link list
@@ -341,6 +344,7 @@ class SyncImporter {
             let staticFile = StaticFile(blog: blog, filename: fileEntry.filename, data: fileData, mimeType: fileEntry.mimeType)
             staticFile.isSpecialFile = fileEntry.isSpecialFile
             staticFile.specialFileType = fileEntry.specialFileType
+            staticFile.syncId = fileEntry.filename  // Use filename as sync ID for static files
             modelContext.insert(staticFile)
             progressUpdate(ImportProgress(currentStep: "Downloading static files...", filesDownloaded: filesDownloaded, totalFiles: totalFiles, isComplete: false))
         }
@@ -446,6 +450,7 @@ class SyncImporter {
         post.title = syncPost.title
         post.stub = syncPost.stub
         post.isDraft = isDraft
+        post.syncId = syncPost.id  // Store remote ID for incremental sync matching
 
         if let createdAt = parseDate(syncPost.createdAt) {
             post.createdAt = createdAt

@@ -243,6 +243,7 @@ final class Category {
     var categoryDescription: String?
     var createdAt: Date
     var stub: String?
+    var syncId: String?  // Remote sync ID for incremental sync matching
 
     var blog: Blog?
     var posts: [Post] = []
@@ -281,6 +282,7 @@ final class Tag {
     var name: String
     var createdAt: Date
     var stub: String?
+    var syncId: String?  // Remote sync ID for incremental sync matching
 
     var blog: Blog?
     var posts: [Post] = []
@@ -586,9 +588,10 @@ final class Post {
     }
     var createdAt: Date
     var stub: String?
+    var syncId: String?  // Remote sync ID for incremental sync matching
 
     var isDraft: Bool = false
-    
+
     /// Updates the stub based on current title or content
     private func updateStub() {
         // Don't regenerate stub if we're in the middle of being initialized
@@ -777,19 +780,20 @@ enum SidebarObjectType: String, Codable {
 @Model
 final class SidebarObject {
     var blog: Blog?
-    
+
     var title: String
     var type: String // SidebarObjectType.rawValue
     var order: Int
     var createdAt: Date
-    
+    var syncId: String?  // Remote sync ID for incremental sync matching
+
     // For text blocks
     var content: String?
-    
+
     // For link lists
     @Relationship(deleteRule: .cascade, inverse: \LinkItem.sidebarObject)
     var links: [LinkItem] = []
-    
+
     init(blog: Blog, title: String, type: SidebarObjectType, order: Int, createdAt: Date = Date()) {
         self.blog = blog
         self.title = title
@@ -976,14 +980,15 @@ final class EmbedImage {
 @Model
 final class StaticFile {
     var blog: Blog?
-    
+
     var filename: String
     @Attribute(.externalStorage) var data: Data
     var mimeType: String
     var isSpecialFile: Bool
     var specialFileType: String? // SpecialFileType.rawValue
     var createdAt: Date
-    
+    var syncId: String?  // Remote sync ID for incremental sync matching
+
     init(blog: Blog, filename: String, data: Data, mimeType: String, isSpecialFile: Bool = false, specialFileType: SpecialFileType? = nil, createdAt: Date = Date()) {
         self.blog = blog
         self.filename = filename

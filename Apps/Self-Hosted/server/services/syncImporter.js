@@ -135,7 +135,8 @@ export async function importBlog(storage, baseUrl, password, onProgress = () => 
     const category = storage.createCategory(blogId, {
       name: syncCategory.name,
       description: syncCategory.description || '',
-      stub: syncCategory.stub
+      stub: syncCategory.stub,
+      syncId: syncCategory.id  // Store remote ID for incremental sync matching
     });
     categoryMap.set(syncCategory.id, category.id);
   }
@@ -153,7 +154,8 @@ export async function importBlog(storage, baseUrl, password, onProgress = () => 
 
     const tag = storage.createTag(blogId, {
       name: syncTag.name,
-      stub: syncTag.stub
+      stub: syncTag.stub,
+      syncId: syncTag.id  // Store remote ID for incremental sync matching
     });
     tagMap.set(syncTag.id, tag.id);
   }
@@ -240,7 +242,8 @@ export async function importBlog(storage, baseUrl, password, onProgress = () => 
       type: syncSidebar.type,
       content: syncSidebar.content || null,
       order: syncSidebar.order,
-      links: syncSidebar.links || []
+      links: syncSidebar.links || [],
+      syncId: syncSidebar.id  // Store remote ID for incremental sync matching
     });
   }
 
@@ -257,7 +260,8 @@ export async function importBlog(storage, baseUrl, password, onProgress = () => 
     storage.createStaticFile(blogId, {
       filename: fileEntry.filename,
       mimeType: fileEntry.mimeType,
-      specialFileType: fileEntry.specialFileType || null
+      specialFileType: fileEntry.specialFileType || null,
+      syncId: fileEntry.filename  // Use filename as sync ID for static files
     }, fileBuffer);
     onProgress({ step: 'Downloading static files...', downloaded: filesDownloaded, total: totalFiles });
   }
@@ -343,6 +347,7 @@ function createPost(storage, blogId, syncPost, categoryMap, tagMap, isDraft) {
     categoryId: categoryId,
     tagIds: tagIds,
     embed: embed,
+    syncId: syncPost.id,  // Store remote ID for incremental sync matching
     createdAt: syncPost.createdAt
   });
 

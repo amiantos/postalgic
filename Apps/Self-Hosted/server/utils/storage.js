@@ -287,8 +287,8 @@ class Storage {
     const stmt = db.prepare(`
       INSERT INTO posts (
         id, blog_id, title, content, stub, is_draft, category_id,
-        embed_type, embed_position, embed_data, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        embed_type, embed_position, embed_data, sync_id, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     stmt.run(
@@ -302,6 +302,7 @@ class Storage {
       embedType,
       embedPosition,
       embedData,
+      postData.syncId || null,
       postData.createdAt || now,
       now
     );
@@ -417,6 +418,7 @@ class Storage {
       categoryId: row.category_id,
       tagIds: tagIds,
       embed: embed,
+      syncId: row.sync_id,
       createdAt: row.created_at,
       updatedAt: row.updated_at
     };
@@ -498,8 +500,8 @@ class Storage {
     const now = new Date().toISOString();
 
     const stmt = db.prepare(`
-      INSERT INTO categories (id, blog_id, name, description, stub, created_at)
-      VALUES (?, ?, ?, ?, ?, ?)
+      INSERT INTO categories (id, blog_id, name, description, stub, sync_id, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
     `);
 
     stmt.run(
@@ -508,6 +510,7 @@ class Storage {
       categoryData.name || 'Untitled',
       categoryData.description || null,
       categoryData.stub || categoryId,
+      categoryData.syncId || null,
       now
     );
 
@@ -557,6 +560,7 @@ class Storage {
       name: row.name,
       description: row.description,
       stub: row.stub,
+      syncId: row.sync_id,
       createdAt: row.created_at
     };
   }
@@ -584,8 +588,8 @@ class Storage {
     const now = new Date().toISOString();
 
     const stmt = db.prepare(`
-      INSERT INTO tags (id, blog_id, name, stub, created_at)
-      VALUES (?, ?, ?, ?, ?)
+      INSERT INTO tags (id, blog_id, name, stub, sync_id, created_at)
+      VALUES (?, ?, ?, ?, ?, ?)
     `);
 
     stmt.run(
@@ -593,6 +597,7 @@ class Storage {
       blogId,
       (tagData.name || 'untitled').toLowerCase(),
       tagData.stub || tagId,
+      tagData.syncId || null,
       now
     );
 
@@ -642,6 +647,7 @@ class Storage {
       id: row.id,
       name: row.name,
       stub: row.stub,
+      syncId: row.sync_id,
       createdAt: row.created_at
     };
   }
@@ -674,8 +680,8 @@ class Storage {
     `).get(blogId).max_order;
 
     const stmt = db.prepare(`
-      INSERT INTO sidebar_objects (id, blog_id, title, type, content, sort_order, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO sidebar_objects (id, blog_id, title, type, content, sort_order, sync_id, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     stmt.run(
@@ -685,6 +691,7 @@ class Storage {
       objectData.type || 'text',
       objectData.content || null,
       objectData.order ?? maxOrder + 1,
+      objectData.syncId || null,
       now
     );
 
@@ -789,6 +796,7 @@ class Storage {
       content: row.content,
       order: row.sort_order,
       links: links,
+      syncId: row.sync_id,
       createdAt: row.created_at
     };
   }
@@ -821,8 +829,8 @@ class Storage {
 
     // Save metadata
     const stmt = db.prepare(`
-      INSERT INTO static_files (id, blog_id, filename, stored_filename, mime_type, size, special_file_type, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO static_files (id, blog_id, filename, stored_filename, mime_type, size, special_file_type, sync_id, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     stmt.run(
@@ -833,6 +841,7 @@ class Storage {
       fileData.mimeType || null,
       fileData.size || fileBuffer.length,
       fileData.specialFileType || null,
+      fileData.syncId || null,
       now
     );
 
@@ -891,6 +900,7 @@ class Storage {
       size: row.size,
       isSpecialFile: !!row.special_file_type,
       specialFileType: row.special_file_type,
+      syncId: row.sync_id,
       createdAt: row.created_at
     };
   }
@@ -1086,6 +1096,64 @@ class Storage {
     }
     this.ensureDir(siteDir);
     return siteDir;
+  }
+
+  // ============ Sync ID Lookup Methods (for incremental sync) ============
+
+  getCategoryBySyncId(blogId, syncId) {
+    const db = getDatabase();
+    const row = db.prepare('SELECT * FROM categories WHERE blog_id = ? AND sync_id = ?').get(blogId, syncId);
+    return row ? this.mapCategoryRow(row) : null;
+  }
+
+  getTagBySyncId(blogId, syncId) {
+    const db = getDatabase();
+    const row = db.prepare('SELECT * FROM tags WHERE blog_id = ? AND sync_id = ?').get(blogId, syncId);
+    return row ? this.mapTagRow(row) : null;
+  }
+
+  getPostBySyncId(blogId, syncId) {
+    const db = getDatabase();
+    const row = db.prepare('SELECT * FROM posts WHERE blog_id = ? AND sync_id = ?').get(blogId, syncId);
+    return row ? this.mapPostRow(row) : null;
+  }
+
+  getSidebarObjectBySyncId(blogId, syncId) {
+    const db = getDatabase();
+    const row = db.prepare('SELECT * FROM sidebar_objects WHERE blog_id = ? AND sync_id = ?').get(blogId, syncId);
+    return row ? this.mapSidebarObjectRow(row) : null;
+  }
+
+  getStaticFileBySyncId(blogId, syncId) {
+    const db = getDatabase();
+    const row = db.prepare('SELECT * FROM static_files WHERE blog_id = ? AND sync_id = ?').get(blogId, syncId);
+    return row ? this.mapStaticFileRow(row) : null;
+  }
+
+  // Update syncId on an existing entity
+  updateCategorySyncId(blogId, categoryId, syncId) {
+    const db = getDatabase();
+    db.prepare('UPDATE categories SET sync_id = ? WHERE id = ? AND blog_id = ?').run(syncId, categoryId, blogId);
+  }
+
+  updateTagSyncId(blogId, tagId, syncId) {
+    const db = getDatabase();
+    db.prepare('UPDATE tags SET sync_id = ? WHERE id = ? AND blog_id = ?').run(syncId, tagId, blogId);
+  }
+
+  updatePostSyncId(blogId, postId, syncId) {
+    const db = getDatabase();
+    db.prepare('UPDATE posts SET sync_id = ? WHERE id = ? AND blog_id = ?').run(syncId, postId, blogId);
+  }
+
+  updateSidebarObjectSyncId(blogId, objectId, syncId) {
+    const db = getDatabase();
+    db.prepare('UPDATE sidebar_objects SET sync_id = ? WHERE id = ? AND blog_id = ?').run(syncId, objectId, blogId);
+  }
+
+  updateStaticFileSyncId(blogId, fileId, syncId) {
+    const db = getDatabase();
+    db.prepare('UPDATE static_files SET sync_id = ? WHERE id = ? AND blog_id = ?').run(syncId, fileId, blogId);
   }
 }
 
