@@ -46,34 +46,38 @@ struct SyncSettingsView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section {
-                    Toggle("Enable Sync", isOn: $syncEnabled)
-                        .onChange(of: syncEnabled) { oldValue, newValue in
-                            if newValue && !hasExistingPassword && password.isEmpty {
-                                // Don't enable yet, need password first
-                                syncEnabled = false
-                            } else if newValue {
-                                enableSync()
-                            } else if blog.syncEnabled {
-                                // Only show disable confirmation if sync is actually enabled
-                                showingDisableConfirmation = true
+                if blog.syncEnabled {
+                    // Sync is enabled - show toggle to disable and status
+                    Section {
+                        Toggle("Enable Sync", isOn: $syncEnabled)
+                            .onChange(of: syncEnabled) { oldValue, newValue in
+                                if !newValue {
+                                    showingDisableConfirmation = true
+                                }
                             }
-                        }
-                } header: {
-                    Text("Sync Status")
-                } footer: {
-                    if blog.syncEnabled {
+                    } header: {
+                        Text("Sync Status")
+                    } footer: {
                         if let lastSynced = blog.lastSyncedAt {
                             Text("Last synced: \(lastSynced.formatted(date: .abbreviated, time: .shortened))")
                         } else {
                             Text("Sync data will be generated when you publish your blog.")
                         }
-                    } else {
-                        Text("When enabled, sync data will be generated alongside your published site, allowing you to import your blog on other devices.")
                     }
-                }
 
-                if !blog.syncEnabled {
+                    Section {
+                        Button {
+                            showingChangePassword = true
+                        } label: {
+                            Label("Change Sync Password", systemImage: "key")
+                        }
+                    } header: {
+                        Text("Security")
+                    } footer: {
+                        Text("Changing your password will require you to re-import on any other devices using the new password.")
+                    }
+                } else {
+                    // Sync is not enabled - show setup form
                     Section {
                         if hasExistingPassword && !showingChangePassword {
                             HStack {
@@ -141,23 +145,9 @@ struct SyncSettingsView: View {
                         }
                         .disabled(!canEnableSync)
                     } header: {
-                        Text("Sync Password")
+                        Text("Setup Sync")
                     } footer: {
-                        Text("This password encrypts your draft posts. You'll need it to import your blog on another device. Keep it safe - it cannot be recovered.")
-                    }
-                }
-
-                if blog.syncEnabled {
-                    Section {
-                        Button {
-                            showingChangePassword = true
-                        } label: {
-                            Label("Change Sync Password", systemImage: "key")
-                        }
-                    } header: {
-                        Text("Security")
-                    } footer: {
-                        Text("Changing your password will require you to re-import on any other devices using the new password.")
+                        Text("Enter a password to encrypt your draft posts. When enabled, sync data will be generated alongside your published site, allowing you to import your blog on other devices. Keep your password safe - it cannot be recovered.")
                     }
                 }
 
