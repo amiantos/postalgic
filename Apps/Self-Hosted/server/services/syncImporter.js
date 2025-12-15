@@ -289,10 +289,15 @@ export async function importBlog(storage, baseUrl, password, onProgress = () => 
 
   // Update local file hashes for future sync
   const localHashes = {};
+  const localContentHashes = {};
   for (const [filePath, fileInfo] of Object.entries(manifest.files)) {
     localHashes[filePath] = fileInfo.hash;
+    // Store content hashes for encrypted files (for consistent comparison)
+    if (fileInfo.contentHash) {
+      localContentHashes[filePath] = fileInfo.contentHash;
+    }
   }
-  storage.updateSyncVersion(blogId, manifest.syncVersion, localHashes);
+  storage.updateSyncVersion(blogId, manifest.syncVersion, localHashes, localContentHashes);
 
   onProgress({ step: 'Import complete!', downloaded: totalFiles, total: totalFiles, complete: true });
 
