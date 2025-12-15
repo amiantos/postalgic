@@ -150,6 +150,18 @@ async function pullChanges() {
     syncDownResult.value = result;
     syncCheckResult.value = null;
     await fetchSyncConfig();
+
+    // Refresh blog data to show pulled changes
+    if (result.updated) {
+      syncDownProgress.value = 'Refreshing data...';
+      await Promise.all([
+        blogStore.fetchBlog(blogId.value),
+        blogStore.fetchPosts(blogId.value),
+        blogStore.fetchCategories(blogId.value),
+        blogStore.fetchTags(blogId.value),
+        blogStore.fetchSidebarObjects(blogId.value),
+      ]);
+    }
   } catch (e) {
     syncDownError.value = e.message;
   } finally {
