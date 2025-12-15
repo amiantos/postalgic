@@ -52,7 +52,7 @@ class SyncDataGenerator {
 
         struct FileInfo: Codable {
             let hash: String
-            let size: Int
+            var size: Int
             var modified: String?
             var encrypted: Bool?
             var iv: String?

@@ -202,7 +202,7 @@ class SyncImporter {
             filesDownloaded += 1
             let syncCategory = try decoder.decode(SyncDataGenerator.SyncCategory.self, from: categoryData)
 
-            let category = Category(name: syncCategory.name, blog: blog)
+            let category = Category(blog: blog, name: syncCategory.name)
             category.categoryDescription = syncCategory.description
             category.stub = syncCategory.stub
             if let createdAt = parseDate(syncCategory.createdAt) {
@@ -224,7 +224,7 @@ class SyncImporter {
             filesDownloaded += 1
             let syncTag = try decoder.decode(SyncDataGenerator.SyncTag.self, from: tagData)
 
-            let tag = Tag(name: syncTag.name, blog: blog)
+            let tag = Tag(blog: blog, name: syncTag.name)
             tag.stub = syncTag.stub
             if let createdAt = parseDate(syncTag.createdAt) {
                 tag.createdAt = createdAt
@@ -315,16 +315,14 @@ class SyncImporter {
             let syncSidebar = try decoder.decode(SyncDataGenerator.SyncSidebarObject.self, from: sidebarData)
 
             let sidebarType: SidebarObjectType = syncSidebar.type == "linkList" ? .linkList : .text
-            let sidebar = SidebarObject(title: syncSidebar.title, type: sidebarType, blog: blog)
+            let sidebar = SidebarObject(blog: blog, title: syncSidebar.title, type: sidebarType, order: syncSidebar.order)
             sidebar.content = syncSidebar.content
-            sidebar.order = syncSidebar.order
             modelContext.insert(sidebar)
 
             // Create links if it's a link list
             if let links = syncSidebar.links {
                 for syncLink in links {
-                    let link = LinkItem(title: syncLink.title, url: syncLink.url, sidebarObject: sidebar)
-                    link.order = syncLink.order
+                    let link = LinkItem(sidebarObject: sidebar, title: syncLink.title, url: syncLink.url, order: syncLink.order)
                     modelContext.insert(link)
                 }
             }
@@ -340,7 +338,7 @@ class SyncImporter {
             let fileData = try await downloadFile(from: "\(baseURL)/sync/static-files/\(fileEntry.filename)")
             filesDownloaded += 1
 
-            let staticFile = StaticFile(filename: fileEntry.filename, data: fileData, mimeType: fileEntry.mimeType, blog: blog)
+            let staticFile = StaticFile(blog: blog, filename: fileEntry.filename, data: fileData, mimeType: fileEntry.mimeType)
             staticFile.isSpecialFile = fileEntry.isSpecialFile
             staticFile.specialFileType = fileEntry.specialFileType
             modelContext.insert(staticFile)
@@ -358,7 +356,7 @@ class SyncImporter {
 
                 // Check if theme already exists
                 if ThemeService.shared.getTheme(identifier: syncTheme.identifier) == nil {
-                    let theme = Theme(name: syncTheme.name, identifier: syncTheme.identifier, templates: syncTheme.templates)
+                    let theme = Theme(name: syncTheme.name, identifier: syncTheme.identifier)
                     modelContext.insert(theme)
                 }
             }
@@ -443,7 +441,8 @@ class SyncImporter {
         isDraft: Bool,
         modelContext: ModelContext
     ) throws {
-        let post = Post(content: syncPost.content, blog: blog)
+        let post = Post(content: syncPost.content)
+        post.blog = blog
         post.title = syncPost.title
         post.stub = syncPost.stub
         post.isDraft = isDraft
@@ -471,7 +470,7 @@ class SyncImporter {
             let embedType: EmbedType
             switch syncEmbed.type.lowercased() {
             case "youtube":
-                embedType = .youTube
+                embedType = .youtube
             case "link":
                 embedType = .link
             case "image":
@@ -480,8 +479,8 @@ class SyncImporter {
                 embedType = .link
             }
 
-            let embed = Embed(url: syncEmbed.url, type: embedType, post: post)
-            embed.position = syncEmbed.position.lowercased() == "below" ? "Below" : "Above"
+            let embedPosition: EmbedPosition = syncEmbed.position.lowercased() == "below" ? .below : .above
+            let embed = Embed(post: post, url: syncEmbed.url, type: embedType, position: embedPosition)
             embed.title = syncEmbed.title
             embed.embedDescription = syncEmbed.description
             embed.imageUrl = syncEmbed.imageUrl
@@ -497,8 +496,7 @@ class SyncImporter {
             if embedType == .image {
                 for syncImage in syncEmbed.images {
                     if let imageData = embedImageData[syncImage.filename] {
-                        let embedImage = EmbedImage(filename: syncImage.filename, imageData: imageData, embed: embed)
-                        embedImage.order = syncImage.order
+                        let embedImage = EmbedImage(embed: embed, imageData: imageData, order: syncImage.order, filename: syncImage.filename)
                         modelContext.insert(embedImage)
                     }
                 }
@@ -511,3 +509,4 @@ class SyncImporter {
 
 // MARK: - CryptoKit Import
 import CryptoKit
+
