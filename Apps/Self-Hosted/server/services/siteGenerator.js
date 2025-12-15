@@ -4,6 +4,7 @@ import Mustache from 'mustache';
 import { marked } from 'marked';
 import { getDefaultTemplates } from './templates.js';
 import { generateFavicons } from './imageProcessor.js';
+import { generateSyncDirectory } from './syncGenerator.js';
 import {
   formatDatePath,
   formatDate,
@@ -86,10 +87,33 @@ export async function generateSite(storage, blogId) {
   await generateRobotsTxt(outputDir, templates, baseContext, fileHashes);
   await generateSitemap(outputDir, templates, baseContext, posts, tags, categories, fileHashes);
 
+  // Generate sync directory if sync is enabled
+  let syncResult = null;
+  const syncConfig = storage.getSyncConfig(blogId);
+  if (syncConfig.syncEnabled && syncConfig.syncPassword) {
+    try {
+      console.log('[SiteGenerator] Generating sync directory...');
+      syncResult = await generateSyncDirectory(storage, blogId, outputDir, syncConfig.syncPassword);
+
+      // Merge sync file hashes into main hashes (prefixed with sync/)
+      for (const [filePath, hash] of Object.entries(syncResult.fileHashes)) {
+        fileHashes[`sync/${filePath}`] = hash;
+      }
+
+      // Update sync version in storage
+      storage.updateSyncVersion(blogId, syncResult.syncVersion, syncResult.fileHashes);
+      console.log(`[SiteGenerator] Sync directory generated with ${syncResult.fileCount} files (version ${syncResult.syncVersion})`);
+    } catch (error) {
+      console.error('[SiteGenerator] Failed to generate sync directory:', error);
+      // Don't fail the whole publish - sync is optional
+    }
+  }
+
   return {
     outputDir,
     fileHashes,
-    fileCount: Object.keys(fileHashes).length
+    fileCount: Object.keys(fileHashes).length,
+    syncVersion: syncResult?.syncVersion || null
   };
 }
 

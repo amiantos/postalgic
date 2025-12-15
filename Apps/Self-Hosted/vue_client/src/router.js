@@ -17,6 +17,11 @@ const routes = [
     component: () => import('./views/BlogImportView.vue')
   },
   {
+    path: '/blogs/import-from-url',
+    name: 'sync-import',
+    component: () => import('./views/SyncImportView.vue')
+  },
+  {
     path: '/blogs/:blogId',
     name: 'blog-detail',
     component: () => import('./views/BlogDetailView.vue'),

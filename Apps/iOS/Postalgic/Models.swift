@@ -66,7 +66,14 @@ final class Blog {
     var gitUsername: String?
     var gitBranch: String?
     var gitCommitMessage: String?
-    
+
+    // Sync Configuration
+    var syncEnabled: Bool = false
+    var lastSyncedVersion: Int = 0
+    var lastSyncedAt: Date?
+    var localSyncHashes: [String: String] = [:]  // For tracking local sync state
+    var localContentHashes: [String: String] = [:]  // Content hashes for encrypted files (hash of plaintext)
+
     // Future Netlify Configuration
     // var netlifyToken: String?
     // var netlifySiteId: String?
@@ -130,12 +137,17 @@ final class Blog {
     var hasGitConfigured: Bool {
         // Check if we have the password in keychain or still in the model
         let hasPassword = KeychainService.passwordExists(for: persistentModelID, type: .git)
-        
-        return gitRepositoryUrl != nil && !gitRepositoryUrl!.isEmpty 
-            && gitUsername != nil && !gitUsername!.isEmpty 
+
+        return gitRepositoryUrl != nil && !gitRepositoryUrl!.isEmpty
+            && gitUsername != nil && !gitUsername!.isEmpty
             && hasPassword && gitBranch != nil && !gitBranch!.isEmpty
     }
-    
+
+    var hasSyncConfigured: Bool {
+        // Sync is configured if enabled and has a password set
+        return syncEnabled && KeychainService.passwordExists(for: persistentModelID, type: .syncPassword)
+    }
+
     var currentPublisherType: PublisherType {
         return PublisherType(rawValue: publisherType ?? "") ?? .none
     }
@@ -232,6 +244,7 @@ final class Category {
     var categoryDescription: String?
     var createdAt: Date
     var stub: String?
+    var syncId: String?  // Remote sync ID for incremental sync matching
 
     var blog: Blog?
     var posts: [Post] = []
@@ -270,6 +283,7 @@ final class Tag {
     var name: String
     var createdAt: Date
     var stub: String?
+    var syncId: String?  // Remote sync ID for incremental sync matching
 
     var blog: Blog?
     var posts: [Post] = []
@@ -575,9 +589,10 @@ final class Post {
     }
     var createdAt: Date
     var stub: String?
+    var syncId: String?  // Remote sync ID for incremental sync matching
 
     var isDraft: Bool = false
-    
+
     /// Updates the stub based on current title or content
     private func updateStub() {
         // Don't regenerate stub if we're in the middle of being initialized
@@ -766,19 +781,20 @@ enum SidebarObjectType: String, Codable {
 @Model
 final class SidebarObject {
     var blog: Blog?
-    
+
     var title: String
     var type: String // SidebarObjectType.rawValue
     var order: Int
     var createdAt: Date
-    
+    var syncId: String?  // Remote sync ID for incremental sync matching
+
     // For text blocks
     var content: String?
-    
+
     // For link lists
     @Relationship(deleteRule: .cascade, inverse: \LinkItem.sidebarObject)
     var links: [LinkItem] = []
-    
+
     init(blog: Blog, title: String, type: SidebarObjectType, order: Int, createdAt: Date = Date()) {
         self.blog = blog
         self.title = title
@@ -965,14 +981,15 @@ final class EmbedImage {
 @Model
 final class StaticFile {
     var blog: Blog?
-    
+
     var filename: String
     @Attribute(.externalStorage) var data: Data
     var mimeType: String
     var isSpecialFile: Bool
     var specialFileType: String? // SpecialFileType.rawValue
     var createdAt: Date
-    
+    var syncId: String?  // Remote sync ID for incremental sync matching
+
     init(blog: Blog, filename: String, data: Data, mimeType: String, isSpecialFile: Bool = false, specialFileType: SpecialFileType? = nil, createdAt: Date = Date()) {
         self.blog = blog
         self.filename = filename

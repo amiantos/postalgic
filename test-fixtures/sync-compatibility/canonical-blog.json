@@ -1,0 +1,190 @@
+{
+  "blog": {
+    "name": "Sync Test Blog",
+    "url": "https://test.example.com",
+    "tagline": "A blog for testing sync compatibility",
+    "authorName": "Test Author",
+    "authorUrl": "https://author.example.com",
+    "authorEmail": "test@example.com",
+    "timezone": "UTC",
+    "colors": {
+      "accent": "#FF5733",
+      "background": "#FFFFFF",
+      "text": "#333333",
+      "lightShade": "#F5F5F5",
+      "mediumShade": "#CCCCCC",
+      "darkShade": "#666666"
+    },
+    "themeIdentifier": "default"
+  },
+  "categories": [
+    {
+      "testId": "cat-1",
+      "name": "Technology",
+      "description": "Posts about technology",
+      "stub": "technology",
+      "createdAt": "2025-01-01T00:00:00.000Z"
+    },
+    {
+      "testId": "cat-2",
+      "name": "Personal",
+      "description": null,
+      "stub": "personal",
+      "createdAt": "2025-01-02T00:00:00.000Z"
+    }
+  ],
+  "tags": [
+    {
+      "testId": "tag-1",
+      "name": "Swift",
+      "stub": "swift",
+      "createdAt": "2025-01-01T00:00:00.000Z"
+    },
+    {
+      "testId": "tag-2",
+      "name": "JavaScript",
+      "stub": "javascript",
+      "createdAt": "2025-01-01T00:00:00.000Z"
+    },
+    {
+      "testId": "tag-3",
+      "name": "Testing",
+      "stub": "testing",
+      "createdAt": "2025-01-02T00:00:00.000Z"
+    }
+  ],
+  "posts": [
+    {
+      "testId": "post-1",
+      "title": "First Test Post",
+      "content": "This is the content of the first test post with **bold** and *italic* text.",
+      "stub": "first-test-post",
+      "isDraft": false,
+      "categoryTestId": "cat-1",
+      "tagTestIds": ["tag-1", "tag-3"],
+      "embed": null,
+      "createdAt": "2025-01-15T10:00:00.000Z"
+    },
+    {
+      "testId": "post-2",
+      "title": null,
+      "content": "This is an untitled post that tests null title handling.",
+      "stub": "this-is-an-untitled-post-that-tests-null",
+      "isDraft": false,
+      "categoryTestId": null,
+      "tagTestIds": [],
+      "embed": null,
+      "createdAt": "2025-01-16T12:00:00.000Z"
+    },
+    {
+      "testId": "post-3",
+      "title": "Post with YouTube Embed",
+      "content": "Check out this video!",
+      "stub": "post-with-youtube-embed",
+      "isDraft": false,
+      "categoryTestId": "cat-1",
+      "tagTestIds": ["tag-2"],
+      "embed": {
+        "type": "YouTube",
+        "position": "below",
+        "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "title": null,
+        "description": null,
+        "imageUrl": null,
+        "imageFilename": null,
+        "images": []
+      },
+      "createdAt": "2025-01-17T14:00:00.000Z"
+    },
+    {
+      "testId": "post-4",
+      "title": "Post with Link Embed",
+      "content": "Here's an interesting article.",
+      "stub": "post-with-link-embed",
+      "isDraft": false,
+      "categoryTestId": "cat-2",
+      "tagTestIds": ["tag-1", "tag-2"],
+      "embed": {
+        "type": "Link",
+        "position": "above",
+        "url": "https://example.com/article",
+        "title": "Example Article",
+        "description": "This is a description of the article.",
+        "imageUrl": "https://example.com/image.jpg",
+        "imageFilename": null,
+        "images": []
+      },
+      "createdAt": "2025-01-18T16:00:00.000Z"
+    },
+    {
+      "testId": "post-5",
+      "title": "Post with Image Embed",
+      "content": "Look at these photos!",
+      "stub": "post-with-image-embed",
+      "isDraft": false,
+      "categoryTestId": "cat-2",
+      "tagTestIds": [],
+      "embed": {
+        "type": "Image",
+        "position": "above",
+        "url": "",
+        "title": null,
+        "description": null,
+        "imageUrl": null,
+        "imageFilename": null,
+        "images": [
+          {"filename": "test-image-1.jpg", "order": 0},
+          {"filename": "test-image-2.jpg", "order": 1}
+        ]
+      },
+      "createdAt": "2025-01-19T18:00:00.000Z"
+    }
+  ],
+  "drafts": [
+    {
+      "testId": "draft-1",
+      "title": "Draft Post",
+      "content": "This is a draft that should be encrypted.",
+      "stub": "draft-post",
+      "isDraft": true,
+      "categoryTestId": "cat-1",
+      "tagTestIds": ["tag-3"],
+      "embed": null,
+      "createdAt": "2025-01-20T20:00:00.000Z"
+    }
+  ],
+  "sidebar": [
+    {
+      "testId": "sidebar-1",
+      "type": "text",
+      "title": "About",
+      "content": "This is a test blog for sync compatibility testing.",
+      "order": 0,
+      "links": null
+    },
+    {
+      "testId": "sidebar-2",
+      "type": "linkList",
+      "title": "Links",
+      "content": null,
+      "order": 1,
+      "links": [
+        {"title": "Example Site", "url": "https://example.com", "order": 0},
+        {"title": "Another Site", "url": "https://another.example.com", "order": 1}
+      ]
+    }
+  ],
+  "staticFiles": [
+    {
+      "testId": "static-1",
+      "filename": "favicon.ico",
+      "mimeType": "image/x-icon",
+      "specialFileType": "favicon"
+    }
+  ],
+  "encryption": {
+    "testPassword": "test-sync-password-123",
+    "expectedSalt": "dGVzdC1zYWx0LWZvci1zeW5j",
+    "expectedIterations": 100000
+  }
+}
