@@ -364,19 +364,26 @@ class SyncDataGenerator {
 
         for post in publishedPosts {
             let id = post.persistentModelID.stringRepresentation() ?? UUID().uuidString
-            let syncPost = try createSyncPost(from: post, categoryIdMap: categoryIdMap, tagIdMap: tagIdMap)
-            let postData = try encoder.encode(syncPost)
-            let postPath = syncDirectory.appendingPathComponent("posts/\(id).json")
-            try postData.write(to: postPath)
-            let hash = postData.sha256Hash()
-            fileHashes["posts/\(id).json"] = hash
+            statusUpdate("Generating post: \(post.stub ?? id)...")
 
-            postIndexEntries.append(SyncPostIndex.PostIndexEntry(
-                id: id,
-                stub: post.stub,
-                hash: hash,
-                modified: isoFormatter.string(from: post.createdAt)
-            ))
+            do {
+                let syncPost = try createSyncPost(from: post, categoryIdMap: categoryIdMap, tagIdMap: tagIdMap)
+                let postData = try encoder.encode(syncPost)
+                let postPath = syncDirectory.appendingPathComponent("posts/\(id).json")
+                try postData.write(to: postPath)
+                let hash = postData.sha256Hash()
+                fileHashes["posts/\(id).json"] = hash
+
+                postIndexEntries.append(SyncPostIndex.PostIndexEntry(
+                    id: id,
+                    stub: post.stub,
+                    hash: hash,
+                    modified: isoFormatter.string(from: post.createdAt)
+                ))
+            } catch {
+                print("⚠️ Error generating sync data for post \(post.stub ?? id): \(error)")
+                throw error
+            }
         }
 
         let postIndex = SyncPostIndex(posts: postIndexEntries)
@@ -625,13 +632,16 @@ class SyncDataGenerator {
         // Build embed if exists
         var syncEmbed: SyncEmbed? = nil
         if let embed = post.embed {
+            print("📎 Processing embed for post: type=\(embed.type), images count=\(embed.images.count)")
+
             var imageFilename: String? = nil
             if embed.embedType == .link && embed.imageData != nil {
-                imageFilename = "embed-\(embed.url.hash).jpg"
+                imageFilename = "embed-\(embed.url.hashValue).jpg"
             }
 
             let embedImages = embed.images.sorted { $0.order < $1.order }.map { image in
-                SyncEmbedImage(filename: image.filename, order: image.order)
+                print("   📷 Embed image: \(image.filename)")
+                return SyncEmbedImage(filename: image.filename, order: image.order)
             }
 
             syncEmbed = SyncEmbed(
