@@ -44,7 +44,7 @@ struct PostalgicTests {
         let zipURL = try await generator.generateSite()
 
         // Verify the zip file exists
-        #expect(FileManager.default.fileExists(atPath: zipURL.path))
+        #expect(FileManager.default.fileExists(atPath: zipURL!.path))
 
         // Extract the zip to a temporary location to verify contents
         let extractDir = FileManager.default.temporaryDirectory
@@ -54,7 +54,7 @@ struct PostalgicTests {
             withIntermediateDirectories: true
         )
 
-        try FileManager.default.unzipItem(at: zipURL, to: extractDir)
+        try FileManager.default.unzipItem(at: zipURL!, to: extractDir)
 
         // Get the site directory name (the first subdirectory in the extracted folder)
         let extractedContents = try FileManager.default.contentsOfDirectory(
@@ -100,7 +100,7 @@ struct PostalgicTests {
 
         // Clean up
         try? FileManager.default.removeItem(at: extractDir)
-        try? FileManager.default.removeItem(at: zipURL)
+        try? FileManager.default.removeItem(at: zipURL!)
     }
 
     @Test func testMarkdownInPostContent() async throws {
@@ -134,7 +134,7 @@ struct PostalgicTests {
             withIntermediateDirectories: true
         )
 
-        try FileManager.default.unzipItem(at: zipURL, to: extractDir)
+        try FileManager.default.unzipItem(at: zipURL!, to: extractDir)
 
         // Find the site directory
         let extractedContents = try FileManager.default.contentsOfDirectory(
@@ -178,7 +178,7 @@ struct PostalgicTests {
 
         // Clean up
         try? FileManager.default.removeItem(at: extractDir)
-        try? FileManager.default.removeItem(at: zipURL)
+        try? FileManager.default.removeItem(at: zipURL!)
     }
 
 }
