@@ -101,7 +101,8 @@ class SyncChecker {
     ///   - blog: The local blog to check
     /// - Returns: SyncCheckResult with change details
     static func checkForChanges(blog: Blog) async throws -> SyncCheckResult {
-        guard let syncUrl = blog.url, !syncUrl.isEmpty else {
+        let syncUrl = blog.url
+        guard !syncUrl.isEmpty else {
             throw CheckError.noSyncUrl
         }
 
@@ -294,3 +295,4 @@ class SyncChecker {
         return id != "index" ? id : nil
     }
 }
+

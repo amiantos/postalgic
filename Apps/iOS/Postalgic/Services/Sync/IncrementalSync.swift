@@ -74,9 +74,8 @@ class IncrementalSync {
         modelContext: ModelContext,
         progressUpdate: @escaping (IncrementalSyncProgress) -> Void
     ) async throws -> IncrementalSyncResult {
-        guard let syncUrl = blog.url, !syncUrl.isEmpty else {
-            throw SyncError.noSyncUrl
-        }
+        let syncUrl = blog.url
+        guard !syncUrl.isEmpty else { throw SyncError.noSyncUrl }
 
         let baseURL = normalizeURL(syncUrl)
 
@@ -608,3 +607,4 @@ class IncrementalSync {
         return isoFormatter.date(from: dateString)
     }
 }
+
