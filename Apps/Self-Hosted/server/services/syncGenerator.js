@@ -9,6 +9,15 @@ import { calculateHash, calculateBufferHash, formatISO8601Date } from '../utils/
 import syncEncryption from './syncEncryption.js';
 
 /**
+ * Get the stable sync ID for an entity.
+ * Uses syncId if available (preserves ID from import), otherwise falls back to local id.
+ * This ensures entity IDs remain stable across all copies of a synced blog.
+ */
+function getStableSyncId(entity) {
+  return entity.syncId || entity.id;
+}
+
+/**
  * Generate the sync directory for a blog
  * @param {Storage} storage - Storage instance
  * @param {string} blogId - Blog ID
@@ -92,20 +101,21 @@ export async function generateSyncDirectory(storage, blogId, outputDir, password
   // === Generate categories ===
   const categoryIndex = { categories: [] };
   for (const category of categories) {
+    const stableId = getStableSyncId(category);
     const categoryData = {
-      id: category.id,
+      id: stableId,
       name: category.name,
       description: category.description || '',
       stub: category.stub,
       createdAt: category.createdAt
     };
     const categoryJson = JSON.stringify(categoryData, null, 2);
-    fs.writeFileSync(path.join(syncDir, 'categories', `${category.id}.json`), categoryJson);
+    fs.writeFileSync(path.join(syncDir, 'categories', `${stableId}.json`), categoryJson);
     const hash = calculateHash(categoryJson);
-    fileHashes[`categories/${category.id}.json`] = hash;
+    fileHashes[`categories/${stableId}.json`] = hash;
 
     categoryIndex.categories.push({
-      id: category.id,
+      id: stableId,
       stub: category.stub,
       hash
     });
@@ -117,19 +127,20 @@ export async function generateSyncDirectory(storage, blogId, outputDir, password
   // === Generate tags ===
   const tagIndex = { tags: [] };
   for (const tag of tags) {
+    const stableId = getStableSyncId(tag);
     const tagData = {
-      id: tag.id,
+      id: stableId,
       name: tag.name,
       stub: tag.stub,
       createdAt: tag.createdAt
     };
     const tagJson = JSON.stringify(tagData, null, 2);
-    fs.writeFileSync(path.join(syncDir, 'tags', `${tag.id}.json`), tagJson);
+    fs.writeFileSync(path.join(syncDir, 'tags', `${stableId}.json`), tagJson);
     const hash = calculateHash(tagJson);
-    fileHashes[`tags/${tag.id}.json`] = hash;
+    fileHashes[`tags/${stableId}.json`] = hash;
 
     tagIndex.tags.push({
-      id: tag.id,
+      id: stableId,
       stub: tag.stub,
       hash
     });
@@ -138,17 +149,28 @@ export async function generateSyncDirectory(storage, blogId, outputDir, password
   fs.writeFileSync(path.join(syncDir, 'tags', 'index.json'), tagIndexJson);
   fileHashes['tags/index.json'] = calculateHash(tagIndexJson);
 
+  // Build maps of local ID -> stable sync ID for categories and tags
+  const categoryIdMap = new Map();
+  for (const category of categories) {
+    categoryIdMap.set(category.id, getStableSyncId(category));
+  }
+  const tagIdMap = new Map();
+  for (const tag of tags) {
+    tagIdMap.set(tag.id, getStableSyncId(tag));
+  }
+
   // === Generate published posts (unencrypted) ===
   const postIndex = { posts: [] };
   for (const post of publishedPosts) {
-    const postData = createSyncPost(post, storage, blogId);
+    const stableId = getStableSyncId(post);
+    const postData = createSyncPost(post, stableId, categoryIdMap, tagIdMap);
     const postJson = JSON.stringify(postData, null, 2);
-    fs.writeFileSync(path.join(syncDir, 'posts', `${post.id}.json`), postJson);
+    fs.writeFileSync(path.join(syncDir, 'posts', `${stableId}.json`), postJson);
     const hash = calculateHash(postJson);
-    fileHashes[`posts/${post.id}.json`] = hash;
+    fileHashes[`posts/${stableId}.json`] = hash;
 
     postIndex.posts.push({
-      id: post.id,
+      id: stableId,
       stub: post.stub,
       hash,
       modified: post.updatedAt || post.createdAt
@@ -161,15 +183,16 @@ export async function generateSyncDirectory(storage, blogId, outputDir, password
   // === Generate drafts (encrypted) ===
   const draftIndex = { drafts: [] };
   for (const draft of drafts) {
-    const draftData = createSyncPost(draft, storage, blogId);
+    const stableId = getStableSyncId(draft);
+    const draftData = createSyncPost(draft, stableId, categoryIdMap, tagIdMap);
     const { ciphertext, iv } = syncEncryption.encryptJSON(draftData, password, salt);
-    fs.writeFileSync(path.join(syncDir, 'drafts', `${draft.id}.json.enc`), ciphertext);
+    fs.writeFileSync(path.join(syncDir, 'drafts', `${stableId}.json.enc`), ciphertext);
     const hash = calculateBufferHash(ciphertext);
-    fileHashes[`drafts/${draft.id}.json.enc`] = hash;
-    draftIVs[`drafts/${draft.id}.json.enc`] = syncEncryption.base64Encode(iv);
+    fileHashes[`drafts/${stableId}.json.enc`] = hash;
+    draftIVs[`drafts/${stableId}.json.enc`] = syncEncryption.base64Encode(iv);
 
     draftIndex.drafts.push({
-      id: draft.id,
+      id: stableId,
       hash,
       modified: draft.updatedAt || draft.createdAt
     });
@@ -186,8 +209,9 @@ export async function generateSyncDirectory(storage, blogId, outputDir, password
   // === Generate sidebar objects ===
   const sidebarIndex = { sidebar: [] };
   for (const sidebar of sidebarObjects) {
+    const stableId = getStableSyncId(sidebar);
     const sidebarData = {
-      id: sidebar.id,
+      id: stableId,
       type: sidebar.type,
       title: sidebar.title,
       content: sidebar.content || null,
@@ -199,12 +223,12 @@ export async function generateSyncDirectory(storage, blogId, outputDir, password
       })) : null
     };
     const sidebarJson = JSON.stringify(sidebarData, null, 2);
-    fs.writeFileSync(path.join(syncDir, 'sidebar', `${sidebar.id}.json`), sidebarJson);
+    fs.writeFileSync(path.join(syncDir, 'sidebar', `${stableId}.json`), sidebarJson);
     const hash = calculateHash(sidebarJson);
-    fileHashes[`sidebar/${sidebar.id}.json`] = hash;
+    fileHashes[`sidebar/${stableId}.json`] = hash;
 
     sidebarIndex.sidebar.push({
-      id: sidebar.id,
+      id: stableId,
       hash
     });
   }
@@ -303,7 +327,8 @@ export async function generateSyncDirectory(storage, blogId, outputDir, password
     // Add modified date for posts and drafts
     if (filePath.startsWith('posts/') && filePath !== 'posts/index.json') {
       const postId = filePath.replace('posts/', '').replace('.json', '');
-      const post = publishedPosts.find(p => p.id === postId);
+      // Find post by stable sync ID (matches either syncId or id)
+      const post = publishedPosts.find(p => getStableSyncId(p) === postId);
       if (post) {
         fileInfo.modified = post.updatedAt || post.createdAt;
       }
@@ -347,8 +372,12 @@ export async function generateSyncDirectory(storage, blogId, outputDir, password
 
 /**
  * Create a sync post object from a post
+ * @param {Object} post - The post object
+ * @param {string} stableId - The stable sync ID to use for this post
+ * @param {Map} categoryIdMap - Map of local category ID to stable sync ID
+ * @param {Map} tagIdMap - Map of local tag ID to stable sync ID
  */
-function createSyncPost(post, storage, blogId) {
+function createSyncPost(post, stableId, categoryIdMap, tagIdMap) {
   let embed = null;
 
   if (post.embed) {
@@ -394,15 +423,24 @@ function createSyncPost(post, storage, blogId) {
     }
   }
 
+  // Map category ID to stable sync ID
+  let syncCategoryId = null;
+  if (post.categoryId) {
+    syncCategoryId = categoryIdMap.get(post.categoryId) || post.categoryId;
+  }
+
+  // Map tag IDs to stable sync IDs
+  const syncTagIds = (post.tagIds || []).map(tagId => tagIdMap.get(tagId) || tagId);
+
   return {
-    id: post.id,
+    id: stableId,
     title: post.title || null,
     content: post.content,
     stub: post.stub,
     createdAt: post.createdAt,
     updatedAt: post.updatedAt || post.createdAt,
-    categoryId: post.categoryId || null,
-    tagIds: post.tagIds || [],
+    categoryId: syncCategoryId,
+    tagIds: syncTagIds,
     embed
   };
 }

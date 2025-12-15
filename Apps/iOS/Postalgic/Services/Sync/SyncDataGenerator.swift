@@ -46,6 +46,29 @@ class SyncDataGenerator {
             .replacingOccurrences(of: "/", with: "-")
     }
 
+    /// Gets the stable sync ID for an entity.
+    /// Uses syncId if available (preserves ID from import), otherwise generates from persistentModelID.
+    /// This ensures entity IDs remain stable across all copies of a synced blog.
+    private static func getStableSyncId(for category: Category) -> String {
+        return category.syncId ?? safeId(from: category.persistentModelID)
+    }
+
+    private static func getStableSyncId(for tag: Tag) -> String {
+        return tag.syncId ?? safeId(from: tag.persistentModelID)
+    }
+
+    private static func getStableSyncId(for post: Post) -> String {
+        return post.syncId ?? safeId(from: post.persistentModelID)
+    }
+
+    private static func getStableSyncId(for sidebarObject: SidebarObject) -> String {
+        return sidebarObject.syncId ?? safeId(from: sidebarObject.persistentModelID)
+    }
+
+    private static func getStableSyncId(for staticFile: StaticFile) -> String {
+        return staticFile.syncId ?? safeId(from: staticFile.persistentModelID)
+    }
+
     // MARK: - Sync Data Models
 
     struct SyncManifest: Codable {
@@ -268,20 +291,21 @@ class SyncDataGenerator {
         // Generate salt for encryption (will be stored in manifest)
         let salt = SyncEncryption.generateSalt()
 
-        // Build ID maps using SwiftData persistent IDs
-        var categoryIdMap: [String: String] = [:]
-        var tagIdMap: [String: String] = [:]
+        // Build ID maps: local persistent ID -> stable sync ID
+        // This allows us to look up the stable ID when we have a reference to the local entity
+        var categoryIdMap: [PersistentIdentifier: String] = [:]
+        var tagIdMap: [PersistentIdentifier: String] = [:]
 
-        // Generate category IDs
+        // Build category ID map
         for category in blog.categories {
-            let id = safeId(from: category.persistentModelID)
-            categoryIdMap[id] = id
+            let stableId = getStableSyncId(for: category)
+            categoryIdMap[category.persistentModelID] = stableId
         }
 
-        // Generate tag IDs
+        // Build tag ID map
         for tag in blog.tags {
-            let id = safeId(from: tag.persistentModelID)
-            tagIdMap[id] = id
+            let stableId = getStableSyncId(for: tag)
+            tagIdMap[tag.persistentModelID] = stableId
         }
 
         // MARK: Generate blog.json
@@ -314,22 +338,22 @@ class SyncDataGenerator {
         var categoryIndexEntries: [SyncCategoryIndex.CategoryIndexEntry] = []
 
         for category in blog.categories {
-            let id = safeId(from: category.persistentModelID)
+            let stableId = getStableSyncId(for: category)
             let syncCategory = SyncCategory(
-                id: id,
+                id: stableId,
                 name: category.name,
                 description: category.categoryDescription,
                 stub: category.stub,
                 createdAt: isoFormatter.string(from: category.createdAt)
             )
             let categoryData = try encoder.encode(syncCategory)
-            let categoryPath = syncDirectory.appendingPathComponent("categories/\(id).json")
+            let categoryPath = syncDirectory.appendingPathComponent("categories/\(stableId).json")
             try categoryData.write(to: categoryPath)
             let hash = categoryData.sha256Hash()
-            fileHashes["categories/\(id).json"] = hash
+            fileHashes["categories/\(stableId).json"] = hash
 
             categoryIndexEntries.append(SyncCategoryIndex.CategoryIndexEntry(
-                id: id,
+                id: stableId,
                 stub: category.stub,
                 hash: hash
             ))
@@ -346,21 +370,21 @@ class SyncDataGenerator {
         var tagIndexEntries: [SyncTagIndex.TagIndexEntry] = []
 
         for tag in blog.tags {
-            let id = safeId(from: tag.persistentModelID)
+            let stableId = getStableSyncId(for: tag)
             let syncTag = SyncTag(
-                id: id,
+                id: stableId,
                 name: tag.name,
                 stub: tag.stub,
                 createdAt: isoFormatter.string(from: tag.createdAt)
             )
             let tagData = try encoder.encode(syncTag)
-            let tagPath = syncDirectory.appendingPathComponent("tags/\(id).json")
+            let tagPath = syncDirectory.appendingPathComponent("tags/\(stableId).json")
             try tagData.write(to: tagPath)
             let hash = tagData.sha256Hash()
-            fileHashes["tags/\(id).json"] = hash
+            fileHashes["tags/\(stableId).json"] = hash
 
             tagIndexEntries.append(SyncTagIndex.TagIndexEntry(
-                id: id,
+                id: stableId,
                 stub: tag.stub,
                 hash: hash
             ))
@@ -378,25 +402,25 @@ class SyncDataGenerator {
         var postIndexEntries: [SyncPostIndex.PostIndexEntry] = []
 
         for post in publishedPosts {
-            let id = safeId(from: post.persistentModelID)
-            statusUpdate("Generating post: \(post.stub ?? id)...")
+            let stableId = getStableSyncId(for: post)
+            statusUpdate("Generating post: \(post.stub ?? stableId)...")
 
             do {
-                let syncPost = try createSyncPost(from: post, categoryIdMap: categoryIdMap, tagIdMap: tagIdMap)
+                let syncPost = try createSyncPost(from: post, stableId: stableId, categoryIdMap: categoryIdMap, tagIdMap: tagIdMap)
                 let postData = try encoder.encode(syncPost)
-                let postPath = syncDirectory.appendingPathComponent("posts/\(id).json")
+                let postPath = syncDirectory.appendingPathComponent("posts/\(stableId).json")
                 try postData.write(to: postPath)
                 let hash = postData.sha256Hash()
-                fileHashes["posts/\(id).json"] = hash
+                fileHashes["posts/\(stableId).json"] = hash
 
                 postIndexEntries.append(SyncPostIndex.PostIndexEntry(
-                    id: id,
+                    id: stableId,
                     stub: post.stub,
                     hash: hash,
                     modified: isoFormatter.string(from: post.createdAt)
                 ))
             } catch {
-                print("⚠️ Error generating sync data for post \(post.stub ?? id): \(error)")
+                print("⚠️ Error generating sync data for post \(post.stub ?? stableId): \(error)")
                 throw error
             }
         }
@@ -414,20 +438,19 @@ class SyncDataGenerator {
         var draftIVs: [String: String] = [:] // Store IVs for manifest
 
         for draft in drafts {
-            let id = safeId(from: draft.persistentModelID)
-            let syncPost = try createSyncPost(from: draft, categoryIdMap: categoryIdMap, tagIdMap: tagIdMap)
-            let postData = try encoder.encode(syncPost)
+            let stableId = getStableSyncId(for: draft)
+            let syncPost = try createSyncPost(from: draft, stableId: stableId, categoryIdMap: categoryIdMap, tagIdMap: tagIdMap)
 
             // Encrypt the draft
             let (ciphertext, iv) = try SyncEncryption.encryptJSON(syncPost, password: password, salt: salt)
-            let draftPath = syncDirectory.appendingPathComponent("drafts/\(id).json.enc")
+            let draftPath = syncDirectory.appendingPathComponent("drafts/\(stableId).json.enc")
             try ciphertext.write(to: draftPath)
             let hash = ciphertext.sha256Hash()
-            fileHashes["drafts/\(id).json.enc"] = hash
-            draftIVs["drafts/\(id).json.enc"] = SyncEncryption.base64Encode(iv)
+            fileHashes["drafts/\(stableId).json.enc"] = hash
+            draftIVs["drafts/\(stableId).json.enc"] = SyncEncryption.base64Encode(iv)
 
             draftIndexEntries.append(SyncDraftIndex.DraftIndexEntry(
-                id: id,
+                id: stableId,
                 hash: hash,
                 modified: isoFormatter.string(from: draft.createdAt)
             ))
@@ -448,7 +471,7 @@ class SyncDataGenerator {
         var sidebarIndexEntries: [SyncSidebarIndex.SidebarIndexEntry] = []
 
         for sidebarObject in blog.sidebarObjects {
-            let id = safeId(from: sidebarObject.persistentModelID)
+            let stableId = getStableSyncId(for: sidebarObject)
 
             var links: [SyncLink]? = nil
             if sidebarObject.objectType == .linkList {
@@ -458,7 +481,7 @@ class SyncDataGenerator {
             }
 
             let syncSidebar = SyncSidebarObject(
-                id: id,
+                id: stableId,
                 type: sidebarObject.type,
                 title: sidebarObject.title,
                 content: sidebarObject.content,
@@ -466,13 +489,13 @@ class SyncDataGenerator {
                 links: links
             )
             let sidebarData = try encoder.encode(syncSidebar)
-            let sidebarPath = syncDirectory.appendingPathComponent("sidebar/\(id).json")
+            let sidebarPath = syncDirectory.appendingPathComponent("sidebar/\(stableId).json")
             try sidebarData.write(to: sidebarPath)
             let hash = sidebarData.sha256Hash()
-            fileHashes["sidebar/\(id).json"] = hash
+            fileHashes["sidebar/\(stableId).json"] = hash
 
             sidebarIndexEntries.append(SyncSidebarIndex.SidebarIndexEntry(
-                id: id,
+                id: stableId,
                 hash: hash
             ))
         }
@@ -628,20 +651,19 @@ class SyncDataGenerator {
 
     private static func createSyncPost(
         from post: Post,
-        categoryIdMap: [String: String],
-        tagIdMap: [String: String]
+        stableId: String,
+        categoryIdMap: [PersistentIdentifier: String],
+        tagIdMap: [PersistentIdentifier: String]
     ) throws -> SyncPost {
-        let postId = safeId(from: post.persistentModelID)
-
-        // Get category ID if exists
+        // Get stable category ID if exists (use the ID map to translate)
         var categoryId: String? = nil
         if let category = post.category {
-            categoryId = safeId(from: category.persistentModelID)
+            categoryId = categoryIdMap[category.persistentModelID] ?? getStableSyncId(for: category)
         }
 
-        // Get tag IDs
+        // Get stable tag IDs (use the ID map to translate)
         let tagIds = post.tags.map { tag in
-            safeId(from: tag.persistentModelID)
+            tagIdMap[tag.persistentModelID] ?? getStableSyncId(for: tag)
         }
 
         // Build embed if exists
@@ -672,7 +694,7 @@ class SyncDataGenerator {
         }
 
         return SyncPost(
-            id: postId,
+            id: stableId,
             title: post.title,
             content: post.content,
             stub: post.stub,
