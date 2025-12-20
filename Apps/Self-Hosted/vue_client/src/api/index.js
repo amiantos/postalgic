@@ -33,10 +33,12 @@ export const blogApi = {
 
 // Post API
 export const postApi = {
-  list: (blogId, includeDrafts = true, search = '', sort = 'date_desc') => {
+  list: (blogId, { includeDrafts = true, search = '', sort = 'date_desc', page = 1, limit = 10 } = {}) => {
     const params = new URLSearchParams({
       includeDrafts: includeDrafts.toString(),
-      sort
+      sort,
+      page: page.toString(),
+      limit: limit.toString()
     });
     if (search) params.append('search', search);
     return fetchApi(`/blogs/${blogId}/posts?${params.toString()}`);

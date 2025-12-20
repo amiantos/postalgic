@@ -13,6 +13,7 @@ const postToDelete = ref(null);
 const filter = ref('all'); // 'all', 'published', 'draft'
 const searchText = ref('');
 const sortOption = ref('date_desc');
+const POSTS_PER_PAGE = 10;
 let searchTimeout = null;
 
 const sortOptions = [
@@ -23,6 +24,8 @@ const sortOptions = [
 ];
 
 const blogId = computed(() => route.params.blogId);
+
+const MIN_SEARCH_LENGTH = 2;
 
 // Fetch posts when search/sort changes (with debounce for search)
 watch([searchText, sortOption], () => {
@@ -37,18 +40,22 @@ watch(filter, () => {
   fetchPosts();
 });
 
+const effectiveSearchText = computed(() => {
+  return searchText.value.length >= MIN_SEARCH_LENGTH ? searchText.value : '';
+});
+
 async function fetchPosts() {
   const includeDrafts = filter.value === 'all' || filter.value === 'draft';
   await blogStore.fetchPosts(blogId.value, {
     includeDrafts,
-    search: searchText.value,
-    sort: sortOption.value
+    search: effectiveSearchText.value,
+    sort: sortOption.value,
+    limit: POSTS_PER_PAGE
   });
 }
 
 const filteredPosts = computed(() => {
-  // Filter is now handled server-side, but we still filter drafts client-side
-  // because we fetch with includeDrafts=true for 'all' and 'draft' filters
+  // Filter drafts client-side since we fetch with includeDrafts=true for 'all' and 'draft'
   if (filter.value === 'published') {
     return blogStore.posts.filter(p => !p.isDraft);
   } else if (filter.value === 'draft') {
@@ -57,8 +64,25 @@ const filteredPosts = computed(() => {
   return blogStore.posts;
 });
 
+const hasMorePosts = computed(() => blogStore.postsHasMore);
+
+const remainingPostsCount = computed(() => {
+  return blogStore.postsTotal - blogStore.posts.length;
+});
+
+async function loadMorePosts() {
+  const includeDrafts = filter.value === 'all' || filter.value === 'draft';
+  await blogStore.loadMorePosts(blogId.value, {
+    includeDrafts,
+    search: effectiveSearchText.value,
+    sort: sortOption.value,
+    limit: POSTS_PER_PAGE
+  });
+}
+
 const postCounts = computed(() => {
-  const all = blogStore.posts.length;
+  // Use total from server for accurate count
+  const all = blogStore.postsTotal;
   const published = blogStore.posts.filter(p => !p.isDraft).length;
   const drafts = blogStore.posts.filter(p => p.isDraft).length;
   return { all, published, drafts };
@@ -212,7 +236,12 @@ function formatLocalDateTime(dateString) {
         </button>
       </div>
       <span class="text-sm text-gray-500 dark:text-gray-400">
-        {{ filteredPosts.length }} posts
+        <template v-if="searchText && !effectiveSearchText">
+          Type {{ MIN_SEARCH_LENGTH - searchText.length }} more character{{ MIN_SEARCH_LENGTH - searchText.length > 1 ? 's' : '' }} to search
+        </template>
+        <template v-else>
+          {{ blogStore.posts.length }}<span v-if="hasMorePosts">+</span> of {{ blogStore.postsTotal }} posts
+        </template>
       </span>
     </div>
 
@@ -406,6 +435,18 @@ function formatLocalDateTime(dateString) {
             +{{ post.tags.length - 2 }} more
           </span>
         </div>
+      </div>
+
+      <!-- Load More Button -->
+      <div v-if="hasMorePosts" class="flex justify-center pt-4">
+        <button
+          @click="loadMorePosts"
+          :disabled="blogStore.loading"
+          class="px-6 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <template v-if="blogStore.loading">Loading...</template>
+          <template v-else>Load More ({{ remainingPostsCount }} remaining)</template>
+        </button>
       </div>
     </div>
 

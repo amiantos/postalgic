@@ -17,11 +17,13 @@ function getStorage(req) {
   return new Storage(req.app.locals.dataRoot);
 }
 
-// GET /api/blogs/:blogId/posts - List all posts
+// GET /api/blogs/:blogId/posts - List posts with pagination
 // Query params:
 //   - includeDrafts: 'true' to include drafts
-//   - search: search term for title, content, category, tags
+//   - search: search term for title, content, category, tags (min 2 chars)
 //   - sort: 'date_desc' (default), 'date_asc', 'title_asc', 'title_desc'
+//   - page: page number (default 1)
+//   - limit: posts per page (default 10, max 100)
 router.get('/', (req, res) => {
   try {
     const storage = getStorage(req);
@@ -29,23 +31,35 @@ router.get('/', (req, res) => {
     const includeDrafts = req.query.includeDrafts === 'true';
     const search = req.query.search || '';
     const sort = req.query.sort || 'date_desc';
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 10));
 
     let posts;
 
-    // Use searchPosts if there's a search term, otherwise use getAllPosts
-    if (search.trim()) {
+    // Only search if term is at least 2 characters
+    if (search.trim() && search.trim().length >= 2) {
       posts = storage.searchPosts(blogId, search, { includeDrafts, sort });
     } else {
       posts = storage.getAllPosts(blogId, includeDrafts);
-
-      // Apply sorting for non-search queries
       posts = sortPosts(posts, sort);
     }
 
-    // Enrich posts with computed properties
-    const enrichedPosts = posts.map(post => enrichPost(post, storage, blogId));
+    // Calculate pagination
+    const total = posts.length;
+    const startIndex = (page - 1) * limit;
+    const endIndex = startIndex + limit;
+    const paginatedPosts = posts.slice(startIndex, endIndex);
 
-    res.json(enrichedPosts);
+    // Enrich posts with computed properties
+    const enrichedPosts = paginatedPosts.map(post => enrichPost(post, storage, blogId));
+
+    res.json({
+      posts: enrichedPosts,
+      total,
+      page,
+      limit,
+      hasMore: endIndex < total
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

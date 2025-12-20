@@ -7,6 +7,9 @@ export const useBlogStore = defineStore('blog', () => {
   const blogs = ref([]);
   const currentBlog = ref(null);
   const posts = ref([]);
+  const postsTotal = ref(0);
+  const postsHasMore = ref(false);
+  const postsPage = ref(1);
   const categories = ref([]);
   const tags = ref([]);
   const sidebarObjects = ref([]);
@@ -71,8 +74,31 @@ export const useBlogStore = defineStore('blog', () => {
   async function fetchPosts(blogId, options = {}) {
     loading.value = true;
     try {
-      const { includeDrafts = true, search = '', sort = 'date_desc' } = options;
-      posts.value = await postApi.list(blogId, includeDrafts, search, sort);
+      const { includeDrafts = true, search = '', sort = 'date_desc', page = 1, limit = 10 } = options;
+      const response = await postApi.list(blogId, { includeDrafts, search, sort, page, limit });
+      posts.value = response.posts;
+      postsTotal.value = response.total;
+      postsHasMore.value = response.hasMore;
+      postsPage.value = response.page;
+    } catch (e) {
+      error.value = e.message;
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  async function loadMorePosts(blogId, options = {}) {
+    if (!postsHasMore.value || loading.value) return;
+
+    loading.value = true;
+    try {
+      const { includeDrafts = true, search = '', sort = 'date_desc', limit = 10 } = options;
+      const nextPage = postsPage.value + 1;
+      const response = await postApi.list(blogId, { includeDrafts, search, sort, page: nextPage, limit });
+      posts.value = [...posts.value, ...response.posts];
+      postsTotal.value = response.total;
+      postsHasMore.value = response.hasMore;
+      postsPage.value = response.page;
     } catch (e) {
       error.value = e.message;
     } finally {
@@ -218,6 +244,9 @@ export const useBlogStore = defineStore('blog', () => {
     blogs,
     currentBlog,
     posts,
+    postsTotal,
+    postsHasMore,
+    postsPage,
     categories,
     tags,
     sidebarObjects,
@@ -236,6 +265,7 @@ export const useBlogStore = defineStore('blog', () => {
     updateBlog,
     deleteBlog,
     fetchPosts,
+    loadMorePosts,
     fetchPost,
     createPost,
     updatePost,
