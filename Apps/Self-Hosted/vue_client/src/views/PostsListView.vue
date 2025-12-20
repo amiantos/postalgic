@@ -160,7 +160,7 @@ function formatLocalDateTime(dateString) {
 </script>
 
 <template>
-  <div class="p-6">
+  <div class="p-6 max-w-4xl">
     <!-- Header -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
       <div>

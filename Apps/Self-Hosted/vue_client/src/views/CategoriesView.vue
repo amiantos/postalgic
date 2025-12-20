@@ -59,7 +59,7 @@ async function deleteCategory(category) {
 </script>
 
 <template>
-  <div class="p-6">
+  <div class="p-6 max-w-4xl">
     <!-- Header -->
     <div class="flex items-center justify-between mb-6">
       <div>
