@@ -8,6 +8,8 @@ export const useBlogStore = defineStore('blog', () => {
   const currentBlog = ref(null);
   const posts = ref([]);
   const postsTotal = ref(0);
+  const postsPublishedCount = ref(0);
+  const postsDraftCount = ref(0);
   const postsHasMore = ref(false);
   const postsPage = ref(1);
   const categories = ref([]);
@@ -78,6 +80,8 @@ export const useBlogStore = defineStore('blog', () => {
       const response = await postApi.list(blogId, { includeDrafts, search, sort, page, limit });
       posts.value = response.posts;
       postsTotal.value = response.total;
+      postsPublishedCount.value = response.publishedCount;
+      postsDraftCount.value = response.draftCount;
       postsHasMore.value = response.hasMore;
       postsPage.value = response.page;
     } catch (e) {
@@ -245,6 +249,8 @@ export const useBlogStore = defineStore('blog', () => {
     currentBlog,
     posts,
     postsTotal,
+    postsPublishedCount,
+    postsDraftCount,
     postsHasMore,
     postsPage,
     categories,

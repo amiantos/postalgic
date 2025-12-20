@@ -46,6 +46,8 @@ router.get('/', (req, res) => {
 
     // Calculate pagination
     const total = posts.length;
+    const publishedCount = posts.filter(p => !p.isDraft).length;
+    const draftCount = posts.filter(p => p.isDraft).length;
     const startIndex = (page - 1) * limit;
     const endIndex = startIndex + limit;
     const paginatedPosts = posts.slice(startIndex, endIndex);
@@ -56,6 +58,8 @@ router.get('/', (req, res) => {
     res.json({
       posts: enrichedPosts,
       total,
+      publishedCount,
+      draftCount,
       page,
       limit,
       hasMore: endIndex < total

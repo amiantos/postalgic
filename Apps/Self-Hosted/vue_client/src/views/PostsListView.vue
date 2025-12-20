@@ -81,11 +81,11 @@ async function loadMorePosts() {
 }
 
 const postCounts = computed(() => {
-  // Use total from server for accurate count
-  const all = blogStore.postsTotal;
-  const published = blogStore.posts.filter(p => !p.isDraft).length;
-  const drafts = blogStore.posts.filter(p => p.isDraft).length;
-  return { all, published, drafts };
+  return {
+    all: blogStore.postsTotal,
+    published: blogStore.postsPublishedCount,
+    drafts: blogStore.postsDraftCount
+  };
 });
 
 function navigateToPost(postId) {
@@ -235,13 +235,8 @@ function formatLocalDateTime(dateString) {
           {{ f.charAt(0).toUpperCase() + f.slice(1) }}
         </button>
       </div>
-      <span class="text-sm text-gray-500 dark:text-gray-400">
-        <template v-if="searchText && !effectiveSearchText">
-          Type {{ MIN_SEARCH_LENGTH - searchText.length }} more character{{ MIN_SEARCH_LENGTH - searchText.length > 1 ? 's' : '' }} to search
-        </template>
-        <template v-else>
-          {{ blogStore.posts.length }}<span v-if="hasMorePosts">+</span> of {{ blogStore.postsTotal }} posts
-        </template>
+      <span v-if="searchText && !effectiveSearchText" class="text-sm text-gray-500 dark:text-gray-400">
+        Type {{ MIN_SEARCH_LENGTH - searchText.length }} more character{{ MIN_SEARCH_LENGTH - searchText.length > 1 ? 's' : '' }} to search
       </span>
     </div>
 
