@@ -35,8 +35,37 @@ const form = ref({
 
 const saving = ref(false);
 const error = ref(null);
-const newTag = ref('');
+const tagSearchQuery = ref('');
+const showTagDropdown = ref(false);
 const showEmbedEditor = ref(false);
+
+// Tags matching search query (case-insensitive)
+const filteredTags = computed(() => {
+  if (!tagSearchQuery.value.trim()) return [];
+  const query = tagSearchQuery.value.toLowerCase();
+  return blogStore.tags.filter(t =>
+    !form.value.tagIds.includes(t.id) &&
+    t.name.toLowerCase().includes(query)
+  );
+});
+
+// Check if exact match exists (to decide whether to show "Create" option)
+const exactTagMatch = computed(() => {
+  const query = tagSearchQuery.value.trim().toLowerCase();
+  if (!query) return true; // Don't show create option when empty
+  return blogStore.tags.some(t => t.name.toLowerCase() === query);
+});
+
+// Tags suggested based on post content (partial/prefix matching)
+const suggestedTags = computed(() => {
+  const text = `${form.value.title} ${form.value.content}`.toLowerCase();
+  if (!text.trim()) return [];
+  return blogStore.tags.filter(tag => {
+    if (form.value.tagIds.includes(tag.id)) return false;
+    const tagName = tag.name.toLowerCase();
+    return text.includes(tagName);
+  });
+});
 
 onMounted(async () => {
   if (!isNew.value) {
@@ -86,16 +115,29 @@ async function publishPost() {
   await savePost();
 }
 
-async function addTag() {
-  if (!newTag.value.trim()) return;
+async function createTag() {
+  if (!tagSearchQuery.value.trim()) return;
 
   try {
-    const tag = await blogStore.createTag(blogId.value, { name: newTag.value.trim() });
+    const tag = await blogStore.createTag(blogId.value, { name: tagSearchQuery.value.trim() });
     form.value.tagIds.push(tag.id);
-    newTag.value = '';
+    tagSearchQuery.value = '';
+    showTagDropdown.value = false;
   } catch (e) {
     error.value = e.message;
   }
+}
+
+function selectTag(tagId) {
+  form.value.tagIds.push(tagId);
+  tagSearchQuery.value = '';
+  showTagDropdown.value = false;
+}
+
+function hideTagDropdown() {
+  setTimeout(() => {
+    showTagDropdown.value = false;
+  }, 150);
 }
 
 function toggleTag(tagId) {
@@ -265,11 +307,12 @@ function removeEmbed() {
             </span>
           </div>
 
-          <!-- Available Tags -->
-          <div v-if="blogStore.tags.length > 0" class="mb-3">
+          <!-- Suggested Tags (based on content) -->
+          <div v-if="suggestedTags.length > 0" class="mb-3">
+            <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Suggested</p>
             <div class="flex flex-wrap gap-1">
               <button
-                v-for="tag in blogStore.tags.filter(t => !form.tagIds.includes(t.id))"
+                v-for="tag in suggestedTags"
                 :key="tag.id"
                 @click="toggleTag(tag.id)"
                 class="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 text-xs rounded-full hover:bg-gray-200 dark:hover:bg-gray-600"
@@ -279,21 +322,40 @@ function removeEmbed() {
             </div>
           </div>
 
-          <!-- Add New Tag -->
-          <div class="flex gap-2">
+          <!-- Search/Add Tags -->
+          <div class="relative">
             <input
-              v-model="newTag"
+              v-model="tagSearchQuery"
               type="text"
-              placeholder="New tag"
-              class="flex-1 px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm"
-              @keyup.enter="addTag"
+              placeholder="Search or add tags..."
+              class="w-full px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm"
+              @focus="showTagDropdown = true"
+              @blur="hideTagDropdown"
+              @keyup.enter="exactTagMatch ? null : createTag()"
             />
-            <button
-              @click="addTag"
-              class="px-3 py-1.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 text-sm"
+            <!-- Dropdown -->
+            <div
+              v-if="showTagDropdown && (filteredTags.length > 0 || (!exactTagMatch && tagSearchQuery.trim()))"
+              class="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-48 overflow-y-auto"
             >
-              Add
-            </button>
+              <!-- Matching tags -->
+              <button
+                v-for="tag in filteredTags"
+                :key="tag.id"
+                @mousedown.prevent="selectTag(tag.id)"
+                class="w-full px-3 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+              >
+                {{ tag.name }}
+              </button>
+              <!-- Create new tag option -->
+              <button
+                v-if="!exactTagMatch && tagSearchQuery.trim()"
+                @mousedown.prevent="createTag"
+                class="w-full px-3 py-2 text-left text-sm text-primary-600 dark:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-700 border-t border-gray-200 dark:border-gray-700"
+              >
+                Create "{{ tagSearchQuery.trim() }}"
+              </button>
+            </div>
           </div>
         </div>
 
