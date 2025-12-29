@@ -15,6 +15,16 @@ const isNew = computed(() => !postId.value);
 // Mobile sidebar state (desktop sidebar is always visible)
 const mobileSidebarOpen = ref(false);
 
+// Auto-resize textarea
+const contentTextarea = ref(null);
+function autoResize() {
+  const textarea = contentTextarea.value;
+  if (textarea) {
+    textarea.style.height = 'auto';
+    textarea.style.height = Math.max(400, textarea.scrollHeight) + 'px';
+  }
+}
+
 // Convert a Date to local datetime-local format (YYYY-MM-DDTHH:MM)
 function toLocalDateTimeString(date) {
   const d = new Date(date);
@@ -82,6 +92,8 @@ onMounted(async () => {
       embed: post.embed || null,
       createdAt: toLocalDateTimeString(new Date(post.createdAt))
     };
+    // Auto-resize after content is loaded
+    setTimeout(autoResize, 0);
   }
 });
 
@@ -187,9 +199,9 @@ function removeEmbed() {
 </script>
 
 <template>
-  <div class="flex">
+  <div>
     <!-- Main Content Area -->
-    <div class="flex-1 p-6 lg:max-w-4xl">
+    <div class="p-6 lg:pr-80 pb-16">
       <!-- Header -->
       <div class="flex items-center justify-between mb-6">
         <div class="flex items-center gap-4">
@@ -251,23 +263,20 @@ function removeEmbed() {
         </div>
 
         <!-- Borderless Content -->
-        <div class="py-4">
+        <div>
           <textarea
+            ref="contentTextarea"
             v-model="form.content"
-            class="w-full min-h-[calc(100vh-280px)] text-base leading-relaxed bg-transparent border-none outline-none resize-none text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500"
+            @input="autoResize"
+            class="w-full min-h-[400px] text-base leading-relaxed bg-transparent border-none outline-none resize-none text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500"
             placeholder="Write your post content in Markdown..."
           ></textarea>
-        </div>
-
-        <!-- Footer hint -->
-        <div class="pb-4">
-          <p class="text-xs text-gray-400 dark:text-gray-500">Supports Markdown formatting</p>
         </div>
       </div>
     </div>
 
     <!-- Desktop Sidebar (always visible on lg+) -->
-    <aside class="hidden lg:block w-72 bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 sticky top-0 h-screen overflow-y-auto">
+    <aside class="hidden lg:flex lg:flex-col w-72 liquid-glass fixed top-4 right-4 h-[calc(100vh-2rem)] overflow-y-auto overflow-x-hidden z-30">
       <div class="p-4">
         <!-- Header -->
         <h3 class="font-semibold text-gray-900 dark:text-gray-100 mb-4">Post Settings</h3>

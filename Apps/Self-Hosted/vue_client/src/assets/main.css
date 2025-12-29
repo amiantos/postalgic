@@ -35,3 +35,45 @@ input[type="color"]::-webkit-color-swatch {
     border-color: #374151;
   }
 }
+
+/* Liquid Glass Effect - using @layer so Tailwind utilities can override */
+@layer components {
+  .liquid-glass {
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow:
+      0 8px 32px rgba(0, 0, 0, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    border-radius: 22px;
+  }
+}
+
+/* Dark mode variant */
+@media (prefers-color-scheme: dark) {
+  .liquid-glass {
+    background: rgba(15, 15, 15, 0.75);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow:
+      0 8px 32px rgba(0, 0, 0, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+}
+
+/* Specular highlight gradient at top edge */
+.liquid-glass::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.2) 50%,
+    transparent 100%);
+  border-radius: 22px 22px 0 0;
+  pointer-events: none;
+  z-index: 1;
+}

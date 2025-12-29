@@ -48,7 +48,7 @@ function isActive(routeName) {
 <template>
   <div class="min-h-screen bg-gray-50 dark:bg-gray-900 flex max-w-7xl mx-auto">
     <!-- Desktop Sidebar -->
-    <aside class="hidden md:flex md:flex-col md:w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 xl:border-l sticky top-0 h-screen">
+    <aside class="hidden md:flex md:flex-col md:w-64 liquid-glass sticky top-4 h-[calc(100vh-2rem)] mb-4 ml-4 overflow-hidden">
       <!-- Header -->
       <div class="p-4 border-b border-gray-200 dark:border-gray-700">
         <router-link to="/" class="flex items-center gap-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 mb-3">
@@ -124,7 +124,7 @@ function isActive(routeName) {
     </div>
 
     <!-- Main Content -->
-    <main class="flex-1 pt-16 md:pt-0">
+    <main class="flex-1 pt-16 md:pt-4">
       <router-view />
     </main>
   </div>
