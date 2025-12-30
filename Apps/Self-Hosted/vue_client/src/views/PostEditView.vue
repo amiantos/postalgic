@@ -1,6 +1,6 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
+import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router';
 import { useBlogStore } from '@/stores/blog';
 import EmbedEditor from '@/components/EmbedEditor.vue';
 
@@ -49,6 +49,41 @@ const form = ref({
 const saving = ref(false);
 const error = ref(null);
 const tagSearchQuery = ref('');
+
+// Track initial form state for dirty checking
+const initialFormState = ref(null);
+const hasSaved = ref(false);
+
+// Check if form has unsaved changes
+const isDirty = computed(() => {
+  if (!initialFormState.value) return false;
+  if (hasSaved.value) return false;
+
+  const current = form.value;
+  const initial = initialFormState.value;
+
+  return (
+    current.title !== initial.title ||
+    current.content !== initial.content ||
+    current.isDraft !== initial.isDraft ||
+    current.categoryId !== initial.categoryId ||
+    current.createdAt !== initial.createdAt ||
+    JSON.stringify(current.tagIds) !== JSON.stringify(initial.tagIds) ||
+    JSON.stringify(current.embed) !== JSON.stringify(initial.embed)
+  );
+});
+
+function captureInitialState() {
+  initialFormState.value = {
+    title: form.value.title,
+    content: form.value.content,
+    isDraft: form.value.isDraft,
+    categoryId: form.value.categoryId,
+    tagIds: [...form.value.tagIds],
+    embed: form.value.embed ? JSON.parse(JSON.stringify(form.value.embed)) : null,
+    createdAt: form.value.createdAt
+  };
+}
 const showTagDropdown = ref(false);
 const showEmbedEditor = ref(false);
 
@@ -95,6 +130,32 @@ onMounted(async () => {
     // Auto-resize after content is loaded
     setTimeout(autoResize, 0);
   }
+  // Capture initial state for dirty checking
+  captureInitialState();
+
+  // Add beforeunload handler for browser refresh/close
+  window.addEventListener('beforeunload', handleBeforeUnload);
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener('beforeunload', handleBeforeUnload);
+});
+
+// Handle browser refresh/close
+function handleBeforeUnload(e) {
+  if (isDirty.value) {
+    e.preventDefault();
+    e.returnValue = '';
+    return '';
+  }
+}
+
+// Navigation guard for route changes
+onBeforeRouteLeave((to, from) => {
+  if (isDirty.value) {
+    const answer = window.confirm('You have unsaved changes. Are you sure you want to leave?');
+    if (!answer) return false;
+  }
 });
 
 async function savePost() {
@@ -117,6 +178,8 @@ async function savePost() {
     } else {
       await blogStore.updatePost(blogId.value, postId.value, data);
     }
+    // Mark as saved so navigation guard doesn't trigger
+    hasSaved.value = true;
     router.push({ name: 'blog-posts', params: { blogId: blogId.value } });
   } catch (e) {
     error.value = e.message;

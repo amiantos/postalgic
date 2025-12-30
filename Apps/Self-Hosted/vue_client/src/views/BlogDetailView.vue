@@ -11,6 +11,11 @@ const mobileMenuOpen = ref(false);
 
 const blogId = computed(() => route.params.blogId);
 
+// Hide sidebar and mobile header when editing posts (focused editing mode)
+const isPostEditorRoute = computed(() => {
+  return route.name === 'post-create' || route.name === 'post-edit';
+});
+
 onMounted(async () => {
   await loadBlogData();
 });
@@ -47,8 +52,8 @@ function isActive(routeName) {
 
 <template>
   <div class="min-h-screen bg-gray-50 dark:bg-gray-900 flex max-w-7xl mx-auto">
-    <!-- Desktop Sidebar -->
-    <aside class="hidden md:flex md:flex-col md:w-64 liquid-glass sticky top-4 h-[calc(100vh-2rem)] mb-4 ml-4 overflow-hidden">
+    <!-- Desktop Sidebar (hidden when editing posts) -->
+    <aside v-if="!isPostEditorRoute" class="hidden md:flex md:flex-col md:w-64 liquid-glass sticky top-4 h-[calc(100vh-2rem)] mb-4 ml-4 overflow-hidden">
       <!-- Header -->
       <div class="p-4 border-b border-gray-200 dark:border-gray-700">
         <router-link to="/" class="flex items-center gap-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 mb-3">
@@ -81,8 +86,8 @@ function isActive(routeName) {
       </nav>
     </aside>
 
-    <!-- Mobile Header -->
-    <div class="md:hidden fixed top-0 left-0 right-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 z-40">
+    <!-- Mobile Header (hidden when editing posts) -->
+    <div v-if="!isPostEditorRoute" class="md:hidden fixed top-0 left-0 right-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 z-40">
       <div class="flex items-center justify-between p-4">
         <div class="flex items-center gap-3">
           <router-link to="/" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
@@ -124,7 +129,7 @@ function isActive(routeName) {
     </div>
 
     <!-- Main Content -->
-    <main class="flex-1 pt-16 md:pt-4">
+    <main :class="['flex-1', isPostEditorRoute ? 'pt-0' : 'pt-16 md:pt-4']">
       <router-view />
     </main>
   </div>
