@@ -530,7 +530,7 @@ function removeEmbed() {
                     <img
                       v-for="(img, index) in form.embed.images?.slice(0, 4)"
                       :key="index"
-                      :src="img.data"
+                      :src="img.data || `/uploads/${blogId}/${img.filename}`"
                       class="w-10 h-10 object-cover rounded"
                       alt=""
                     />
@@ -759,7 +759,7 @@ function removeEmbed() {
                       <img
                         v-for="(img, index) in form.embed.images?.slice(0, 4)"
                         :key="index"
-                        :src="img.data"
+                        :src="img.data || `/uploads/${blogId}/${img.filename}`"
                         class="w-10 h-10 object-cover rounded"
                         alt=""
                       />
