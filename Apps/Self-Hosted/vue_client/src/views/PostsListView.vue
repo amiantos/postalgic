@@ -163,11 +163,11 @@ function formatLocalDateTime(dateString) {
   <div class="py-8 px-6 max-w-3xl">
     <!-- Header - Clean and minimal -->
     <header class="mb-10">
-      <div class="flex items-baseline justify-between mb-1">
+      <div class="flex items-center justify-between mb-1">
         <h1 class="text-3xl font-semibold tracking-tight text-gray-900 dark:text-white">Posts</h1>
         <button
           @click="createNewPost"
-          class="text-primary-600 dark:text-primary-400 font-medium hover:text-primary-700 dark:hover:text-primary-300 transition-colors"
+          class="px-4 py-2 text-sm font-medium rounded-xl bg-white/80 dark:bg-white/10 backdrop-blur-sm border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white hover:bg-white dark:hover:bg-white/15 transition-all shadow-sm"
         >
           New Post
         </button>
@@ -178,7 +178,7 @@ function formatLocalDateTime(dateString) {
     </header>
 
     <!-- Controls - Understated, inline -->
-    <div class="flex flex-col sm:flex-row sm:items-center gap-4 mb-8 pb-6 border-b border-gray-200 dark:border-white/10">
+    <div class="flex flex-col sm:flex-row sm:items-center gap-4 mb-16 pb-6 border-b border-gray-200 dark:border-white/10">
       <!-- Search -->
       <div class="relative flex-1">
         <svg class="absolute left-0 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -256,11 +256,11 @@ function formatLocalDateTime(dateString) {
     </div>
 
     <!-- Posts List - Editorial flow -->
-    <div v-else class="divide-y divide-gray-100 dark:divide-white/5">
+    <div v-else class="divide-y divide-gray-200 dark:divide-white/10">
       <article
         v-for="post in filteredPosts"
         :key="post.id"
-        class="py-8 first:pt-0 group cursor-pointer"
+        class="py-16 first:pt-0 group cursor-pointer"
         @click="navigateToPost(post.id)"
       >
         <!-- Meta line -->
@@ -342,10 +342,10 @@ function formatLocalDateTime(dateString) {
           </div>
         </div>
 
-        <!-- Content preview -->
+        <!-- Content -->
         <div
           v-if="post.content"
-          class="prose prose-sm dark:prose-invert prose-gray max-w-none text-gray-600 dark:text-gray-400 line-clamp-3"
+          class="prose prose-sm dark:prose-invert prose-gray max-w-none"
           v-html="renderMarkdown(post.content)"
         ></div>
 
@@ -410,7 +410,7 @@ function formatLocalDateTime(dateString) {
     </div>
 
     <!-- Load More -->
-    <div v-if="hasMorePosts" class="pt-8 text-center border-t border-gray-100 dark:border-white/5 mt-8">
+    <div v-if="hasMorePosts" class="pt-16 text-center border-t border-gray-200 dark:border-white/10">
       <button
         @click="loadMorePosts"
         :disabled="blogStore.loading"
