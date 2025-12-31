@@ -162,12 +162,12 @@ function formatLocalDateTime(dateString) {
 <template>
   <div class="py-8 px-6 max-w-3xl">
     <!-- Header - Clean and minimal -->
-    <header class="mb-10">
+    <header class="mb-5">
       <div class="flex items-center justify-between mb-1">
         <h1 class="text-3xl font-semibold tracking-tight text-gray-900 dark:text-white">Posts</h1>
         <button
           @click="createNewPost"
-          class="px-4 py-2 text-sm font-medium rounded-xl bg-white/80 dark:bg-white/10 backdrop-blur-sm border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white hover:bg-white dark:hover:bg-white/15 transition-all shadow-sm"
+          class="glass px-4 py-2 text-sm font-medium text-gray-900 dark:text-white"
         >
           New Post
         </button>
@@ -177,23 +177,23 @@ function formatLocalDateTime(dateString) {
       </p>
     </header>
 
-    <!-- Controls - Understated, inline -->
-    <div class="flex flex-col sm:flex-row sm:items-center gap-4 mb-16 pb-6 border-b border-gray-200 dark:border-white/10">
+    <!-- Controls -->
+    <div class="flex flex-col sm:flex-row sm:items-center gap-3 mb-16 pb-6 border-b border-gray-200 dark:border-white/10">
       <!-- Search -->
-      <div class="relative flex-1">
-        <svg class="absolute left-0 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div class="glass flex-1 flex items-center h-10">
+        <svg class="ml-3 w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
         </svg>
         <input
           v-model="searchText"
           type="text"
           placeholder="Search..."
-          class="w-full pl-6 pr-8 py-1.5 bg-transparent text-gray-900 dark:text-gray-100 placeholder-gray-400 border-0 border-b border-transparent focus:border-gray-300 dark:focus:border-white/20 focus:ring-0 transition-colors text-sm"
+          class="flex-1 h-full px-2 text-sm bg-transparent text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none"
         />
         <button
           v-if="searchText"
           @click="clearSearch"
-          class="absolute right-0 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+          class="mr-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -201,32 +201,36 @@ function formatLocalDateTime(dateString) {
         </button>
       </div>
 
-      <!-- Filter & Sort - Compact -->
-      <div class="flex items-center gap-4 text-sm">
-        <div class="flex items-center gap-1 text-gray-500 dark:text-gray-400">
-          <button
-            v-for="f in ['all', 'published', 'draft']"
-            :key="f"
-            @click="filter = f"
-            :class="[
-              'px-2 py-1 rounded transition-colors',
-              filter === f
-                ? 'text-gray-900 dark:text-white font-medium'
-                : 'hover:text-gray-700 dark:hover:text-gray-300'
-            ]"
-          >
-            {{ f.charAt(0).toUpperCase() + f.slice(1) }}
-          </button>
-        </div>
-        <span class="text-gray-300 dark:text-gray-700">|</span>
+      <!-- Filter toggles -->
+      <div class="glass flex items-center h-10 p-1">
+        <button
+          v-for="f in ['all', 'published', 'draft']"
+          :key="f"
+          @click="filter = f"
+          :class="[
+            'px-3 h-full text-sm font-medium rounded-lg transition-all flex items-center',
+            filter === f
+              ? 'bg-white/80 dark:bg-white/20 text-gray-900 dark:text-white shadow-sm'
+              : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+          ]"
+        >
+          {{ f.charAt(0).toUpperCase() + f.slice(1) }}
+        </button>
+      </div>
+
+      <!-- Sort dropdown -->
+      <div class="glass relative h-10 flex items-center">
         <select
           v-model="sortOption"
-          class="bg-transparent text-gray-500 dark:text-gray-400 border-0 focus:ring-0 cursor-pointer text-sm py-0 pr-6"
+          class="appearance-none h-full pl-3 pr-8 text-sm font-medium bg-transparent text-gray-700 dark:text-gray-300 focus:outline-none cursor-pointer"
         >
           <option v-for="opt in sortOptions" :key="opt.value" :value="opt.value">
             {{ opt.label }}
           </option>
         </select>
+        <svg class="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg>
       </div>
     </div>
 

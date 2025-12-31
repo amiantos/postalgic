@@ -85,6 +85,58 @@ input[type="color"]::-webkit-color-swatch {
   z-index: 1;
 }
 
+/* Glass UI elements - buttons, inputs, controls */
+@layer components {
+  .glass {
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow:
+      0 2px 8px rgba(0, 0, 0, 0.06),
+      inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    border-radius: 12px;
+    transition: all 0.2s ease;
+  }
+
+  .glass:hover {
+    box-shadow:
+      0 4px 12px rgba(0, 0, 0, 0.08),
+      inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  }
+
+  .glass:focus-within {
+    box-shadow:
+      0 0 0 3px rgba(59, 130, 246, 0.15),
+      0 2px 8px rgba(0, 0, 0, 0.06),
+      inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .glass {
+    background: rgba(15, 15, 15, 0.75);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow:
+      0 2px 8px rgba(0, 0, 0, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+
+  .glass:hover {
+    background: rgba(25, 25, 25, 0.75);
+    box-shadow:
+      0 4px 12px rgba(0, 0, 0, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+
+  .glass:focus-within {
+    box-shadow:
+      0 0 0 3px rgba(59, 130, 246, 0.25),
+      0 2px 8px rgba(0, 0, 0, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+}
+
 /* Minimal Surface - subtle floating cards without harsh borders */
 @layer components {
   .surface {
