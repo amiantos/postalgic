@@ -337,7 +337,7 @@ function cancel() {
           class="relative group"
         >
           <img
-            :src="image.data"
+            :src="image.data || `/uploads/${props.blogId}/${image.filename}`"
             class="w-full h-24 object-cover rounded"
             alt=""
           />

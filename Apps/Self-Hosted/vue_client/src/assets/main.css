@@ -3,8 +3,15 @@
 @tailwind utilities;
 
 /* Custom styles */
-body {
+html, body {
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  background-color: #f9fafb; /* gray-50 */
+}
+
+@media (prefers-color-scheme: dark) {
+  html, body {
+    background-color: #111827; /* gray-900 */
+  }
 }
 
 /* Markdown editor styles */
@@ -33,5 +40,110 @@ input[type="color"]::-webkit-color-swatch {
 @media (prefers-color-scheme: dark) {
   input[type="color"]::-webkit-color-swatch {
     border-color: #374151;
+  }
+}
+
+/* Liquid Glass Effect - using @layer so Tailwind utilities can override */
+@layer components {
+  .liquid-glass {
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow:
+      0 8px 32px rgba(0, 0, 0, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    border-radius: 22px;
+  }
+}
+
+/* Dark mode variant */
+@media (prefers-color-scheme: dark) {
+  .liquid-glass {
+    background: rgba(15, 15, 15, 0.75);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow:
+      0 8px 32px rgba(0, 0, 0, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+}
+
+/* Specular highlight gradient at top edge */
+.liquid-glass::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.2) 50%,
+    transparent 100%);
+  border-radius: 22px 22px 0 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Minimal Surface - subtle floating cards without harsh borders */
+@layer components {
+  .surface {
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 16px;
+    box-shadow:
+      0 2px 8px rgba(0, 0, 0, 0.04),
+      0 1px 2px rgba(0, 0, 0, 0.06);
+  }
+
+  .surface-interactive {
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 16px;
+    box-shadow:
+      0 2px 8px rgba(0, 0, 0, 0.04),
+      0 1px 2px rgba(0, 0, 0, 0.06);
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+  }
+
+  .surface-interactive:hover {
+    box-shadow:
+      0 4px 16px rgba(0, 0, 0, 0.08),
+      0 2px 4px rgba(0, 0, 0, 0.08);
+    transform: translateY(-1px);
+  }
+
+  /* Inset surface for inputs and nested elements */
+  .surface-inset {
+    background: rgba(0, 0, 0, 0.03);
+    border-radius: 12px;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .surface {
+    background: rgba(255, 255, 255, 0.05);
+    box-shadow:
+      0 2px 8px rgba(0, 0, 0, 0.3),
+      0 1px 2px rgba(0, 0, 0, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  }
+
+  .surface-interactive {
+    background: rgba(255, 255, 255, 0.05);
+    box-shadow:
+      0 2px 8px rgba(0, 0, 0, 0.3),
+      0 1px 2px rgba(0, 0, 0, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  }
+
+  .surface-interactive:hover {
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow:
+      0 8px 24px rgba(0, 0, 0, 0.4),
+      0 2px 4px rgba(0, 0, 0, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
+
+  .surface-inset {
+    background: rgba(0, 0, 0, 0.2);
   }
 }

@@ -341,16 +341,16 @@ async function deleteBlog() {
     <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-6">Blog Settings</h2>
 
     <!-- Messages -->
-    <div v-if="error" class="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-800 dark:text-red-400">
+    <div v-if="error" class="mb-6 p-4 bg-red-500/10 rounded-xl text-red-600 dark:text-red-400">
       {{ error }}
     </div>
-    <div v-if="success" class="mb-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg text-green-800 dark:text-green-400">
+    <div v-if="success" class="mb-6 p-4 bg-green-500/10 rounded-xl text-green-600 dark:text-green-400">
       Settings saved successfully!
     </div>
 
     <form @submit.prevent="saveSettings" class="space-y-8">
       <!-- Basic Info -->
-      <section class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+      <section class="surface p-6">
         <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Basic Information</h3>
         <div class="space-y-4">
           <div>
@@ -358,7 +358,7 @@ async function deleteBlog() {
             <input
               v-model="form.name"
               type="text"
-              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              class="w-full px-3.5 py-2.5 rounded-xl bg-black/5 dark:bg-white/5 text-gray-900 dark:text-gray-100 border-0 focus:ring-2 focus:ring-primary-500/50 focus:bg-white dark:focus:bg-white/10 transition-colors"
             />
           </div>
           <div>
@@ -366,7 +366,7 @@ async function deleteBlog() {
             <input
               v-model="form.url"
               type="url"
-              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              class="w-full px-3.5 py-2.5 rounded-xl bg-black/5 dark:bg-white/5 text-gray-900 dark:text-gray-100 border-0 focus:ring-2 focus:ring-primary-500/50 focus:bg-white dark:focus:bg-white/10 transition-colors"
               placeholder="https://myblog.com"
             />
           </div>
@@ -375,14 +375,14 @@ async function deleteBlog() {
             <input
               v-model="form.tagline"
               type="text"
-              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              class="w-full px-3.5 py-2.5 rounded-xl bg-black/5 dark:bg-white/5 text-gray-900 dark:text-gray-100 border-0 focus:ring-2 focus:ring-primary-500/50 focus:bg-white dark:focus:bg-white/10 transition-colors"
             />
           </div>
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Timezone</label>
             <select
               v-model="form.timezone"
-              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              class="w-full px-3.5 py-2.5 rounded-xl bg-black/5 dark:bg-white/5 text-gray-900 dark:text-gray-100 border-0 focus:ring-2 focus:ring-primary-500/50 focus:bg-white dark:focus:bg-white/10 transition-colors"
             >
               <option value="UTC">UTC</option>
               <optgroup label="Americas">
@@ -437,7 +437,7 @@ async function deleteBlog() {
       </section>
 
       <!-- Author Info -->
-      <section class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+      <section class="surface p-6">
         <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Author Information</h3>
         <div class="space-y-4">
           <div>
@@ -445,7 +445,7 @@ async function deleteBlog() {
             <input
               v-model="form.authorName"
               type="text"
-              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              class="w-full px-3.5 py-2.5 rounded-xl bg-black/5 dark:bg-white/5 text-gray-900 dark:text-gray-100 border-0 focus:ring-2 focus:ring-primary-500/50 focus:bg-white dark:focus:bg-white/10 transition-colors"
             />
           </div>
           <div>
@@ -453,7 +453,7 @@ async function deleteBlog() {
             <input
               v-model="form.authorUrl"
               type="url"
-              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              class="w-full px-3.5 py-2.5 rounded-xl bg-black/5 dark:bg-white/5 text-gray-900 dark:text-gray-100 border-0 focus:ring-2 focus:ring-primary-500/50 focus:bg-white dark:focus:bg-white/10 transition-colors"
             />
           </div>
           <div>
@@ -461,14 +461,14 @@ async function deleteBlog() {
             <input
               v-model="form.authorEmail"
               type="email"
-              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              class="w-full px-3.5 py-2.5 rounded-xl bg-black/5 dark:bg-white/5 text-gray-900 dark:text-gray-100 border-0 focus:ring-2 focus:ring-primary-500/50 focus:bg-white dark:focus:bg-white/10 transition-colors"
             />
           </div>
         </div>
       </section>
 
       <!-- Theme Colors -->
-      <section class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+      <section class="surface p-6">
         <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Theme Colors</h3>
         <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
           <div>
@@ -482,7 +482,7 @@ async function deleteBlog() {
               <input
                 v-model="form.accentColor"
                 type="text"
-                class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm"
+                class="flex-1 px-3 py-2 rounded-lg bg-black/5 dark:bg-white/5 text-gray-900 dark:text-gray-100 text-sm border-0 focus:ring-2 focus:ring-primary-500/50 transition-colors"
               />
             </div>
           </div>
@@ -497,7 +497,7 @@ async function deleteBlog() {
               <input
                 v-model="form.backgroundColor"
                 type="text"
-                class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm"
+                class="flex-1 px-3 py-2 rounded-lg bg-black/5 dark:bg-white/5 text-gray-900 dark:text-gray-100 text-sm border-0 focus:ring-2 focus:ring-primary-500/50 transition-colors"
               />
             </div>
           </div>
@@ -512,7 +512,7 @@ async function deleteBlog() {
               <input
                 v-model="form.textColor"
                 type="text"
-                class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm"
+                class="flex-1 px-3 py-2 rounded-lg bg-black/5 dark:bg-white/5 text-gray-900 dark:text-gray-100 text-sm border-0 focus:ring-2 focus:ring-primary-500/50 transition-colors"
               />
             </div>
           </div>
@@ -527,7 +527,7 @@ async function deleteBlog() {
               <input
                 v-model="form.lightShade"
                 type="text"
-                class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm"
+                class="flex-1 px-3 py-2 rounded-lg bg-black/5 dark:bg-white/5 text-gray-900 dark:text-gray-100 text-sm border-0 focus:ring-2 focus:ring-primary-500/50 transition-colors"
               />
             </div>
           </div>
@@ -542,7 +542,7 @@ async function deleteBlog() {
               <input
                 v-model="form.mediumShade"
                 type="text"
-                class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm"
+                class="flex-1 px-3 py-2 rounded-lg bg-black/5 dark:bg-white/5 text-gray-900 dark:text-gray-100 text-sm border-0 focus:ring-2 focus:ring-primary-500/50 transition-colors"
               />
             </div>
           </div>
@@ -557,7 +557,7 @@ async function deleteBlog() {
               <input
                 v-model="form.darkShade"
                 type="text"
-                class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm"
+                class="flex-1 px-3 py-2 rounded-lg bg-black/5 dark:bg-white/5 text-gray-900 dark:text-gray-100 text-sm border-0 focus:ring-2 focus:ring-primary-500/50 transition-colors"
               />
             </div>
           </div>
@@ -566,7 +566,7 @@ async function deleteBlog() {
         <!-- Color Preview -->
         <div class="mt-6">
           <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Preview</label>
-          <div class="rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+          <div class="rounded-xl overflow-hidden bg-black/5 dark:bg-white/5">
             <iframe
               :srcdoc="colorPreviewHtml"
               class="w-full border-0"
@@ -577,14 +577,14 @@ async function deleteBlog() {
       </section>
 
       <!-- Publishing Settings -->
-      <section class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+      <section class="surface p-6">
         <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Publishing</h3>
         <div class="space-y-4">
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Publisher Type</label>
             <select
               v-model="form.publisherType"
-              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              class="w-full px-3.5 py-2.5 rounded-xl bg-black/5 dark:bg-white/5 text-gray-900 dark:text-gray-100 border-0 focus:ring-2 focus:ring-primary-500/50 focus:bg-white dark:focus:bg-white/10 transition-colors"
             >
               <option value="manual">Manual (Download ZIP)</option>
               <option value="aws">AWS S3</option>
@@ -594,7 +594,7 @@ async function deleteBlog() {
           </div>
 
           <!-- AWS Settings -->
-          <div v-if="form.publisherType === 'aws'" class="space-y-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+          <div v-if="form.publisherType === 'aws'" class="space-y-4 p-4 bg-black/5 dark:bg-white/5 rounded-xl">
             <h4 class="font-medium text-gray-900 dark:text-gray-100">AWS S3 Configuration</h4>
             <div class="grid grid-cols-2 gap-4">
               <div>
@@ -602,7 +602,7 @@ async function deleteBlog() {
                 <input
                   v-model="form.awsRegion"
                   type="text"
-                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  class="w-full px-3.5 py-2.5 rounded-xl bg-white/80 dark:bg-white/10 text-gray-900 dark:text-gray-100 border-0 focus:ring-2 focus:ring-primary-500/50 transition-colors"
                   placeholder="us-east-1"
                 />
               </div>
@@ -611,7 +611,7 @@ async function deleteBlog() {
                 <input
                   v-model="form.awsS3Bucket"
                   type="text"
-                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  class="w-full px-3.5 py-2.5 rounded-xl bg-white/80 dark:bg-white/10 text-gray-900 dark:text-gray-100 border-0 focus:ring-2 focus:ring-primary-500/50 transition-colors"
                   placeholder="my-blog-bucket"
                 />
               </div>
@@ -620,7 +620,7 @@ async function deleteBlog() {
                 <input
                   v-model="form.awsAccessKeyId"
                   type="text"
-                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  class="w-full px-3.5 py-2.5 rounded-xl bg-white/80 dark:bg-white/10 text-gray-900 dark:text-gray-100 border-0 focus:ring-2 focus:ring-primary-500/50 transition-colors"
                 />
               </div>
               <div>
@@ -628,7 +628,7 @@ async function deleteBlog() {
                 <input
                   v-model="form.awsSecretAccessKey"
                   type="password"
-                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  class="w-full px-3.5 py-2.5 rounded-xl bg-white/80 dark:bg-white/10 text-gray-900 dark:text-gray-100 border-0 focus:ring-2 focus:ring-primary-500/50 transition-colors"
                 />
               </div>
               <div class="col-span-2">
@@ -636,7 +636,7 @@ async function deleteBlog() {
                 <input
                   v-model="form.awsCloudFrontDistId"
                   type="text"
-                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  class="w-full px-3.5 py-2.5 rounded-xl bg-white/80 dark:bg-white/10 text-gray-900 dark:text-gray-100 border-0 focus:ring-2 focus:ring-primary-500/50 transition-colors"
                   placeholder="Optional - for cache invalidation"
                 />
               </div>
@@ -644,7 +644,7 @@ async function deleteBlog() {
           </div>
 
           <!-- SFTP Settings -->
-          <div v-if="form.publisherType === 'sftp'" class="space-y-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+          <div v-if="form.publisherType === 'sftp'" class="space-y-4 p-4 bg-black/5 dark:bg-white/5 rounded-xl">
             <h4 class="font-medium text-gray-900 dark:text-gray-100">SFTP Configuration</h4>
             <div class="grid grid-cols-2 gap-4">
               <div>
@@ -652,7 +652,7 @@ async function deleteBlog() {
                 <input
                   v-model="form.ftpHost"
                   type="text"
-                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  class="w-full px-3.5 py-2.5 rounded-xl bg-white/80 dark:bg-white/10 text-gray-900 dark:text-gray-100 border-0 focus:ring-2 focus:ring-primary-500/50 transition-colors"
                   placeholder="sftp.example.com"
                 />
               </div>
@@ -661,7 +661,7 @@ async function deleteBlog() {
                 <input
                   v-model.number="form.ftpPort"
                   type="number"
-                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  class="w-full px-3.5 py-2.5 rounded-xl bg-white/80 dark:bg-white/10 text-gray-900 dark:text-gray-100 border-0 focus:ring-2 focus:ring-primary-500/50 transition-colors"
                   placeholder="22"
                 />
               </div>
@@ -670,7 +670,7 @@ async function deleteBlog() {
                 <input
                   v-model="form.ftpUsername"
                   type="text"
-                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  class="w-full px-3.5 py-2.5 rounded-xl bg-white/80 dark:bg-white/10 text-gray-900 dark:text-gray-100 border-0 focus:ring-2 focus:ring-primary-500/50 transition-colors"
                 />
               </div>
               <div>
@@ -678,7 +678,7 @@ async function deleteBlog() {
                 <input
                   v-model="form.ftpPassword"
                   type="password"
-                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  class="w-full px-3.5 py-2.5 rounded-xl bg-white/80 dark:bg-white/10 text-gray-900 dark:text-gray-100 border-0 focus:ring-2 focus:ring-primary-500/50 transition-colors"
                 />
               </div>
               <div class="col-span-2">
@@ -686,7 +686,7 @@ async function deleteBlog() {
                 <input
                   v-model="form.ftpPath"
                   type="text"
-                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  class="w-full px-3.5 py-2.5 rounded-xl bg-white/80 dark:bg-white/10 text-gray-900 dark:text-gray-100 border-0 focus:ring-2 focus:ring-primary-500/50 transition-colors"
                   placeholder="/var/www/html"
                 />
               </div>
@@ -695,7 +695,7 @@ async function deleteBlog() {
                 <textarea
                   v-model="form.ftpPrivateKey"
                   rows="3"
-                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 font-mono text-xs"
+                  class="w-full px-3.5 py-2.5 rounded-xl bg-white/80 dark:bg-white/10 text-gray-900 dark:text-gray-100 border-0 focus:ring-2 focus:ring-primary-500/50 font-mono text-xs transition-colors"
                   placeholder="-----BEGIN OPENSSH PRIVATE KEY-----..."
                 ></textarea>
               </div>
@@ -703,7 +703,7 @@ async function deleteBlog() {
           </div>
 
           <!-- Git Settings -->
-          <div v-if="form.publisherType === 'git'" class="space-y-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+          <div v-if="form.publisherType === 'git'" class="space-y-4 p-4 bg-black/5 dark:bg-white/5 rounded-xl">
             <h4 class="font-medium text-gray-900 dark:text-gray-100">Git Configuration</h4>
             <div class="space-y-4">
               <div>
@@ -711,7 +711,7 @@ async function deleteBlog() {
                 <input
                   v-model="form.gitRepositoryUrl"
                   type="text"
-                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  class="w-full px-3.5 py-2.5 rounded-xl bg-white/80 dark:bg-white/10 text-gray-900 dark:text-gray-100 border-0 focus:ring-2 focus:ring-primary-500/50 transition-colors"
                   placeholder="https://github.com/username/repo.git"
                 />
               </div>
@@ -721,7 +721,7 @@ async function deleteBlog() {
                   <input
                     v-model="form.gitUsername"
                     type="text"
-                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    class="w-full px-3.5 py-2.5 rounded-xl bg-white/80 dark:bg-white/10 text-gray-900 dark:text-gray-100 border-0 focus:ring-2 focus:ring-primary-500/50 transition-colors"
                   />
                 </div>
                 <div>
@@ -729,7 +729,7 @@ async function deleteBlog() {
                   <input
                     v-model="form.gitToken"
                     type="password"
-                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    class="w-full px-3.5 py-2.5 rounded-xl bg-white/80 dark:bg-white/10 text-gray-900 dark:text-gray-100 border-0 focus:ring-2 focus:ring-primary-500/50 transition-colors"
                   />
                 </div>
               </div>
@@ -739,7 +739,7 @@ async function deleteBlog() {
                   <input
                     v-model="form.gitBranch"
                     type="text"
-                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    class="w-full px-3.5 py-2.5 rounded-xl bg-white/80 dark:bg-white/10 text-gray-900 dark:text-gray-100 border-0 focus:ring-2 focus:ring-primary-500/50 transition-colors"
                     placeholder="main"
                   />
                 </div>
@@ -748,7 +748,7 @@ async function deleteBlog() {
                   <input
                     v-model="form.gitCommitMessage"
                     type="text"
-                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    class="w-full px-3.5 py-2.5 rounded-xl bg-white/80 dark:bg-white/10 text-gray-900 dark:text-gray-100 border-0 focus:ring-2 focus:ring-primary-500/50 transition-colors"
                     placeholder="Update blog"
                   />
                 </div>
@@ -759,14 +759,14 @@ async function deleteBlog() {
       </section>
 
       <!-- Sync Settings -->
-      <section class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+      <section class="surface p-6">
         <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Sync Settings</h3>
         <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
           When enabled, sync data will be generated alongside your published site, allowing you to import your blog on other devices or the iOS app.
         </p>
 
         <!-- Sync Error -->
-        <div v-if="syncError" class="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-800 dark:text-red-400">
+        <div v-if="syncError" class="mb-4 p-4 bg-red-500/10 rounded-xl text-red-600 dark:text-red-400">
           {{ syncError }}
         </div>
 
@@ -777,7 +777,7 @@ async function deleteBlog() {
 
         <!-- Sync Enabled -->
         <div v-else-if="syncConfig?.syncEnabled" class="space-y-4">
-          <div class="flex items-center justify-between p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+          <div class="flex items-center justify-between p-4 bg-green-500/10 rounded-xl">
             <div class="flex items-center gap-3">
               <svg class="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
@@ -795,7 +795,7 @@ async function deleteBlog() {
             <button
               type="button"
               @click="disableSync"
-              class="px-3 py-1 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+              class="px-4 py-2 text-sm text-red-500 dark:text-red-400 hover:bg-red-500/10 rounded-xl transition-colors"
             >
               Disable
             </button>
@@ -811,14 +811,14 @@ async function deleteBlog() {
               Change sync password
             </button>
           </div>
-          <div v-else class="space-y-3 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+          <div v-else class="space-y-3 p-4 bg-black/5 dark:bg-white/5 rounded-xl">
             <h4 class="font-medium text-gray-900 dark:text-gray-100">Change Password</h4>
             <div class="relative">
               <input
                 v-model="syncPassword"
                 :type="showPassword ? 'text' : 'password'"
                 placeholder="New password (min 8 characters)"
-                class="w-full px-3 py-2 pr-10 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                class="w-full px-3.5 py-2.5 pr-10 rounded-xl bg-white/80 dark:bg-white/10 text-gray-900 dark:text-gray-100 border-0 focus:ring-2 focus:ring-primary-500/50 transition-colors"
               />
               <button
                 type="button"
@@ -839,7 +839,7 @@ async function deleteBlog() {
                 v-model="syncConfirmPassword"
                 :type="showConfirmPassword ? 'text' : 'password'"
                 placeholder="Confirm new password"
-                class="w-full px-3 py-2 pr-10 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                class="w-full px-3.5 py-2.5 pr-10 rounded-xl bg-white/80 dark:bg-white/10 text-gray-900 dark:text-gray-100 border-0 focus:ring-2 focus:ring-primary-500/50 transition-colors"
               />
               <button
                 type="button"
@@ -862,7 +862,7 @@ async function deleteBlog() {
               <button
                 type="button"
                 @click="changingPassword = false; syncPassword = ''; syncConfirmPassword = '';"
-                class="px-3 py-1 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors"
+                class="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-black/5 dark:hover:bg-white/10 rounded-xl transition-colors"
               >
                 Cancel
               </button>
@@ -870,7 +870,7 @@ async function deleteBlog() {
                 type="button"
                 @click="changePassword"
                 :disabled="!passwordsMatch || syncPassword.length < 8"
-                class="px-3 py-1 text-sm bg-primary-600 text-white rounded hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                class="px-4 py-2 text-sm bg-primary-500 text-white rounded-xl font-medium hover:bg-primary-600 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Update Password
               </button>
@@ -885,12 +885,12 @@ async function deleteBlog() {
             </p>
 
             <!-- Sync Down Error -->
-            <div v-if="syncDownError" class="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-800 dark:text-red-400">
+            <div v-if="syncDownError" class="mb-4 p-3 bg-red-500/10 rounded-xl text-sm text-red-600 dark:text-red-400">
               {{ syncDownError }}
             </div>
 
             <!-- Sync Down Result -->
-            <div v-if="syncDownResult" class="mb-4 p-3 rounded-lg" :class="syncDownResult.success ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800' : 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800'">
+            <div v-if="syncDownResult" class="mb-4 p-3 rounded-xl" :class="syncDownResult.success ? 'bg-green-500/10' : 'bg-red-500/10'">
               <div class="flex items-center gap-2">
                 <svg v-if="syncDownResult.success" class="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
@@ -905,13 +905,13 @@ async function deleteBlog() {
             </div>
 
             <!-- Checking Changes -->
-            <div v-if="checkingChanges" class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+            <div v-if="checkingChanges" class="flex items-center gap-3 p-3 bg-black/5 dark:bg-white/5 rounded-xl">
               <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-primary-600"></div>
               <span class="text-gray-700 dark:text-gray-300">Checking for changes...</span>
             </div>
 
             <!-- Syncing -->
-            <div v-else-if="syncingDown" class="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+            <div v-else-if="syncingDown" class="p-3 bg-black/5 dark:bg-white/5 rounded-xl">
               <div class="flex items-center gap-3">
                 <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-primary-600"></div>
                 <span class="text-gray-700 dark:text-gray-300">{{ syncDownProgress || 'Syncing...' }}</span>
@@ -919,7 +919,7 @@ async function deleteBlog() {
             </div>
 
             <!-- Check Result -->
-            <div v-else-if="syncCheckResult" class="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+            <div v-else-if="syncCheckResult" class="p-3 bg-black/5 dark:bg-white/5 rounded-xl">
               <div v-if="syncCheckResult.hasChanges" class="space-y-3">
                 <div class="flex items-center gap-2">
                   <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1062,7 +1062,7 @@ async function deleteBlog() {
                 <button
                   type="button"
                   @click="pullChanges"
-                  class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+                  class="px-5 py-2.5 bg-primary-500 text-white rounded-xl font-medium hover:bg-primary-600 transition-colors shadow-sm"
                 >
                   Pull Changes
                 </button>
@@ -1080,7 +1080,7 @@ async function deleteBlog() {
               <button
                 type="button"
                 @click="checkForChanges"
-                class="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                class="px-5 py-2.5 bg-black/5 dark:bg-white/10 text-gray-700 dark:text-gray-300 rounded-xl font-medium hover:bg-black/10 dark:hover:bg-white/15 transition-colors"
               >
                 Check for Changes
               </button>
@@ -1106,7 +1106,7 @@ async function deleteBlog() {
             <button
               type="button"
               @click="enableSync"
-              class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+              class="px-5 py-2.5 bg-primary-500 text-white rounded-xl font-medium hover:bg-primary-600 transition-colors shadow-sm"
             >
               Enable Sync
             </button>
@@ -1122,7 +1122,7 @@ async function deleteBlog() {
                 v-model="syncPassword"
                 :type="showPassword ? 'text' : 'password'"
                 placeholder="Password (min 8 characters)"
-                class="w-full px-3 py-2 pr-10 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                class="w-full px-3.5 py-2.5 pr-10 rounded-xl bg-black/5 dark:bg-white/5 text-gray-900 dark:text-gray-100 border-0 focus:ring-2 focus:ring-primary-500/50 focus:bg-white dark:focus:bg-white/10 transition-colors"
               />
               <button
                 type="button"
@@ -1143,7 +1143,7 @@ async function deleteBlog() {
                 v-model="syncConfirmPassword"
                 :type="showConfirmPassword ? 'text' : 'password'"
                 placeholder="Confirm password"
-                class="w-full px-3 py-2 pr-10 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                class="w-full px-3.5 py-2.5 pr-10 rounded-xl bg-black/5 dark:bg-white/5 text-gray-900 dark:text-gray-100 border-0 focus:ring-2 focus:ring-primary-500/50 focus:bg-white dark:focus:bg-white/10 transition-colors"
               />
               <button
                 type="button"
@@ -1166,7 +1166,7 @@ async function deleteBlog() {
               type="button"
               @click="enableSync"
               :disabled="!canEnableSync"
-              class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              class="px-5 py-2.5 bg-primary-500 text-white rounded-xl font-medium hover:bg-primary-600 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Enable Sync
             </button>
@@ -1179,14 +1179,14 @@ async function deleteBlog() {
         <button
           type="button"
           @click="deleteBlog"
-          class="px-4 py-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+          class="px-5 py-2.5 text-red-500 dark:text-red-400 hover:bg-red-500/10 rounded-xl font-medium transition-colors"
         >
           Delete Blog
         </button>
         <button
           type="submit"
           :disabled="saving"
-          class="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50"
+          class="px-6 py-2.5 bg-primary-500 text-white rounded-xl font-medium hover:bg-primary-600 transition-colors shadow-sm disabled:opacity-50"
         >
           {{ saving ? 'Saving...' : 'Save Settings' }}
         </button>
