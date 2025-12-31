@@ -55,7 +55,7 @@ function isActive(routeName) {
     <!-- Desktop Sidebar (hidden when editing posts) -->
     <aside v-if="!isPostEditorRoute" class="hidden md:flex md:flex-col md:w-64 liquid-glass sticky top-4 h-[calc(100vh-2rem)] mb-4 ml-4 overflow-hidden">
       <!-- Header -->
-      <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+      <div class="p-4 border-b border-black/5 dark:border-white/10">
         <router-link to="/" class="flex items-center gap-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 mb-3">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
@@ -75,7 +75,7 @@ function isActive(routeName) {
             'flex items-center gap-3 px-3 py-2 rounded-lg transition-colors',
             isActive(item.route)
               ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
-              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+              : 'text-gray-600 dark:text-gray-400 hover:bg-black/5 dark:hover:bg-white/10'
           ]"
         >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -87,7 +87,7 @@ function isActive(routeName) {
     </aside>
 
     <!-- Mobile Header (hidden when editing posts) -->
-    <div v-if="!isPostEditorRoute" class="md:hidden fixed top-0 left-0 right-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 z-40">
+    <div v-if="!isPostEditorRoute" class="md:hidden fixed top-0 left-0 right-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-lg border-b border-black/5 dark:border-white/10 z-40">
       <div class="flex items-center justify-between p-4">
         <div class="flex items-center gap-3">
           <router-link to="/" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
@@ -105,7 +105,7 @@ function isActive(routeName) {
       </div>
 
       <!-- Mobile Menu -->
-      <div v-if="mobileMenuOpen" class="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+      <div v-if="mobileMenuOpen" class="border-t border-black/5 dark:border-white/10 bg-white/90 dark:bg-gray-900/90 backdrop-blur-lg">
         <nav class="p-2">
           <router-link
             v-for="item in navItems"
@@ -115,7 +115,7 @@ function isActive(routeName) {
               'flex items-center gap-3 px-3 py-2 rounded-lg transition-colors',
               isActive(item.route)
                 ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
-                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                : 'text-gray-600 dark:text-gray-400 hover:bg-black/5 dark:hover:bg-white/10'
             ]"
             @click="mobileMenuOpen = false"
           >
