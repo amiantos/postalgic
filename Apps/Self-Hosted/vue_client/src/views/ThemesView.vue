@@ -137,7 +137,7 @@ const templateNames = computed(() => {
 </script>
 
 <template>
-  <div class="p-6 max-w-4xl">
+  <div class="p-6">
     <div class="flex items-center justify-between mb-6">
       <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100">Themes</h2>
       <button

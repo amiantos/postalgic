@@ -92,10 +92,6 @@ function navigateToPost(postId) {
   router.push({ name: 'post-edit', params: { blogId: blogId.value, postId } });
 }
 
-function createNewPost() {
-  router.push({ name: 'post-create', params: { blogId: blogId.value } });
-}
-
 function confirmDelete(post) {
   postToDelete.value = post;
   showDeleteModal.value = true;
@@ -160,18 +156,10 @@ function formatLocalDateTime(dateString) {
 </script>
 
 <template>
-  <div class="py-8 px-6 max-w-3xl">
+  <div class="py-8 px-6">
     <!-- Header - Clean and minimal -->
     <header class="mb-5">
-      <div class="flex items-center justify-between mb-1">
-        <h1 class="text-3xl font-semibold tracking-tight text-gray-900 dark:text-white">Posts</h1>
-        <button
-          @click="createNewPost"
-          class="glass px-4 py-2 text-sm font-medium text-gray-900 dark:text-white"
-        >
-          New Post
-        </button>
-      </div>
+      <h1 class="text-3xl font-semibold tracking-tight text-gray-900 dark:text-white mb-1">Posts</h1>
       <p class="text-gray-500 dark:text-gray-500 text-sm">
         {{ postCounts.published }} published<span v-if="postCounts.drafts > 0">, {{ postCounts.drafts }} drafts</span>
       </p>
@@ -201,36 +189,39 @@ function formatLocalDateTime(dateString) {
         </button>
       </div>
 
-      <!-- Filter toggles -->
-      <div class="glass flex items-center h-10 p-1">
-        <button
-          v-for="f in ['all', 'published', 'draft']"
-          :key="f"
-          @click="filter = f"
-          :class="[
-            'px-3 h-full text-sm font-medium rounded-lg transition-all flex items-center',
-            filter === f
-              ? 'bg-white/80 dark:bg-white/20 text-gray-900 dark:text-white shadow-sm'
-              : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
-          ]"
-        >
-          {{ f.charAt(0).toUpperCase() + f.slice(1) }}
-        </button>
-      </div>
+      <!-- Filter and Sort row -->
+      <div class="flex items-center gap-3">
+        <!-- Filter toggles -->
+        <div class="glass flex items-center h-10 p-1">
+          <button
+            v-for="f in ['all', 'published', 'draft']"
+            :key="f"
+            @click="filter = f"
+            :class="[
+              'px-3 h-full text-sm font-medium rounded-lg transition-all flex items-center',
+              filter === f
+                ? 'bg-white/80 dark:bg-white/20 text-gray-900 dark:text-white shadow-sm'
+                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+            ]"
+          >
+            {{ f.charAt(0).toUpperCase() + f.slice(1) }}
+          </button>
+        </div>
 
-      <!-- Sort dropdown -->
-      <div class="glass relative h-10 flex items-center">
-        <select
-          v-model="sortOption"
-          class="appearance-none h-full pl-3 pr-8 text-sm font-medium bg-transparent text-gray-700 dark:text-gray-300 focus:outline-none cursor-pointer"
-        >
-          <option v-for="opt in sortOptions" :key="opt.value" :value="opt.value">
-            {{ opt.label }}
-          </option>
-        </select>
-        <svg class="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-        </svg>
+        <!-- Sort dropdown -->
+        <div class="glass relative h-10 flex items-center flex-1">
+          <select
+            v-model="sortOption"
+            class="appearance-none w-full h-full pl-3 pr-8 text-sm font-medium bg-transparent text-gray-700 dark:text-gray-300 focus:outline-none cursor-pointer"
+          >
+            <option v-for="opt in sortOptions" :key="opt.value" :value="opt.value">
+              {{ opt.label }}
+            </option>
+          </select>
+          <svg class="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </div>
       </div>
     </div>
 
@@ -243,13 +234,13 @@ function formatLocalDateTime(dateString) {
       <p class="text-gray-400 dark:text-gray-500 mb-4">
         {{ searchText ? 'No posts match your search.' : 'No posts yet.' }}
       </p>
-      <button
+      <router-link
         v-if="!searchText"
-        @click="createNewPost"
+        :to="{ name: 'post-create', params: { blogId } }"
         class="text-primary-600 dark:text-primary-400 font-medium hover:text-primary-700 dark:hover:text-primary-300"
       >
         Create your first post
-      </button>
+      </router-link>
       <button
         v-else
         @click="clearSearch"
