@@ -7,7 +7,6 @@
 
 import fs from 'fs';
 import path from 'path';
-import syncEncryption from './syncEncryption.js';
 import { checkForChanges, categorizeChanges, extractEntityId } from './syncChecker.js';
 
 /**
@@ -47,7 +46,7 @@ function normalizeUrl(urlString) {
  * @param {Storage} storage - Storage instance
  * @param {string} blogId - The blog ID
  * @param {string} syncUrl - The remote sync URL
- * @param {string} password - The sync password (for encrypted drafts)
+ * @param {string} password - Unused (kept for API compatibility)
  * @param {Function} onProgress - Progress callback
  * @returns {Promise<Object>} Sync result
  */
@@ -75,13 +74,6 @@ export async function pullChanges(storage, blogId, syncUrl, password, onProgress
 
   const categorized = categorizeChanges(changeSet);
   const { manifest } = changeSet;
-
-  // Prepare encryption key if needed
-  let encryptionKey = null;
-  if (manifest.hasDrafts && password && manifest.encryption) {
-    const salt = syncEncryption.base64Decode(manifest.encryption.salt);
-    encryptionKey = syncEncryption.deriveKey(password, salt);
-  }
 
   let totalChanges = 0;
   let appliedChanges = 0;
@@ -286,48 +278,7 @@ export async function pullChanges(storage, blogId, syncUrl, password, onProgress
     appliedChanges++;
   }
 
-  // Step 7: Process draft changes (encrypted)
-  if (encryptionKey) {
-    for (const file of categorized.drafts.new) {
-      onProgress({ step: 'Adding new drafts...', phase: 'applying', progress: appliedChanges / totalChanges });
-      const entityId = extractEntityId(file.path);
-      if (entityId && file.iv) {
-        const draftEncData = await downloadFile(`${normalizedUrl}/sync/${file.path}`);
-        const iv = syncEncryption.base64Decode(file.iv);
-        const draftData = syncEncryption.decrypt(draftEncData, iv, encryptionKey);
-        const syncDraft = JSON.parse(draftData.toString());
-        createOrUpdatePost(storage, blogId, syncDraft, categoryMap, tagMap, true);
-      }
-      appliedChanges++;
-    }
-
-    for (const file of categorized.drafts.modified) {
-      onProgress({ step: 'Updating drafts...', phase: 'applying', progress: appliedChanges / totalChanges });
-      const entityId = extractEntityId(file.path);
-      if (entityId && file.iv) {
-        const draftEncData = await downloadFile(`${normalizedUrl}/sync/${file.path}`);
-        const iv = syncEncryption.base64Decode(file.iv);
-        const draftData = syncEncryption.decrypt(draftEncData, iv, encryptionKey);
-        const syncDraft = JSON.parse(draftData.toString());
-        createOrUpdatePost(storage, blogId, syncDraft, categoryMap, tagMap, true);
-      }
-      appliedChanges++;
-    }
-
-    for (const file of categorized.drafts.deleted) {
-      onProgress({ step: 'Removing deleted drafts...', phase: 'applying', progress: appliedChanges / totalChanges });
-      const entityId = extractEntityId(file.path);
-      if (entityId) {
-        const localDraft = storage.getPostBySyncId(blogId, entityId);
-        if (localDraft) {
-          storage.deletePost(blogId, localDraft.id);
-        }
-      }
-      appliedChanges++;
-    }
-  }
-
-  // Step 8: Process sidebar changes
+  // Step 7: Process sidebar changes
   for (const file of categorized.sidebar.new) {
     onProgress({ step: 'Adding sidebar content...', phase: 'applying', progress: appliedChanges / totalChanges });
     const entityId = extractEntityId(file.path);
@@ -387,7 +338,7 @@ export async function pullChanges(storage, blogId, syncUrl, password, onProgress
     appliedChanges++;
   }
 
-  // Step 9: Process static file changes
+  // Step 8: Process static file changes
   for (const file of categorized.staticFiles.new) {
     onProgress({ step: 'Downloading static files...', phase: 'applying', progress: appliedChanges / totalChanges });
     const filename = file.path.replace('static-files/', '');
@@ -417,17 +368,8 @@ export async function pullChanges(storage, blogId, syncUrl, password, onProgress
     appliedChanges++;
   }
 
-  // Step 10: Update sync state
-  const newHashes = {};
-  const newContentHashes = {};
-  for (const [filePath, fileInfo] of Object.entries(manifest.files)) {
-    newHashes[filePath] = fileInfo.hash;
-    // Store content hashes for encrypted files (for consistent comparison)
-    if (fileInfo.contentHash) {
-      newContentHashes[filePath] = fileInfo.contentHash;
-    }
-  }
-  storage.updateSyncVersion(blogId, manifest.syncVersion, newHashes, newContentHashes);
+  // Step 9: Update sync state
+  storage.updateSyncVersion(blogId, manifest.contentVersion || manifest.syncVersion);
 
   onProgress({ step: 'Sync complete!', phase: 'complete', progress: 1 });
 

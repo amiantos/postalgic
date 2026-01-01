@@ -98,19 +98,54 @@ router.get('/status', (req, res) => {
       return res.status(404).json({ error: 'Blog not found' });
     }
 
-    const publishedFiles = storage.getPublishedFiles(blogId);
+    const syncConfig = storage.getSyncConfig(blogId);
 
     res.json({
       publisherType: blog.publisherType || 'manual',
-      lastPublishedDate: publishedFiles.lastPublishedDate,
-      fileCount: Object.keys(publishedFiles.fileHashes || {}).length
+      lastPublishedDate: syncConfig.lastSyncedAt,
+      syncVersion: syncConfig.lastSyncedVersion
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-// POST /api/blogs/:blogId/publish/changes - Get list of changed files
+// GET /api/blogs/:blogId/publish/debug-hashes - Debug endpoint to show current file hashes
+router.get('/debug-hashes', async (req, res) => {
+  try {
+    const storage = getStorage(req);
+    const { blogId } = req.params;
+
+    const blog = storage.getBlog(blogId);
+    if (!blog) {
+      return res.status(404).json({ error: 'Blog not found' });
+    }
+
+    // Generate site to get current hashes
+    const generateResult = await generateSite(storage, blogId);
+    const currentHashes = generateResult.fileHashes;
+
+    const syncConfig = storage.getSyncConfig(blogId);
+
+    res.json({
+      blogId,
+      publisherType: blog.publisherType || 'manual',
+      lastSyncedAt: syncConfig.lastSyncedAt,
+      syncVersion: syncConfig.lastSyncedVersion,
+      fileCount: Object.keys(currentHashes).length,
+      // Include sample of current hashes
+      sampleHashes: Object.entries(currentHashes).slice(0, 20).map(([path, hash]) => ({
+        path,
+        hash: hash.substring(0, 16)
+      }))
+    });
+  } catch (error) {
+    console.error('Debug hashes error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/blogs/:blogId/publish/changes - Get list of files that will be published
 router.post('/changes', async (req, res) => {
   try {
     const storage = getStorage(req);
@@ -123,76 +158,17 @@ router.post('/changes', async (req, res) => {
 
     // Generate the site to get current file hashes
     const generateResult = await generateSite(storage, blogId);
-
-    // Get previous published files
-    const publishedFiles = storage.getPublishedFiles(blogId);
-    const previousHashes = publishedFiles.fileHashes || {};
-
-    // Compare hashes
     const currentHashes = generateResult.fileHashes;
 
-    const modifiedFiles = [];
-    const newFiles = [];
-    const deletedFiles = [];
-
-    // Find new and modified files
-    for (const [filePath, hash] of Object.entries(currentHashes)) {
-      if (!previousHashes[filePath]) {
-        newFiles.push(filePath);
-      } else if (previousHashes[filePath] !== hash) {
-        // Ignore rss.xml and sitemap.xml for change detection
-        if (!['rss.xml', 'sitemap.xml'].includes(filePath)) {
-          modifiedFiles.push(filePath);
-        }
-      }
-    }
-
-    // Find deleted files
-    for (const filePath of Object.keys(previousHashes)) {
-      if (!currentHashes[filePath]) {
-        deletedFiles.push(filePath);
-      }
-    }
-
+    // Without remote hashes, we can only show total files
+    // Change detection happens during actual publish using remote hash file
     res.json({
-      modifiedFiles,
-      newFiles,
-      deletedFiles,
-      hasChanges: modifiedFiles.length > 0 || newFiles.length > 0 || deletedFiles.length > 0
+      totalFiles: Object.keys(currentHashes).length,
+      files: Object.keys(currentHashes),
+      message: 'Change detection occurs during publish using remote hash file'
     });
   } catch (error) {
     console.error('Changes check error:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// POST /api/blogs/:blogId/publish/mark-published - Mark current state as published
-router.post('/mark-published', async (req, res) => {
-  try {
-    const storage = getStorage(req);
-    const { blogId } = req.params;
-
-    const blog = storage.getBlog(blogId);
-    if (!blog) {
-      return res.status(404).json({ error: 'Blog not found' });
-    }
-
-    // Generate site to get current hashes
-    const generateResult = await generateSite(storage, blogId);
-
-    // Save published state
-    storage.savePublishedFiles(blogId, {
-      publisherType: blog.publisherType || 'manual',
-      lastPublishedDate: new Date().toISOString(),
-      fileHashes: generateResult.fileHashes
-    });
-
-    res.json({
-      success: true,
-      message: 'Published state saved',
-      lastPublishedDate: new Date().toISOString()
-    });
-  } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
@@ -215,13 +191,6 @@ router.post('/aws', async (req, res) => {
       });
     }
 
-    // Generate site first
-    const generateResult = await generateSite(storage, blogId);
-
-    // Get previous published file hashes for change detection
-    const publishedFiles = storage.getPublishedFiles(blogId);
-    const previousHashes = publishedFiles.fileHashes || {};
-
     // Create publisher
     const publisher = new AWSPublisher({
       bucket: blog.awsS3Bucket,
@@ -231,6 +200,19 @@ router.post('/aws', async (req, res) => {
       secretAccessKey: blog.awsSecretAccessKey
     });
 
+    // Fetch remote hashes - if none found, previousHashes stays empty (full upload)
+    const remoteHashData = await publisher.fetchRemoteHashes();
+    const previousHashes = (remoteHashData && remoteHashData.fileHashes) ? remoteHashData.fileHashes : {};
+
+    if (Object.keys(previousHashes).length > 0) {
+      console.log('[Publish] Using remote hashes from server');
+    } else {
+      console.log('[Publish] No remote hashes found - will upload all files');
+    }
+
+    // Generate site
+    const generateResult = await generateSite(storage, blogId);
+
     // Publish with hash-based change detection
     const result = await publisher.publish(generateResult.outputDir, null, {
       forceUploadAll,
@@ -238,12 +220,11 @@ router.post('/aws', async (req, res) => {
       previousHashes
     });
 
-    // Save published state
-    storage.savePublishedFiles(blogId, {
-      publisherType: 'aws',
-      lastPublishedDate: new Date().toISOString(),
-      fileHashes: generateResult.fileHashes
-    });
+    // Upload hash file to remote after successful publish
+    await publisher.uploadHashFile(generateResult.fileHashes, 'self-hosted');
+
+    // Update sync version
+    storage.updateSyncVersion(blogId, generateResult.syncVersion);
 
     res.json({
       success: true,
@@ -280,13 +261,6 @@ router.post('/sftp', async (req, res) => {
       });
     }
 
-    // Generate site first
-    const generateResult = await generateSite(storage, blogId);
-
-    // Get previous published file hashes for change detection
-    const publishedFiles = storage.getPublishedFiles(blogId);
-    const previousHashes = publishedFiles.fileHashes || {};
-
     // Create publisher
     const publisher = new SFTPPublisher({
       host: blog.ftpHost,
@@ -297,6 +271,19 @@ router.post('/sftp', async (req, res) => {
       remotePath: blog.ftpPath || '/'
     });
 
+    // Fetch remote hashes - if none found, previousHashes stays empty (full upload)
+    const remoteHashData = await publisher.fetchRemoteHashes();
+    const previousHashes = (remoteHashData && remoteHashData.fileHashes) ? remoteHashData.fileHashes : {};
+
+    if (Object.keys(previousHashes).length > 0) {
+      console.log('[Publish] Using remote hashes from server');
+    } else {
+      console.log('[Publish] No remote hashes found - will upload all files');
+    }
+
+    // Generate site
+    const generateResult = await generateSite(storage, blogId);
+
     // Publish with hash-based change detection
     const result = await publisher.publish(generateResult.outputDir, null, {
       forceUploadAll,
@@ -304,12 +291,11 @@ router.post('/sftp', async (req, res) => {
       previousHashes
     });
 
-    // Save published state
-    storage.savePublishedFiles(blogId, {
-      publisherType: 'sftp',
-      lastPublishedDate: new Date().toISOString(),
-      fileHashes: generateResult.fileHashes
-    });
+    // Upload hash file to remote after successful publish
+    await publisher.uploadHashFile(generateResult.fileHashes, 'self-hosted');
+
+    // Update sync version
+    storage.updateSyncVersion(blogId, generateResult.syncVersion);
 
     res.json({
       success: true,
@@ -339,9 +325,6 @@ router.post('/git', async (req, res) => {
       });
     }
 
-    // Generate site first
-    const generateResult = await generateSite(storage, blogId);
-
     // Create publisher
     const publisher = new GitPublisher({
       repositoryUrl: blog.gitRepositoryUrl,
@@ -353,15 +336,17 @@ router.post('/git', async (req, res) => {
       authorEmail: blog.authorEmail || 'postalgic@localhost'
     });
 
-    // Publish
+    // Generate site
+    const generateResult = await generateSite(storage, blogId);
+
+    // Write hash file to the generated site directory (it will be committed with the rest)
+    publisher.writeHashFile(generateResult.outputDir, generateResult.fileHashes, 'self-hosted');
+
+    // Publish (hash file is included in the commit)
     const result = await publisher.publish(generateResult.outputDir);
 
-    // Save published state
-    storage.savePublishedFiles(blogId, {
-      publisherType: 'git',
-      lastPublishedDate: new Date().toISOString(),
-      fileHashes: generateResult.fileHashes
-    });
+    // Update sync version
+    storage.updateSyncVersion(blogId, generateResult.syncVersion);
 
     res.json({
       success: true,

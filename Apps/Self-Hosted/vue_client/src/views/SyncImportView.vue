@@ -8,12 +8,10 @@ const router = useRouter();
 const blogStore = useBlogStore();
 
 const url = ref('');
-const password = ref('');
 const manifest = ref(null);
 const checking = ref(false);
 const importing = ref(false);
 const error = ref(null);
-const needsPassword = ref(false);
 const importProgress = ref('');
 
 async function checkUrl() {
@@ -25,12 +23,10 @@ async function checkUrl() {
   checking.value = true;
   error.value = null;
   manifest.value = null;
-  needsPassword.value = false;
 
   try {
     const result = await syncApi.check(url.value);
     manifest.value = result.manifest;
-    needsPassword.value = result.manifest.hasDrafts;
   } catch (e) {
     error.value = e.message;
   } finally {
@@ -41,24 +37,18 @@ async function checkUrl() {
 function clearManifest() {
   manifest.value = null;
   url.value = '';
-  password.value = '';
-  needsPassword.value = false;
   error.value = null;
 }
 
 async function importBlog() {
   if (!manifest.value) return;
-  if (needsPassword.value && !password.value) {
-    error.value = 'Password is required for blogs with drafts';
-    return;
-  }
 
   importing.value = true;
   error.value = null;
   importProgress.value = 'Starting import...';
 
   try {
-    const result = await syncApi.import(url.value, password.value || null);
+    const result = await syncApi.import(url.value);
     // Refresh blog list
     await blogStore.fetchBlogs();
     // Navigate to the imported blog
@@ -171,7 +161,7 @@ function formatDate(dateString) {
 
             <!-- Sync Info -->
             <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 mb-4">
-              <div class="grid grid-cols-2 gap-4 text-sm">
+              <div class="grid grid-cols-3 gap-4 text-sm">
                 <div>
                   <p class="text-gray-500 dark:text-gray-400">Last Modified</p>
                   <p class="font-medium text-gray-900 dark:text-gray-100">{{ formatDate(manifest.lastModified) }}</p>
@@ -184,36 +174,8 @@ function formatDate(dateString) {
                   <p class="text-gray-500 dark:text-gray-400">Files</p>
                   <p class="font-medium text-gray-900 dark:text-gray-100">{{ manifest.fileCount }} files</p>
                 </div>
-                <div>
-                  <p class="text-gray-500 dark:text-gray-400">Has Drafts</p>
-                  <p class="font-medium text-gray-900 dark:text-gray-100">{{ manifest.hasDrafts ? 'Yes (encrypted)' : 'No' }}</p>
-                </div>
               </div>
-            </div>
-
-            <!-- Password Input (if needed) -->
-            <div v-if="needsPassword" class="mb-4">
-              <div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mb-4">
-                <div class="flex items-start gap-3">
-                  <svg class="w-5 h-5 text-yellow-600 dark:text-yellow-500 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                  </svg>
-                  <div>
-                    <p class="font-medium text-yellow-800 dark:text-yellow-400">Password Required</p>
-                    <p class="text-sm text-yellow-700 dark:text-yellow-500 mt-1">This blog has encrypted drafts. Enter the sync password to import them.</p>
-                  </div>
-                </div>
-              </div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Sync Password
-              </label>
-              <input
-                v-model="password"
-                type="password"
-                placeholder="Enter sync password"
-                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                :disabled="importing"
-              />
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-3">Note: Drafts are not synced. Only published content will be imported.</p>
             </div>
 
             <!-- Import Progress -->
@@ -239,7 +201,7 @@ function formatDate(dateString) {
           <button
             v-if="manifest"
             @click="importBlog"
-            :disabled="importing || (needsPassword && !password)"
+            :disabled="importing"
             class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {{ importing ? 'Importing...' : 'Import Blog' }}

@@ -1,12 +1,14 @@
 /**
  * Sync data generator service
  * Generates the /sync/ directory for bidirectional sync between iOS and Self-Hosted apps
+ *
+ * Note: Drafts are NOT synced - they remain local to each device.
+ * Only published posts and other content are included in the sync directory.
  */
 
 import fs from 'fs';
 import path from 'path';
-import { calculateHash, calculateBufferHash, formatISO8601Date } from '../utils/helpers.js';
-import syncEncryption from './syncEncryption.js';
+import { calculateHash, calculateBufferHash } from '../utils/helpers.js';
 
 /**
  * Get the stable sync ID for an entity.
@@ -18,26 +20,55 @@ function getStableSyncId(entity) {
 }
 
 /**
+ * Calculate the latest modification date from all content entities.
+ * Returns the most recent updatedAt/createdAt from posts, categories, tags, and sidebar objects.
+ */
+function getLatestModificationDate(posts, categories, tags, sidebarObjects) {
+  let latest = new Date(0);
+
+  // Check posts
+  for (const post of posts) {
+    const date = new Date(post.updatedAt || post.createdAt);
+    if (date > latest) latest = date;
+  }
+
+  // Check categories
+  for (const category of categories) {
+    const date = new Date(category.createdAt);
+    if (date > latest) latest = date;
+  }
+
+  // Check tags
+  for (const tag of tags) {
+    const date = new Date(tag.createdAt);
+    if (date > latest) latest = date;
+  }
+
+  // Check sidebar objects (they don't have dates, so skip)
+
+  // If no content exists, return current date as fallback
+  if (latest.getTime() === 0) {
+    return new Date().toISOString();
+  }
+
+  return latest.toISOString();
+}
+
+/**
  * Generate the sync directory for a blog
  * @param {Storage} storage - Storage instance
  * @param {string} blogId - Blog ID
  * @param {string} outputDir - Output directory (site root)
- * @param {string} password - Sync password for encrypting drafts
  * @returns {Promise<Object>} - Object containing fileHashes and syncVersion
  */
-export async function generateSyncDirectory(storage, blogId, outputDir, password) {
+export async function generateSyncDirectory(storage, blogId, outputDir) {
   const blog = storage.getBlog(blogId);
   if (!blog) {
     throw new Error('Blog not found');
   }
 
-  const syncConfig = storage.getSyncConfig(blogId);
-  const newSyncVersion = (syncConfig.lastSyncedVersion || 0) + 1;
-
-  // Get all data
-  const allPosts = storage.getAllPosts(blogId, true); // Include drafts
-  const publishedPosts = allPosts.filter(p => !p.isDraft);
-  const drafts = allPosts.filter(p => p.isDraft);
+  // Get all data (published posts only - drafts stay local to each device)
+  const publishedPosts = storage.getAllPosts(blogId, false);
   const categories = storage.getAllCategories(blogId);
   const tags = storage.getAllTags(blogId);
   const sidebarObjects = storage.getAllSidebarObjects(blogId);
@@ -49,12 +80,11 @@ export async function generateSyncDirectory(storage, blogId, outputDir, password
     theme = storage.getTheme(blog.themeIdentifier);
   }
 
-  // Create sync directory structure
+  // Create sync directory structure (no drafts directory)
   const syncDir = path.join(outputDir, 'sync');
   const dirs = [
     syncDir,
     path.join(syncDir, 'posts'),
-    path.join(syncDir, 'drafts'),
     path.join(syncDir, 'categories'),
     path.join(syncDir, 'tags'),
     path.join(syncDir, 'sidebar'),
@@ -70,10 +100,6 @@ export async function generateSyncDirectory(storage, blogId, outputDir, password
   }
 
   const fileHashes = {};
-  const draftIVs = {};
-
-  // Generate encryption key from password
-  const salt = syncEncryption.generateSalt();
 
   // === Generate blog.json ===
   const blogData = {
@@ -180,42 +206,6 @@ export async function generateSyncDirectory(storage, blogId, outputDir, password
   fs.writeFileSync(path.join(syncDir, 'posts', 'index.json'), postIndexJson);
   fileHashes['posts/index.json'] = calculateHash(postIndexJson);
 
-  // === Generate drafts (encrypted) ===
-  const draftIndex = { drafts: [] };
-  const draftContentHashes = {}; // Store plaintext content hashes for comparison
-  for (const draft of drafts) {
-    const stableId = getStableSyncId(draft);
-    const draftData = createSyncPost(draft, stableId, categoryIdMap, tagIdMap);
-    const draftJson = JSON.stringify(draftData, null, 2);
-    // Calculate content hash BEFORE encryption (for consistent comparison)
-    const contentHash = calculateHash(draftJson);
-    const { ciphertext, iv } = syncEncryption.encryptJSON(draftData, password, salt);
-    fs.writeFileSync(path.join(syncDir, 'drafts', `${stableId}.json.enc`), ciphertext);
-    const hash = calculateBufferHash(ciphertext);
-    fileHashes[`drafts/${stableId}.json.enc`] = hash;
-    draftIVs[`drafts/${stableId}.json.enc`] = syncEncryption.base64Encode(iv);
-    draftContentHashes[`drafts/${stableId}.json.enc`] = contentHash;
-
-    draftIndex.drafts.push({
-      id: stableId,
-      hash: contentHash, // Use contentHash for stable comparison (ciphertext hash is in manifest)
-      modified: draft.updatedAt || draft.createdAt
-    });
-  }
-
-  // Encrypt draft index if there are drafts
-  if (drafts.length > 0) {
-    // Calculate content hash for draft index before encryption
-    const draftIndexJson = JSON.stringify(draftIndex, null, 2);
-    const draftIndexContentHash = calculateHash(draftIndexJson);
-
-    const { ciphertext, iv } = syncEncryption.encryptJSON(draftIndex, password, salt);
-    fs.writeFileSync(path.join(syncDir, 'drafts', 'index.json.enc'), ciphertext);
-    fileHashes['drafts/index.json.enc'] = calculateBufferHash(ciphertext);
-    draftIVs['drafts/index.json.enc'] = syncEncryption.base64Encode(iv);
-    draftContentHashes['drafts/index.json.enc'] = draftIndexContentHash;
-  }
-
   // === Generate sidebar objects ===
   const sidebarIndex = { sidebar: [] };
   for (const sidebar of sidebarObjects) {
@@ -271,11 +261,11 @@ export async function generateSyncDirectory(storage, blogId, outputDir, password
   fs.writeFileSync(path.join(syncDir, 'static-files', 'index.json'), staticFilesIndexJson);
   fileHashes['static-files/index.json'] = calculateHash(staticFilesIndexJson);
 
-  // === Generate embed images ===
+  // === Generate embed images (only from published posts) ===
   const embedImagesIndex = { images: [] };
   const uploadsDir = storage.getBlogUploadsDir(blogId);
 
-  for (const post of allPosts) {
+  for (const post of publishedPosts) {
     if (post.embed) {
       const embed = post.embed;
 
@@ -334,7 +324,7 @@ export async function generateSyncDirectory(storage, blogId, outputDir, password
       size: stats.size
     };
 
-    // Add modified date for posts and drafts
+    // Add modified date for posts
     if (filePath.startsWith('posts/') && filePath !== 'posts/index.json') {
       const postId = filePath.replace('posts/', '').replace('.json', '');
       // Find post by stable sync ID (matches either syncId or id)
@@ -344,32 +334,25 @@ export async function generateSyncDirectory(storage, blogId, outputDir, password
       }
     }
 
-    // Add IV and contentHash for encrypted files
-    if (draftIVs[filePath]) {
-      fileInfo.encrypted = true;
-      fileInfo.iv = draftIVs[filePath];
-      // Add content hash for drafts (hash of plaintext for consistent comparison)
-      if (draftContentHashes[filePath]) {
-        fileInfo.contentHash = draftContentHashes[filePath];
-      }
-    }
-
     manifestFiles[filePath] = fileInfo;
   }
 
+  // Calculate a stable content version from all file hashes
+  // This only changes when actual content changes (not on every generation)
+  const sortedHashes = Object.entries(fileHashes)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([filePath, hash]) => `${filePath}:${hash}`)
+    .join('\n');
+  const contentVersion = calculateHash(sortedHashes);
+
   const manifest = {
     version: '1.0',
-    syncVersion: newSyncVersion,
-    lastModified: new Date().toISOString(),
+    contentVersion,
+    lastModified: getLatestModificationDate(publishedPosts, categories, tags, sidebarObjects),
     appSource: 'self-hosted',
     appVersion: '1.0.0',
     blogName: blog.name,
-    hasDrafts: drafts.length > 0,
-    encryption: drafts.length > 0 ? {
-      method: 'aes-256-gcm',
-      salt: syncEncryption.base64Encode(salt),
-      iterations: syncEncryption.PBKDF2_ITERATIONS
-    } : null,
+    fileCount: Object.keys(manifestFiles).length,
     files: manifestFiles
   };
 
@@ -379,7 +362,7 @@ export async function generateSyncDirectory(storage, blogId, outputDir, password
 
   return {
     fileHashes,
-    syncVersion: newSyncVersion,
+    syncVersion: contentVersion,  // Use content-based version for stability
     fileCount: Object.keys(fileHashes).length
   };
 }

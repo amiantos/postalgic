@@ -19,6 +19,9 @@ const successMessage = ref(null);
 const previewUrl = ref(null);
 const publishStatus = ref(null);
 const changes = ref(null);
+const showNewFiles = ref(false);
+const showModifiedFiles = ref(false);
+const showDeletedFiles = ref(false);
 
 onMounted(async () => {
   await loadStatus();
@@ -330,20 +333,78 @@ function getPublisherLabel(type) {
 
       <!-- Changes Summary -->
       <div v-if="changes" class="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-        <p class="font-medium text-gray-900 dark:text-gray-100 mb-2">Changes Since Last Publish</p>
-        <div class="text-sm space-y-1">
-          <p v-if="changes.newFiles.length > 0" class="text-green-600 dark:text-green-400">
-            + {{ changes.newFiles.length }} new files
-          </p>
-          <p v-if="changes.modifiedFiles.length > 0" class="text-yellow-600 dark:text-yellow-400">
-            ~ {{ changes.modifiedFiles.length }} modified files
-          </p>
-          <p v-if="changes.deletedFiles.length > 0" class="text-red-600 dark:text-red-400">
-            - {{ changes.deletedFiles.length }} deleted files
-          </p>
-          <p v-if="!changes.hasChanges" class="text-gray-500 dark:text-gray-400">
+        <p class="font-medium text-gray-900 dark:text-gray-100 mb-3">Changes Since Last Publish</p>
+
+        <!-- Summary -->
+        <div class="text-sm mb-3 p-3 bg-white dark:bg-gray-800 rounded-lg">
+          <div class="flex flex-wrap gap-3 text-center">
+            <div v-if="changes.newFiles.length > 0" class="flex items-center gap-1 text-green-600 dark:text-green-400">
+              <span class="font-semibold">+{{ changes.newFiles.length }}</span> new
+            </div>
+            <div v-if="changes.modifiedFiles.length > 0" class="flex items-center gap-1 text-yellow-600 dark:text-yellow-400">
+              <span class="font-semibold">~{{ changes.modifiedFiles.length }}</span> modified
+            </div>
+            <div v-if="changes.deletedFiles.length > 0" class="flex items-center gap-1 text-red-600 dark:text-red-400">
+              <span class="font-semibold">-{{ changes.deletedFiles.length }}</span> deleted
+            </div>
+            <div v-if="changes.unchangedCount > 0" class="flex items-center gap-1 text-gray-500 dark:text-gray-400">
+              <span class="font-semibold">{{ changes.unchangedCount }}</span> unchanged
+            </div>
+          </div>
+          <p v-if="!changes.hasChanges" class="text-gray-500 dark:text-gray-400 mt-2">
             No changes since last publish
           </p>
+        </div>
+
+        <!-- Expandable File Lists -->
+        <div class="space-y-2">
+          <!-- New Files -->
+          <div v-if="changes.newFiles.length > 0">
+            <button
+              @click="showNewFiles = !showNewFiles"
+              class="flex items-center gap-2 text-sm font-medium text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300"
+            >
+              <svg :class="{ 'rotate-90': showNewFiles }" class="w-4 h-4 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              </svg>
+              New files ({{ changes.newFiles.length }})
+            </button>
+            <div v-if="showNewFiles" class="mt-2 ml-6 text-xs text-gray-600 dark:text-gray-400 max-h-40 overflow-y-auto bg-white dark:bg-gray-800 rounded p-2">
+              <div v-for="file in changes.newFiles" :key="file" class="py-0.5 truncate">{{ file }}</div>
+            </div>
+          </div>
+
+          <!-- Modified Files -->
+          <div v-if="changes.modifiedFiles.length > 0">
+            <button
+              @click="showModifiedFiles = !showModifiedFiles"
+              class="flex items-center gap-2 text-sm font-medium text-yellow-600 dark:text-yellow-400 hover:text-yellow-700 dark:hover:text-yellow-300"
+            >
+              <svg :class="{ 'rotate-90': showModifiedFiles }" class="w-4 h-4 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              </svg>
+              Modified files ({{ changes.modifiedFiles.length }})
+            </button>
+            <div v-if="showModifiedFiles" class="mt-2 ml-6 text-xs text-gray-600 dark:text-gray-400 max-h-40 overflow-y-auto bg-white dark:bg-gray-800 rounded p-2">
+              <div v-for="file in changes.modifiedFiles" :key="file" class="py-0.5 truncate">{{ file }}</div>
+            </div>
+          </div>
+
+          <!-- Deleted Files -->
+          <div v-if="changes.deletedFiles.length > 0">
+            <button
+              @click="showDeletedFiles = !showDeletedFiles"
+              class="flex items-center gap-2 text-sm font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
+            >
+              <svg :class="{ 'rotate-90': showDeletedFiles }" class="w-4 h-4 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              </svg>
+              Deleted files ({{ changes.deletedFiles.length }})
+            </button>
+            <div v-if="showDeletedFiles" class="mt-2 ml-6 text-xs text-gray-600 dark:text-gray-400 max-h-40 overflow-y-auto bg-white dark:bg-gray-800 rounded p-2">
+              <div v-for="file in changes.deletedFiles" :key="file" class="py-0.5 truncate">{{ file }}</div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

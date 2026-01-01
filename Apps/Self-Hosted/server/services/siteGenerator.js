@@ -87,26 +87,21 @@ export async function generateSite(storage, blogId) {
   await generateRobotsTxt(outputDir, templates, baseContext, fileHashes);
   await generateSitemap(outputDir, templates, baseContext, posts, tags, categories, fileHashes);
 
-  // Generate sync directory if sync is enabled
+  // Always generate sync directory for iOS app sync
   let syncResult = null;
-  const syncConfig = storage.getSyncConfig(blogId);
-  if (syncConfig.syncEnabled && syncConfig.syncPassword) {
-    try {
-      console.log('[SiteGenerator] Generating sync directory...');
-      syncResult = await generateSyncDirectory(storage, blogId, outputDir, syncConfig.syncPassword);
+  try {
+    console.log('[SiteGenerator] Generating sync directory...');
+    syncResult = await generateSyncDirectory(storage, blogId, outputDir);
 
-      // Merge sync file hashes into main hashes (prefixed with sync/)
-      for (const [filePath, hash] of Object.entries(syncResult.fileHashes)) {
-        fileHashes[`sync/${filePath}`] = hash;
-      }
-
-      // Update sync version in storage
-      storage.updateSyncVersion(blogId, syncResult.syncVersion, syncResult.fileHashes);
-      console.log(`[SiteGenerator] Sync directory generated with ${syncResult.fileCount} files (version ${syncResult.syncVersion})`);
-    } catch (error) {
-      console.error('[SiteGenerator] Failed to generate sync directory:', error);
-      // Don't fail the whole publish - sync is optional
+    // Merge sync file hashes into main hashes (prefixed with sync/)
+    for (const [filePath, hash] of Object.entries(syncResult.fileHashes)) {
+      fileHashes[`sync/${filePath}`] = hash;
     }
+
+    console.log(`[SiteGenerator] Sync directory generated with ${syncResult.fileCount} files (version ${syncResult.syncVersion})`);
+  } catch (error) {
+    console.error('[SiteGenerator] Failed to generate sync directory:', error);
+    // Don't fail the whole publish - sync is optional
   }
 
   return {
@@ -786,9 +781,15 @@ async function generateRSSFeed(outputDir, templates, baseContext, posts, fileHas
     };
   });
 
+  // Use the most recent post's date as the build date (content-based, not current time)
+  const mostRecentPost = posts[0];
+  const buildDate = mostRecentPost
+    ? formatRFC822Date(mostRecentPost.updatedAt || mostRecentPost.createdAt)
+    : formatRFC822Date(new Date());
+
   const rssContent = Mustache.render(templates.rss, {
     ...baseContext,
-    buildDate: formatRFC822Date(new Date()),
+    buildDate,
     posts: rssPosts
   });
 
@@ -807,27 +808,41 @@ async function generateRobotsTxt(outputDir, templates, baseContext, fileHashes) 
  * Generate sitemap
  */
 async function generateSitemap(outputDir, templates, baseContext, posts, tags, categories, fileHashes) {
-  const now = formatISO8601Date(new Date());
   const timezone = baseContext.timezone || 'UTC';
+
+  // Get most recent post date for index/archives lastmod
+  const mostRecentPostDate = posts.length > 0
+    ? formatISO8601Date(posts[0].updatedAt || posts[0].createdAt)
+    : formatISO8601Date(new Date());
 
   const postsData = posts.map(post => ({
     urlPath: `${formatDatePath(post.createdAt, timezone)}/${post.stub}`,
     lastmod: formatISO8601Date(post.updatedAt || post.createdAt)
   }));
 
+  // For tags, use the most recent post in that tag as lastmod
   const tagsData = tags
     .filter(tag => posts.some(p => p.tags && p.tags.some(t => t.id === tag.id)))
-    .map(tag => ({
-      urlPath: tag.stub,
-      lastmod: now
-    }));
+    .map(tag => {
+      const tagPosts = posts.filter(p => p.tags && p.tags.some(t => t.id === tag.id));
+      const mostRecent = tagPosts[0]; // Posts are already sorted by date
+      return {
+        urlPath: tag.stub,
+        lastmod: mostRecent ? formatISO8601Date(mostRecent.updatedAt || mostRecent.createdAt) : mostRecentPostDate
+      };
+    });
 
+  // For categories, use the most recent post in that category as lastmod
   const categoriesData = categories
     .filter(category => posts.some(p => p.category && p.category.id === category.id))
-    .map(category => ({
-      urlPath: category.stub,
-      lastmod: now
-    }));
+    .map(category => {
+      const categoryPosts = posts.filter(p => p.category && p.category.id === category.id);
+      const mostRecent = categoryPosts[0]; // Posts are already sorted by date
+      return {
+        urlPath: category.stub,
+        lastmod: mostRecent ? formatISO8601Date(mostRecent.updatedAt || mostRecent.createdAt) : mostRecentPostDate
+      };
+    });
 
   // Monthly archives (using timezone)
   const monthlyArchives = [];
@@ -846,7 +861,7 @@ async function generateSitemap(outputDir, templates, baseContext, posts, tags, c
 
   const sitemapContent = Mustache.render(templates.sitemap, {
     ...baseContext,
-    buildDate: now,
+    buildDate: mostRecentPostDate,
     posts: postsData,
     tags: tagsData,
     categories: categoriesData,

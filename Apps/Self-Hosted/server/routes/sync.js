@@ -34,11 +34,10 @@ router.post('/check', async (req, res) => {
       success: true,
       manifest: {
         blogName: manifest.blogName,
-        syncVersion: manifest.syncVersion,
+        contentVersion: manifest.contentVersion || manifest.syncVersion,
         lastModified: manifest.lastModified,
         appSource: manifest.appSource,
-        hasDrafts: manifest.hasDrafts,
-        fileCount: Object.keys(manifest.files).length
+        fileCount: manifest.fileCount || Object.keys(manifest.files).length
       }
     });
   } catch (error) {
@@ -50,10 +49,11 @@ router.post('/check', async (req, res) => {
 /**
  * POST /api/sync/import
  * Imports a blog from a sync URL
+ * Note: Drafts are no longer synced - only published content is imported
  */
 router.post('/import', async (req, res) => {
   try {
-    const { url, password } = req.body;
+    const { url } = req.body;
 
     if (!url) {
       return res.status(400).json({ error: 'URL is required' });
@@ -64,20 +64,8 @@ router.post('/import', async (req, res) => {
     // First check the manifest
     const manifest = await fetchManifest(url);
 
-    // Verify password is provided if needed
-    if (manifest.hasDrafts && !password) {
-      return res.status(400).json({
-        error: 'Password required',
-        needsPassword: true,
-        manifest: {
-          blogName: manifest.blogName,
-          hasDrafts: manifest.hasDrafts
-        }
-      });
-    }
-
-    // Import the blog
-    const blog = await importBlog(storage, url, password, (progress) => {
+    // Import the blog (no password needed - drafts are not synced)
+    const blog = await importBlog(storage, url, null, (progress) => {
       console.log(`[Sync Import] ${progress.step} (${progress.downloaded}/${progress.total})`);
     });
 
@@ -105,93 +93,11 @@ router.get('/blogs/:blogId/status', (req, res) => {
     const syncConfig = storage.getSyncConfig(blogId);
 
     res.json({
-      syncEnabled: syncConfig.syncEnabled,
       lastSyncedAt: syncConfig.lastSyncedAt,
-      lastSyncedVersion: syncConfig.lastSyncedVersion,
-      hasPassword: !!syncConfig.syncPassword
+      lastSyncedVersion: syncConfig.lastSyncedVersion
     });
   } catch (error) {
     console.error('[Sync] Get status failed:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-/**
- * POST /api/blogs/:blogId/sync/enable
- * Enables sync for a blog
- */
-router.post('/blogs/:blogId/enable', (req, res) => {
-  try {
-    const { blogId } = req.params;
-    const { password } = req.body;
-    const storage = getStorage(req);
-
-    if (!password) {
-      return res.status(400).json({ error: 'Password is required' });
-    }
-
-    const existingConfig = storage.getSyncConfig(blogId);
-
-    storage.saveSyncConfig(blogId, {
-      ...existingConfig,
-      syncEnabled: true,
-      syncPassword: password
-    });
-
-    res.json({ success: true });
-  } catch (error) {
-    console.error('[Sync] Enable failed:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-/**
- * POST /api/blogs/:blogId/sync/disable
- * Disables sync for a blog
- */
-router.post('/blogs/:blogId/disable', (req, res) => {
-  try {
-    const { blogId } = req.params;
-    const storage = getStorage(req);
-
-    const existingConfig = storage.getSyncConfig(blogId);
-
-    storage.saveSyncConfig(blogId, {
-      ...existingConfig,
-      syncEnabled: false
-    });
-
-    res.json({ success: true });
-  } catch (error) {
-    console.error('[Sync] Disable failed:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-/**
- * POST /api/blogs/:blogId/sync/password
- * Updates the sync password for a blog
- */
-router.post('/blogs/:blogId/password', (req, res) => {
-  try {
-    const { blogId } = req.params;
-    const { password } = req.body;
-    const storage = getStorage(req);
-
-    if (!password) {
-      return res.status(400).json({ error: 'Password is required' });
-    }
-
-    const existingConfig = storage.getSyncConfig(blogId);
-
-    storage.saveSyncConfig(blogId, {
-      ...existingConfig,
-      syncPassword: password
-    });
-
-    res.json({ success: true });
-  } catch (error) {
-    console.error('[Sync] Update password failed:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -296,11 +202,11 @@ router.post('/blogs/:blogId/check-changes', async (req, res) => {
 /**
  * POST /api/blogs/:blogId/sync/pull
  * Pulls (downloads) changes from remote to local
+ * Note: Drafts are no longer synced - only published content is pulled
  */
 router.post('/blogs/:blogId/pull', async (req, res) => {
   try {
     const { blogId } = req.params;
-    const { password } = req.body;
     const storage = getStorage(req);
 
     const blog = storage.getBlog(blogId);
@@ -312,11 +218,8 @@ router.post('/blogs/:blogId/pull', async (req, res) => {
       return res.status(400).json({ error: 'Blog URL is not configured' });
     }
 
-    // Get password from request or existing config
-    const syncConfig = storage.getSyncConfig(blogId);
-    const syncPassword = password || syncConfig.syncPassword;
-
-    const result = await pullChanges(storage, blogId, blog.url, syncPassword, (progress) => {
+    // No password needed - drafts are not synced
+    const result = await pullChanges(storage, blogId, blog.url, null, (progress) => {
       console.log(`[Sync Pull] ${progress.step} (${progress.phase})`);
     });
 

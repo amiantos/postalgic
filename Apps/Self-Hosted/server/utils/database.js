@@ -129,6 +129,13 @@ function runMigrations(database) {
     console.log('[Database] Running migration: adding local_content_hashes column to sync_config table');
     database.exec(`ALTER TABLE sync_config ADD COLUMN local_content_hashes TEXT`);
   }
+
+  // Migration: Add encryption_salt column for stable encrypted file generation
+  const syncConfigColumns2 = database.prepare(`PRAGMA table_info(sync_config)`).all();
+  if (!syncConfigColumns2.some(col => col.name === 'encryption_salt')) {
+    console.log('[Database] Running migration: adding encryption_salt column to sync_config table');
+    database.exec(`ALTER TABLE sync_config ADD COLUMN encryption_salt TEXT`);
+  }
 }
 
 /**

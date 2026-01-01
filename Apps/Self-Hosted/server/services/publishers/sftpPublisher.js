@@ -2,6 +2,8 @@ import SftpClient from 'ssh2-sftp-client';
 import fs from 'fs';
 import path from 'path';
 
+const HASH_FILE_PATH = '.postalgic/hashes.json';
+
 /**
  * SFTP Publisher
  * Uploads generated site files to a remote server via SFTP
@@ -102,9 +104,9 @@ export class SFTPPublisher {
         }
       }
 
-      // Find files to delete (not in local)
+      // Find files to delete (not in local, excluding .postalgic/ which is managed separately)
       for (const remoteFile of remoteFiles) {
-        if (!remoteFile.isDirectory) {
+        if (!remoteFile.isDirectory && !remoteFile.key.startsWith('.postalgic/')) {
           const localFile = localFiles.find(f => f.key === remoteFile.key);
           if (!localFile) {
             filesToDelete.push(remoteFile);
@@ -278,6 +280,101 @@ export class SFTPPublisher {
    */
   normalizeRemotePath(filePath) {
     return filePath.replace(/\\/g, '/');
+  }
+
+  /**
+   * Fetch remote hash file from SFTP server
+   * @returns {Promise<Object|null>} - Hash data or null if not found
+   */
+  async fetchRemoteHashes() {
+    const sftp = new SftpClient();
+    console.log('[SFTP Publisher] Fetching remote hashes from:', HASH_FILE_PATH);
+
+    try {
+      const connectionConfig = {
+        host: this.host,
+        port: this.port,
+        username: this.username
+      };
+
+      if (this.privateKey) {
+        connectionConfig.privateKey = this.privateKey;
+      } else if (this.password) {
+        connectionConfig.password = this.password;
+      }
+
+      await sftp.connect(connectionConfig);
+      const remotePath = path.posix.join(this.remotePath, HASH_FILE_PATH);
+
+      // Check if file exists
+      const exists = await sftp.exists(remotePath);
+      if (!exists) {
+        console.log('[SFTP Publisher] No remote hash file found (first publish or old version)');
+        await sftp.end();
+        return null;
+      }
+
+      // Download and parse the file
+      const buffer = await sftp.get(remotePath);
+      const hashData = JSON.parse(buffer.toString());
+      console.log('[SFTP Publisher] Remote hashes found, published by:', hashData.publishedBy || 'unknown');
+      console.log('[SFTP Publisher] Remote hash count:', Object.keys(hashData.fileHashes || {}).length);
+      await sftp.end();
+      return hashData;
+    } catch (error) {
+      console.error('[SFTP Publisher] Error fetching remote hashes:', error.message);
+      try { await sftp.end(); } catch (e) { /* ignore */ }
+      return null;
+    }
+  }
+
+  /**
+   * Upload hash file to SFTP server after successful publish
+   * @param {Object} fileHashes - Map of file paths to hashes
+   * @param {string} publishedBy - Identifier of the publishing client
+   */
+  async uploadHashFile(fileHashes, publishedBy = 'self-hosted') {
+    const sftp = new SftpClient();
+    console.log('[SFTP Publisher] Uploading hash file with', Object.keys(fileHashes).length, 'entries');
+
+    const hashData = {
+      version: 1,
+      lastPublishedDate: new Date().toISOString(),
+      publishedBy,
+      fileHashes
+    };
+
+    try {
+      const connectionConfig = {
+        host: this.host,
+        port: this.port,
+        username: this.username
+      };
+
+      if (this.privateKey) {
+        connectionConfig.privateKey = this.privateKey;
+      } else if (this.password) {
+        connectionConfig.password = this.password;
+      }
+
+      await sftp.connect(connectionConfig);
+
+      // Ensure .postalgic directory exists
+      const hashDir = path.posix.join(this.remotePath, '.postalgic');
+      await this.ensureRemoteDir(sftp, hashDir);
+
+      // Upload the hash file
+      const remotePath = path.posix.join(this.remotePath, HASH_FILE_PATH);
+      const content = Buffer.from(JSON.stringify(hashData, null, 2));
+      await sftp.put(content, remotePath);
+
+      console.log('[SFTP Publisher] Hash file uploaded successfully');
+      await sftp.end();
+    } catch (error) {
+      console.error('[SFTP Publisher] Error uploading hash file:', error.message);
+      try { await sftp.end(); } catch (e) { /* ignore */ }
+      // Don't throw - hash file upload failure shouldn't fail the whole publish
+    }
   }
 }
 

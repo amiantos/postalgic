@@ -18,16 +18,14 @@ export async function checkForChanges(storage, blogId, syncUrl) {
   // Get local sync state
   const syncConfig = storage.getSyncConfig(blogId);
   const localVersion = syncConfig.lastSyncedVersion || 0;
-  const localHashes = syncConfig.localFileHashes || {};
-  const localContentHashes = syncConfig.localContentHashes || {};
 
   // Fetch remote manifest
   const manifest = await fetchManifest(syncUrl);
-  const remoteVersion = manifest.syncVersion;
+  const remoteVersion = manifest.contentVersion || manifest.syncVersion;  // Support both old and new format
   const remoteFiles = manifest.files;
 
-  // If versions match and we have hashes, no changes
-  if (remoteVersion === localVersion && Object.keys(localHashes).length > 0) {
+  // If versions match, no changes needed
+  if (remoteVersion === localVersion) {
     return {
       hasChanges: false,
       localVersion,
@@ -39,66 +37,25 @@ export async function checkForChanges(storage, blogId, syncUrl) {
     };
   }
 
-  // Compare file hashes
-  const newFiles = [];
+  // Version differs - treat all remote files as potentially modified
+  // The incremental sync will use syncId to determine actual new vs update
   const modifiedFiles = [];
-  const deletedFiles = [];
 
-  // Check for new and modified files
   for (const [filePath, fileInfo] of Object.entries(remoteFiles)) {
-    if (!localHashes[filePath]) {
-      // New file
-      newFiles.push({
-        path: filePath,
-        hash: fileInfo.hash,
-        contentHash: fileInfo.contentHash,
-        size: fileInfo.size,
-        encrypted: fileInfo.encrypted,
-        iv: fileInfo.iv
-      });
-    } else {
-      // For encrypted files (drafts), compare contentHash if available
-      // This prevents false positives from random IV changes
-      const localHash = localHashes[filePath];
-      const localContentHash = localContentHashes?.[filePath];
-      const remoteHash = fileInfo.contentHash || fileInfo.hash;
-      const compareHash = localContentHash || localHash;
-
-      if (compareHash !== remoteHash) {
-        // Modified file
-        modifiedFiles.push({
-          path: filePath,
-          hash: fileInfo.hash,
-          contentHash: fileInfo.contentHash,
-          size: fileInfo.size,
-          encrypted: fileInfo.encrypted,
-          iv: fileInfo.iv,
-          oldHash: localHash,
-          oldContentHash: localContentHash
-        });
-      }
-    }
+    modifiedFiles.push({
+      path: filePath,
+      hash: fileInfo.hash,
+      size: fileInfo.size
+    });
   }
-
-  // Check for deleted files
-  for (const filePath of Object.keys(localHashes)) {
-    if (!remoteFiles[filePath]) {
-      deletedFiles.push({
-        path: filePath,
-        oldHash: localHashes[filePath]
-      });
-    }
-  }
-
-  const hasChanges = newFiles.length > 0 || modifiedFiles.length > 0 || deletedFiles.length > 0;
 
   return {
-    hasChanges,
+    hasChanges: modifiedFiles.length > 0,
     localVersion,
     remoteVersion,
-    newFiles,
+    newFiles: [],
     modifiedFiles,
-    deletedFiles,
+    deletedFiles: [],
     manifest
   };
 }
@@ -114,7 +71,6 @@ export function categorizeChanges(changeSet) {
     categories: { new: [], modified: [], deleted: [] },
     tags: { new: [], modified: [], deleted: [] },
     posts: { new: [], modified: [], deleted: [] },
-    drafts: { new: [], modified: [], deleted: [] },
     sidebar: { new: [], modified: [], deleted: [] },
     staticFiles: { new: [], modified: [], deleted: [] },
     embedImages: { new: [], modified: [], deleted: [] },
@@ -132,8 +88,6 @@ export function categorizeChanges(changeSet) {
       categories.tags[list].push(file);
     } else if (path.startsWith('posts/') && path !== 'posts/index.json') {
       categories.posts[list].push(file);
-    } else if (path.startsWith('drafts/') && path !== 'drafts/index.json.enc') {
-      categories.drafts[list].push(file);
     } else if (path.startsWith('sidebar/') && path !== 'sidebar/index.json') {
       categories.sidebar[list].push(file);
     } else if (path.startsWith('static-files/') && path !== 'static-files/index.json') {
@@ -166,7 +120,7 @@ export function categorizeChanges(changeSet) {
  * @returns {string|null} The entity ID or null
  */
 export function extractEntityId(filePath) {
-  const match = filePath.match(/\/([^/]+)\.(json|json\.enc)$/);
+  const match = filePath.match(/\/([^/]+)\.json$/);
   if (match && match[1] !== 'index') {
     return match[1];
   }
