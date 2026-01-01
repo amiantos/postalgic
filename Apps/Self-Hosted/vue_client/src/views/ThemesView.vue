@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useBlogStore } from '@/stores/blog';
 import { themeApi } from '@/api';
@@ -24,11 +24,174 @@ const editingTemplateName = ref(null);
 const editingTemplateContent = ref('');
 const savingTemplate = ref(false);
 
+// Color settings
+const colorForm = ref({});
+const savingColors = ref(false);
+const colorSuccess = ref(false);
+
+watch(() => blogStore.currentBlog, (blog) => {
+  if (blog) {
+    colorForm.value = {
+      accentColor: blog.accentColor,
+      backgroundColor: blog.backgroundColor,
+      textColor: blog.textColor,
+      lightShade: blog.lightShade,
+      mediumShade: blog.mediumShade,
+      darkShade: blog.darkShade
+    };
+  }
+}, { immediate: true });
+
 onMounted(async () => {
   await loadThemes();
   // Get current theme from blog
   selectedThemeId.value = blogStore.currentBlog?.themeIdentifier || 'default';
 });
+
+const colorPreviewHtml = computed(() => {
+  const accentColor = colorForm.value.accentColor || '#FFA100';
+  const backgroundColor = colorForm.value.backgroundColor || '#efefef';
+  const textColor = colorForm.value.textColor || '#2d3748';
+  const lightShade = colorForm.value.lightShade || '#dedede';
+  const mediumShade = colorForm.value.mediumShade || '#a0aec0';
+  const darkShade = colorForm.value.darkShade || '#4a5568';
+
+  return `<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        :root {
+            --accent-color: ${accentColor};
+            --background-color: ${backgroundColor};
+            --text-color: ${textColor};
+            --light-shade: ${lightShade};
+            --medium-shade: ${mediumShade};
+            --dark-shade: ${darkShade};
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            padding: 12px;
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        a {
+            color: var(--accent-color);
+            text-decoration: none;
+        }
+
+        .header-separator {
+            height: 28px;
+            width: 100%;
+            background-color: var(--accent-color);
+            --mask:
+              radial-gradient(10.96px at 50% calc(100% + 5.6px),#0000 calc(99% - 4px),#000 calc(101% - 4px) 99%,#0000 101%) calc(50% - 14px) calc(50% - 5.5px + .5px)/28px 11px repeat-x,
+              radial-gradient(10.96px at 50% -5.6px,#0000 calc(99% - 4px),#000 calc(101% - 4px) 99%,#0000 101%) 50% calc(50% + 5.5px)/28px 11px repeat-x;
+            -webkit-mask: var(--mask);
+            mask: var(--mask);
+            margin: 15px 0;
+        }
+
+        .category, .tag {
+            display: inline-block;
+            margin-right: 5px;
+        }
+
+        .category a {
+            display: inline-block;
+            color: white;
+            background-color: var(--accent-color);
+            border: 1px solid var(--accent-color);
+            padding: 3px 8px;
+            border-radius: 1em;
+            font-size: 0.8em;
+        }
+
+        .tag a {
+            display: inline-block;
+            color: var(--accent-color);
+            background-color: var(--background-color);
+            border: 1px solid var(--accent-color);
+            padding: 3px 8px;
+            border-radius: 1em;
+            font-size: 0.8em;
+        }
+
+        .section {
+            margin-bottom: 20px;
+        }
+
+        h3 {
+            margin-bottom: 8px;
+            color: var(--dark-shade);
+        }
+
+        h2 {
+            color: var(--text-color);
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-bottom: 0px;
+            margin-top: 10px;
+        }
+
+        .post-date {
+            color: var(--medium-shade);
+            font-size: 0.9em;
+            display: inline-block;
+            margin-top: 0px;
+        }
+
+        .menu-button {
+            display: block;
+            padding: 8px 0;
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: var(--dark-shade);
+            text-decoration: none;
+        }
+
+        .menu-sample {
+            margin-bottom: 25px;
+            border-bottom: 1px solid var(--light-shade);
+        }
+    </style>
+</head>
+<body>
+    <div class="section">
+        <h2>Example Post Title</h2>
+        <div class="post-date">May 24, 2025 at 1:50 AM</div>
+
+        <p>This is regular text on your blog, and <a href="#">this is a link</a> to demonstrate how the accent color looks.</p>
+        <div class="category"><a href="#">Category Name</a></div>
+        <div class="tag"><a href="#">#tag name</a></div>
+        <div class="header-separator"></div>
+        <div class="menu-sample">
+            <a class="menu-button">Menu Nav Item</a>
+        </div>
+    </div>
+</body>
+</html>`;
+});
+
+async function saveColors() {
+  savingColors.value = true;
+  error.value = null;
+  colorSuccess.value = false;
+
+  try {
+    await blogStore.updateBlog(blogId.value, colorForm.value);
+    colorSuccess.value = true;
+    setTimeout(() => colorSuccess.value = false, 3000);
+  } catch (e) {
+    error.value = e.message;
+  } finally {
+    savingColors.value = false;
+  }
+}
 
 async function loadThemes() {
   loading.value = true;
@@ -246,6 +409,131 @@ const templateNames = computed(() => {
     <p class="mt-4 text-sm text-gray-500 dark:text-gray-400">
       Custom themes can be used across all your blogs.
     </p>
+
+    <!-- Theme Colors -->
+    <section class="surface p-6 mt-8">
+      <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Theme Colors</h3>
+
+      <div v-if="colorSuccess" class="mb-4 p-4 bg-green-500/10 rounded-xl text-green-600 dark:text-green-400">
+        Colors saved successfully!
+      </div>
+
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 max-w-lg">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Accent Color</label>
+          <div class="flex items-center gap-2">
+            <input
+              v-model="colorForm.accentColor"
+              type="color"
+              class="w-10 h-10 shrink-0"
+            />
+            <input
+              v-model="colorForm.accentColor"
+              type="text"
+              class="min-w-0 flex-1 px-3 py-2 rounded-lg bg-black/5 dark:bg-white/5 text-gray-900 dark:text-gray-100 text-sm border-0 focus:ring-2 focus:ring-primary-500/50 transition-colors"
+            />
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Background</label>
+          <div class="flex items-center gap-2">
+            <input
+              v-model="colorForm.backgroundColor"
+              type="color"
+              class="w-10 h-10 shrink-0"
+            />
+            <input
+              v-model="colorForm.backgroundColor"
+              type="text"
+              class="min-w-0 flex-1 px-3 py-2 rounded-lg bg-black/5 dark:bg-white/5 text-gray-900 dark:text-gray-100 text-sm border-0 focus:ring-2 focus:ring-primary-500/50 transition-colors"
+            />
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Text Color</label>
+          <div class="flex items-center gap-2">
+            <input
+              v-model="colorForm.textColor"
+              type="color"
+              class="w-10 h-10 shrink-0"
+            />
+            <input
+              v-model="colorForm.textColor"
+              type="text"
+              class="min-w-0 flex-1 px-3 py-2 rounded-lg bg-black/5 dark:bg-white/5 text-gray-900 dark:text-gray-100 text-sm border-0 focus:ring-2 focus:ring-primary-500/50 transition-colors"
+            />
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Light Shade</label>
+          <div class="flex items-center gap-2">
+            <input
+              v-model="colorForm.lightShade"
+              type="color"
+              class="w-10 h-10 shrink-0"
+            />
+            <input
+              v-model="colorForm.lightShade"
+              type="text"
+              class="min-w-0 flex-1 px-3 py-2 rounded-lg bg-black/5 dark:bg-white/5 text-gray-900 dark:text-gray-100 text-sm border-0 focus:ring-2 focus:ring-primary-500/50 transition-colors"
+            />
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Medium Shade</label>
+          <div class="flex items-center gap-2">
+            <input
+              v-model="colorForm.mediumShade"
+              type="color"
+              class="w-10 h-10 shrink-0"
+            />
+            <input
+              v-model="colorForm.mediumShade"
+              type="text"
+              class="min-w-0 flex-1 px-3 py-2 rounded-lg bg-black/5 dark:bg-white/5 text-gray-900 dark:text-gray-100 text-sm border-0 focus:ring-2 focus:ring-primary-500/50 transition-colors"
+            />
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Dark Shade</label>
+          <div class="flex items-center gap-2">
+            <input
+              v-model="colorForm.darkShade"
+              type="color"
+              class="w-10 h-10 shrink-0"
+            />
+            <input
+              v-model="colorForm.darkShade"
+              type="text"
+              class="min-w-0 flex-1 px-3 py-2 rounded-lg bg-black/5 dark:bg-white/5 text-gray-900 dark:text-gray-100 text-sm border-0 focus:ring-2 focus:ring-primary-500/50 transition-colors"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- Color Preview -->
+      <div class="mt-6">
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Preview</label>
+        <div class="rounded-xl overflow-hidden bg-black/5 dark:bg-white/5">
+          <iframe
+            :srcdoc="colorPreviewHtml"
+            class="w-full border-0"
+            style="height: 340px;"
+          ></iframe>
+        </div>
+      </div>
+
+      <!-- Save Button -->
+      <div class="mt-6 flex justify-end">
+        <button
+          @click="saveColors"
+          :disabled="savingColors"
+          class="px-6 py-2.5 bg-primary-500 text-white rounded-xl font-medium hover:bg-primary-600 transition-colors shadow-sm disabled:opacity-50"
+        >
+          {{ savingColors ? 'Saving...' : 'Save Colors' }}
+        </button>
+      </div>
+    </section>
     </div>
 
     <!-- Delete Confirmation Modal -->
