@@ -459,6 +459,59 @@ class AWSPublisher: Publisher {
         }
     }
 
+    // MARK: - Remote Hash File Support
+
+    /// Path for the remote hash file
+    private static let hashFilePath = ".postalgic/hashes.json"
+
+    /// Fetches the remote hash file from S3 for cross-client change detection
+    func fetchRemoteHashes() async -> RemoteHashFile? {
+        return await withCheckedContinuation { continuation in
+            let getRequest = AWSS3GetObjectRequest()!
+            getRequest.bucket = bucket
+            getRequest.key = Self.hashFilePath
+
+            AWSS3.default().getObject(getRequest) { (output, error) in
+                if let error = error {
+                    print("📦 No remote hash file found (or error): \(error.localizedDescription)")
+                    continuation.resume(returning: nil)
+                    return
+                }
+
+                guard let data = output?.body as? Data else {
+                    print("📦 Remote hash file has no data")
+                    continuation.resume(returning: nil)
+                    return
+                }
+
+                do {
+                    let hashFile = try JSONDecoder().decode(RemoteHashFile.self, from: data)
+                    print("📦 Found remote hash file from \(hashFile.appSource) with \(hashFile.fileHashes.count) files")
+                    continuation.resume(returning: hashFile)
+                } catch {
+                    print("📦 Failed to decode remote hash file: \(error.localizedDescription)")
+                    continuation.resume(returning: nil)
+                }
+            }
+        }
+    }
+
+    /// Uploads the hash file to S3 after successful publish
+    func uploadHashFile(hashes: [String: String]) async throws {
+        let hashFile = RemoteHashFile(appSource: "ios", fileHashes: hashes)
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        let data = try encoder.encode(hashFile)
+
+        try await uploadDataToS3(
+            data: data,
+            bucket: bucket,
+            key: Self.hashFilePath,
+            contentType: "application/json"
+        )
+        print("📦 Uploaded remote hash file with \(hashes.count) file hashes")
+    }
+
     /// Error types that can occur during AWS operations
     enum AWSPublisherError: Error {
         case directoryEnumerationFailed

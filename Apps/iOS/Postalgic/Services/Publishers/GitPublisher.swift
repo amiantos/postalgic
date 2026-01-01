@@ -188,12 +188,83 @@ class GitPublisher: Publisher {
         return try await publish(directoryURL: directoryURL, statusUpdate: statusUpdate)
     }
     
+    // MARK: - Remote Hash File Support
+
+    /// Path for the remote hash file
+    private static let hashFilePath = ".postalgic/hashes.json"
+
+    /// Fetches the remote hash file from the Git repository
+    func fetchRemoteHashes() async -> RemoteHashFile? {
+        let fileManager = FileManager.default
+        let tempRepoURL = fileManager.temporaryDirectory.appendingPathComponent("postalgic-hash-check-\(UUID().uuidString)")
+
+        do {
+            // Clone the repository to read the hash file
+            let credentials = Credentials.plaintext(username: username, password: password)
+            let repoUrlObj = URL(string: repositoryUrl)!
+            _ = try await Repository.clone(
+                from: repoUrlObj,
+                to: tempRepoURL,
+                credentials: credentials
+            )
+
+            // Read the hash file if it exists
+            let hashFilePath = tempRepoURL.appendingPathComponent(Self.hashFilePath)
+
+            guard fileManager.fileExists(atPath: hashFilePath.path) else {
+                print("📦 No remote hash file found in repository")
+                try? fileManager.removeItem(at: tempRepoURL)
+                return nil
+            }
+
+            let data = try Data(contentsOf: hashFilePath)
+            let hashFile = try JSONDecoder().decode(RemoteHashFile.self, from: data)
+            print("📦 Found remote hash file from \(hashFile.appSource) with \(hashFile.fileHashes.count) files")
+
+            // Clean up temp directory
+            try? fileManager.removeItem(at: tempRepoURL)
+
+            return hashFile
+
+        } catch {
+            print("📦 Failed to fetch remote hashes from Git: \(error.localizedDescription)")
+            try? fileManager.removeItem(at: tempRepoURL)
+            return nil
+        }
+    }
+
+    /// Writes the hash file to a local directory (for Git, this is called before publish)
+    /// The hash file gets committed with the rest of the site
+    func uploadHashFile(hashes: [String: String]) async throws {
+        // For Git publisher, the hash file is written to the site directory
+        // by StaticSiteGenerator before publish() is called, so this is a no-op.
+        // The hash file gets committed along with the rest of the site.
+        print("📦 Git publisher: hash file should be written to site directory before publish")
+    }
+
+    /// Writes the hash file to a specific directory (used by StaticSiteGenerator for Git publishing)
+    func writeHashFile(to directoryURL: URL, hashes: [String: String]) throws {
+        let hashFile = RemoteHashFile(appSource: "ios", fileHashes: hashes)
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        let data = try encoder.encode(hashFile)
+
+        // Create .postalgic directory if needed
+        let postalgicDir = directoryURL.appendingPathComponent(".postalgic")
+        try FileManager.default.createDirectory(at: postalgicDir, withIntermediateDirectories: true)
+
+        // Write the hash file
+        let hashFilePath = directoryURL.appendingPathComponent(Self.hashFilePath)
+        try data.write(to: hashFilePath)
+        print("📦 Wrote hash file to \(hashFilePath.path) with \(hashes.count) file hashes")
+    }
+
     /// Error types that can occur during Git operations
     enum GitPublisherError: Error, LocalizedError {
         case publishFailed(String)
         case cloneFailed(String)
         case pushFailed(String)
-        
+
         var localizedDescription: String {
             switch self {
             case .publishFailed(let message):

@@ -439,21 +439,34 @@ class StaticSiteGenerator {
         
         do {
             print("🚀 Publishing site using \(publisher.publisherType.displayName) publisher...")
-            
+
             // Calculate hashes for the newly generated files
             let newFileHashes = try calculateFileHashes(in: siteDirectory)
-            
+
+            // For Git publisher, write hash file to directory before publish
+            if let gitPublisher = publisher as? GitPublisher {
+                try gitPublisher.writeHashFile(to: siteDirectory, hashes: newFileHashes)
+            }
+
+            // Fetch remote hashes for cross-client change detection
+            NotificationCenter.default.post(
+                name: .publishStatusUpdated,
+                object: "Checking for remote changes..."
+            )
+            let remoteHashFile = await publisher.fetchRemoteHashes()
+            let previousHashes: [String: String]? = remoteHashFile?.fileHashes ?? getPreviousPublishedFiles()?.fileHashes
+
             // For smart publishing, we need the previous file hashes
-            if !forceFullUpload, let previousFiles = getPreviousPublishedFiles() {
+            if !forceFullUpload, let previousHashes = previousHashes {
                 // Determine which files changed
-                let changes = previousFiles.determineChanges(with: newFileHashes)
-                
+                let changes = determineChanges(oldHashes: previousHashes, newHashes: newFileHashes)
+
                 if changes.hasChanges {
                     NotificationCenter.default.post(
                         name: .publishStatusUpdated,
                         object: "Smart publishing: \(changes.modified.count) files to update, \(changes.deleted.count) files to delete"
                     )
-                    
+
                     // Selectively publish only changed files
                     let result = try await publisher.smartPublish(
                         directoryURL: siteDirectory,
@@ -465,10 +478,15 @@ class StaticSiteGenerator {
                             object: statusMessage
                         )
                     }
-                    
-                    // Save the new file hashes after successful publishing
+
+                    // Upload hash file to remote (AWS/SFTP - Git already has it in the commit)
+                    if !(publisher is GitPublisher) {
+                        try await publisher.uploadHashFile(hashes: newFileHashes)
+                    }
+
+                    // Save the new file hashes locally after successful publishing
                     saveFileHashes(newFileHashes)
-                    
+
                     return result
                 } else {
                     NotificationCenter.default.post(
@@ -490,22 +508,49 @@ class StaticSiteGenerator {
                         object: "No previous publish data found. Performing full site upload."
                     )
                 }
-                
+
                 let result = try await publisher.publish(directoryURL: siteDirectory) { statusMessage in
                     NotificationCenter.default.post(
                         name: .publishStatusUpdated,
                         object: statusMessage
                     )
                 }
-                
-                // Save the file hashes after successful publishing
+
+                // Upload hash file to remote (AWS/SFTP - Git already has it in the commit)
+                if !(publisher is GitPublisher) {
+                    try await publisher.uploadHashFile(hashes: newFileHashes)
+                }
+
+                // Save the file hashes locally after successful publishing
                 saveFileHashes(newFileHashes)
-                
+
                 return result
             }
         } catch {
             throw SiteGeneratorError.publishingFailed("\(publisher.publisherType.displayName) publishing failed: \(error.localizedDescription)")
         }
+    }
+
+    /// Determines which files have changed between old and new hashes
+    private func determineChanges(oldHashes: [String: String], newHashes: [String: String]) -> (hasChanges: Bool, modified: [String], deleted: [String]) {
+        var modified: [String] = []
+        var deleted: [String] = []
+
+        // Check for new and modified files
+        for (path, hash) in newHashes {
+            if oldHashes[path] != hash {
+                modified.append(path)
+            }
+        }
+
+        // Check for deleted files
+        for path in oldHashes.keys {
+            if newHashes[path] == nil {
+                deleted.append(path)
+            }
+        }
+
+        return (hasChanges: !modified.isEmpty || !deleted.isEmpty, modified: modified, deleted: deleted)
     }
 
     /// Generates an RSS feed for the blog posts

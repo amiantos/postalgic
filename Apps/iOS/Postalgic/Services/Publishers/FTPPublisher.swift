@@ -343,13 +343,104 @@ class FTPPublisher: Publisher {
         }
     }
     
+    // MARK: - Remote Hash File Support
+
+    /// Path for the remote hash file (relative to remotePath)
+    private static let hashFileName = ".postalgic/hashes.json"
+
+    /// Fetches the remote hash file from SFTP for cross-client change detection
+    func fetchRemoteHashes() async -> RemoteHashFile? {
+        do {
+            // Connect to the server
+            let client = try await SSHClient.connect(
+                host: host,
+                port: port,
+                authenticationMethod: .passwordBased(username: username, password: password),
+                hostKeyValidator: .acceptAnything(),
+                reconnect: .never
+            )
+
+            defer {
+                Task { try? await client.close() }
+            }
+
+            let sftp = try await client.openSFTP()
+            defer {
+                Task { try? await sftp.close() }
+            }
+
+            // Build the full path
+            let hashFilePath = remotePath.hasSuffix("/") ?
+                "\(remotePath)\(Self.hashFileName)" :
+                "\(remotePath)/\(Self.hashFileName)"
+
+            // Try to read the file
+            let data = try await sftp.withFile(filePath: hashFilePath, flags: .read) { file in
+                try await file.readAll()
+            }
+
+            // Convert ByteBuffer to Data
+            let fileData = Data(buffer: data)
+
+            let hashFile = try JSONDecoder().decode(RemoteHashFile.self, from: fileData)
+            print("📦 Found remote hash file from \(hashFile.appSource) with \(hashFile.fileHashes.count) files")
+            return hashFile
+
+        } catch {
+            print("📦 No remote hash file found (or error): \(error.localizedDescription)")
+            return nil
+        }
+    }
+
+    /// Uploads the hash file to SFTP after successful publish
+    func uploadHashFile(hashes: [String: String]) async throws {
+        let hashFile = RemoteHashFile(appSource: "ios", fileHashes: hashes)
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        let data = try encoder.encode(hashFile)
+
+        // Connect to the server
+        let client = try await SSHClient.connect(
+            host: host,
+            port: port,
+            authenticationMethod: .passwordBased(username: username, password: password),
+            hostKeyValidator: .acceptAnything(),
+            reconnect: .never
+        )
+
+        defer {
+            Task { try? await client.close() }
+        }
+
+        let sftp = try await client.openSFTP()
+        defer {
+            Task { try? await sftp.close() }
+        }
+
+        // Build the full path
+        let hashFilePath = remotePath.hasSuffix("/") ?
+            "\(remotePath)\(Self.hashFileName)" :
+            "\(remotePath)/\(Self.hashFileName)"
+
+        // Ensure .postalgic directory exists
+        let hashDirPath = remotePath.hasSuffix("/") ?
+            "\(remotePath).postalgic" :
+            "\(remotePath)/.postalgic"
+
+        try await createRemoteDirectoryStructure(sftp: sftp, path: hashDirPath)
+
+        // Upload the file
+        try await uploadFile(sftp: sftp, fileData: data, remotePath: hashFilePath)
+        print("📦 Uploaded remote hash file with \(hashes.count) file hashes")
+    }
+
     /// Error types that can occur during SFTP operations
     enum FTPPublisherError: Error, LocalizedError {
         case directoryEnumerationFailed
         case ftpUploadFailed(String)
         case connectionFailed(String)
         case authenticationFailed(String)
-        
+
         var localizedDescription: String {
             switch self {
             case .directoryEnumerationFailed:
