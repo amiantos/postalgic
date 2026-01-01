@@ -7,7 +7,6 @@
 
 import Foundation
 import SwiftData
-import CryptoKit
 
 /// Result of incremental sync operation
 struct IncrementalSyncResult {
@@ -44,7 +43,6 @@ class IncrementalSync {
         case blogNotFound
         case noSyncUrl
         case networkError(String)
-        case decryptionFailed
         case importFailed(String)
 
         var errorDescription: String? {
@@ -55,8 +53,6 @@ class IncrementalSync {
                 return "Blog URL is not configured"
             case .networkError(let message):
                 return "Network error: \(message)"
-            case .decryptionFailed:
-                return "Failed to decrypt data. Check your password."
             case .importFailed(let message):
                 return "Sync failed: \(message)"
             }
@@ -100,23 +96,13 @@ class IncrementalSync {
 
         let categorized = SyncChecker.categorizeChanges(checkResult)
 
-        // Prepare encryption key if needed
-        var encryptionKey: SymmetricKey? = nil
-        if manifest.hasDrafts, let password = blog.getSyncPassword(), let encInfo = manifest.encryption {
-            guard let saltData = SyncEncryption.base64Decode(encInfo.salt) else {
-                throw SyncError.decryptionFailed
-            }
-            encryptionKey = SyncEncryption.deriveKey(password: password, salt: saltData)
-        }
-
         var totalChanges = 0
         var appliedChanges = 0
 
-        // Count total changes
+        // Count total changes (drafts are local-only, not synced)
         totalChanges += categorized.categories.new.count + categorized.categories.modified.count + categorized.categories.deleted.count
         totalChanges += categorized.tags.new.count + categorized.tags.modified.count + categorized.tags.deleted.count
         totalChanges += categorized.posts.new.count + categorized.posts.modified.count + categorized.posts.deleted.count
-        totalChanges += categorized.drafts.new.count + categorized.drafts.modified.count + categorized.drafts.deleted.count
         totalChanges += categorized.sidebar.new.count + categorized.sidebar.modified.count + categorized.sidebar.deleted.count
         totalChanges += categorized.staticFiles.new.count + categorized.staticFiles.deleted.count
         totalChanges += categorized.blog.modified.count
@@ -304,46 +290,7 @@ class IncrementalSync {
             appliedChanges += 1
         }
 
-        // Step 7: Process draft changes (encrypted)
-        if let key = encryptionKey {
-            for file in categorized.drafts.new {
-                progressUpdate(IncrementalSyncProgress(step: "Adding new drafts...", phase: .applying, progress: Double(appliedChanges) / Double(max(1, totalChanges))))
-                if let entityId = SyncChecker.extractEntityId(from: file.path),
-                   let iv = file.iv,
-                   let ivData = SyncEncryption.base64Decode(iv) {
-                    let draftEncData = try await downloadFile(from: "\(baseURL)/sync/\(file.path)")
-                    let draftData = try SyncEncryption.decrypt(ciphertext: draftEncData, iv: ivData, key: key)
-                    let syncDraft = try decoder.decode(SyncDataGenerator.SyncPost.self, from: draftData)
-                    try createOrUpdatePost(syncDraft, blog: blog, categoryMap: categoryMap, tagMap: tagMap, embedImageData: embedImageData, isDraft: true, modelContext: modelContext, existingPost: nil)
-                }
-                appliedChanges += 1
-            }
-
-            for file in categorized.drafts.modified {
-                progressUpdate(IncrementalSyncProgress(step: "Updating drafts...", phase: .applying, progress: Double(appliedChanges) / Double(max(1, totalChanges))))
-                if let entityId = SyncChecker.extractEntityId(from: file.path),
-                   let iv = file.iv,
-                   let ivData = SyncEncryption.base64Decode(iv) {
-                    let draftEncData = try await downloadFile(from: "\(baseURL)/sync/\(file.path)")
-                    let draftData = try SyncEncryption.decrypt(ciphertext: draftEncData, iv: ivData, key: key)
-                    let syncDraft = try decoder.decode(SyncDataGenerator.SyncPost.self, from: draftData)
-                    let existingDraft = postMap[syncDraft.id]
-                    try createOrUpdatePost(syncDraft, blog: blog, categoryMap: categoryMap, tagMap: tagMap, embedImageData: embedImageData, isDraft: true, modelContext: modelContext, existingPost: existingDraft)
-                }
-                appliedChanges += 1
-            }
-
-            for file in categorized.drafts.deleted {
-                progressUpdate(IncrementalSyncProgress(step: "Removing deleted drafts...", phase: .applying, progress: Double(appliedChanges) / Double(max(1, totalChanges))))
-                if let entityId = SyncChecker.extractEntityId(from: file.path),
-                   let draft = postMap[entityId] {
-                    modelContext.delete(draft)
-                }
-                appliedChanges += 1
-            }
-        }
-
-        // Step 8: Process sidebar changes
+        // Step 7: Process sidebar changes
         var sidebarMap: [String: SidebarObject] = [:]
         for sidebar in blog.sidebarObjects {
             if let syncId = sidebar.syncId {
@@ -408,7 +355,7 @@ class IncrementalSync {
             appliedChanges += 1
         }
 
-        // Step 9: Process static file changes
+        // Step 8: Process static file changes
         var staticFileMap: [String: StaticFile] = [:]
         for staticFile in blog.staticFiles {
             if let syncId = staticFile.syncId {
@@ -449,21 +396,16 @@ class IncrementalSync {
             appliedChanges += 1
         }
 
-        // Step 10: Update sync state
-        blog.lastSyncedVersion = manifest.syncVersion
+        // Step 9: Update sync state
+        blog.lastSyncedVersion = manifest.contentVersion
         blog.lastSyncedAt = Date()
 
+        // Store file hashes for incremental sync change detection
         var newHashes: [String: String] = [:]
-        var newContentHashes: [String: String] = [:]
         for (path, fileInfo) in manifest.files {
             newHashes[path] = fileInfo.hash
-            // Store contentHash for encrypted files (allows change detection without IV false positives)
-            if let contentHash = fileInfo.contentHash {
-                newContentHashes[path] = contentHash
-            }
         }
         blog.localSyncHashes = newHashes
-        blog.localContentHashes = newContentHashes
 
         // Save changes
         try modelContext.save()

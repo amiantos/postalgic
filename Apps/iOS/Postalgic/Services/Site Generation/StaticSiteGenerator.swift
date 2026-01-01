@@ -358,7 +358,7 @@ class StaticSiteGenerator {
         try generateSitemap()
 
         // Generate sync directory if sync is enabled
-        if blog.syncEnabled, let syncPassword = blog.getSyncPassword() {
+        if blog.syncEnabled {
             NotificationCenter.default.post(
                 name: .publishStatusUpdated,
                 object: "Generating sync data..."
@@ -366,8 +366,7 @@ class StaticSiteGenerator {
             do {
                 _ = try SyncDataGenerator.generateSyncDirectory(
                     for: blog,
-                    in: siteDirectory,
-                    password: syncPassword
+                    in: siteDirectory
                 ) { statusMessage in
                     NotificationCenter.default.post(
                         name: .publishStatusUpdated,

@@ -11,8 +11,8 @@ import Foundation
 /// Result of checking for sync changes
 struct SyncCheckResult {
     let hasChanges: Bool
-    let localVersion: Int
-    let remoteVersion: Int
+    let localVersion: String
+    let remoteVersion: String
     let newFiles: [ChangedFile]
     let modifiedFiles: [ChangedFile]
     let deletedFiles: [ChangedFile]
@@ -21,12 +21,8 @@ struct SyncCheckResult {
     struct ChangedFile {
         let path: String
         let hash: String
-        let contentHash: String?  // Hash of plaintext before encryption (for drafts)
         let size: Int?
-        let encrypted: Bool
-        let iv: String?
         let oldHash: String?
-        let oldContentHash: String?
     }
 
     /// Check if there are entity-level changes (excluding indexes)
@@ -62,7 +58,6 @@ struct CategorizedChanges {
     var categories: EntityChanges = EntityChanges()
     var tags: EntityChanges = EntityChanges()
     var posts: EntityChanges = EntityChanges()
-    var drafts: EntityChanges = EntityChanges()
     var sidebar: EntityChanges = EntityChanges()
     var staticFiles: EntityChanges = EntityChanges()
     var embedImages: EntityChanges = EntityChanges()
@@ -109,13 +104,12 @@ class SyncChecker {
         }
 
         // Get local sync state
-        let localVersion = blog.lastSyncedVersion
+        let localVersion = blog.lastSyncedVersion ?? ""
         let localHashes = blog.localSyncHashes
-        let localContentHashes = blog.localContentHashes
 
         // Fetch remote manifest
         let manifest = try await SyncImporter.fetchManifest(from: syncUrl)
-        let remoteVersion = manifest.syncVersion
+        let remoteVersion = manifest.contentVersion
         let remoteFiles = manifest.files
 
         // If versions match and we have local hashes, no changes
@@ -143,34 +137,17 @@ class SyncChecker {
                 newFiles.append(SyncCheckResult.ChangedFile(
                     path: filePath,
                     hash: fileInfo.hash,
-                    contentHash: fileInfo.contentHash,
                     size: fileInfo.size,
-                    encrypted: fileInfo.encrypted ?? false,
-                    iv: fileInfo.iv,
-                    oldHash: nil,
-                    oldContentHash: nil
+                    oldHash: nil
                 ))
-            } else {
-                // For encrypted files (drafts), compare contentHash if available
-                // This prevents false positives from random IV changes
-                let localHash = localHashes[filePath]
-                let localContentHash = localContentHashes[filePath]
-                let remoteHash = fileInfo.contentHash ?? fileInfo.hash
-                let compareHash = localContentHash ?? localHash
-
-                if compareHash != remoteHash {
-                    // Modified file
-                    modifiedFiles.append(SyncCheckResult.ChangedFile(
-                        path: filePath,
-                        hash: fileInfo.hash,
-                        contentHash: fileInfo.contentHash,
-                        size: fileInfo.size,
-                        encrypted: fileInfo.encrypted ?? false,
-                        iv: fileInfo.iv,
-                        oldHash: localHashes[filePath],
-                        oldContentHash: localContentHash
-                    ))
-                }
+            } else if localHashes[filePath] != fileInfo.hash {
+                // Modified file
+                modifiedFiles.append(SyncCheckResult.ChangedFile(
+                    path: filePath,
+                    hash: fileInfo.hash,
+                    size: fileInfo.size,
+                    oldHash: localHashes[filePath]
+                ))
             }
         }
 
@@ -180,12 +157,8 @@ class SyncChecker {
                 deletedFiles.append(SyncCheckResult.ChangedFile(
                     path: filePath,
                     hash: hash,
-                    contentHash: localContentHashes[filePath],
                     size: nil,
-                    encrypted: false,
-                    iv: nil,
-                    oldHash: hash,
-                    oldContentHash: localContentHashes[filePath]
+                    oldHash: hash
                 ))
             }
         }
@@ -244,13 +217,6 @@ class SyncChecker {
                 case "deleted": categories.posts.deleted.append(file)
                 default: break
                 }
-            } else if path.hasPrefix("drafts/") && path != "drafts/index.json.enc" {
-                switch type {
-                case "new": categories.drafts.new.append(file)
-                case "modified": categories.drafts.modified.append(file)
-                case "deleted": categories.drafts.deleted.append(file)
-                default: break
-                }
             } else if path.hasPrefix("sidebar/") && path != "sidebar/index.json" {
                 switch type {
                 case "new": categories.sidebar.new.append(file)
@@ -301,8 +267,8 @@ class SyncChecker {
     /// - Parameter filePath: The file path (e.g., 'posts/abc-123.json')
     /// - Returns: The entity ID or nil
     static func extractEntityId(from filePath: String) -> String? {
-        // Match patterns like 'posts/abc-123.json' or 'drafts/xyz.json.enc'
-        let pattern = #"/([^/]+)\.(json|json\.enc)$"#
+        // Match patterns like 'posts/abc-123.json'
+        let pattern = #"/([^/]+)\.json$"#
         guard let regex = try? NSRegularExpression(pattern: pattern),
               let match = regex.firstMatch(in: filePath, range: NSRange(filePath.startIndex..., in: filePath)),
               let idRange = Range(match.range(at: 1), in: filePath) else {

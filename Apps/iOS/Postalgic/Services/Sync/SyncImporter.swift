@@ -16,8 +16,6 @@ class SyncImporter {
         case networkError(String)
         case manifestNotFound
         case invalidManifest
-        case decryptionFailed
-        case passwordRequired
         case importFailed(String)
 
         var errorDescription: String? {
@@ -30,10 +28,6 @@ class SyncImporter {
                 return "Sync manifest not found at this URL. Make sure the site has sync enabled."
             case .invalidManifest:
                 return "Invalid sync manifest format"
-            case .decryptionFailed:
-                return "Failed to decrypt data. Check your password."
-            case .passwordRequired:
-                return "This blog has drafts that require a password to import"
             case .importFailed(let message):
                 return "Import failed: \(message)"
             }
@@ -44,28 +38,18 @@ class SyncImporter {
 
     struct SyncManifest: Codable {
         let version: String
-        let syncVersion: Int
+        let contentVersion: String
         let lastModified: String
         let appSource: String
         let appVersion: String
         let blogName: String
-        let hasDrafts: Bool
-        let encryption: EncryptionInfo?
+        let fileCount: Int?
         let files: [String: FileInfo]
-
-        struct EncryptionInfo: Codable {
-            let method: String
-            let salt: String
-            let iterations: Int
-        }
 
         struct FileInfo: Codable {
             let hash: String
             let size: Int
             let modified: String?
-            let encrypted: Bool?
-            let iv: String?
-            let contentHash: String?  // Hash of plaintext before encryption (for drafts)
         }
     }
 
@@ -124,13 +108,11 @@ class SyncImporter {
     /// Imports a blog from a sync URL
     /// - Parameters:
     ///   - urlString: The base URL of the published site
-    ///   - password: The sync password (required if blog has drafts)
     ///   - modelContext: The SwiftData model context
     ///   - progressUpdate: Closure for progress updates
     /// - Returns: The imported blog
     static func importBlog(
         from urlString: String,
-        password: String?,
         modelContext: ModelContext,
         progressUpdate: @escaping (ImportProgress) -> Void
     ) async throws -> Blog {
@@ -140,22 +122,8 @@ class SyncImporter {
         progressUpdate(ImportProgress(currentStep: "Fetching manifest...", filesDownloaded: 0, totalFiles: 0, isComplete: false))
         let manifest = try await fetchManifest(from: baseURL)
 
-        // Check if password is required
-        if manifest.hasDrafts && (password == nil || password!.isEmpty) {
-            throw ImportError.passwordRequired
-        }
-
         let totalFiles = manifest.files.count
         var filesDownloaded = 0
-
-        // Prepare encryption key if needed
-        var encryptionKey: SymmetricKey? = nil
-        if manifest.hasDrafts, let password = password, let encInfo = manifest.encryption {
-            guard let saltData = SyncEncryption.base64Decode(encInfo.salt) else {
-                throw ImportError.decryptionFailed
-            }
-            encryptionKey = SyncEncryption.deriveKey(password: password, salt: saltData)
-        }
 
         // Step 2: Download blog.json
         progressUpdate(ImportProgress(currentStep: "Downloading blog settings...", filesDownloaded: filesDownloaded, totalFiles: totalFiles, isComplete: false))
@@ -181,15 +149,10 @@ class SyncImporter {
 
         // Enable sync and store sync info
         blog.syncEnabled = true
-        blog.lastSyncedVersion = manifest.syncVersion
+        blog.lastSyncedVersion = manifest.contentVersion
         blog.lastSyncedAt = Date()
 
         modelContext.insert(blog)
-
-        // Store sync password if provided
-        if let password = password {
-            blog.setSyncPassword(password)
-        }
 
         // Step 4: Download and create categories
         progressUpdate(ImportProgress(currentStep: "Downloading categories...", filesDownloaded: filesDownloaded, totalFiles: totalFiles, isComplete: false))
@@ -273,40 +236,7 @@ class SyncImporter {
             progressUpdate(ImportProgress(currentStep: "Downloading posts...", filesDownloaded: filesDownloaded, totalFiles: totalFiles, isComplete: false))
         }
 
-        // Step 8: Download and create drafts (encrypted)
-        if manifest.hasDrafts, let key = encryptionKey {
-            progressUpdate(ImportProgress(currentStep: "Downloading drafts...", filesDownloaded: filesDownloaded, totalFiles: totalFiles, isComplete: false))
-
-            // Download encrypted draft index
-            let draftIndexEncData = try await downloadFile(from: "\(baseURL)/sync/drafts/index.json.enc")
-            filesDownloaded += 1
-
-            guard let draftIndexIV = manifest.files["drafts/index.json.enc"]?.iv,
-                  let ivData = SyncEncryption.base64Decode(draftIndexIV) else {
-                throw ImportError.decryptionFailed
-            }
-
-            let draftIndexData = try SyncEncryption.decrypt(ciphertext: draftIndexEncData, iv: ivData, key: key)
-            let draftIndex = try decoder.decode(SyncDataGenerator.SyncDraftIndex.self, from: draftIndexData)
-
-            for entry in draftIndex.drafts {
-                let draftEncData = try await downloadFile(from: "\(baseURL)/sync/drafts/\(entry.id).json.enc")
-                filesDownloaded += 1
-
-                guard let draftIV = manifest.files["drafts/\(entry.id).json.enc"]?.iv,
-                      let draftIVData = SyncEncryption.base64Decode(draftIV) else {
-                    throw ImportError.decryptionFailed
-                }
-
-                let draftData = try SyncEncryption.decrypt(ciphertext: draftEncData, iv: draftIVData, key: key)
-                let syncDraft = try decoder.decode(SyncDataGenerator.SyncPost.self, from: draftData)
-
-                try createPost(from: syncDraft, blog: blog, categoryMap: categoryMap, tagMap: tagMap, embedImageData: embedImageData, isDraft: true, modelContext: modelContext)
-                progressUpdate(ImportProgress(currentStep: "Downloading drafts...", filesDownloaded: filesDownloaded, totalFiles: totalFiles, isComplete: false))
-            }
-        }
-
-        // Step 9: Download and create sidebar objects
+        // Step 8: Download and create sidebar objects
         progressUpdate(ImportProgress(currentStep: "Downloading sidebar content...", filesDownloaded: filesDownloaded, totalFiles: totalFiles, isComplete: false))
         let sidebarIndexData = try await downloadFile(from: "\(baseURL)/sync/sidebar/index.json")
         filesDownloaded += 1
@@ -332,7 +262,7 @@ class SyncImporter {
             }
         }
 
-        // Step 10: Download and create static files
+        // Step 9: Download and create static files
         progressUpdate(ImportProgress(currentStep: "Downloading static files...", filesDownloaded: filesDownloaded, totalFiles: totalFiles, isComplete: false))
         let staticFilesIndexData = try await downloadFile(from: "\(baseURL)/sync/static-files/index.json")
         filesDownloaded += 1
@@ -350,7 +280,7 @@ class SyncImporter {
             progressUpdate(ImportProgress(currentStep: "Downloading static files...", filesDownloaded: filesDownloaded, totalFiles: totalFiles, isComplete: false))
         }
 
-        // Step 11: Download custom theme if present
+        // Step 10: Download custom theme if present
         if let themeId = syncBlog.themeIdentifier, themeId != "default" {
             let themePath = "themes/\(themeId).json"
             if manifest.files[themePath] != nil {
@@ -369,19 +299,6 @@ class SyncImporter {
 
         // Save all changes
         try modelContext.save()
-
-        // Store local file hashes for future sync
-        var localHashes: [String: String] = [:]
-        var localContentHashes: [String: String] = [:]
-        for (path, fileInfo) in manifest.files {
-            localHashes[path] = fileInfo.hash
-            // Store contentHash for encrypted files (allows change detection without IV false positives)
-            if let contentHash = fileInfo.contentHash {
-                localContentHashes[path] = contentHash
-            }
-        }
-        blog.localSyncHashes = localHashes
-        blog.localContentHashes = localContentHashes
 
         progressUpdate(ImportProgress(currentStep: "Import complete!", filesDownloaded: totalFiles, totalFiles: totalFiles, isComplete: true))
 
@@ -518,7 +435,3 @@ class SyncImporter {
         }
     }
 }
-
-// MARK: - CryptoKit Import
-import CryptoKit
-

@@ -25,7 +25,6 @@ class KeychainService {
         case aws = "awsSecretAccessKey"
         case ftp = "ftpPassword"
         case git = "gitPassword"
-        case syncPassword = "syncPassword"
     }
     
     // MARK: - Private Helpers
@@ -122,7 +121,6 @@ class KeychainService {
         try deletePassword(for: blogId, type: .aws)
         try deletePassword(for: blogId, type: .ftp)
         try deletePassword(for: blogId, type: .git)
-        try deletePassword(for: blogId, type: .syncPassword)
     }
     
     /// Checks if a password exists in the keychain
@@ -189,33 +187,6 @@ extension Blog {
             try KeychainService.storePassword(password, for: persistentModelID, type: .git)
         } catch {
             print("Failed to store Git password in keychain: \(error)")
-        }
-    }
-
-    /// Gets the sync password from keychain
-    func getSyncPassword() -> String? {
-        do {
-            return try KeychainService.retrievePassword(for: persistentModelID, type: .syncPassword)
-        } catch {
-            return nil
-        }
-    }
-
-    /// Sets the sync password in keychain
-    func setSyncPassword(_ password: String) {
-        do {
-            try KeychainService.storePassword(password, for: persistentModelID, type: .syncPassword)
-        } catch {
-            print("Failed to store sync password in keychain: \(error)")
-        }
-    }
-
-    /// Deletes the sync password from keychain
-    func deleteSyncPassword() {
-        do {
-            try KeychainService.deletePassword(for: persistentModelID, type: .syncPassword)
-        } catch {
-            print("Failed to delete sync password from keychain: \(error)")
         }
     }
 

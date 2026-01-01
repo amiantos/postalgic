@@ -12,21 +12,15 @@ import SwiftData
 class SyncDataGenerator {
 
     enum SyncError: Error, LocalizedError {
-        case noSyncPassword
         case failedToCreateDirectory
         case failedToWriteFile(String)
-        case encryptionFailed(String)
 
         var errorDescription: String? {
             switch self {
-            case .noSyncPassword:
-                return "No sync password configured"
             case .failedToCreateDirectory:
                 return "Failed to create sync directory"
             case .failedToWriteFile(let filename):
                 return "Failed to write file: \(filename)"
-            case .encryptionFailed(let message):
-                return "Encryption failed: \(message)"
             }
         }
     }
@@ -73,28 +67,18 @@ class SyncDataGenerator {
 
     struct SyncManifest: Codable {
         let version: String
-        let syncVersion: Int
+        let contentVersion: String
         let lastModified: String
         let appSource: String
         let appVersion: String
         let blogName: String
-        let hasDrafts: Bool
-        let encryption: EncryptionInfo?
+        let fileCount: Int?
         var files: [String: FileInfo]
-
-        struct EncryptionInfo: Codable {
-            let method: String
-            let salt: String
-            let iterations: Int
-        }
 
         struct FileInfo: Codable {
             let hash: String
             var size: Int
             var modified: String?
-            var encrypted: Bool?
-            var iv: String?
-            var contentHash: String?  // Hash of plaintext before encryption (for drafts)
         }
     }
 
@@ -125,16 +109,6 @@ class SyncDataGenerator {
         struct PostIndexEntry: Codable {
             let id: String
             let stub: String?
-            let hash: String
-            let modified: String
-        }
-    }
-
-    struct SyncDraftIndex: Codable {
-        let drafts: [DraftIndexEntry]
-
-        struct DraftIndexEntry: Codable {
-            let id: String
             let hash: String
             let modified: String
         }
@@ -260,23 +234,20 @@ class SyncDataGenerator {
     /// - Parameters:
     ///   - blog: The blog to generate sync data for
     ///   - siteDirectory: The root site directory
-    ///   - password: The sync password for encrypting drafts
     ///   - statusUpdate: Closure for status updates
     /// - Returns: Dictionary of file paths to their hashes
     static func generateSyncDirectory(
         for blog: Blog,
         in siteDirectory: URL,
-        password: String,
         statusUpdate: @escaping (String) -> Void
     ) throws -> [String: String] {
         let fileManager = FileManager.default
         let syncDirectory = siteDirectory.appendingPathComponent("sync")
 
-        // Create sync directory structure
+        // Create sync directory structure (drafts stay local, not synced)
         statusUpdate("Creating sync directory structure...")
         try fileManager.createDirectory(at: syncDirectory, withIntermediateDirectories: true)
         try fileManager.createDirectory(at: syncDirectory.appendingPathComponent("posts"), withIntermediateDirectories: true)
-        try fileManager.createDirectory(at: syncDirectory.appendingPathComponent("drafts"), withIntermediateDirectories: true)
         try fileManager.createDirectory(at: syncDirectory.appendingPathComponent("categories"), withIntermediateDirectories: true)
         try fileManager.createDirectory(at: syncDirectory.appendingPathComponent("tags"), withIntermediateDirectories: true)
         try fileManager.createDirectory(at: syncDirectory.appendingPathComponent("sidebar"), withIntermediateDirectories: true)
@@ -288,9 +259,6 @@ class SyncDataGenerator {
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
 
         var fileHashes: [String: String] = [:]
-
-        // Generate salt for encryption (will be stored in manifest)
-        let salt = SyncEncryption.generateSalt()
 
         // Build ID maps: local persistent ID -> stable sync ID
         // This allows us to look up the stable ID when we have a reference to the local entity
@@ -432,54 +400,6 @@ class SyncDataGenerator {
         try postIndexData.write(to: postIndexPath)
         fileHashes["posts/index.json"] = postIndexData.sha256Hash()
 
-        // MARK: Generate drafts (encrypted)
-        statusUpdate("Generating encrypted drafts...")
-        let drafts = blog.posts.filter { $0.isDraft }
-        var draftIndexEntries: [SyncDraftIndex.DraftIndexEntry] = []
-        var draftIVs: [String: String] = [:] // Store IVs for manifest
-        var draftContentHashes: [String: String] = [:] // Store contentHash (hash of plaintext before encryption)
-
-        for draft in drafts {
-            let stableId = getStableSyncId(for: draft)
-            let syncPost = try createSyncPost(from: draft, stableId: stableId, categoryIdMap: categoryIdMap, tagIdMap: tagIdMap)
-
-            // Calculate content hash BEFORE encryption
-            // This allows change detection without false positives from random IV
-            let draftData = try encoder.encode(syncPost)
-            let contentHash = draftData.sha256Hash()
-
-            // Encrypt the draft
-            let (ciphertext, iv) = try SyncEncryption.encryptJSON(syncPost, password: password, salt: salt)
-            let draftPath = syncDirectory.appendingPathComponent("drafts/\(stableId).json.enc")
-            try ciphertext.write(to: draftPath)
-            let hash = ciphertext.sha256Hash()
-            fileHashes["drafts/\(stableId).json.enc"] = hash
-            draftIVs["drafts/\(stableId).json.enc"] = SyncEncryption.base64Encode(iv)
-            draftContentHashes["drafts/\(stableId).json.enc"] = contentHash
-
-            draftIndexEntries.append(SyncDraftIndex.DraftIndexEntry(
-                id: stableId,
-                hash: contentHash, // Use contentHash for stable comparison (ciphertext hash is in manifest)
-                modified: isoFormatter.string(from: draft.createdAt)
-            ))
-        }
-
-        // Encrypt draft index
-        if !draftIndexEntries.isEmpty {
-            let draftIndex = SyncDraftIndex(drafts: draftIndexEntries)
-
-            // Calculate content hash for draft index before encryption
-            let draftIndexData = try encoder.encode(draftIndex)
-            let draftIndexContentHash = draftIndexData.sha256Hash()
-
-            let (indexCiphertext, indexIV) = try SyncEncryption.encryptJSON(draftIndex, password: password, salt: salt)
-            let draftIndexPath = syncDirectory.appendingPathComponent("drafts/index.json.enc")
-            try indexCiphertext.write(to: draftIndexPath)
-            fileHashes["drafts/index.json.enc"] = indexCiphertext.sha256Hash()
-            draftIVs["drafts/index.json.enc"] = SyncEncryption.base64Encode(indexIV)
-            draftContentHashes["drafts/index.json.enc"] = draftIndexContentHash
-        }
-
         // MARK: Generate sidebar objects
         statusUpdate("Generating sidebar content...")
         var sidebarIndexEntries: [SyncSidebarIndex.SidebarIndexEntry] = []
@@ -609,7 +529,6 @@ class SyncDataGenerator {
 
         // MARK: Generate manifest
         statusUpdate("Generating manifest...")
-        let newSyncVersion = blog.lastSyncedVersion + 1
 
         var manifestFiles: [String: SyncManifest.FileInfo] = [:]
         for (path, hash) in fileHashes {
@@ -617,18 +536,6 @@ class SyncDataGenerator {
                 hash: hash,
                 size: 0 // We'll update this
             )
-
-            // Add IV and contentHash for encrypted files
-            if let iv = draftIVs[path] {
-                fileInfo.encrypted = true
-                fileInfo.iv = iv
-                // Add contentHash for encrypted files (hash of plaintext before encryption)
-                // This allows change detection without false positives from random IV
-                if let contentHash = draftContentHashes[path] {
-                    fileInfo.contentHash = contentHash
-                }
-            }
-
             manifestFiles[path] = fileInfo
         }
 
@@ -641,19 +548,19 @@ class SyncDataGenerator {
             }
         }
 
+        // Compute contentVersion as SHA256 of all file hashes (sorted for consistency)
+        let sortedHashes = fileHashes.keys.sorted().compactMap { fileHashes[$0] }
+        let combinedHashes = sortedHashes.joined()
+        let contentVersion = combinedHashes.data(using: .utf8)?.sha256Hash() ?? UUID().uuidString
+
         let manifest = SyncManifest(
             version: "1.0",
-            syncVersion: newSyncVersion,
+            contentVersion: contentVersion,
             lastModified: isoFormatter.string(from: Date()),
             appSource: "ios",
             appVersion: Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "unknown",
             blogName: blog.name,
-            hasDrafts: !drafts.isEmpty,
-            encryption: !drafts.isEmpty ? SyncManifest.EncryptionInfo(
-                method: "aes-256-gcm",
-                salt: SyncEncryption.base64Encode(salt),
-                iterations: Int(SyncEncryption.pbkdf2Iterations)
-            ) : nil,
+            fileCount: fileHashes.count,
             files: manifestFiles
         )
 

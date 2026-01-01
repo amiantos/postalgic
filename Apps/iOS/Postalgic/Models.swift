@@ -69,10 +69,9 @@ final class Blog {
 
     // Sync Configuration
     var syncEnabled: Bool = false
-    var lastSyncedVersion: Int = 0
+    var lastSyncedVersion: String?  // Content version hash for sync comparison
     var lastSyncedAt: Date?
     var localSyncHashes: [String: String] = [:]  // For tracking local sync state
-    var localContentHashes: [String: String] = [:]  // Content hashes for encrypted files (hash of plaintext)
 
     // Future Netlify Configuration
     // var netlifyToken: String?
@@ -144,8 +143,8 @@ final class Blog {
     }
 
     var hasSyncConfigured: Bool {
-        // Sync is configured if enabled and has a password set
-        return syncEnabled && KeychainService.passwordExists(for: persistentModelID, type: .syncPassword)
+        // Sync is configured if enabled
+        return syncEnabled
     }
 
     var currentPublisherType: PublisherType {

@@ -13,13 +13,11 @@ struct ImportFromURLView: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var urlString: String = ""
-    @State private var password: String = ""
     @State private var isLoading = false
     @State private var isImporting = false
     @State private var error: String?
     @State private var manifest: SyncImporter.SyncManifest?
     @State private var importProgress: SyncImporter.ImportProgress?
-    @State private var showPasswordField = false
 
     var body: some View {
         NavigationStack {
@@ -31,19 +29,10 @@ struct ImportFromURLView: View {
                         .autocapitalization(.none)
                         .autocorrectionDisabled()
                         .disabled(isImporting)
-
-                    if showPasswordField {
-                        SecureField("Sync Password", text: $password)
-                            .disabled(isImporting)
-                    }
                 } header: {
                     Text("Sync URL")
                 } footer: {
-                    if showPasswordField {
-                        Text("This blog has drafts that require a password to import.")
-                    } else {
-                        Text("Enter the URL of a published Postalgic site to import.")
-                    }
+                    Text("Enter the URL of a published Postalgic site to import.")
                 }
 
                 if let manifest = manifest {
@@ -51,9 +40,6 @@ struct ImportFromURLView: View {
                         LabeledContent("Name", value: manifest.blogName)
                         LabeledContent("Source", value: manifest.appSource.capitalized)
                         LabeledContent("Files", value: "\(manifest.files.count)")
-                        if manifest.hasDrafts {
-                            LabeledContent("Has Drafts", value: "Yes (encrypted)")
-                        }
                     }
                 }
 
@@ -111,7 +97,7 @@ struct ImportFromURLView: View {
                                 Text("Import Blog")
                             }
                         }
-                        .disabled(isImporting || (showPasswordField && password.isEmpty))
+                        .disabled(isImporting)
                     }
                 }
             }
@@ -135,14 +121,12 @@ struct ImportFromURLView: View {
         isLoading = true
         error = nil
         manifest = nil
-        showPasswordField = false
 
         Task {
             do {
                 let fetchedManifest = try await SyncImporter.fetchManifest(from: urlString)
                 await MainActor.run {
                     manifest = fetchedManifest
-                    showPasswordField = fetchedManifest.hasDrafts
                     isLoading = false
                 }
             } catch {
@@ -170,7 +154,6 @@ struct ImportFromURLView: View {
             do {
                 let blog = try await SyncImporter.importBlog(
                     from: urlString,
-                    password: showPasswordField ? password : nil,
                     modelContext: modelContext
                 ) { progress in
                     Task { @MainActor in
