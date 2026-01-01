@@ -40,7 +40,7 @@ const blogId = computed(() => route.params.blogId);
 
       <!-- Bottom row: Title + Actions -->
       <div class="flex items-center justify-between pt-4 pb-4">
-        <div>
+        <div class="min-h-[3rem] flex flex-col justify-center">
           <h1 class="text-xl font-semibold text-gray-900 dark:text-gray-100">{{ title }}</h1>
           <p v-if="subtitle" class="text-gray-500 dark:text-gray-400 text-sm">{{ subtitle }}</p>
         </div>
