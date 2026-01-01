@@ -162,7 +162,6 @@ router.post('/blogs/:blogId/check-changes', async (req, res) => {
       categories: buildDetailedChanges(categorized.categories, 'category'),
       tags: buildDetailedChanges(categorized.tags, 'tag'),
       posts: buildDetailedChanges(categorized.posts, 'post'),
-      drafts: buildDetailedChanges(categorized.drafts, 'draft'),
       sidebar: buildDetailedChanges(categorized.sidebar, 'sidebar'),
       staticFiles: buildDetailedChanges(categorized.staticFiles, 'staticFile'),
       embedImages: buildDetailedChanges(categorized.embedImages, 'embedImage'),
