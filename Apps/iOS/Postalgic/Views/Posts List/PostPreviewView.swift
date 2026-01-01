@@ -181,21 +181,27 @@ struct PostPreviewView: View {
         }
     }
 
-    func formatDate(_ date: Date) -> String {
+    private static let timeFormatter: DateFormatter = {
         let formatter = DateFormatter()
+        formatter.dateFormat = "h:mm a"
+        return formatter
+    }()
 
+    private static let fullDateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM d, yyyy 'at' h:mm a"
+        return formatter
+    }()
+
+    func formatDate(_ date: Date) -> String {
         if Calendar.current.isDateInToday(date) {
-            formatter.dateFormat = "h:mm a"
-            return "Today at " + formatter.string(from: date)
+            return "Today at " + Self.timeFormatter.string(from: date)
         }
 
         if Calendar.current.isDateInYesterday(date) {
-            formatter.dateFormat = "h:mm a"
-            return "Yesterday at " + formatter.string(from: date)
+            return "Yesterday at " + Self.timeFormatter.string(from: date)
         }
 
-        // For other dates
-        formatter.dateFormat = "MMM d, yyyy 'at' h:mm a"
-        return formatter.string(from: date)
+        return Self.fullDateFormatter.string(from: date)
     }
 }

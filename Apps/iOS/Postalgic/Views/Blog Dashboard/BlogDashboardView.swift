@@ -18,27 +18,14 @@ struct BlogDashboardView: View {
     @State private var showingSettingsView = false
     @State private var showingPostsView = false
 
-    // Query for blog posts with predicate - properly scoped to this blog
-    @Query private var blogPosts: [Post]
-
-    // Initialize with predicate to properly scope query to this blog
-    init(blog: Blog) {
-        self.blog = blog
-        let id = blog.persistentModelID
-        let predicate = #Predicate<Post> { post in
-            post.blog?.persistentModelID == id
-        }
-        self._blogPosts = Query(filter: predicate, sort: \Post.createdAt, order: .reverse)
-    }
-
     // Computed property for draft posts
     private var draftPosts: [Post] {
-        return blogPosts.filter { $0.isDraft }
+        return blog.posts.filter { $0.isDraft }.sorted { $0.createdAt > $1.createdAt }
     }
 
     // Computed property for recent published posts
     private var recentPublishedPosts: [Post] {
-        return blogPosts.filter { !$0.isDraft }.prefix(20).map { $0 }
+        return blog.posts.filter { !$0.isDraft }.sorted { $0.createdAt > $1.createdAt }.prefix(20).map { $0 }
     }
 
     var body: some View {
@@ -91,7 +78,7 @@ struct BlogDashboardView: View {
                     }.padding(.horizontal)
                     
                     HStack(spacing: 12) {
-                        
+
                         NavigationLink {
                             PostsView(blog: blog)
                         } label: {
@@ -107,7 +94,7 @@ struct BlogDashboardView: View {
                         }.buttonStyle(.bordered).foregroundStyle(
                             .primary
                         )
-                        
+
                         Button(action: { showingPostForm = true }) {
                             VStack(spacing: 3) {
                                 Image(systemName: "square.and.pencil")

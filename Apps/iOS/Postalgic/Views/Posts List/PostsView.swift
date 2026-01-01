@@ -24,104 +24,84 @@ struct PostsView: View {
         case titleAZ = "Title (A-Z)"
         case titleZA = "Title (Z-A)"
     }
-    
+
     @State private var sortOption = SortOption.dateNewest
     @State private var showingSortMenu = false
-    
-    // SwiftData query for posts - we'll handle sorting in the view
-    @Query private var allPosts: [Post]
-    
     @State private var showingPostForm = false
     
-    // Initialize the query based on the blog
-    init(blog: Blog) {
-        self.blog = blog
-        
-        // Configure the query to fetch all posts for this blog (without sorting)
-        let id = blog.persistentModelID
-        let blogPredicate = #Predicate<Post> { post in
-            post.blog?.persistentModelID == id
-        }
-        
-        // Use a simple query without specific sorting
-        self._allPosts = Query(filter: blogPredicate)
-    }
-    
     var body: some View {
-        NavigationStack {
-            VStack {
-                // Search bar
-                TextField("Search posts", text: $searchText)
-                    .padding(10)
-                    .background(.background.secondary)
-                    .foregroundStyle(.primary)
-                    .cornerRadius(10)
-                    .padding(.horizontal)
-                    .padding(.top, 10)
-                
-                // Toolbar with sort options
-                HStack {
-                    Menu {
-                        ForEach(SortOption.allCases, id: \.self) { option in
-                            Button(action: {
-                                sortOption = option
-                            }) {
-                                HStack {
-                                    Text(option.rawValue)
-                                    if sortOption == option {
-                                        Image(systemName: "checkmark")
-                                    }
+        VStack {
+            // Search bar
+            TextField("Search posts", text: $searchText)
+                .padding(10)
+                .background(.background.secondary)
+                .foregroundStyle(.primary)
+                .cornerRadius(10)
+                .padding(.horizontal)
+                .padding(.top, 10)
+
+            // Toolbar with sort options
+            HStack {
+                Menu {
+                    ForEach(SortOption.allCases, id: \.self) { option in
+                        Button(action: {
+                            sortOption = option
+                        }) {
+                            HStack {
+                                Text(option.rawValue)
+                                if sortOption == option {
+                                    Image(systemName: "checkmark")
                                 }
                             }
                         }
-                    } label: {
-                        HStack {
-                            Image(systemName: "arrow.up.arrow.down")
-                            Text("Sort: \(sortOption.rawValue)")
-                            Image(systemName: "chevron.down")
-                                .font(.caption)
+                    }
+                } label: {
+                    HStack {
+                        Image(systemName: "arrow.up.arrow.down")
+                        Text("Sort: \(sortOption.rawValue)")
+                        Image(systemName: "chevron.down")
+                            .font(.caption)
+                    }
+                    .padding(8)
+                    .background(.background.secondary)
+                    .foregroundStyle(.primary)
+                    .cornerRadius(8)
+                }
+
+                Spacer()
+
+                Text("\(filteredPosts.count) posts")
+                    .foregroundColor(.secondary)
+                    .font(.caption)
+            }
+            .padding(.horizontal)
+
+            // Posts list
+            ScrollView {
+                if filteredPosts.isEmpty {
+                    emptyStateView
+                } else {
+                    LazyVStack(spacing: 20) {
+                        ForEach(filteredPosts) { post in
+                            PostPreviewView(post: post)
                         }
-                        .padding(8)
-                        .background(.background.secondary)
-                        .foregroundStyle(.primary)
-                        .cornerRadius(8)
                     }
-                    
-                    Spacer()
-                    
-                    Text("\(filteredPosts.count) posts")
-                        .foregroundColor(.secondary)
-                        .font(.caption)
-                }
-                .padding(.horizontal)
-                
-                // Posts list
-                ScrollView {
-                    if filteredPosts.isEmpty {
-                        emptyStateView
-                    } else {
-                        LazyVStack(spacing: 20) {
-                            ForEach(filteredPosts) { post in
-                                PostPreviewView(post: post)
-                            }
-                        }
-                        .padding(.vertical)
-                    }
+                    .padding(.vertical)
                 }
             }
-            .navigationTitle("All Posts")
-            .toolbar {
-                ToolbarItemGroup(placement: .primaryAction) {
-                    Button {
-                        showingPostForm = true
-                    } label: {
-                        Label("New Post", systemImage: "plus")
-                    }
+        }
+        .navigationTitle("All Posts")
+        .toolbar {
+            ToolbarItemGroup(placement: .primaryAction) {
+                Button {
+                    showingPostForm = true
+                } label: {
+                    Label("New Post", systemImage: "plus")
                 }
             }
-            .sheet(isPresented: $showingPostForm) {
-                PostView(blog: blog).interactiveDismissDisabled()
-            }
+        }
+        .sheet(isPresented: $showingPostForm) {
+            PostView(blog: blog).interactiveDismissDisabled()
         }
     }
     
@@ -154,12 +134,12 @@ struct PostsView: View {
     private var filteredPosts: [Post] {
         // First filter the posts based on search text
         let filtered: [Post]
-        
+
         if searchText.isEmpty {
-            filtered = allPosts
+            filtered = blog.posts
         } else {
             // Search in title, content, category name, and tag names
-            filtered = allPosts.filter { post in
+            filtered = blog.posts.filter { post in
                 // Check title
                 if let title = post.title,
                    title.localizedCaseInsensitiveContains(searchText) {
