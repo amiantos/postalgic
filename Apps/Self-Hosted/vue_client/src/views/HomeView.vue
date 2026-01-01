@@ -51,19 +51,21 @@ async function deleteBlog() {
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
-              <div class="absolute right-0 mt-2 w-48 surface py-1 hidden group-hover:block z-10">
-                <router-link
-                  to="/blogs/import"
-                  class="block px-4 py-2.5 text-gray-700 dark:text-gray-300 hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
-                >
-                  From ZIP File
-                </router-link>
-                <router-link
-                  to="/blogs/import-from-url"
-                  class="block px-4 py-2.5 text-gray-700 dark:text-gray-300 hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
-                >
-                  From URL
-                </router-link>
+              <div class="absolute right-0 w-48 pt-2 hidden group-hover:block z-10">
+                <div class="surface py-1">
+                  <router-link
+                    to="/blogs/import"
+                    class="block px-4 py-2.5 text-gray-700 dark:text-gray-300 hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
+                  >
+                    From ZIP File
+                  </router-link>
+                  <router-link
+                    to="/blogs/import-from-url"
+                    class="block px-4 py-2.5 text-gray-700 dark:text-gray-300 hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
+                  >
+                    From URL
+                  </router-link>
+                </div>
               </div>
             </div>
             <router-link
