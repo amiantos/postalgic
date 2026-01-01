@@ -183,7 +183,7 @@ function formatLocalDateTime(dateString) {
       <template #controls>
         <div class="flex flex-col sm:flex-row sm:items-center gap-3 pb-4">
           <!-- Search -->
-          <div class="glass flex-1 flex items-center h-10">
+          <div class="glass flex-1 flex items-center h-10 min-h-[2.5rem]">
             <svg class="ml-3 w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
