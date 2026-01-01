@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { useBlogStore } from '@/stores/blog';
 import PageToolbar from '@/components/PageToolbar.vue';
+import SettingsTabs from '@/components/SettingsTabs.vue';
 
 const route = useRoute();
 const blogStore = useBlogStore();
@@ -119,6 +120,9 @@ async function deleteSidebarObject(obj) {
           </svg>
           Link List
         </button>
+      </template>
+      <template #controls>
+        <SettingsTabs />
       </template>
     </PageToolbar>
 

@@ -3,6 +3,7 @@ import { ref, computed } from 'vue';
 import { useRoute } from 'vue-router';
 import { useBlogStore } from '@/stores/blog';
 import PageToolbar from '@/components/PageToolbar.vue';
+import SettingsTabs from '@/components/SettingsTabs.vue';
 
 const route = useRoute();
 const blogStore = useBlogStore();
@@ -75,6 +76,9 @@ async function deleteCategory(category) {
           </svg>
           New Category
         </button>
+      </template>
+      <template #controls>
+        <SettingsTabs />
       </template>
     </PageToolbar>
 

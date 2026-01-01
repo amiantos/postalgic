@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { useBlogStore } from '@/stores/blog';
 import { syncApi } from '@/api';
 import PageToolbar from '@/components/PageToolbar.vue';
+import SettingsTabs from '@/components/SettingsTabs.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -339,7 +340,11 @@ async function deleteBlog() {
 
 <template>
   <div>
-    <PageToolbar title="Settings" />
+    <PageToolbar title="Settings">
+      <template #controls>
+        <SettingsTabs />
+      </template>
+    </PageToolbar>
 
     <div class="px-6 pb-6">
     <!-- Messages -->
