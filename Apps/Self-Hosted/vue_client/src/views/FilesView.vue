@@ -135,7 +135,7 @@ function formatFileSize(bytes) {
           {{ uploading ? 'Uploading...' : 'Upload Files' }}
         </button>
       </template>
-      <template #controls>
+      <template #tabs>
         <SettingsTabs />
       </template>
     </PageToolbar>

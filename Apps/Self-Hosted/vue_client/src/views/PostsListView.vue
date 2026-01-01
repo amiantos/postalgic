@@ -172,6 +172,12 @@ function formatLocalDateTime(dateString) {
           </svg>
           New Post
         </router-link>
+        <router-link
+          :to="{ name: 'publish', params: { blogId } }"
+          class="glass px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300"
+        >
+          Publish
+        </router-link>
       </template>
 
       <template #controls>

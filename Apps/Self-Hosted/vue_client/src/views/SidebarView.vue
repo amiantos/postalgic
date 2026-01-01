@@ -121,7 +121,7 @@ async function deleteSidebarObject(obj) {
           Link List
         </button>
       </template>
-      <template #controls>
+      <template #tabs>
         <SettingsTabs />
       </template>
     </PageToolbar>

@@ -77,7 +77,7 @@ async function deleteCategory(category) {
           New Category
         </button>
       </template>
-      <template #controls>
+      <template #tabs>
         <SettingsTabs />
       </template>
     </PageToolbar>

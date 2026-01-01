@@ -153,7 +153,7 @@ const templateNames = computed(() => {
           {{ duplicating ? 'Creating...' : 'New Theme' }}
         </button>
       </template>
-      <template #controls>
+      <template #tabs>
         <SettingsTabs />
       </template>
     </PageToolbar>

@@ -77,7 +77,7 @@ async function deleteTag(tag) {
           New Tag
         </button>
       </template>
-      <template #controls>
+      <template #tabs>
         <SettingsTabs />
       </template>
     </PageToolbar>

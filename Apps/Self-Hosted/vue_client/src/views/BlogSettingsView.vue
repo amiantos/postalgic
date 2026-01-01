@@ -341,7 +341,7 @@ async function deleteBlog() {
 <template>
   <div>
     <PageToolbar title="Settings">
-      <template #controls>
+      <template #tabs>
         <SettingsTabs />
       </template>
     </PageToolbar>
