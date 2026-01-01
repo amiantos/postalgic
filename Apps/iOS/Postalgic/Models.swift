@@ -44,6 +44,7 @@ final class Blog {
     var mediumShade: String?
     var darkShade: String?
     var themeIdentifier: String?
+    var timezone: String = "UTC"
 
     // Publisher Type
     var publisherType: String?
@@ -322,7 +323,7 @@ enum EmbedPosition: String, Codable {
 
 enum SpecialFileType: String, Codable, CaseIterable {
     case favicon = "favicon"
-    case socialShareImage = "social-share.png"
+    case socialShareImage = "social-share"
     
     var displayName: String {
         switch self {

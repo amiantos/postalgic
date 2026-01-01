@@ -146,6 +146,7 @@ class SyncImporter {
         blog.mediumShade = syncBlog.colors.mediumShade
         blog.darkShade = syncBlog.colors.darkShade
         blog.themeIdentifier = syncBlog.themeIdentifier
+        blog.timezone = syncBlog.timezone
 
         // Enable sync and store sync info
         blog.syncEnabled = true
@@ -297,6 +298,13 @@ class SyncImporter {
             }
         }
 
+        // Store sync manifest hashes for future sync comparisons
+        var localHashes: [String: String] = [:]
+        for (path, fileInfo) in manifest.files {
+            localHashes[path] = fileInfo.hash
+        }
+        blog.localSyncHashes = localHashes
+
         // Save all changes
         try modelContext.save()
 
@@ -356,8 +364,16 @@ class SyncImporter {
         return formatter
     }()
 
+    private static let isoFormatterNoFractional: ISO8601DateFormatter = {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime]
+        return formatter
+    }()
+
     private static func parseDate(_ dateString: String) -> Date? {
+        // Try with fractional seconds first, then without
         return isoFormatter.date(from: dateString)
+            ?? isoFormatterNoFractional.date(from: dateString)
     }
 
     private static func createPost(

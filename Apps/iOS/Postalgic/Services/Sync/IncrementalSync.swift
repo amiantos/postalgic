@@ -128,6 +128,7 @@ class IncrementalSync {
             blog.mediumShade = syncBlog.colors.mediumShade
             blog.darkShade = syncBlog.colors.darkShade
             blog.themeIdentifier = syncBlog.themeIdentifier
+            blog.timezone = syncBlog.timezone
 
             appliedChanges += 1
         }

@@ -22,7 +22,58 @@ struct BlogFormView: View {
     @State private var authorEmail: String
     @State private var authorUrl: String
     @State private var tagline: String
-    
+    @State private var timezone: String
+
+    // Available timezones (matching Self-Hosted options)
+    private static let timezones: [(group: String, zones: [(id: String, label: String)])] = [
+        ("", [("UTC", "UTC")]),
+        ("Americas", [
+            ("America/New_York", "Eastern Time (US & Canada)"),
+            ("America/Chicago", "Central Time (US & Canada)"),
+            ("America/Denver", "Mountain Time (US & Canada)"),
+            ("America/Los_Angeles", "Pacific Time (US & Canada)"),
+            ("America/Anchorage", "Alaska"),
+            ("Pacific/Honolulu", "Hawaii"),
+            ("America/Phoenix", "Arizona"),
+            ("America/Toronto", "Toronto"),
+            ("America/Vancouver", "Vancouver"),
+            ("America/Mexico_City", "Mexico City"),
+            ("America/Sao_Paulo", "São Paulo"),
+            ("America/Buenos_Aires", "Buenos Aires")
+        ]),
+        ("Europe", [
+            ("Europe/London", "London"),
+            ("Europe/Paris", "Paris"),
+            ("Europe/Berlin", "Berlin"),
+            ("Europe/Amsterdam", "Amsterdam"),
+            ("Europe/Madrid", "Madrid"),
+            ("Europe/Rome", "Rome"),
+            ("Europe/Stockholm", "Stockholm"),
+            ("Europe/Moscow", "Moscow")
+        ]),
+        ("Asia", [
+            ("Asia/Tokyo", "Tokyo"),
+            ("Asia/Shanghai", "Shanghai"),
+            ("Asia/Hong_Kong", "Hong Kong"),
+            ("Asia/Singapore", "Singapore"),
+            ("Asia/Seoul", "Seoul"),
+            ("Asia/Kolkata", "Mumbai/Kolkata"),
+            ("Asia/Dubai", "Dubai"),
+            ("Asia/Bangkok", "Bangkok")
+        ]),
+        ("Pacific", [
+            ("Australia/Sydney", "Sydney"),
+            ("Australia/Melbourne", "Melbourne"),
+            ("Australia/Perth", "Perth"),
+            ("Pacific/Auckland", "Auckland")
+        ]),
+        ("Africa", [
+            ("Africa/Johannesburg", "Johannesburg"),
+            ("Africa/Cairo", "Cairo"),
+            ("Africa/Lagos", "Lagos")
+        ])
+    ]
+
     // Initialize for creating a new blog
     init() {
         self.isEditing = false
@@ -32,8 +83,9 @@ struct BlogFormView: View {
         _authorEmail = State(initialValue: "")
         _authorUrl = State(initialValue: "")
         _tagline = State(initialValue: "")
+        _timezone = State(initialValue: "UTC")
     }
-    
+
     // Initialize for editing an existing blog
     init(blog: Blog) {
         self.isEditing = true
@@ -43,6 +95,7 @@ struct BlogFormView: View {
         _authorEmail = State(initialValue: blog.authorEmail ?? "")
         _authorUrl = State(initialValue: blog.authorUrl ?? "")
         _tagline = State(initialValue: blog.tagline ?? "")
+        _timezone = State(initialValue: blog.timezone)
     }
     
     var body: some View {
@@ -69,6 +122,26 @@ struct BlogFormView: View {
                     Text("Author Information")
                 } footer: {
                     Text("If provided, author information will be added to posts and included in the RSS feed.")
+                }
+
+                Section {
+                    Picker("Timezone", selection: $timezone) {
+                        ForEach(Self.timezones, id: \.group) { group in
+                            if group.group.isEmpty {
+                                ForEach(group.zones, id: \.id) { zone in
+                                    Text(zone.label).tag(zone.id)
+                                }
+                            } else {
+                                Section(header: Text(group.group)) {
+                                    ForEach(group.zones, id: \.id) { zone in
+                                        Text(zone.label).tag(zone.id)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } footer: {
+                    Text("Dates on your published blog will display in this timezone.")
                 }
             }
             .navigationTitle(isEditing ? "Metadata" : "New Blog")
@@ -113,6 +186,7 @@ struct BlogFormView: View {
             blogToUpdate.authorEmail = authorEmail.isEmpty ? nil : authorEmail
             blogToUpdate.authorUrl = authorUrl.isEmpty ? nil : authorUrl
             blogToUpdate.tagline = tagline.isEmpty ? nil : tagline
+            blogToUpdate.timezone = timezone
         }
     }
 }

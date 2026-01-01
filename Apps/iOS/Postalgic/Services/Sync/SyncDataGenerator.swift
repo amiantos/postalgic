@@ -286,7 +286,7 @@ class SyncDataGenerator {
             authorName: blog.authorName,
             authorUrl: blog.authorUrl,
             authorEmail: blog.authorEmail,
-            timezone: "UTC", // TODO: Add timezone support
+            timezone: blog.timezone,
             colors: SyncBlog.ColorSettings(
                 accent: blog.accentColor,
                 background: blog.backgroundColor,
