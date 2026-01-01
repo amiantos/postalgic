@@ -18,18 +18,27 @@ struct BlogDashboardView: View {
     @State private var showingSettingsView = false
     @State private var showingPostsView = false
 
-    // Query for all blog posts, sorted by creation date
-    @Query(sort: \Post.createdAt, order: .reverse) private var allPosts: [Post]
+    // Query for blog posts with predicate - properly scoped to this blog
+    @Query private var blogPosts: [Post]
+
+    // Initialize with predicate to properly scope query to this blog
+    init(blog: Blog) {
+        self.blog = blog
+        let id = blog.persistentModelID
+        let predicate = #Predicate<Post> { post in
+            post.blog?.persistentModelID == id
+        }
+        self._blogPosts = Query(filter: predicate, sort: \Post.createdAt, order: .reverse)
+    }
 
     // Computed property for draft posts
     private var draftPosts: [Post] {
-        return allPosts.filter { $0.isDraft && $0.blog == blog }
+        return blogPosts.filter { $0.isDraft }
     }
 
     // Computed property for recent published posts
     private var recentPublishedPosts: [Post] {
-        return allPosts.filter { !$0.isDraft && $0.blog == blog }.prefix(20).map
-        { $0 }
+        return blogPosts.filter { !$0.isDraft }.prefix(20).map { $0 }
     }
 
     var body: some View {

@@ -150,27 +150,21 @@ struct ImportFromURLView: View {
             isComplete: false
         )
 
-        Task {
+        Task { @MainActor in
             do {
-                let blog = try await SyncImporter.importBlog(
+                let _ = try await SyncImporter.importBlog(
                     from: urlString,
                     modelContext: modelContext
                 ) { progress in
-                    Task { @MainActor in
-                        importProgress = progress
-                    }
+                    importProgress = progress
                 }
 
-                await MainActor.run {
-                    isImporting = false
-                    dismiss()
-                }
+                isImporting = false
+                dismiss()
             } catch {
-                await MainActor.run {
-                    self.error = error.localizedDescription
-                    isImporting = false
-                    importProgress = nil
-                }
+                self.error = error.localizedDescription
+                isImporting = false
+                importProgress = nil
             }
         }
     }

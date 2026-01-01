@@ -111,6 +111,7 @@ class SyncImporter {
     ///   - modelContext: The SwiftData model context
     ///   - progressUpdate: Closure for progress updates
     /// - Returns: The imported blog
+    @MainActor
     static func importBlog(
         from urlString: String,
         modelContext: ModelContext,
@@ -370,10 +371,54 @@ class SyncImporter {
         return formatter
     }()
 
+    // Fallback for dates without timezone (assumes UTC)
+    private static let dateFormatterNoTimezone: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
+        formatter.timeZone = TimeZone(identifier: "UTC")
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        return formatter
+    }()
+
+    // Fallback for dates without timezone but with fractional seconds
+    private static let dateFormatterNoTimezoneFractional: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS"
+        formatter.timeZone = TimeZone(identifier: "UTC")
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        return formatter
+    }()
+
+    // Fallback for date-only strings (midnight UTC)
+    private static let dateFormatterDateOnly: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        formatter.timeZone = TimeZone(identifier: "UTC")
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        return formatter
+    }()
+
     private static func parseDate(_ dateString: String) -> Date? {
-        // Try with fractional seconds first, then without
-        return isoFormatter.date(from: dateString)
-            ?? isoFormatterNoFractional.date(from: dateString)
+        // Try ISO8601 with fractional seconds first (most common)
+        if let date = isoFormatter.date(from: dateString) {
+            return date
+        }
+        // Try ISO8601 without fractional seconds
+        if let date = isoFormatterNoFractional.date(from: dateString) {
+            return date
+        }
+        // Try without timezone indicator (assumes UTC)
+        if let date = dateFormatterNoTimezoneFractional.date(from: dateString) {
+            return date
+        }
+        if let date = dateFormatterNoTimezone.date(from: dateString) {
+            return date
+        }
+        // Try date-only (midnight UTC)
+        if let date = dateFormatterDateOnly.date(from: dateString) {
+            return date
+        }
+        return nil
     }
 
     private static func createPost(

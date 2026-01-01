@@ -186,16 +186,16 @@ struct PostPreviewView: View {
 
         if Calendar.current.isDateInToday(date) {
             formatter.dateFormat = "h:mm a"
-            return "Today, " + formatter.string(from: date)
+            return "Today at " + formatter.string(from: date)
         }
 
         if Calendar.current.isDateInYesterday(date) {
             formatter.dateFormat = "h:mm a"
-            return "Yesterday, " + formatter.string(from: date)
+            return "Yesterday at " + formatter.string(from: date)
         }
 
         // For other dates
-        formatter.dateFormat = "MMM d, yyyy"
+        formatter.dateFormat = "MMM d, yyyy 'at' h:mm a"
         return formatter.string(from: date)
     }
 }

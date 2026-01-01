@@ -552,8 +552,53 @@ class IncrementalSync {
         return formatter
     }()
 
+    private static let isoFormatterNoFractional: ISO8601DateFormatter = {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime]
+        return formatter
+    }()
+
+    private static let dateFormatterNoTimezone: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
+        formatter.timeZone = TimeZone(identifier: "UTC")
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        return formatter
+    }()
+
+    private static let dateFormatterNoTimezoneFractional: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS"
+        formatter.timeZone = TimeZone(identifier: "UTC")
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        return formatter
+    }()
+
+    private static let dateFormatterDateOnly: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        formatter.timeZone = TimeZone(identifier: "UTC")
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        return formatter
+    }()
+
     private static func parseDate(_ dateString: String) -> Date? {
-        return isoFormatter.date(from: dateString)
+        if let date = isoFormatter.date(from: dateString) {
+            return date
+        }
+        if let date = isoFormatterNoFractional.date(from: dateString) {
+            return date
+        }
+        if let date = dateFormatterNoTimezoneFractional.date(from: dateString) {
+            return date
+        }
+        if let date = dateFormatterNoTimezone.date(from: dateString) {
+            return date
+        }
+        if let date = dateFormatterDateOnly.date(from: dateString) {
+            return date
+        }
+        return nil
     }
 }
 
