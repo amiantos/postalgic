@@ -62,7 +62,6 @@
 		44DE438D2DD5A32200F31204 /* KeychainService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44DE438C2DD5A32200F31204 /* KeychainService.swift */; };
 		44E4AA0E2EE944D400364738 /* ExportBlogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44E4AA0D2EE944D400364738 /* ExportBlogView.swift */; };
 		44E4AA102EE944F100364738 /* BlogExportService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44E4AA0F2EE944F100364738 /* BlogExportService.swift */; };
-		44E4AA212EEF86CE00364738 /* SyncEncryption.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44E4AA1E2EEF86CE00364738 /* SyncEncryption.swift */; };
 		44E4AA222EEF86CE00364738 /* SyncDataGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44E4AA1D2EEF86CE00364738 /* SyncDataGenerator.swift */; };
 		44E4AA232EEF86CE00364738 /* SyncImporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44E4AA1F2EEF86CE00364738 /* SyncImporter.swift */; };
 		44E4AA272EEF86E500364738 /* ImportFromURLView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44E4AA242EEF86E500364738 /* ImportFromURLView.swift */; };
@@ -143,7 +142,6 @@
 		44E4AA0D2EE944D400364738 /* ExportBlogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportBlogView.swift; sourceTree = "<group>"; };
 		44E4AA0F2EE944F100364738 /* BlogExportService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlogExportService.swift; sourceTree = "<group>"; };
 		44E4AA1D2EEF86CE00364738 /* SyncDataGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncDataGenerator.swift; sourceTree = "<group>"; };
-		44E4AA1E2EEF86CE00364738 /* SyncEncryption.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncEncryption.swift; sourceTree = "<group>"; };
 		44E4AA1F2EEF86CE00364738 /* SyncImporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncImporter.swift; sourceTree = "<group>"; };
 		44E4AA242EEF86E500364738 /* ImportFromURLView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportFromURLView.swift; sourceTree = "<group>"; };
 		44E4AA252EEF86E500364738 /* SyncSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncSettingsView.swift; sourceTree = "<group>"; };
@@ -362,7 +360,6 @@
 				44E4AA2B2EEFEF6800364738 /* IncrementalSync.swift */,
 				44E4AA2C2EEFEF6800364738 /* SyncChecker.swift */,
 				44E4AA1D2EEF86CE00364738 /* SyncDataGenerator.swift */,
-				44E4AA1E2EEF86CE00364738 /* SyncEncryption.swift */,
 				44E4AA1F2EEF86CE00364738 /* SyncImporter.swift */,
 			);
 			path = Sync;
@@ -562,7 +559,6 @@
 				44C364252DB768DB0057567C /* BlogsView.swift in Sources */,
 				44DE436B2DD589B600F31204 /* BlogGitConfigView.swift in Sources */,
 				44362EDF2DBD82B700EA704F /* TemplateEngine.swift in Sources */,
-				44E4AA212EEF86CE00364738 /* SyncEncryption.swift in Sources */,
 				44E4AA222EEF86CE00364738 /* SyncDataGenerator.swift in Sources */,
 				44E4AA232EEF86CE00364738 /* SyncImporter.swift in Sources */,
 				443F0B512DBAD7AC00034EF1 /* PreviewData.swift in Sources */,
