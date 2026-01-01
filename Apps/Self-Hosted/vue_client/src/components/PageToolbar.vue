@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, useSlots } from 'vue';
 import { useRoute } from 'vue-router';
 import { useBlogStore } from '@/stores/blog';
 
@@ -10,14 +10,16 @@ defineProps({
 
 const route = useRoute();
 const blogStore = useBlogStore();
+const slots = useSlots();
 
 const blogId = computed(() => route.params.blogId);
+const hasControls = computed(() => !!slots.controls);
 </script>
 
 <template>
   <header class="sticky top-0 z-40 bg-white/90 dark:bg-gray-900/90 backdrop-blur-lg border-b border-black/5 dark:border-white/10 mb-6">
-    <div class="max-w-3xl mx-auto px-4 sm:px-6 pb-4">
-      <!-- Top row: Back link + Blog name centered + Settings link -->
+    <!-- Top row: Back link + Blog name centered + Settings link -->
+    <div class="max-w-3xl mx-auto px-4 sm:px-6">
       <div class="flex items-center justify-between py-2">
         <router-link to="/" class="flex items-center gap-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 text-sm">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -40,12 +42,19 @@ const blogId = computed(() => route.params.blogId);
           Settings
         </router-link>
       </div>
+    </div>
 
-      <!-- Tabs (settings navigation, appears right under top nav) -->
-      <slot name="tabs"></slot>
+    <!-- Tabs (settings navigation, full-width border) -->
+    <div v-if="$slots.tabs" class="border-b border-gray-200 dark:border-gray-700 mt-3">
+      <div class="max-w-3xl mx-auto px-4 sm:px-6">
+        <slot name="tabs"></slot>
+      </div>
+    </div>
 
-      <!-- Bottom row: Title + Actions -->
-      <div class="flex items-center justify-between pt-4 pb-4">
+    <!-- Bottom section -->
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 pb-4">
+      <!-- Title + Actions -->
+      <div :class="['flex items-center justify-between pt-4', hasControls ? 'pb-4' : '']">
         <div class="min-h-[3rem] flex flex-col justify-center">
           <h1 class="text-xl font-semibold text-gray-900 dark:text-gray-100">{{ title }}</h1>
           <p v-if="subtitle" class="text-gray-500 dark:text-gray-400 text-sm">{{ subtitle }}</p>
