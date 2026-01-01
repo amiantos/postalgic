@@ -7,7 +7,7 @@ const blogId = computed(() => route.params.blogId);
 const currentRoute = computed(() => route.name);
 
 const tabs = [
-  { name: 'Settings', route: 'blog-settings' },
+  { name: 'Basic', route: 'blog-settings' },
   { name: 'Categories', route: 'categories' },
   { name: 'Tags', route: 'tags' },
   { name: 'Sidebar', route: 'sidebar' },
