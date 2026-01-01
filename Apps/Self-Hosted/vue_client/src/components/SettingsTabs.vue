@@ -18,7 +18,7 @@ const tabs = [
 </script>
 
 <template>
-  <div class="flex items-center">
+  <div class="flex items-center -mx-2 sm:-mx-4">
     <router-link
       v-for="tab in tabs"
       :key="tab.route"

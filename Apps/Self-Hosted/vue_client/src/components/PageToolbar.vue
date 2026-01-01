@@ -48,15 +48,12 @@ const hasControls = computed(() => !!slots.controls);
       </div>
     </div>
 
-    <!-- Tabs (settings navigation, full-width border) -->
-    <div v-if="$slots.tabs" class="border-b border-gray-200 dark:border-gray-700 mt-3">
-      <div class="max-w-3xl mx-auto px-4 sm:px-6">
-        <slot name="tabs"></slot>
-      </div>
-    </div>
-
     <!-- Bottom section -->
     <div class="max-w-3xl mx-auto px-4 sm:px-6 pb-4">
+      <!-- Tabs (settings navigation) -->
+      <div v-if="$slots.tabs" class="pt-2">
+        <slot name="tabs"></slot>
+      </div>
       <!-- Title + Actions -->
       <div :class="['flex items-center justify-between pt-4', hasControls ? 'pb-4' : '']">
         <div class="min-h-[3rem] flex flex-col justify-center">
