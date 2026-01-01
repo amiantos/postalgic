@@ -172,12 +172,6 @@ function formatLocalDateTime(dateString) {
           </svg>
           New Post
         </router-link>
-        <router-link
-          :to="{ name: 'publish', params: { blogId } }"
-          class="glass px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300"
-        >
-          Publish
-        </router-link>
       </template>
 
       <template #controls>
@@ -286,6 +280,18 @@ function formatLocalDateTime(dateString) {
           >
             Draft
           </span>
+          <!-- Category & Tags -->
+          <span v-if="post.category" class="text-primary-600 dark:text-primary-400">
+            {{ post.category.name }}
+          </span>
+          <template v-if="post.tags?.length > 0">
+            <span v-for="tag in post.tags?.slice(0, 3)" :key="tag.id" class="text-gray-400 dark:text-gray-500">
+              #{{ tag.name }}
+            </span>
+            <span v-if="post.tags?.length > 3" class="text-gray-400 dark:text-gray-500">
+              +{{ post.tags.length - 3 }}
+            </span>
+          </template>
           <!-- Delete button - appears on hover -->
           <button
             @click.stop="confirmDelete(post)"
@@ -406,20 +412,6 @@ function formatLocalDateTime(dateString) {
               +{{ post.embed.images.length - 1 }} more
             </p>
           </div>
-        </div>
-
-        <!-- Category & Tags -->
-        <div v-if="post.category || post.tags?.length > 0" class="flex items-center gap-2 mt-4 text-sm text-gray-400 dark:text-gray-500">
-          <span v-if="post.category" class="text-primary-600 dark:text-primary-400">
-            {{ post.category.name }}
-          </span>
-          <span v-if="post.category && post.tags?.length > 0">·</span>
-          <span v-for="tag in post.tags?.slice(0, 3)" :key="tag.id">
-            #{{ tag.name }}
-          </span>
-          <span v-if="post.tags?.length > 3">
-            +{{ post.tags.length - 3 }}
-          </span>
         </div>
       </article>
     </div>
