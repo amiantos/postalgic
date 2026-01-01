@@ -3,6 +3,7 @@ import { ref, computed, watch, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useBlogStore } from '@/stores/blog';
 import { syncApi } from '@/api';
+import PageToolbar from '@/components/PageToolbar.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -337,9 +338,10 @@ async function deleteBlog() {
 </script>
 
 <template>
-  <div class="p-6">
-    <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-6">Blog Settings</h2>
+  <div>
+    <PageToolbar title="Settings" />
 
+    <div class="px-6 pb-6">
     <!-- Messages -->
     <div v-if="error" class="mb-6 p-4 bg-red-500/10 rounded-xl text-red-600 dark:text-red-400">
       {{ error }}
@@ -1192,5 +1194,6 @@ async function deleteBlog() {
         </button>
       </div>
     </form>
+    </div>
   </div>
 </template>

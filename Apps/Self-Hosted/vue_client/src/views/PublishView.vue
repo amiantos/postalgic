@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { useBlogStore } from '@/stores/blog';
 import { publishApi } from '@/api';
+import PageToolbar from '@/components/PageToolbar.vue';
 
 const route = useRoute();
 const blogStore = useBlogStore();
@@ -141,9 +142,10 @@ function getPublisherLabel(type) {
 </script>
 
 <template>
-  <div class="p-6">
-    <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-6">Publish</h2>
+  <div>
+    <PageToolbar title="Publish" />
 
+    <div class="px-6 pb-6">
     <!-- Error -->
     <div v-if="error" class="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-800 dark:text-red-400">
       {{ error }}
@@ -381,6 +383,7 @@ function getPublisherLabel(type) {
           <li>Your site is deployed via GitHub Pages or similar</li>
         </ol>
       </div>
+    </div>
     </div>
   </div>
 </template>

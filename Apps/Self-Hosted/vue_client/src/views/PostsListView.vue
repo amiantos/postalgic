@@ -3,6 +3,7 @@ import { ref, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useBlogStore } from '@/stores/blog';
 import { marked } from 'marked';
+import PageToolbar from '@/components/PageToolbar.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -156,74 +157,86 @@ function formatLocalDateTime(dateString) {
 </script>
 
 <template>
-  <div class="py-8 px-6">
-    <!-- Header - Clean and minimal -->
-    <header class="mb-5">
-      <h1 class="text-3xl font-semibold tracking-tight text-gray-900 dark:text-white mb-1">Posts</h1>
-      <p class="text-gray-500 dark:text-gray-500 text-sm">
-        {{ postCounts.published }} published<span v-if="postCounts.drafts > 0">, {{ postCounts.drafts }} drafts</span>
-      </p>
-    </header>
-
-    <!-- Controls -->
-    <div class="flex flex-col sm:flex-row sm:items-center gap-3 mb-16 pb-6 border-b border-gray-200 dark:border-white/10">
-      <!-- Search -->
-      <div class="glass flex-1 flex items-center h-10">
-        <svg class="ml-3 w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-        </svg>
-        <input
-          v-model="searchText"
-          type="text"
-          placeholder="Search..."
-          class="flex-1 h-full px-2 text-sm bg-transparent text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none"
-        />
-        <button
-          v-if="searchText"
-          @click="clearSearch"
-          class="mr-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+  <div>
+    <PageToolbar
+      title="Posts"
+      :subtitle="`${postCounts.published} published${postCounts.drafts > 0 ? `, ${postCounts.drafts} drafts` : ''}`"
+    >
+      <template #actions>
+        <router-link
+          :to="{ name: 'post-create', params: { blogId } }"
+          class="glass px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
           </svg>
-        </button>
-      </div>
+          New Post
+        </router-link>
+      </template>
 
-      <!-- Filter and Sort row -->
-      <div class="flex items-center gap-3">
-        <!-- Filter toggles -->
-        <div class="glass flex items-center h-10 p-1">
-          <button
-            v-for="f in ['all', 'published', 'draft']"
-            :key="f"
-            @click="filter = f"
-            :class="[
-              'px-3 h-full text-sm font-medium rounded-lg transition-all flex items-center',
-              filter === f
-                ? 'bg-white/80 dark:bg-white/20 text-gray-900 dark:text-white shadow-sm'
-                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
-            ]"
-          >
-            {{ f.charAt(0).toUpperCase() + f.slice(1) }}
-          </button>
-        </div>
+      <template #controls>
+        <div class="flex flex-col sm:flex-row sm:items-center gap-3 pb-4">
+          <!-- Search -->
+          <div class="glass flex-1 flex items-center h-10">
+            <svg class="ml-3 w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input
+              v-model="searchText"
+              type="text"
+              placeholder="Search..."
+              class="flex-1 h-full px-2 text-sm bg-transparent text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none"
+            />
+            <button
+              v-if="searchText"
+              @click="clearSearch"
+              class="mr-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
 
-        <!-- Sort dropdown -->
-        <div class="glass relative h-10 flex items-center flex-1">
-          <select
-            v-model="sortOption"
-            class="appearance-none w-full h-full pl-3 pr-8 text-sm font-medium bg-transparent text-gray-700 dark:text-gray-300 focus:outline-none cursor-pointer"
-          >
-            <option v-for="opt in sortOptions" :key="opt.value" :value="opt.value">
-              {{ opt.label }}
-            </option>
-          </select>
-          <svg class="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-          </svg>
+          <!-- Filter and Sort row -->
+          <div class="flex items-center gap-3">
+            <!-- Filter toggles -->
+            <div class="glass flex items-center h-10 p-1">
+              <button
+                v-for="f in ['all', 'published', 'draft']"
+                :key="f"
+                @click="filter = f"
+                :class="[
+                  'px-3 h-full text-sm font-medium rounded-lg transition-all flex items-center',
+                  filter === f
+                    ? 'bg-white/80 dark:bg-white/20 text-gray-900 dark:text-white shadow-sm'
+                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                ]"
+              >
+                {{ f.charAt(0).toUpperCase() + f.slice(1) }}
+              </button>
+            </div>
+
+            <!-- Sort dropdown -->
+            <div class="glass relative h-10 flex items-center flex-1">
+              <select
+                v-model="sortOption"
+                class="appearance-none w-full h-full pl-3 pr-8 text-sm font-medium bg-transparent text-gray-700 dark:text-gray-300 focus:outline-none cursor-pointer"
+              >
+                <option v-for="opt in sortOptions" :key="opt.value" :value="opt.value">
+                  {{ opt.label }}
+                </option>
+              </select>
+              <svg class="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
+      </template>
+    </PageToolbar>
+
+    <div class="px-6 pb-8">
 
     <p v-if="searchText && !effectiveSearchText" class="text-sm text-gray-500 dark:text-gray-400 mb-4">
       Type {{ MIN_SEARCH_LENGTH - searchText.length }} more character{{ MIN_SEARCH_LENGTH - searchText.length > 1 ? 's' : '' }} to search
@@ -439,6 +452,7 @@ function formatLocalDateTime(dateString) {
           </button>
         </div>
       </div>
+    </div>
     </div>
   </div>
 </template>

@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { useBlogStore } from '@/stores/blog';
 import { themeApi } from '@/api';
+import PageToolbar from '@/components/PageToolbar.vue';
 
 const route = useRoute();
 const blogStore = useBlogStore();
@@ -137,21 +138,23 @@ const templateNames = computed(() => {
 </script>
 
 <template>
-  <div class="p-6">
-    <div class="flex items-center justify-between mb-6">
-      <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100">Themes</h2>
-      <button
-        @click="duplicateTheme('default')"
-        :disabled="duplicating"
-        class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 flex items-center gap-2"
-      >
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-        </svg>
-        {{ duplicating ? 'Creating...' : 'New Theme' }}
-      </button>
-    </div>
+  <div>
+    <PageToolbar title="Themes">
+      <template #actions>
+        <button
+          @click="duplicateTheme('default')"
+          :disabled="duplicating"
+          class="glass px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1 disabled:opacity-50"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          {{ duplicating ? 'Creating...' : 'New Theme' }}
+        </button>
+      </template>
+    </PageToolbar>
 
+    <div class="px-6 pb-6">
     <!-- Error -->
     <div v-if="error" class="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-800 dark:text-red-400">
       {{ error }}
@@ -239,6 +242,7 @@ const templateNames = computed(() => {
     <p class="mt-4 text-sm text-gray-500 dark:text-gray-400">
       Custom themes can be used across all your blogs.
     </p>
+    </div>
 
     <!-- Delete Confirmation Modal -->
     <div

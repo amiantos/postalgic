@@ -2,6 +2,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { useBlogStore } from '@/stores/blog';
+import PageToolbar from '@/components/PageToolbar.vue';
 
 const route = useRoute();
 const blogStore = useBlogStore();
@@ -94,29 +95,34 @@ async function deleteSidebarObject(obj) {
 </script>
 
 <template>
-  <div class="p-6">
-    <!-- Header -->
-    <div class="flex items-center justify-between mb-6">
-      <div>
-        <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100">Sidebar</h2>
-        <p class="text-gray-500 dark:text-gray-400 text-sm">{{ blogStore.sidebarObjects.length }} items</p>
-      </div>
-      <div class="flex gap-2">
+  <div>
+    <PageToolbar
+      title="Sidebar"
+      :subtitle="`${blogStore.sidebarObjects.length} items`"
+    >
+      <template #actions>
         <button
           @click="openCreateModal('text')"
-          class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+          class="glass px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1"
         >
-          Add Text Block
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          Text Block
         </button>
         <button
           @click="openCreateModal('linkList')"
-          class="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+          class="glass px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1"
         >
-          Add Link List
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          Link List
         </button>
-      </div>
-    </div>
+      </template>
+    </PageToolbar>
 
+    <div class="px-6 pb-6">
     <!-- Empty State -->
     <div v-if="blogStore.sidebarObjects.length === 0" class="text-center py-12 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
       <div class="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -170,6 +176,7 @@ async function deleteSidebarObject(obj) {
           </div>
         </div>
       </div>
+    </div>
     </div>
 
     <!-- Modal -->

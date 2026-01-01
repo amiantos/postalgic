@@ -2,6 +2,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { useBlogStore } from '@/stores/blog';
+import PageToolbar from '@/components/PageToolbar.vue';
 
 const route = useRoute();
 const blogStore = useBlogStore();
@@ -116,29 +117,33 @@ function formatFileSize(bytes) {
 </script>
 
 <template>
-  <div class="p-6">
-    <!-- Header -->
-    <div class="flex items-center justify-between mb-6">
-      <div>
-        <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100">Files</h2>
-        <p class="text-gray-500 dark:text-gray-400 text-sm">{{ blogStore.staticFiles.length }} files</p>
-      </div>
-      <button
-        @click="triggerFileUpload"
-        :disabled="uploading"
-        class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50"
-      >
-        {{ uploading ? 'Uploading...' : 'Upload Files' }}
-      </button>
-      <input
-        ref="fileInput"
-        type="file"
-        multiple
-        class="hidden"
-        @change="handleFileUpload"
-      />
-    </div>
+  <div>
+    <PageToolbar
+      title="Files"
+      :subtitle="`${blogStore.staticFiles.length} files`"
+    >
+      <template #actions>
+        <button
+          @click="triggerFileUpload"
+          :disabled="uploading"
+          class="glass px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1 disabled:opacity-50"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+          </svg>
+          {{ uploading ? 'Uploading...' : 'Upload Files' }}
+        </button>
+      </template>
+    </PageToolbar>
+    <input
+      ref="fileInput"
+      type="file"
+      multiple
+      class="hidden"
+      @change="handleFileUpload"
+    />
 
+    <div class="px-6 pb-6">
     <!-- Error -->
     <div v-if="error" class="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-800 dark:text-red-400">
       {{ error }}
@@ -276,6 +281,7 @@ function formatFileSize(bytes) {
           </div>
         </div>
       </div>
+    </div>
     </div>
   </div>
 </template>
