@@ -100,7 +100,17 @@ class TemplateEngine {
         let sidebarContent = generateSidebarContent()
         context["sidebarContent"] = sidebarContent
 
-        return layoutTemplate.render(context, library: templateManager.getLibrary())
+        let rendered = layoutTemplate.render(context, library: templateManager.getLibrary())
+        // Strip trailing whitespace from each line to match self-hosted output
+        return rendered.split(separator: "\n", omittingEmptySubsequences: false)
+            .map { line in
+                var s = String(line)
+                while s.hasSuffix(" ") || s.hasSuffix("\t") {
+                    s.removeLast()
+                }
+                return s
+            }
+            .joined(separator: "\n")
     }
     
     /// Generates the HTML content for the sidebar based on the blog's sidebar objects
@@ -383,7 +393,7 @@ class TemplateEngine {
         }
         
         let content = tagTemplate.render(context, library: templateManager.getLibrary())
-        let pageTitle = currentPage == 1 ? "Tag: \(tag.name) - \(blog.name)" : "Tag: \(tag.name) (Page \(currentPage)) - \(blog.name)"
+        let pageTitle = currentPage == 1 ? "Posts tagged \"\(tag.name)\" - \(blog.name)" : "Posts tagged \"\(tag.name)\" (Page \(currentPage)) - \(blog.name)"
         return try renderLayout(content: content, pageTitle: pageTitle)
     }
     
@@ -451,7 +461,7 @@ class TemplateEngine {
         }
         
         let content = categoryTemplate.render(context, library: templateManager.getLibrary())
-        let pageTitle = currentPage == 1 ? "Category: \(category.name) - \(blog.name)" : "Category: \(category.name) (Page \(currentPage)) - \(blog.name)"
+        let pageTitle = currentPage == 1 ? "Posts in \"\(category.name)\" - \(blog.name)" : "Posts in \"\(category.name)\" (Page \(currentPage)) - \(blog.name)"
         return try renderLayout(content: content, pageTitle: pageTitle)
     }
     
