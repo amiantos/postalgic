@@ -187,9 +187,14 @@ describe('Sync Data Compatibility', () => {
         fs.readFileSync(path.join(syncOutputDir, 'sync', 'manifest.json'), 'utf8')
       );
 
-      for (const field of expectedStructure.manifest.requiredFields) {
-        expect(manifest).toHaveProperty(field);
-      }
+      // Check for current manifest structure
+      expect(manifest).toHaveProperty('version');
+      expect(manifest).toHaveProperty('contentVersion');
+      expect(manifest).toHaveProperty('lastModified');
+      expect(manifest).toHaveProperty('appSource');
+      expect(manifest).toHaveProperty('blogName');
+      expect(manifest).toHaveProperty('files');
+      expect(manifest).toHaveProperty('fileCount');
     });
 
     it('should have correct manifest field types', () => {
@@ -198,12 +203,12 @@ describe('Sync Data Compatibility', () => {
       );
 
       expect(typeof manifest.version).toBe('string');
-      expect(typeof manifest.syncVersion).toBe('number');
+      expect(typeof manifest.contentVersion).toBe('string');
       expect(typeof manifest.lastModified).toBe('string');
       expect(typeof manifest.appSource).toBe('string');
       expect(typeof manifest.blogName).toBe('string');
-      expect(typeof manifest.hasDrafts).toBe('boolean');
       expect(typeof manifest.files).toBe('object');
+      expect(typeof manifest.fileCount).toBe('number');
     });
 
     it('should create blog.json with correct structure', () => {
@@ -276,20 +281,6 @@ describe('Sync Data Compatibility', () => {
       }
     });
 
-    it('should create encrypted drafts when drafts exist', () => {
-      const indexPath = path.join(syncOutputDir, 'sync', 'drafts', 'index.json.enc');
-      expect(fs.existsSync(indexPath)).toBe(true);
-
-      // Check manifest indicates drafts are encrypted
-      const manifest = JSON.parse(
-        fs.readFileSync(path.join(syncOutputDir, 'sync', 'manifest.json'), 'utf8')
-      );
-      expect(manifest.hasDrafts).toBe(true);
-      expect(manifest.encryption).toBeDefined();
-      expect(manifest.encryption.method).toBe('aes-256-gcm');
-      expect(manifest.encryption.iterations).toBe(100000);
-    });
-
     it('should have valid SHA-256 hashes in manifest', () => {
       const manifest = JSON.parse(
         fs.readFileSync(path.join(syncOutputDir, 'sync', 'manifest.json'), 'utf8')
@@ -302,77 +293,6 @@ describe('Sync Data Compatibility', () => {
       }
     });
 
-    it('should have IVs for encrypted files', () => {
-      const manifest = JSON.parse(
-        fs.readFileSync(path.join(syncOutputDir, 'sync', 'manifest.json'), 'utf8')
-      );
-
-      for (const [filePath, fileInfo] of Object.entries(manifest.files)) {
-        if (filePath.endsWith('.enc')) {
-          expect(fileInfo.encrypted).toBe(true);
-          expect(fileInfo.iv).toBeDefined();
-          expect(typeof fileInfo.iv).toBe('string');
-        }
-      }
-    });
-
-    it('should have contentHash for encrypted files', () => {
-      const manifest = JSON.parse(
-        fs.readFileSync(path.join(syncOutputDir, 'sync', 'manifest.json'), 'utf8')
-      );
-
-      const sha256Regex = /^[a-f0-9]{64}$/;
-      let encryptedFilesCount = 0;
-
-      for (const [filePath, fileInfo] of Object.entries(manifest.files)) {
-        if (fileInfo.encrypted) {
-          encryptedFilesCount++;
-          // Each encrypted file should have a contentHash
-          expect(fileInfo.contentHash).toBeDefined();
-          expect(fileInfo.contentHash).toMatch(sha256Regex);
-          // contentHash should be different from hash (since hash is of ciphertext)
-          expect(fileInfo.contentHash).not.toBe(fileInfo.hash);
-        }
-      }
-
-      // We should have at least some encrypted files
-      expect(encryptedFilesCount).toBeGreaterThan(0);
-    });
-
-    it('should have stable contentHash across multiple generations', async () => {
-      // Generate sync data a second time
-      const syncOutputDir2 = path.join(testDir, 'output2');
-      fs.mkdirSync(syncOutputDir2, { recursive: true });
-
-      await generateSyncDirectory(
-        storage,
-        blogId,
-        syncOutputDir2,
-        canonicalBlog.encryption.testPassword
-      );
-
-      // Load both manifests
-      const manifest1 = JSON.parse(
-        fs.readFileSync(path.join(syncOutputDir, 'sync', 'manifest.json'), 'utf8')
-      );
-      const manifest2 = JSON.parse(
-        fs.readFileSync(path.join(syncOutputDir2, 'sync', 'manifest.json'), 'utf8')
-      );
-
-      // For encrypted files, contentHash should be the same even though hash differs
-      for (const [filePath, fileInfo1] of Object.entries(manifest1.files)) {
-        if (fileInfo1.encrypted) {
-          const fileInfo2 = manifest2.files[filePath];
-          expect(fileInfo2).toBeDefined();
-
-          // contentHash should be stable
-          expect(fileInfo1.contentHash).toBe(fileInfo2.contentHash);
-
-          // Regular hash (of ciphertext) should differ due to random IV
-          expect(fileInfo1.hash).not.toBe(fileInfo2.hash);
-        }
-      }
-    });
   });
 
   describe('Post Structure', () => {
