@@ -372,7 +372,7 @@ class TemplateManager {
         {{/posts}}
         {{#hasMorePosts}}
         <div class="archives-link">
-            <a href="{{#recentArchiveUrl}}{{recentArchiveUrl}}{{/recentArchiveUrl}}{{^recentArchiveUrl}}/archives{{/recentArchiveUrl}}">← View more posts in the archives</a>
+            <a href="{{#recentArchiveUrl}}{{{recentArchiveUrl}}}{{/recentArchiveUrl}}{{^recentArchiveUrl}}/archives{{/recentArchiveUrl}}">← View more posts in the archives</a>
         </div>
         {{/hasMorePosts}}
         """
@@ -404,36 +404,36 @@ class TemplateManager {
         <h1>{{monthName}} {{year}}</h1>
         <p class="archive-meta">{{postCount}} {{postCountText}} in this month</p>
         <div class="archive-separator"></div>
-        
+
         <div class="post-list">
             {{#posts}}
                 {{> post}}
             {{/posts}}
         </div>
-        
+
         {{#hasPreviousMonth}}{{#hasNextMonth}}
         <nav class="month-navigation">
             <div class="nav-previous">
-                <a href="{{previousMonthUrl}}">&larr; {{previousMonthName}} {{previousYear}}</a>
+                <a href="{{{previousMonthUrl}}}">&larr; {{previousMonthName}} {{previousYear}}</a>
             </div>
             <div class="nav-next">
-                <a href="{{nextMonthUrl}}">{{nextMonthName}} {{nextYear}} &rarr;</a>
+                <a href="{{{nextMonthUrl}}}">{{nextMonthName}} {{nextYear}} &rarr;</a>
             </div>
         </nav>
         {{/hasNextMonth}}{{/hasPreviousMonth}}
-        
+
         {{#hasPreviousMonth}}{{^hasNextMonth}}
         <nav class="month-navigation">
             <div class="nav-previous">
-                <a href="{{previousMonthUrl}}">&larr; {{previousMonthName}} {{previousYear}}</a>
+                <a href="{{{previousMonthUrl}}}">&larr; {{previousMonthName}} {{previousYear}}</a>
             </div>
         </nav>
         {{/hasNextMonth}}{{/hasPreviousMonth}}
-        
+
         {{^hasPreviousMonth}}{{#hasNextMonth}}
         <nav class="month-navigation">
             <div class="nav-next">
-                <a href="{{nextMonthUrl}}">{{nextMonthName}} {{nextYear}} &rarr;</a>
+                <a href="{{{nextMonthUrl}}}">{{nextMonthName}} {{nextYear}} &rarr;</a>
             </div>
         </nav>
         {{/hasNextMonth}}{{/hasPreviousMonth}}
