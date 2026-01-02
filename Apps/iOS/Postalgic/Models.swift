@@ -778,25 +778,29 @@ final class Post {
         var result = text
         
         // Regular expressions for common Markdown patterns
-        let patterns = [
+        let patterns: [(String, String, NSRegularExpression.Options)] = [
+            // Blockquotes: > text -> text (multiline)
+            ("^>+\\s*", "", [.anchorsMatchLines]),
             // Links: [text](url) -> text
-            "\\[([^\\]]+)\\]\\([^)]+\\)": "$1",
+            ("\\[([^\\]]+)\\]\\([^)]+\\)", "$1", []),
             // Bold: **text** or __text__ -> text
-            "\\*\\*([^*]+)\\*\\*|__([^_]+)__": "$1$2",
+            ("\\*\\*([^*]+)\\*\\*|__([^_]+)__", "$1$2", []),
             // Italic: *text* or _text_ -> text
-            "\\*([^*]+)\\*|_([^_]+)_": "$1$2",
+            ("\\*([^*]+)\\*|_([^_]+)_", "$1$2", []),
             // Headers: #+ text -> text
-            "^#+\\s+(.+)$": "$1",
+            ("^#+\\s+(.+)$", "$1", []),
             // Code blocks: `text` -> text
-            "`([^`]+)`": "$1",
+            ("`([^`]+)`", "$1", []),
             // Strikethrough: ~~text~~ -> text
-            "~~([^~]+)~~": "$1",
+            ("~~([^~]+)~~", "$1", []),
             // Images: ![alt](url) -> alt
-            "!\\[([^\\]]+)\\]\\([^)]+\\)": "$1"
+            ("!\\[([^\\]]+)\\]\\([^)]+\\)", "$1", []),
+            // Horizontal rules: ---, ***, ___ -> empty
+            ("^[-*_]{3,}$", "", [.anchorsMatchLines])
         ]
-        
-        for (pattern, replacement) in patterns {
-            if let regex = try? NSRegularExpression(pattern: pattern, options: []) {
+
+        for (pattern, replacement, options) in patterns {
+            if let regex = try? NSRegularExpression(pattern: pattern, options: options) {
                 let range = NSRange(location: 0, length: result.utf16.count)
                 result = regex.stringByReplacingMatches(in: result, options: [], range: range, withTemplate: replacement)
             }

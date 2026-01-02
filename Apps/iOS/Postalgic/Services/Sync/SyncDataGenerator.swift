@@ -788,10 +788,8 @@ class SyncDataGenerator {
         if let embed = post.embed {
             print("📎 Processing embed for post: type=\(embed.type), images count=\(embed.images.count)")
 
-            var imageFilename: String? = nil
-            if embed.embedType == .link && embed.imageData != nil {
-                imageFilename = "embed-\(embed.url.hashValue).jpg"
-            }
+            // Use deterministicImageFilename which uses SHA256 hash for cross-platform compatibility
+            let imageFilename = embed.deterministicImageFilename
 
             let embedImages = embed.images.sorted { $0.order < $1.order }.map { image in
                 print("   📷 Embed image: \(image.filename)")

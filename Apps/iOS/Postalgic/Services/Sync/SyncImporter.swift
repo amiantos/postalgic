@@ -285,18 +285,39 @@ class SyncImporter {
         // Step 10: Download custom theme if present
         if let themeId = syncBlog.themeIdentifier, themeId != "default" {
             let themePath = "themes/\(themeId).json"
+            print("🎨 Theme import: Looking for theme '\(themeId)' at path '\(themePath)'")
+            print("🎨 Theme import: Manifest has \(manifest.files.count) files")
+            print("🎨 Theme import: Theme in manifest? \(manifest.files[themePath] != nil)")
+
             if manifest.files[themePath] != nil {
                 progressUpdate(ImportProgress(currentStep: "Downloading theme...", filesDownloaded: filesDownloaded, totalFiles: totalFiles, isComplete: false))
                 let themeData = try await downloadFile(from: "\(baseURL)/sync/\(themePath)")
                 filesDownloaded += 1
                 let syncTheme = try decoder.decode(SyncDataGenerator.SyncTheme.self, from: themeData)
+                print("🎨 Theme import: Downloaded theme '\(syncTheme.name)' with \(syncTheme.templates.count) templates")
 
                 // Check if theme already exists
                 if ThemeService.shared.getTheme(identifier: syncTheme.identifier) == nil {
-                    let theme = Theme(name: syncTheme.name, identifier: syncTheme.identifier)
+                    let theme = Theme(name: syncTheme.name, identifier: syncTheme.identifier, isCustomized: true)
+                    theme.templates = syncTheme.templates
                     modelContext.insert(theme)
+                    ThemeService.shared.addTheme(theme)
+                    print("🎨 Theme import: Created new theme '\(syncTheme.identifier)'")
+                } else {
+                    // Update existing theme's templates if it already exists
+                    if let existingTheme = ThemeService.shared.getTheme(identifier: syncTheme.identifier) {
+                        existingTheme.templates = syncTheme.templates
+                        print("🎨 Theme import: Updated existing theme '\(syncTheme.identifier)'")
+                    }
                 }
+            } else {
+                print("🎨 Theme import: Theme file not found in manifest!")
+                // List all theme-related paths in manifest for debugging
+                let themePaths = manifest.files.keys.filter { $0.hasPrefix("themes/") }
+                print("🎨 Theme import: Available theme paths: \(themePaths)")
             }
+        } else {
+            print("🎨 Theme import: No custom theme to import (themeIdentifier: \(syncBlog.themeIdentifier ?? "nil"))")
         }
 
         // Store sync manifest hashes for future sync comparisons

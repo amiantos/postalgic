@@ -46,8 +46,7 @@ struct PostTemplateData {
             // When there's an embed below, no trailing newline
             dict["contentHtml"] = finalContent
         } else {
-            // Add trailing newline to match self-hosted markdown output
-            dict["contentHtml"] = finalContent + "\n"
+            dict["contentHtml"] = finalContent
         }
         
         // Add tags if present (sorted by name for deterministic output)
