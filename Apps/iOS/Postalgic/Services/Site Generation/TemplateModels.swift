@@ -47,13 +47,10 @@ struct PostTemplateData {
         finalContent += postContent
 
         if let embed = post.embed, embed.embedPosition == .below {
-            // Add one blank line before embed (two newlines), no trailing newline
-            finalContent += "\n\n" + embed.generateHtml(embedId: embedId)
-            // When there's an embed below, no trailing newline
-            dict["contentHtml"] = finalContent
-        } else {
-            dict["contentHtml"] = finalContent
+            finalContent += "\n" + embed.generateHtml(embedId: embedId)
         }
+
+        dict["contentHtml"] = finalContent
         
         // Add tags if present (sorted by name for deterministic output)
         if !post.tags.isEmpty {

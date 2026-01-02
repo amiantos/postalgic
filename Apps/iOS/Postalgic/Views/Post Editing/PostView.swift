@@ -348,9 +348,9 @@ struct PostView: View {
 
     /// Saves the post and updates `updatedAt` if the post has changed
     private func savePost() {
-        // Render markdown to HTML
+        // Render markdown to HTML (trimmed to match Self-Hosted behavior)
         let markdownParser = MarkdownParser()
-        post.contentHtml = markdownParser.html(from: post.content)
+        post.contentHtml = markdownParser.html(from: post.content).trimmingCharacters(in: .whitespacesAndNewlines)
 
         // For existing posts, check if content has changed
         if !isNewPost, let snapshot = initialSnapshot {

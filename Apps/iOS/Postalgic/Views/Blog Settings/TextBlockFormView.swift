@@ -51,9 +51,9 @@ struct AddTextBlockView: View {
     }
     
     private func saveTextBlock() {
-        // Render markdown to HTML
+        // Render markdown to HTML (trimmed to match Self-Hosted behavior)
         let markdownParser = MarkdownParser()
-        let contentHtml = markdownParser.html(from: content)
+        let contentHtml = markdownParser.html(from: content).trimmingCharacters(in: .whitespacesAndNewlines)
 
         // Create a new text block with the next available order
         let nextOrder = blog.sidebarObjects.count
@@ -125,9 +125,9 @@ struct EditTextBlockView: View {
     }
     
     private func saveTextBlock() {
-        // Render markdown to HTML
+        // Render markdown to HTML (trimmed to match Self-Hosted behavior)
         let markdownParser = MarkdownParser()
-        sidebarObject.contentHtml = markdownParser.html(from: content)
+        sidebarObject.contentHtml = markdownParser.html(from: content).trimmingCharacters(in: .whitespacesAndNewlines)
 
         // Update existing text block
         sidebarObject.title = title
