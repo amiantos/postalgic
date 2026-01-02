@@ -395,8 +395,13 @@ class Storage {
   mapPostRow(row) {
     const db = getDatabase();
 
-    // Get tag IDs for this post
-    const tagRows = db.prepare('SELECT tag_id FROM post_tags WHERE post_id = ?').all(row.id);
+    // Get tag IDs for this post, ordered by tag name for consistent output
+    const tagRows = db.prepare(`
+      SELECT pt.tag_id FROM post_tags pt
+      JOIN tags t ON pt.tag_id = t.id
+      WHERE pt.post_id = ?
+      ORDER BY t.name ASC
+    `).all(row.id);
     const tagIds = tagRows.map(r => r.tag_id);
 
     // Parse embed data

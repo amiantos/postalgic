@@ -838,5 +838,334 @@ describe('Sync Data Compatibility', () => {
 
       expect(mismatches).toHaveLength(0);
     });
+
+    it('should generate identical non-HTML files for imported blog (RSS, sitemap, CSS, robots.txt)', async () => {
+      // Use the cloned blog created in the previous test - create a fresh one here
+      const clonedBlog2 = storage.createBlog({
+        name: canonicalBlog.blog.name,
+        url: canonicalBlog.blog.url,
+        tagline: canonicalBlog.blog.tagline,
+        authorName: canonicalBlog.blog.authorName,
+        authorUrl: canonicalBlog.blog.authorUrl,
+        authorEmail: canonicalBlog.blog.authorEmail,
+        accentColor: canonicalBlog.blog.colors.accent,
+        backgroundColor: canonicalBlog.blog.colors.background,
+        textColor: canonicalBlog.blog.colors.text,
+        lightShade: canonicalBlog.blog.colors.lightShade,
+        mediumShade: canonicalBlog.blog.colors.mediumShade,
+        darkShade: canonicalBlog.blog.colors.darkShade,
+        themeIdentifier: canonicalBlog.blog.themeIdentifier,
+      });
+      const clonedBlogId2 = clonedBlog2.id;
+
+      // Read sync data from original blog's output
+      const originalSyncDir = path.join(testDir, 'output', 'sync');
+
+      // Import all entities with syncId preserved (same as previous test)
+      const catIndex = JSON.parse(
+        fs.readFileSync(path.join(originalSyncDir, 'categories', 'index.json'), 'utf8')
+      );
+      const categoryMap = new Map();
+      for (const entry of catIndex.categories) {
+        const catData = JSON.parse(
+          fs.readFileSync(path.join(originalSyncDir, 'categories', `${entry.id}.json`), 'utf8')
+        );
+        const created = storage.createCategory(clonedBlogId2, {
+          name: catData.name,
+          description: catData.description,
+          stub: catData.stub,
+          syncId: catData.id,
+          createdAt: catData.createdAt,
+        });
+        categoryMap.set(catData.id, created.id);
+      }
+
+      const tagIndex = JSON.parse(
+        fs.readFileSync(path.join(originalSyncDir, 'tags', 'index.json'), 'utf8')
+      );
+      const tagMap = new Map();
+      for (const entry of tagIndex.tags) {
+        const tagData = JSON.parse(
+          fs.readFileSync(path.join(originalSyncDir, 'tags', `${entry.id}.json`), 'utf8')
+        );
+        const created = storage.createTag(clonedBlogId2, {
+          name: tagData.name,
+          stub: tagData.stub,
+          syncId: tagData.id,
+          createdAt: tagData.createdAt,
+        });
+        tagMap.set(tagData.id, created.id);
+      }
+
+      const sidebarIndex = JSON.parse(
+        fs.readFileSync(path.join(originalSyncDir, 'sidebar', 'index.json'), 'utf8')
+      );
+      for (const entry of sidebarIndex.sidebar) {
+        const sidebarData = JSON.parse(
+          fs.readFileSync(path.join(originalSyncDir, 'sidebar', `${entry.id}.json`), 'utf8')
+        );
+        storage.createSidebarObject(clonedBlogId2, {
+          title: sidebarData.title,
+          type: sidebarData.type,
+          content: sidebarData.content,
+          order: sidebarData.order,
+          links: sidebarData.links || [],
+          syncId: sidebarData.id,
+          createdAt: sidebarData.createdAt,
+        });
+      }
+
+      const postIndex = JSON.parse(
+        fs.readFileSync(path.join(originalSyncDir, 'posts', 'index.json'), 'utf8')
+      );
+      for (const entry of postIndex.posts) {
+        const postData = JSON.parse(
+          fs.readFileSync(path.join(originalSyncDir, 'posts', `${entry.id}.json`), 'utf8')
+        );
+
+        const categoryId = postData.categoryId ? categoryMap.get(postData.categoryId) : null;
+        const tagIds = (postData.tagIds || []).map(id => tagMap.get(id)).filter(Boolean);
+
+        let embed = null;
+        if (postData.embed) {
+          embed = {
+            type: postData.embed.type.toLowerCase(),
+            position: postData.embed.position.toLowerCase(),
+            url: postData.embed.url,
+            title: postData.embed.title,
+            description: postData.embed.description,
+            imageUrl: postData.embed.imageUrl,
+            imageFilename: postData.embed.imageFilename,
+            images: postData.embed.images,
+          };
+        }
+
+        storage.createPost(clonedBlogId2, {
+          title: postData.title,
+          content: postData.content,
+          stub: postData.stub,
+          isDraft: false,
+          categoryId: categoryId,
+          tagIds: tagIds,
+          embed: embed,
+          syncId: postData.id,
+          createdAt: postData.createdAt,
+          updatedAt: postData.updatedAt,
+        });
+      }
+
+      // Generate sites
+      const originalResult = await generateSite(storage, blogId);
+      const clonedResult = await generateSite(storage, clonedBlogId2);
+
+      // Check non-HTML files
+      const nonHtmlFiles = ['rss.xml', 'sitemap.xml', 'css/style.css', 'robots.txt'];
+
+      for (const file of nonHtmlFiles) {
+        const originalHash = originalResult.fileHashes[file];
+        const clonedHash = clonedResult.fileHashes[file];
+
+        expect(clonedHash).toBe(originalHash);
+      }
+    });
+
+    it('should generate identical sync manifest file hashes for imported blog', async () => {
+      // Generate sync data for both blogs
+      const originalSyncOutputDir = path.join(testDir, 'original-sync-output');
+      const importedSyncOutputDir = path.join(testDir, 'imported-sync-output');
+      fs.mkdirSync(originalSyncOutputDir, { recursive: true });
+      fs.mkdirSync(importedSyncOutputDir, { recursive: true });
+
+      // Create a properly imported blog with all settings
+      const originalSyncDir = path.join(testDir, 'output', 'sync');
+      const blogData = JSON.parse(fs.readFileSync(path.join(originalSyncDir, 'blog.json'), 'utf8'));
+
+      const syncTestBlog = storage.createBlog({
+        name: blogData.name,
+        url: blogData.url,
+        tagline: blogData.tagline,
+        authorName: blogData.authorName,
+        authorUrl: blogData.authorUrl,
+        authorEmail: blogData.authorEmail,
+        accentColor: blogData.colors?.accent,
+        backgroundColor: blogData.colors?.background,
+        textColor: blogData.colors?.text,
+        lightShade: blogData.colors?.lightShade,
+        mediumShade: blogData.colors?.mediumShade,
+        darkShade: blogData.colors?.darkShade,
+        themeIdentifier: blogData.themeIdentifier,
+      });
+      const syncTestBlogId = syncTestBlog.id;
+
+      // Import entities
+      const catIndex = JSON.parse(fs.readFileSync(path.join(originalSyncDir, 'categories', 'index.json'), 'utf8'));
+      const catMap = new Map();
+      for (const entry of catIndex.categories) {
+        const catData = JSON.parse(fs.readFileSync(path.join(originalSyncDir, 'categories', `${entry.id}.json`), 'utf8'));
+        const created = storage.createCategory(syncTestBlogId, { name: catData.name, description: catData.description, stub: catData.stub, syncId: catData.id, createdAt: catData.createdAt });
+        catMap.set(catData.id, created.id);
+      }
+
+      const tagIndex = JSON.parse(fs.readFileSync(path.join(originalSyncDir, 'tags', 'index.json'), 'utf8'));
+      const tagMap = new Map();
+      for (const entry of tagIndex.tags) {
+        const tagData = JSON.parse(fs.readFileSync(path.join(originalSyncDir, 'tags', `${entry.id}.json`), 'utf8'));
+        const created = storage.createTag(syncTestBlogId, { name: tagData.name, stub: tagData.stub, syncId: tagData.id, createdAt: tagData.createdAt });
+        tagMap.set(tagData.id, created.id);
+      }
+
+      const sidebarIndex = JSON.parse(fs.readFileSync(path.join(originalSyncDir, 'sidebar', 'index.json'), 'utf8'));
+      for (const entry of sidebarIndex.sidebar) {
+        const sidebarData = JSON.parse(fs.readFileSync(path.join(originalSyncDir, 'sidebar', `${entry.id}.json`), 'utf8'));
+        storage.createSidebarObject(syncTestBlogId, { title: sidebarData.title, type: sidebarData.type, content: sidebarData.content, order: sidebarData.order, links: sidebarData.links || [], syncId: sidebarData.id, createdAt: sidebarData.createdAt });
+      }
+
+      const postIndex = JSON.parse(fs.readFileSync(path.join(originalSyncDir, 'posts', 'index.json'), 'utf8'));
+      for (const entry of postIndex.posts) {
+        const postData = JSON.parse(fs.readFileSync(path.join(originalSyncDir, 'posts', `${entry.id}.json`), 'utf8'));
+        const categoryId = postData.categoryId ? catMap.get(postData.categoryId) : null;
+        const tagIds = (postData.tagIds || []).map(id => tagMap.get(id)).filter(Boolean);
+        let embed = null;
+        if (postData.embed) {
+          embed = { type: postData.embed.type.toLowerCase(), position: postData.embed.position.toLowerCase(), url: postData.embed.url, title: postData.embed.title, description: postData.embed.description, imageUrl: postData.embed.imageUrl, imageFilename: postData.embed.imageFilename, images: postData.embed.images };
+        }
+        storage.createPost(syncTestBlogId, { title: postData.title, content: postData.content, stub: postData.stub, isDraft: false, categoryId: categoryId, tagIds: tagIds, embed: embed, syncId: postData.id, createdAt: postData.createdAt, updatedAt: postData.updatedAt });
+      }
+
+      const originalResult = await generateSyncDirectory(storage, blogId, originalSyncOutputDir);
+      const importedResult = await generateSyncDirectory(storage, syncTestBlogId, importedSyncOutputDir);
+
+      // Compare manifest file hashes (excluding manifest.json itself which has different timestamps)
+      const originalManifest = JSON.parse(
+        fs.readFileSync(path.join(originalSyncOutputDir, 'sync', 'manifest.json'), 'utf8')
+      );
+      const importedManifest = JSON.parse(
+        fs.readFileSync(path.join(importedSyncOutputDir, 'sync', 'manifest.json'), 'utf8')
+      );
+
+      // Same files should exist
+      const originalFiles = Object.keys(originalManifest.files).sort();
+      const importedFiles = Object.keys(importedManifest.files).sort();
+      expect(importedFiles).toEqual(originalFiles);
+
+      // Same hashes for each file
+      const hashMismatches = [];
+      for (const file of originalFiles) {
+        if (importedManifest.files[file].hash !== originalManifest.files[file].hash) {
+          hashMismatches.push(file);
+        }
+      }
+
+      if (hashMismatches.length > 0) {
+        console.log('Hash mismatches in sync manifest:', hashMismatches);
+        // Read first mismatched file to compare
+        const firstMismatch = hashMismatches[0];
+        const originalContent = fs.readFileSync(path.join(originalSyncOutputDir, 'sync', firstMismatch), 'utf8');
+        const importedContent = fs.readFileSync(path.join(importedSyncOutputDir, 'sync', firstMismatch), 'utf8');
+        console.log(`\nOriginal ${firstMismatch}:\n`, originalContent);
+        console.log(`\nImported ${firstMismatch}:\n`, importedContent);
+      }
+
+      expect(hashMismatches).toHaveLength(0);
+
+      // Content versions should match
+      expect(importedResult.syncVersion).toBe(originalResult.syncVersion);
+    });
+
+    it('should generate the same file list for original and imported blogs', async () => {
+      // Create another imported blog for this test
+      const testBlog = storage.createBlog({
+        name: canonicalBlog.blog.name,
+        url: canonicalBlog.blog.url,
+        tagline: canonicalBlog.blog.tagline,
+        authorName: canonicalBlog.blog.authorName,
+        authorUrl: canonicalBlog.blog.authorUrl,
+        authorEmail: canonicalBlog.blog.authorEmail,
+        accentColor: canonicalBlog.blog.colors.accent,
+        backgroundColor: canonicalBlog.blog.colors.background,
+        textColor: canonicalBlog.blog.colors.text,
+        lightShade: canonicalBlog.blog.colors.lightShade,
+        mediumShade: canonicalBlog.blog.colors.mediumShade,
+        darkShade: canonicalBlog.blog.colors.darkShade,
+        themeIdentifier: canonicalBlog.blog.themeIdentifier,
+      });
+      const testBlogId = testBlog.id;
+
+      // Import from sync data
+      const originalSyncDir = path.join(testDir, 'output', 'sync');
+
+      const catIndex = JSON.parse(fs.readFileSync(path.join(originalSyncDir, 'categories', 'index.json'), 'utf8'));
+      const categoryMap = new Map();
+      for (const entry of catIndex.categories) {
+        const catData = JSON.parse(fs.readFileSync(path.join(originalSyncDir, 'categories', `${entry.id}.json`), 'utf8'));
+        const created = storage.createCategory(testBlogId, { name: catData.name, description: catData.description, stub: catData.stub, syncId: catData.id, createdAt: catData.createdAt });
+        categoryMap.set(catData.id, created.id);
+      }
+
+      const tagIndex = JSON.parse(fs.readFileSync(path.join(originalSyncDir, 'tags', 'index.json'), 'utf8'));
+      const tagMap = new Map();
+      for (const entry of tagIndex.tags) {
+        const tagData = JSON.parse(fs.readFileSync(path.join(originalSyncDir, 'tags', `${entry.id}.json`), 'utf8'));
+        const created = storage.createTag(testBlogId, { name: tagData.name, stub: tagData.stub, syncId: tagData.id, createdAt: tagData.createdAt });
+        tagMap.set(tagData.id, created.id);
+      }
+
+      const sidebarIndex = JSON.parse(fs.readFileSync(path.join(originalSyncDir, 'sidebar', 'index.json'), 'utf8'));
+      for (const entry of sidebarIndex.sidebar) {
+        const sidebarData = JSON.parse(fs.readFileSync(path.join(originalSyncDir, 'sidebar', `${entry.id}.json`), 'utf8'));
+        storage.createSidebarObject(testBlogId, { title: sidebarData.title, type: sidebarData.type, content: sidebarData.content, order: sidebarData.order, links: sidebarData.links || [], syncId: sidebarData.id, createdAt: sidebarData.createdAt });
+      }
+
+      const postIndex = JSON.parse(fs.readFileSync(path.join(originalSyncDir, 'posts', 'index.json'), 'utf8'));
+      for (const entry of postIndex.posts) {
+        const postData = JSON.parse(fs.readFileSync(path.join(originalSyncDir, 'posts', `${entry.id}.json`), 'utf8'));
+        const categoryId = postData.categoryId ? categoryMap.get(postData.categoryId) : null;
+        const tagIds = (postData.tagIds || []).map(id => tagMap.get(id)).filter(Boolean);
+        let embed = null;
+        if (postData.embed) {
+          embed = { type: postData.embed.type.toLowerCase(), position: postData.embed.position.toLowerCase(), url: postData.embed.url, title: postData.embed.title, description: postData.embed.description, imageUrl: postData.embed.imageUrl, imageFilename: postData.embed.imageFilename, images: postData.embed.images };
+        }
+        storage.createPost(testBlogId, { title: postData.title, content: postData.content, stub: postData.stub, isDraft: false, categoryId: categoryId, tagIds: tagIds, embed: embed, syncId: postData.id, createdAt: postData.createdAt, updatedAt: postData.updatedAt });
+      }
+
+      // Generate sites
+      const originalResult = await generateSite(storage, blogId);
+      const testResult = await generateSite(storage, testBlogId);
+
+      // Compare file lists (excluding sync/ files which use local IDs in paths)
+      const originalFiles = Object.keys(originalResult.fileHashes)
+        .filter(f => !f.startsWith('sync/'))
+        .sort();
+      const testFiles = Object.keys(testResult.fileHashes)
+        .filter(f => !f.startsWith('sync/'))
+        .sort();
+
+      expect(testFiles).toEqual(originalFiles);
+    });
+
+    it('should maintain consistent ordering of posts in archives', async () => {
+      // Generate site twice and compare archive pages
+      const result1 = await generateSite(storage, blogId);
+      const result2 = await generateSite(storage, blogId);
+
+      // Check archives index
+      expect(result2.fileHashes['archives/index.html']).toBe(result1.fileHashes['archives/index.html']);
+
+      // Check monthly archives
+      const monthlyArchives = Object.keys(result1.fileHashes)
+        .filter(f => f.match(/^\d{4}\/\d{2}\/index\.html$/));
+
+      for (const archive of monthlyArchives) {
+        expect(result2.fileHashes[archive]).toBe(result1.fileHashes[archive]);
+      }
+    });
+
+    it('should maintain consistent ordering of tags and categories in index pages', async () => {
+      const result1 = await generateSite(storage, blogId);
+      const result2 = await generateSite(storage, blogId);
+
+      expect(result2.fileHashes['tags/index.html']).toBe(result1.fileHashes['tags/index.html']);
+      expect(result2.fileHashes['categories/index.html']).toBe(result1.fileHashes['categories/index.html']);
+    });
   });
 });
