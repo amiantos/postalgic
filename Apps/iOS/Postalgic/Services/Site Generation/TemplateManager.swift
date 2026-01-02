@@ -284,37 +284,37 @@ class TemplateManager {
                             {{{sidebarContent}}}
                         </div>
                     </aside>
-                    
+
                     <main>
                         {{{content}}}
                     </main>
-                    
+
                     <div class="clearfix"></div>
                 </div>
-                
+
                 <footer>
-                    <p>&copy; {{currentYear}} {{blogName}}{{#blogAuthor}} by {{#blogAuthorUrl}}<a href="{{blogAuthorUrl}}">{{blogAuthor}}</a>{{/blogAuthorUrl}}{{^blogAuthorUrl}}{{blogAuthor}}{{/blogAuthorUrl}}{{/blogAuthor}}. Generated with <a href="https://postalgic.app">Postalgic</a>.</p>
+                    <p>&copy; {{currentYear}} {{blogName}}{{#blogAuthor}} by {{#blogAuthorUrl}}<a href="{{{blogAuthorUrl}}}">{{blogAuthor}}</a>{{/blogAuthorUrl}}{{^blogAuthorUrl}}{{blogAuthor}}{{/blogAuthorUrl}}{{/blogAuthor}}. Generated with <a href="https://postalgic.app">Postalgic</a>.</p>
                 </footer>
             </div>
-            
+
             <script>
                 document.addEventListener('DOMContentLoaded', function() {
                     const hamburgerIcon = document.querySelector('.hamburger-icon');
                     const sidebar = document.querySelector('.sidebar');
                     const overlay = document.querySelector('.mobile-sidebar-overlay');
-                    
+
                     function toggleSidebar() {
                         document.body.classList.toggle('sidebar-open');
                     }
-                    
+
                     if (hamburgerIcon) {
                         hamburgerIcon.addEventListener('click', toggleSidebar);
                     }
-                    
+
                     if (overlay) {
                         overlay.addEventListener('click', toggleSidebar);
                     }
-                    
+
                     // Handle page resize events
                     window.addEventListener('resize', function() {
                         if (window.innerWidth > 900 && document.body.classList.contains('sidebar-open')) {
@@ -334,13 +334,13 @@ class TemplateManager {
                 {{#inList}}<h2>{{displayTitle}}</h2>{{/inList}}
                 {{^inList}}<h1>{{displayTitle}}</h1>{{/inList}}
             {{/hasTitle}}
-        
-            <div class="post-date"><a href="/{{urlPath}}/">{{formattedDate}}</a></div>
-            
+
+            <div class="post-date"><a href="/{{{urlPath}}}/">{{formattedDate}}</a></div>
+
             {{#blogAuthor}}
-                <div class="post-author"> by {{#blogAuthorUrl}}<a href="{{blogAuthorUrl}}">{{blogAuthor}}</a>{{/blogAuthorUrl}}{{^blogAuthorUrl}}{{blogAuthor}}{{/blogAuthorUrl}}</div>
+                <div class="post-author"> by {{#blogAuthorUrl}}<a href="{{{blogAuthorUrl}}}">{{blogAuthor}}</a>{{/blogAuthorUrl}}{{^blogAuthorUrl}}{{blogAuthor}}{{/blogAuthorUrl}}</div>
             {{/blogAuthor}}
-        
+
             <div class="post-content">
                 {{{contentHtml}}}
             </div>
@@ -348,15 +348,13 @@ class TemplateManager {
             <div>
             {{#hasCategory}}
                 <div class="post-category">
-                    <a href="/categories/{{categoryUrlPath}}/">{{categoryName}}</a>
+                    <a href="/categories/{{{categoryUrlPath}}}/">{{categoryName}}</a>
                 </div>
             {{/hasCategory}}
-        
+
             {{#hasTags}}
                 <div class="post-tags">
-                    {{#tags}}
-                        <a href="/tags/{{urlPath}}/" class="tag">#{{name}}</a> 
-                    {{/tags}}
+                    {{#tags}}<a href="/tags/{{{urlPath}}}/" class="tag">#{{name}}</a> {{/tags}}
                 </div>
             {{/hasTags}}
             </div>

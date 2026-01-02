@@ -494,12 +494,14 @@ final class Embed {
 
         switch embedType {
         case .youtube:
-            // Extract YouTube video ID from URL
+            // Extract YouTube video ID from URL (format matches self-hosted exactly)
             if let videoId = Utils.extractYouTubeId(from: url) {
                 return """
                 <div class="embed youtube-embed">
-                    <iframe width="560" height="315" src="https://www.youtube.com/embed/\(videoId)" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-                </div>
+                      <iframe width="560" height="315" src="https://www.youtube.com/embed/\(videoId)"
+                        frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowfullscreen></iframe>
+                    </div>
                 """
             } else {
                 return "<!-- Invalid YouTube URL: \(url) -->"
@@ -544,53 +546,33 @@ final class Embed {
                 </div>
                 """
             }
-            // Multiple images gallery
+            // Multiple images gallery (format matches self-hosted exactly)
             else if sortedImages.count > 1 {
-                var html = """
-                <div class="embed image-embed gallery" id="gallery-\(id)">
-                    <div class="gallery-container">
-                """
-
-                // Add all images
+                // Build slides
+                var slides = ""
                 for image in sortedImages {
-                    html += """
-
-                        <div class="gallery-slide">
-                            <a href="/images/embeds/\(image.filename)" class="lightbox-trigger" data-lightbox="embed-\(id)" data-title="">
-                                <img src="/images/embeds/\(image.filename)" alt="">
-                            </a>
-                        </div>
-                    """
+                    slides += "\n        <div class=\"gallery-slide\">\n            <a href=\"/images/embeds/\(image.filename)\" class=\"lightbox-trigger\" data-lightbox=\"embed-\(id)\" data-title=\"\">\n                <img src=\"/images/embeds/\(image.filename)\" alt=\"\">\n            </a>\n        </div>"
                 }
 
-                // Add navigation arrows if more than one image
-                html += """
+                // Build dots
+                var dots = ""
+                for i in 0..<sortedImages.count {
+                    dots += "\n            <span class=\"gallery-dot\" onclick=\"showSlide('gallery-\(id)', \(i))\"></span>"
+                }
 
+                return """
+                <div class="embed image-embed gallery" id="gallery-\(id)">
+                    <div class="gallery-container">\(slides)
                         <div class="gallery-nav">
                             <button class="gallery-prev" onclick="prevSlide('gallery-\(id)')">❮</button>
                             <button class="gallery-next" onclick="nextSlide('gallery-\(id)')">❯</button>
                         </div>
                     </div>
-                    <div class="gallery-dots">
-                """
-
-                // Add indicator dots
-                for i in 0..<sortedImages.count {
-                    html += """
-
-                        <span class="gallery-dot" onclick="showSlide('gallery-\(id)', \(i))"></span>
-                    """
-                }
-
-                // Single line script format (matching self-hosted)
-                html += """
-
+                    <div class="gallery-dots">\(dots)
                     </div>
                 </div>
                 <script>initGallery('gallery-\(id)');</script>
                 """
-
-                return html
             }
             else {
                 return "<!-- No images available for this embed -->"
@@ -705,8 +687,8 @@ final class Post {
     var formattedDate: String {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "en_US")
-        formatter.dateStyle = .long
-        formatter.timeStyle = .short
+        // Use explicit format for cross-platform consistency (zero-padded hour)
+        formatter.dateFormat = "MMMM d, yyyy 'at' hh:mm a"
         // Use blog's timezone for display
         if let timezone = blog?.timezone, let tz = TimeZone(identifier: timezone) {
             formatter.timeZone = tz
