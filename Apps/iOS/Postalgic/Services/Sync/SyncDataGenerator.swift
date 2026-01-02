@@ -79,6 +79,27 @@ class SyncDataGenerator {
             let hash: String
             var size: Int
             var modified: String?
+
+            // Explicitly encode nil as null to match self-hosted output
+            func encode(to encoder: Encoder) throws {
+                var container = encoder.container(keyedBy: CodingKeys.self)
+                try container.encode(hash, forKey: .hash)
+                try container.encode(modified, forKey: .modified)
+                try container.encode(size, forKey: .size)
+            }
+        }
+
+        // Explicitly encode nil as null to match self-hosted output
+        func encode(to encoder: Encoder) throws {
+            var container = encoder.container(keyedBy: CodingKeys.self)
+            try container.encode(appSource, forKey: .appSource)
+            try container.encode(appVersion, forKey: .appVersion)
+            try container.encode(blogName, forKey: .blogName)
+            try container.encode(contentVersion, forKey: .contentVersion)
+            try container.encode(fileCount, forKey: .fileCount)
+            try container.encode(files, forKey: .files)
+            try container.encode(lastModified, forKey: .lastModified)
+            try container.encode(version, forKey: .version)
         }
     }
 
@@ -100,6 +121,31 @@ class SyncDataGenerator {
             let lightShade: String?
             let mediumShade: String?
             let darkShade: String?
+
+            // Explicitly encode nil as null to match self-hosted output
+            func encode(to encoder: Encoder) throws {
+                var container = encoder.container(keyedBy: CodingKeys.self)
+                try container.encode(accent, forKey: .accent)
+                try container.encode(background, forKey: .background)
+                try container.encode(darkShade, forKey: .darkShade)
+                try container.encode(lightShade, forKey: .lightShade)
+                try container.encode(mediumShade, forKey: .mediumShade)
+                try container.encode(text, forKey: .text)
+            }
+        }
+
+        // Explicitly encode nil as null to match self-hosted output
+        func encode(to encoder: Encoder) throws {
+            var container = encoder.container(keyedBy: CodingKeys.self)
+            try container.encode(authorEmail, forKey: .authorEmail)
+            try container.encode(authorName, forKey: .authorName)
+            try container.encode(authorUrl, forKey: .authorUrl)
+            try container.encode(colors, forKey: .colors)
+            try container.encode(name, forKey: .name)
+            try container.encode(tagline, forKey: .tagline)
+            try container.encode(themeIdentifier, forKey: .themeIdentifier)
+            try container.encode(timezone, forKey: .timezone)
+            try container.encode(url, forKey: .url)
         }
     }
 
@@ -111,6 +157,15 @@ class SyncDataGenerator {
             let stub: String?
             let hash: String
             let modified: String
+
+            // Explicitly encode nil as null to match self-hosted output
+            func encode(to encoder: Encoder) throws {
+                var container = encoder.container(keyedBy: CodingKeys.self)
+                try container.encode(hash, forKey: .hash)
+                try container.encode(id, forKey: .id)
+                try container.encode(modified, forKey: .modified)
+                try container.encode(stub, forKey: .stub)
+            }
         }
     }
 
@@ -124,6 +179,20 @@ class SyncDataGenerator {
         let categoryId: String?
         let tagIds: [String]
         let embed: SyncEmbed?
+
+        // Explicitly encode nil as null to match self-hosted output
+        func encode(to encoder: Encoder) throws {
+            var container = encoder.container(keyedBy: CodingKeys.self)
+            try container.encode(categoryId, forKey: .categoryId)
+            try container.encode(content, forKey: .content)
+            try container.encode(createdAt, forKey: .createdAt)
+            try container.encode(embed, forKey: .embed)
+            try container.encode(id, forKey: .id)
+            try container.encode(stub, forKey: .stub)
+            try container.encode(tagIds, forKey: .tagIds)
+            try container.encode(title, forKey: .title)
+            try container.encode(updatedAt, forKey: .updatedAt)
+        }
     }
 
     struct SyncEmbed: Codable {
@@ -135,6 +204,19 @@ class SyncDataGenerator {
         let imageUrl: String?
         let imageFilename: String?
         let images: [SyncEmbedImage]
+
+        // Explicitly encode nil as null to match self-hosted output
+        func encode(to encoder: Encoder) throws {
+            var container = encoder.container(keyedBy: CodingKeys.self)
+            try container.encode(description, forKey: .description)
+            try container.encode(imageFilename, forKey: .imageFilename)
+            try container.encode(imageUrl, forKey: .imageUrl)
+            try container.encode(images, forKey: .images)
+            try container.encode(position, forKey: .position)
+            try container.encode(title, forKey: .title)
+            try container.encode(type, forKey: .type)
+            try container.encode(url, forKey: .url)
+        }
     }
 
     struct SyncEmbedImage: Codable {
@@ -149,6 +231,14 @@ class SyncDataGenerator {
             let id: String
             let stub: String?
             let hash: String
+
+            // Explicitly encode nil as null to match self-hosted output
+            func encode(to encoder: Encoder) throws {
+                var container = encoder.container(keyedBy: CodingKeys.self)
+                try container.encode(hash, forKey: .hash)
+                try container.encode(id, forKey: .id)
+                try container.encode(stub, forKey: .stub)
+            }
         }
     }
 
@@ -158,6 +248,16 @@ class SyncDataGenerator {
         let description: String?
         let stub: String?
         let createdAt: String
+
+        // Explicitly encode nil as null to match self-hosted output
+        func encode(to encoder: Encoder) throws {
+            var container = encoder.container(keyedBy: CodingKeys.self)
+            try container.encode(createdAt, forKey: .createdAt)
+            try container.encode(description, forKey: .description)
+            try container.encode(id, forKey: .id)
+            try container.encode(name, forKey: .name)
+            try container.encode(stub, forKey: .stub)
+        }
     }
 
     struct SyncTagIndex: Codable {
@@ -167,6 +267,14 @@ class SyncDataGenerator {
             let id: String
             let stub: String?
             let hash: String
+
+            // Explicitly encode nil as null to match self-hosted output
+            func encode(to encoder: Encoder) throws {
+                var container = encoder.container(keyedBy: CodingKeys.self)
+                try container.encode(hash, forKey: .hash)
+                try container.encode(id, forKey: .id)
+                try container.encode(stub, forKey: .stub)
+            }
         }
     }
 
@@ -175,6 +283,15 @@ class SyncDataGenerator {
         let name: String
         let stub: String?
         let createdAt: String
+
+        // Explicitly encode nil as null to match self-hosted output
+        func encode(to encoder: Encoder) throws {
+            var container = encoder.container(keyedBy: CodingKeys.self)
+            try container.encode(createdAt, forKey: .createdAt)
+            try container.encode(id, forKey: .id)
+            try container.encode(name, forKey: .name)
+            try container.encode(stub, forKey: .stub)
+        }
     }
 
     struct SyncSidebarIndex: Codable {
@@ -193,6 +310,17 @@ class SyncDataGenerator {
         let content: String?
         let order: Int
         let links: [SyncLink]?
+
+        // Explicitly encode nil as null to match self-hosted output
+        func encode(to encoder: Encoder) throws {
+            var container = encoder.container(keyedBy: CodingKeys.self)
+            try container.encode(content, forKey: .content)
+            try container.encode(id, forKey: .id)
+            try container.encode(links, forKey: .links)
+            try container.encode(order, forKey: .order)
+            try container.encode(title, forKey: .title)
+            try container.encode(type, forKey: .type)
+        }
     }
 
     struct SyncLink: Codable {
@@ -211,6 +339,17 @@ class SyncDataGenerator {
             let specialFileType: String?
             let hash: String
             let size: Int
+
+            // Explicitly encode nil as null to match self-hosted output
+            func encode(to encoder: Encoder) throws {
+                var container = encoder.container(keyedBy: CodingKeys.self)
+                try container.encode(filename, forKey: .filename)
+                try container.encode(hash, forKey: .hash)
+                try container.encode(isSpecialFile, forKey: .isSpecialFile)
+                try container.encode(mimeType, forKey: .mimeType)
+                try container.encode(size, forKey: .size)
+                try container.encode(specialFileType, forKey: .specialFileType)
+            }
         }
     }
 
