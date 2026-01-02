@@ -157,15 +157,14 @@ router.get('/:id/debug-export', async (req, res) => {
       return res.status(404).json({ error: 'Blog not found' });
     }
 
-    // Create temp directory for the export
-    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'postalgic-debug-'));
-    const outputDir = path.join(tempDir, 'site');
-    fs.mkdirSync(outputDir, { recursive: true });
-
     // Generate the full site (includes sync directory)
-    await generateSite(storage, req.params.id, outputDir);
+    await generateSite(storage, req.params.id);
 
-    // Create zip file
+    // Get the generated site directory
+    const siteDir = storage.getGeneratedSiteDir(req.params.id);
+
+    // Create temp directory for the zip
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'postalgic-debug-'));
     const zipPath = path.join(tempDir, `debug-export-${blog.id}.zip`);
     const output = fs.createWriteStream(zipPath);
     const archive = archiver('zip', { zlib: { level: 9 } });
@@ -187,7 +186,7 @@ router.get('/:id/debug-export', async (req, res) => {
     });
 
     archive.pipe(output);
-    archive.directory(outputDir, false);
+    archive.directory(siteDir, false);
     await archive.finalize();
 
   } catch (error) {
