@@ -316,7 +316,7 @@ class SyncImporter {
 
     // MARK: - Helper Methods
 
-    static func normalizeURL(_ urlString: String) -> String {
+    private static func normalizeURL(_ urlString: String) -> String {
         var url = urlString.trimmingCharacters(in: .whitespacesAndNewlines)
 
         // Add https:// if no scheme
@@ -332,7 +332,7 @@ class SyncImporter {
         return url
     }
 
-    static func downloadFile(from urlString: String) async throws -> Data {
+    private static func downloadFile(from urlString: String) async throws -> Data {
         guard let url = URL(string: urlString) else {
             throw ImportError.invalidURL
         }
