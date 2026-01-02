@@ -30,7 +30,7 @@ See [Apps/Self-Hosted](Apps/Self-Hosted/) for more options including development
 
 # iOS
 
-The iOS app is available on the App Store (coming soon) or you can build it yourself from [Apps/iOS](Apps/iOS/).
+The iOS app is available on the [App Store](https://apps.apple.com/us/app/postalgic-pocket-blogger/id6446164693) or you can build it yourself from [Apps/iOS](Apps/iOS/).
 
 # Example Blogs
 - https://dev.postalgic.app
