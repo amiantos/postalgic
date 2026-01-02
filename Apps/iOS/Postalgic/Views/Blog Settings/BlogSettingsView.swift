@@ -388,8 +388,8 @@ struct BlogSettingsView: View {
                     try FileManager.default.removeItem(at: zipURL)
                 }
 
-                // Create the zip archive
-                try FileManager.default.zipItem(at: siteDirectory, to: zipURL)
+                // Create the zip archive (shouldKeepParent: false puts contents at root)
+                try FileManager.default.zipItem(at: siteDirectory, to: zipURL, shouldKeepParent: false)
 
                 // Clean up the site directory
                 try? FileManager.default.removeItem(at: siteDirectory)
