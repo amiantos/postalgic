@@ -88,23 +88,7 @@ Apps/Self-Hosted/
 
 ## Data Storage
 
-All data is stored as JSON files in the `data/` directory:
-
-```
-data/
-├── blogs/
-│   └── {blogId}/
-│       ├── blog.json           # Blog settings
-│       ├── posts/              # Post files
-│       ├── categories/         # Category files
-│       ├── tags/               # Tag files
-│       ├── sidebar/            # Sidebar objects
-│       ├── static-files/       # File metadata
-│       ├── uploads/            # Uploaded files
-│       └── published-files.json
-├── themes/                     # Custom themes
-└── generated/                  # Generated sites (for preview)
-```
+All data is stored in a SQLite database at `data/postalgic.db`. Uploaded files are stored in `data/uploads/`.
 
 ## API Endpoints
 
@@ -139,4 +123,4 @@ data/
 
 ## License
 
-MIT
+[Mozilla Public License 2.0](https://www.mozilla.org/en-US/MPL/2.0/)
