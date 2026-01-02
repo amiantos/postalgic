@@ -1,6 +1,7 @@
 import express from 'express';
 import crypto from 'crypto';
 import Storage from '../utils/storage.js';
+import { renderMarkdown } from '../utils/markdown.js';
 import {
   generateStub,
   makeStubUnique,
@@ -131,6 +132,7 @@ router.post('/', (req, res) => {
     const postData = {
       title: title || null,
       content,
+      contentHtml: renderMarkdown(content),
       stub,
       isDraft: isDraft !== false,
       categoryId: categoryId || null,
@@ -178,6 +180,11 @@ router.put('/:id', (req, res) => {
       content: newContent,
       stub
     };
+
+    // Re-render HTML if content changed
+    if (content !== undefined) {
+      updateData.contentHtml = renderMarkdown(newContent);
+    }
 
     if (rest.embed !== undefined) {
       updateData.embed = processEmbed(rest.embed, storage, blogId);

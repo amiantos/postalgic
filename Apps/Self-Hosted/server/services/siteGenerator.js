@@ -24,7 +24,7 @@
 import fs from 'fs';
 import path from 'path';
 import Mustache from 'mustache';
-import { marked } from 'marked';
+import { renderMarkdown } from '../utils/markdown.js';
 import { getDefaultTemplates } from './templates.js';
 import { generateFavicons } from './imageProcessor.js';
 import { generateSyncDirectory } from './syncGenerator.js';
@@ -39,6 +39,7 @@ import {
   calculateHash,
   calculateBufferHash,
   getExcerpt,
+  stripMarkdown,
   extractYouTubeId
 } from '../utils/helpers.js';
 
@@ -147,7 +148,8 @@ function buildBaseContext(blog, categories, tags, sidebarObjects, staticFiles, t
     .sort((a, b) => a.order - b.order)
     .map(obj => {
       if (obj.type === 'text') {
-        const contentHtml = marked(obj.content || '');
+        // Use pre-rendered HTML if available, otherwise render from markdown (fallback for migration)
+        const contentHtml = obj.contentHtml || renderMarkdown(obj.content || '');
         return `<div class="sidebar-text">
     <h2>${obj.title}</h2>
     <div class="sidebar-text-content">
@@ -202,10 +204,8 @@ function buildPostContext(post, baseContext, inList = false) {
   const timezone = baseContext.timezone || 'UTC';
   const urlPath = `${formatDatePath(post.createdAt, timezone)}/${post.stub}`;
 
-  // Convert markdown to HTML
-  // Strip trailing whitespace from inside paragraph tags to match iOS Ink parser behavior
-  let contentHtml = marked(post.content || '')
-    .replace(/<p>([^<]*?) <\/p>/g, '<p>$1</p>');
+  // Use pre-rendered HTML if available, otherwise render from markdown (fallback for migration)
+  let contentHtml = post.contentHtml || renderMarkdown(post.content || '');
 
   // Insert embed HTML (with newlines matching iOS)
   // Use syncId for stable identifiers across sync (falls back to id for local posts)
@@ -355,8 +355,12 @@ function generatePostMeta(post, baseContext) {
   const postUrl = `${blogUrl}/${formatDatePath(post.createdAt, timezone)}/${post.stub}`;
   const pageTitle = `${post.title || getExcerpt(post.content, 50)} - ${baseContext.blogName}`;
 
-  // Generate description from post content (excerpt)
-  const description = getExcerpt(post.content, 200);
+  // Generate description from post content
+  // Use same truncation as iOS: 160 chars max, simple slice at 157 + "..."
+  const plainContent = stripMarkdown(post.content);
+  const description = plainContent.length > 160
+    ? plainContent.substring(0, 157) + '...'
+    : plainContent;
 
   let meta = `<meta name="apple-mobile-web-app-title" content="${baseContext.blogName}"/>`;
   meta += `<link rel="icon" href="/favicon-32x32.png" sizes="32x32" type="image/png">\n`;
@@ -920,14 +924,13 @@ async function generateSitemap(outputDir, templates, baseContext, posts, tags, c
 }
 
 /**
- * Escape HTML special characters
+ * Escape HTML special characters for meta tag content
+ * Match iOS behavior: only escape quotes, less-than, greater-than
  */
 function escapeHtml(text) {
   if (!text) return '';
   return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
 }

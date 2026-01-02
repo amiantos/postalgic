@@ -293,6 +293,7 @@ export async function pullChanges(storage, blogId, syncUrl, password, onProgress
         title: syncSidebar.title,
         type: syncSidebar.type,
         content: syncSidebar.content,
+        contentHtml: syncSidebar.contentHtml || null,
         order: syncSidebar.order,
         links: syncSidebar.links || [],
         syncId: syncSidebar.id,
@@ -314,6 +315,7 @@ export async function pullChanges(storage, blogId, syncUrl, password, onProgress
           title: syncSidebar.title,
           type: syncSidebar.type,
           content: syncSidebar.content,
+          contentHtml: syncSidebar.contentHtml || null,
           order: syncSidebar.order,
           links: syncSidebar.links || []
         });
@@ -322,6 +324,7 @@ export async function pullChanges(storage, blogId, syncUrl, password, onProgress
           title: syncSidebar.title,
           type: syncSidebar.type,
           content: syncSidebar.content,
+          contentHtml: syncSidebar.contentHtml || null,
           order: syncSidebar.order,
           links: syncSidebar.links || [],
           syncId: syncSidebar.id,
@@ -445,6 +448,7 @@ function createOrUpdatePost(storage, blogId, syncPost, categoryMap, tagMap, isDr
     storage.updatePost(blogId, existingPost.id, {
       title: syncPost.title || null,
       content: syncPost.content,
+      contentHtml: syncPost.contentHtml || null,
       stub: syncPost.stub,
       isDraft: isDraft,
       categoryId: categoryId,
@@ -457,6 +461,7 @@ function createOrUpdatePost(storage, blogId, syncPost, categoryMap, tagMap, isDr
     storage.createPost(blogId, {
       title: syncPost.title || null,
       content: syncPost.content,
+      contentHtml: syncPost.contentHtml || null,
       stub: syncPost.stub,
       isDraft: isDraft,
       categoryId: categoryId,

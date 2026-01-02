@@ -286,9 +286,9 @@ class Storage {
 
     const stmt = db.prepare(`
       INSERT INTO posts (
-        id, blog_id, title, content, stub, is_draft, category_id,
+        id, blog_id, title, content, content_html, stub, is_draft, category_id,
         embed_type, embed_position, embed_data, sync_id, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     stmt.run(
@@ -296,6 +296,7 @@ class Storage {
       blogId,
       postData.title || null,
       postData.content || '',
+      postData.contentHtml || null,
       postData.stub || postId,
       postData.isDraft ? 1 : 0,
       postData.categoryId || null,
@@ -350,7 +351,7 @@ class Storage {
 
     const stmt = db.prepare(`
       UPDATE posts SET
-        title = ?, content = ?, stub = ?, is_draft = ?, category_id = ?,
+        title = ?, content = ?, content_html = ?, stub = ?, is_draft = ?, category_id = ?,
         embed_type = ?, embed_position = ?, embed_data = ?, created_at = ?, updated_at = ?
       WHERE id = ? AND blog_id = ?
     `);
@@ -358,6 +359,7 @@ class Storage {
     stmt.run(
       postData.title !== undefined ? postData.title : existing.title,
       postData.content !== undefined ? postData.content : existing.content,
+      postData.contentHtml !== undefined ? postData.contentHtml : existing.contentHtml,
       postData.stub !== undefined ? postData.stub : existing.stub,
       postData.isDraft !== undefined ? (postData.isDraft ? 1 : 0) : (existing.isDraft ? 1 : 0),
       postData.categoryId !== undefined ? postData.categoryId : existing.categoryId,
@@ -418,6 +420,7 @@ class Storage {
       id: row.id,
       title: row.title,
       content: row.content,
+      contentHtml: row.content_html,
       stub: row.stub,
       isDraft: row.is_draft === 1,
       categoryId: row.category_id,
@@ -685,8 +688,8 @@ class Storage {
     `).get(blogId).max_order;
 
     const stmt = db.prepare(`
-      INSERT INTO sidebar_objects (id, blog_id, title, type, content, sort_order, sync_id, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO sidebar_objects (id, blog_id, title, type, content, content_html, sort_order, sync_id, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     stmt.run(
@@ -695,6 +698,7 @@ class Storage {
       objectData.title || 'Untitled',
       objectData.type || 'text',
       objectData.content || null,
+      objectData.contentHtml || null,
       objectData.order ?? maxOrder + 1,
       objectData.syncId || null,
       objectData.createdAt || now  // Use provided createdAt for sync imports
@@ -730,7 +734,7 @@ class Storage {
     }
 
     const stmt = db.prepare(`
-      UPDATE sidebar_objects SET title = ?, type = ?, content = ?, sort_order = ?
+      UPDATE sidebar_objects SET title = ?, type = ?, content = ?, content_html = ?, sort_order = ?
       WHERE id = ? AND blog_id = ?
     `);
 
@@ -738,6 +742,7 @@ class Storage {
       objectData.title !== undefined ? objectData.title : existing.title,
       objectData.type !== undefined ? objectData.type : existing.type,
       objectData.content !== undefined ? objectData.content : existing.content,
+      objectData.contentHtml !== undefined ? objectData.contentHtml : existing.contentHtml,
       objectData.order !== undefined ? objectData.order : existing.order,
       objectId,
       blogId
@@ -799,6 +804,7 @@ class Storage {
       title: row.title,
       type: row.type,
       content: row.content,
+      contentHtml: row.content_html,
       order: row.sort_order,
       links: links,
       syncId: row.sync_id,

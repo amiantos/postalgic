@@ -150,7 +150,9 @@ export async function generateSyncDirectory(storage, blogId, outputDir) {
       mediumShade: blog.mediumShade || null,
       darkShade: blog.darkShade || null
     },
-    themeIdentifier: blog.themeIdentifier || null
+    // Use theme.identifier (not blog.themeIdentifier) to match the theme file path
+    // blog.themeIdentifier may be a database row ID while theme.identifier is the actual identifier
+    themeIdentifier: theme?.identifier || blog.themeIdentifier || null
   };
   const blogJson = stringifyWithSortedKeys(blogData);
   fs.writeFileSync(path.join(syncDir, 'blog.json'), blogJson);
@@ -253,6 +255,7 @@ export async function generateSyncDirectory(storage, blogId, outputDir) {
       type: sidebar.type,
       title: sidebar.title,
       content: sidebar.content || null,
+      contentHtml: sidebar.contentHtml || null,
       order: sidebar.order,
       // Sort links by order for deterministic output
       links: sidebar.links ? [...sidebar.links].sort((a, b) => a.order - b.order).map(l => ({
@@ -480,6 +483,7 @@ function createSyncPost(post, stableId, categoryIdMap, tagIdMap) {
     id: stableId,
     title: post.title || null,
     content: post.content,
+    contentHtml: post.contentHtml || null,
     stub: post.stub,
     createdAt: post.createdAt,
     updatedAt: post.updatedAt || post.createdAt,

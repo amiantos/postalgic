@@ -195,6 +195,7 @@ export async function importBlog(storage, baseUrl, password, onProgress = () => 
       title: syncSidebar.title,
       type: syncSidebar.type,
       content: syncSidebar.content || null,
+      contentHtml: syncSidebar.contentHtml || null,
       order: syncSidebar.order,
       links: syncSidebar.links || [],
       syncId: syncSidebar.id,  // Store remote ID for incremental sync matching
@@ -290,6 +291,7 @@ function createPost(storage, blogId, syncPost, categoryMap, tagMap, isDraft) {
   const post = storage.createPost(blogId, {
     title: syncPost.title || null,
     content: syncPost.content,
+    contentHtml: syncPost.contentHtml || null,
     stub: syncPost.stub,
     isDraft: isDraft,
     categoryId: categoryId,
