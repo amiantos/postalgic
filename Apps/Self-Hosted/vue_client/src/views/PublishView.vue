@@ -131,17 +131,19 @@ async function downloadSite() {
   }
 }
 
-async function publishToAWS(forceUploadAll = false) {
+async function publishToAWS(forceUploadAll = false, skipSync = false) {
   publishing.value = true;
   error.value = null;
   successMessage.value = null;
 
   try {
-    // Perform pre-publish sync first
-    const syncOk = await performPrePublishSync();
-    if (!syncOk) {
-      publishing.value = false;
-      return;
+    // Perform pre-publish sync first (unless skipped)
+    if (!skipSync) {
+      const syncOk = await performPrePublishSync();
+      if (!syncOk) {
+        publishing.value = false;
+        return;
+      }
     }
 
     const result = await publishApi.publishToAWS(blogId.value, { forceUploadAll });
@@ -154,17 +156,19 @@ async function publishToAWS(forceUploadAll = false) {
   }
 }
 
-async function publishToSFTP(forceUploadAll = false) {
+async function publishToSFTP(forceUploadAll = false, skipSync = false) {
   publishing.value = true;
   error.value = null;
   successMessage.value = null;
 
   try {
-    // Perform pre-publish sync first
-    const syncOk = await performPrePublishSync();
-    if (!syncOk) {
-      publishing.value = false;
-      return;
+    // Perform pre-publish sync first (unless skipped)
+    if (!skipSync) {
+      const syncOk = await performPrePublishSync();
+      if (!syncOk) {
+        publishing.value = false;
+        return;
+      }
     }
 
     const result = await publishApi.publishToSFTP(blogId.value, { forceUploadAll });
@@ -177,17 +181,19 @@ async function publishToSFTP(forceUploadAll = false) {
   }
 }
 
-async function publishToGit() {
+async function publishToGit(skipSync = false) {
   publishing.value = true;
   error.value = null;
   successMessage.value = null;
 
   try {
-    // Perform pre-publish sync first
-    const syncOk = await performPrePublishSync();
-    if (!syncOk) {
-      publishing.value = false;
-      return;
+    // Perform pre-publish sync first (unless skipped)
+    if (!skipSync) {
+      const syncOk = await performPrePublishSync();
+      if (!syncOk) {
+        publishing.value = false;
+        return;
+      }
     }
 
     const result = await publishApi.publishToGit(blogId.value);
@@ -356,21 +362,31 @@ function getPublisherLabel(type) {
           <p class="font-medium text-gray-900 dark:text-gray-100">2. Publish to AWS S3</p>
           <p class="text-sm text-gray-500 dark:text-gray-400">Upload directly to your S3 bucket</p>
         </div>
-        <div class="flex gap-2">
+        <div class="flex flex-col items-end gap-2">
+          <div class="flex gap-2">
+            <button
+              @click="publishToAWS(false)"
+              :disabled="publishing || blogStore.publishedPosts.length === 0"
+              class="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50"
+            >
+              {{ publishing ? 'Publishing...' : 'Publish' }}
+            </button>
+            <button
+              @click="publishToAWS(true)"
+              :disabled="publishing || blogStore.publishedPosts.length === 0"
+              class="px-4 py-2 bg-orange-800 text-white rounded-lg hover:bg-orange-900 transition-colors disabled:opacity-50"
+              title="Re-upload all files, even if they already exist in S3"
+            >
+              {{ publishing ? 'Publishing...' : 'Full Publish' }}
+            </button>
+          </div>
           <button
-            @click="publishToAWS(false)"
+            @click="publishToAWS(true, true)"
             :disabled="publishing || blogStore.publishedPosts.length === 0"
-            class="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50"
+            class="text-xs text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 underline"
+            title="Skip pre-publish sync and force upload all files (use to recover from sync issues)"
           >
-            {{ publishing ? 'Publishing...' : 'Publish' }}
-          </button>
-          <button
-            @click="publishToAWS(true)"
-            :disabled="publishing || blogStore.publishedPosts.length === 0"
-            class="px-4 py-2 bg-orange-800 text-white rounded-lg hover:bg-orange-900 transition-colors disabled:opacity-50"
-            title="Re-upload all files, even if they already exist in S3"
-          >
-            {{ publishing ? 'Publishing...' : 'Full Publish' }}
+            Force Publish (Skip Sync)
           </button>
         </div>
       </div>
@@ -381,21 +397,31 @@ function getPublisherLabel(type) {
           <p class="font-medium text-gray-900 dark:text-gray-100">2. Publish via SFTP</p>
           <p class="text-sm text-gray-500 dark:text-gray-400">Upload directly to your server</p>
         </div>
-        <div class="flex gap-2">
+        <div class="flex flex-col items-end gap-2">
+          <div class="flex gap-2">
+            <button
+              @click="publishToSFTP(false)"
+              :disabled="publishing || blogStore.publishedPosts.length === 0"
+              class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+            >
+              {{ publishing ? 'Publishing...' : 'Publish' }}
+            </button>
+            <button
+              @click="publishToSFTP(true)"
+              :disabled="publishing || blogStore.publishedPosts.length === 0"
+              class="px-4 py-2 bg-blue-800 text-white rounded-lg hover:bg-blue-900 transition-colors disabled:opacity-50"
+              title="Re-upload all files, even if they already exist on the server"
+            >
+              {{ publishing ? 'Publishing...' : 'Full Publish' }}
+            </button>
+          </div>
           <button
-            @click="publishToSFTP(false)"
+            @click="publishToSFTP(true, true)"
             :disabled="publishing || blogStore.publishedPosts.length === 0"
-            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+            class="text-xs text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 underline"
+            title="Skip pre-publish sync and force upload all files (use to recover from sync issues)"
           >
-            {{ publishing ? 'Publishing...' : 'Publish' }}
-          </button>
-          <button
-            @click="publishToSFTP(true)"
-            :disabled="publishing || blogStore.publishedPosts.length === 0"
-            class="px-4 py-2 bg-blue-800 text-white rounded-lg hover:bg-blue-900 transition-colors disabled:opacity-50"
-            title="Re-upload all files, even if they already exist on the server"
-          >
-            {{ publishing ? 'Publishing...' : 'Full Publish' }}
+            Force Publish (Skip Sync)
           </button>
         </div>
       </div>
@@ -406,13 +432,23 @@ function getPublisherLabel(type) {
           <p class="font-medium text-gray-900 dark:text-gray-100">2. Publish to Git</p>
           <p class="text-sm text-gray-500 dark:text-gray-400">Push to your Git repository</p>
         </div>
-        <button
-          @click="publishToGit"
-          :disabled="publishing || blogStore.publishedPosts.length === 0"
-          class="px-4 py-2 bg-gray-800 dark:bg-gray-600 text-white rounded-lg hover:bg-gray-900 dark:hover:bg-gray-500 transition-colors disabled:opacity-50"
-        >
-          {{ publishing ? 'Publishing...' : 'Push to Git' }}
-        </button>
+        <div class="flex flex-col items-end gap-2">
+          <button
+            @click="publishToGit()"
+            :disabled="publishing || blogStore.publishedPosts.length === 0"
+            class="px-4 py-2 bg-gray-800 dark:bg-gray-600 text-white rounded-lg hover:bg-gray-900 dark:hover:bg-gray-500 transition-colors disabled:opacity-50"
+          >
+            {{ publishing ? 'Publishing...' : 'Push to Git' }}
+          </button>
+          <button
+            @click="publishToGit(true)"
+            :disabled="publishing || blogStore.publishedPosts.length === 0"
+            class="text-xs text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 underline"
+            title="Skip pre-publish sync (use to recover from sync issues)"
+          >
+            Force Publish (Skip Sync)
+          </button>
+        </div>
       </div>
 
       <!-- Changes Summary -->
