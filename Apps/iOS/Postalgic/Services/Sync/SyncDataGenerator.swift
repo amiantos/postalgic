@@ -658,8 +658,8 @@ class SyncDataGenerator {
         for post in blog.posts {
             if let embed = post.embed {
                 // Save link embed image
-                if embed.embedType == .link, let imageData = embed.imageData, !imageData.isEmpty {
-                    let imageFilename = "embed-\(embed.url.hash).jpg"
+                if embed.embedType == .link, let imageData = embed.imageData, !imageData.isEmpty,
+                   let imageFilename = embed.deterministicImageFilename {
                     let imagePath = syncDirectory.appendingPathComponent("embed-images/\(imageFilename)")
                     try imageData.write(to: imagePath)
                     let hash = imageData.sha256Hash()

@@ -380,20 +380,41 @@ final class Embed {
         self.embedDescription = embedDescription
         self.imageUrl = imageUrl
         self.imageData = imageData
-        self.imageFilename = imageFilename
         self.createdAt = createdAt
+
+        // Auto-generate imageFilename if imageData is provided but no filename was specified
+        if imageData != nil && imageFilename == nil {
+            // Use SHA256 hash of the URL for deterministic, cross-platform compatible filenames
+            let urlHash = url.sha256Hash()
+            self.imageFilename = "embed-\(urlHash.prefix(16)).jpg"
+        } else {
+            self.imageFilename = imageFilename
+        }
     }
-    
+
     var embedType: EmbedType {
         return EmbedType(rawValue: type) ?? .link
     }
-    
+
     var embedPosition: EmbedPosition {
         return EmbedPosition(rawValue: position) ?? .above
     }
-    
+
     var identifier: String {
         return self.persistentModelID.stringRepresentation() ?? "\(self.hashValue)"
+    }
+
+    /// Returns the deterministic image filename, generating one from the URL if not already stored
+    /// This provides backward compatibility for embeds created before imageFilename was stored
+    var deterministicImageFilename: String? {
+        // If we already have a stored filename, use it
+        if let stored = imageFilename, !stored.isEmpty {
+            return stored
+        }
+        // Generate a deterministic filename for backward compatibility
+        guard imageData != nil else { return nil }
+        let urlHash = url.sha256Hash()
+        return "embed-\(urlHash.prefix(16)).jpg"
     }
     
     // Generate RSS-friendly HTML for the embed based on type
@@ -420,9 +441,8 @@ final class Embed {
                 """
             }
             
-            if let _ = imageData {
-                let imageFilename = "embed-\(url.hash).jpg"
-                let imageUrl = "\(blog.url)/images/embeds/\(imageFilename)"
+            if let filename = deterministicImageFilename {
+                let imageUrl = "\(blog.url)/images/embeds/\(filename)"
                 html += """
                 <div style="margin: 8px 0;"><img src="\(imageUrl)" alt="\(title ?? "Link preview")" style="max-width: 100%; height: auto; border-radius: 4px;" /></div>
                 """
@@ -490,9 +510,9 @@ final class Embed {
 
             // Image comes BEFORE title (matching self-hosted structure)
             // Only include if we have image data or an imageUrl
-            if let _ = imageData, let storedFilename = imageFilename {
-                // Use stored filename for deterministic output
-                html += "        <div class=\"link-image\"><img src=\"/images/embeds/\(storedFilename)\" alt=\"\"></div>\n"
+            if let filename = deterministicImageFilename {
+                // Use deterministic filename for consistent cross-platform output
+                html += "        <div class=\"link-image\"><img src=\"/images/embeds/\(filename)\" alt=\"\"></div>\n"
             } else if let imgUrl = imageUrl, !imgUrl.hasPrefix("file://") {
                 // Fallback to direct URL if no local data
                 html += "        <div class=\"link-image\"><img src=\"\(imgUrl)\" alt=\"\"></div>\n"

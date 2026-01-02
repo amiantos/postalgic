@@ -316,8 +316,9 @@ class BlogExportService {
                 var imageFilename: String? = nil
                 if embed.embedType == .link,
                    let imageData = embed.imageData,
-                   !imageData.isEmpty {
-                    imageFilename = "embed-\(embed.url.hash).jpg"
+                   !imageData.isEmpty,
+                   let deterministicFilename = embed.deterministicImageFilename {
+                    imageFilename = deterministicFilename
                     try imageData.write(to: exportDir.appendingPathComponent("embed-images/\(imageFilename!)"))
                 }
 

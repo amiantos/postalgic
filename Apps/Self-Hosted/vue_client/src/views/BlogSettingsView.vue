@@ -2,6 +2,7 @@
 import { ref, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useBlogStore } from '@/stores/blog';
+import { blogApi } from '@/api';
 import PageToolbar from '@/components/PageToolbar.vue';
 import SettingsTabs from '@/components/SettingsTabs.vue';
 
@@ -15,6 +16,7 @@ const form = ref({});
 const saving = ref(false);
 const error = ref(null);
 const success = ref(false);
+const exporting = ref(false);
 
 watch(() => blogStore.currentBlog, (blog) => {
   if (blog) {
@@ -42,6 +44,29 @@ async function deleteBlog() {
   if (confirm(`Are you sure you want to delete "${blogStore.currentBlog?.name}"? This cannot be undone.`)) {
     await blogStore.deleteBlog(blogId.value);
     router.push('/');
+  }
+}
+
+async function downloadDebugExport() {
+  exporting.value = true;
+  error.value = null;
+
+  try {
+    const { blob, filename } = await blogApi.debugExport(blogId.value);
+
+    // Create download link
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  } catch (e) {
+    error.value = e.message;
+  } finally {
+    exporting.value = false;
   }
 }
 </script>
@@ -200,6 +225,22 @@ async function deleteBlog() {
         </button>
       </div>
     </form>
+
+    <!-- Developer Tools -->
+    <section class="surface p-6 mt-8">
+      <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">Developer Tools</h3>
+      <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
+        Export a debug bundle containing the full generated site and sync data. Useful for comparing output between iOS and Self-Hosted apps.
+      </p>
+      <button
+        type="button"
+        @click="downloadDebugExport"
+        :disabled="exporting"
+        class="px-5 py-2.5 bg-gray-600 text-white rounded-xl font-medium hover:bg-gray-700 transition-colors shadow-sm disabled:opacity-50"
+      >
+        {{ exporting ? 'Exporting...' : 'Download Debug Export' }}
+      </button>
+    </section>
     </div>
   </div>
 </template>

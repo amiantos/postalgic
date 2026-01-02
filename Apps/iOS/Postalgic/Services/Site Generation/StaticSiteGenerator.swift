@@ -118,9 +118,8 @@ class StaticSiteGenerator {
 
         for post in publishedPosts {
             if let embed = post.embed {
-                if embed.embedType == .link, let imageData = embed.imageData {
-                    // Create a predictable filename based on URL hash
-                    let imageFilename = "embed-\(embed.url.hash).jpg"
+                if embed.embedType == .link, let imageData = embed.imageData,
+                   let imageFilename = embed.deterministicImageFilename {
                     let imagePath = embedsDir.appendingPathComponent(imageFilename)
 
                     print("📸 Saving link image to: \(imagePath.path)")
@@ -319,6 +318,63 @@ class StaticSiteGenerator {
     }
     
     // MARK: - Main Generation Methods
+
+    /// Generates the site files to a directory without publishing
+    /// - Parameter outputDirectory: The directory to write site files to
+    /// - Throws: SiteGeneratorError
+    func generateSiteToDirectory(_ outputDirectory: URL) async throws {
+        self.siteDirectory = outputDirectory
+
+        print("📝 Generating site in \(outputDirectory.path)")
+
+        // Create CSS directory and file
+        let cssDirectory = outputDirectory.appendingPathComponent("css")
+        try FileManager.default.createDirectory(
+            at: cssDirectory,
+            withIntermediateDirectories: true
+        )
+        try templateEngine.renderCSS().write(
+            to: cssDirectory.appendingPathComponent("style.css"),
+            atomically: true,
+            encoding: .utf8
+        )
+
+        // Create images/embeds directory for embed images
+        let embedImagesDirectory = outputDirectory.appendingPathComponent("images/embeds")
+        try FileManager.default.createDirectory(
+            at: embedImagesDirectory,
+            withIntermediateDirectories: true
+        )
+
+        // Extract and save all embed images
+        saveEmbedImages(to: outputDirectory)
+
+        // Save static files
+        saveStaticFiles(to: outputDirectory)
+
+        // Generate site content
+        try generateIndexPage()
+        try generatePostPages()
+        try generateArchivesPage()
+        try generateMonthlyArchivePages()
+        try generateTagPages()
+        try generateCategoryPages()
+        try generateRSSFeed()
+
+        // Generate robots.txt and sitemap.xml
+        try generateRobotsTxt()
+        try generateSitemap()
+
+        // Always generate sync directory for debug export
+        do {
+            _ = try SyncDataGenerator.generateSyncDirectory(
+                for: blog,
+                in: outputDirectory
+            ) { _ in }
+        } catch {
+            print("⚠️ Failed to generate sync data: \(error)")
+        }
+    }
 
     /// Generates a static site for the blog
     /// - Returns: URL to the generated ZIP file if not publishing to AWS
