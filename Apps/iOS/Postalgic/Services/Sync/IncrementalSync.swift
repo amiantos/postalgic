@@ -149,18 +149,26 @@ class IncrementalSync {
         }
 
         // Step 3: Process category changes
+        // Note: For "new" categories, we still check categoryMap by syncId to prevent duplicates
+        // when syncing back after publishing from another client.
         for file in categorized.categories.new {
             progressUpdate(IncrementalSyncProgress(step: "Adding new categories...", phase: .applying, progress: Double(appliedChanges) / Double(max(1, totalChanges))))
             if let entityId = SyncChecker.extractEntityId(from: file.path) {
                 let categoryData = try await downloadFile(from: "\(baseURL)/sync/\(file.path)")
                 let syncCategory = try decoder.decode(SyncDataGenerator.SyncCategory.self, from: categoryData)
 
-                let category = Category(blog: blog, name: syncCategory.name)
-                category.categoryDescription = syncCategory.description
-                category.stub = syncCategory.stub
-                category.syncId = syncCategory.id
-                modelContext.insert(category)
-                categoryMap[syncCategory.id] = category
+                if let existingCategory = categoryMap[syncCategory.id] {
+                    existingCategory.name = syncCategory.name
+                    existingCategory.categoryDescription = syncCategory.description
+                    existingCategory.stub = syncCategory.stub
+                } else {
+                    let category = Category(blog: blog, name: syncCategory.name)
+                    category.categoryDescription = syncCategory.description
+                    category.stub = syncCategory.stub
+                    category.syncId = syncCategory.id
+                    modelContext.insert(category)
+                    categoryMap[syncCategory.id] = category
+                }
             }
             appliedChanges += 1
         }
@@ -198,17 +206,24 @@ class IncrementalSync {
         }
 
         // Step 4: Process tag changes
+        // Note: For "new" tags, we still check tagMap by syncId to prevent duplicates
+        // when syncing back after publishing from another client.
         for file in categorized.tags.new {
             progressUpdate(IncrementalSyncProgress(step: "Adding new tags...", phase: .applying, progress: Double(appliedChanges) / Double(max(1, totalChanges))))
             if let entityId = SyncChecker.extractEntityId(from: file.path) {
                 let tagData = try await downloadFile(from: "\(baseURL)/sync/\(file.path)")
                 let syncTag = try decoder.decode(SyncDataGenerator.SyncTag.self, from: tagData)
 
-                let tag = Tag(blog: blog, name: syncTag.name)
-                tag.stub = syncTag.stub
-                tag.syncId = syncTag.id
-                modelContext.insert(tag)
-                tagMap[syncTag.id] = tag
+                if let existingTag = tagMap[syncTag.id] {
+                    existingTag.name = syncTag.name
+                    existingTag.stub = syncTag.stub
+                } else {
+                    let tag = Tag(blog: blog, name: syncTag.name)
+                    tag.stub = syncTag.stub
+                    tag.syncId = syncTag.id
+                    modelContext.insert(tag)
+                    tagMap[syncTag.id] = tag
+                }
             }
             appliedChanges += 1
         }
@@ -261,12 +276,16 @@ class IncrementalSync {
         }
 
         // Step 6: Process post changes
+        // Note: For "new" posts, we still check postMap by syncId because if a post was created
+        // locally and published, it won't be in localSyncHashes but will exist with that syncId.
+        // This prevents duplicate posts when syncing back after publishing from another client.
         for file in categorized.posts.new {
             progressUpdate(IncrementalSyncProgress(step: "Adding new posts...", phase: .applying, progress: Double(appliedChanges) / Double(max(1, totalChanges))))
             if let entityId = SyncChecker.extractEntityId(from: file.path) {
                 let postData = try await downloadFile(from: "\(baseURL)/sync/\(file.path)")
                 let syncPost = try decoder.decode(SyncDataGenerator.SyncPost.self, from: postData)
-                try createOrUpdatePost(syncPost, blog: blog, categoryMap: categoryMap, tagMap: tagMap, embedImageData: embedImageData, isDraft: false, modelContext: modelContext, existingPost: nil)
+                let existingPost = postMap[syncPost.id]
+                try createOrUpdatePost(syncPost, blog: blog, categoryMap: categoryMap, tagMap: tagMap, embedImageData: embedImageData, isDraft: false, modelContext: modelContext, existingPost: existingPost)
             }
             appliedChanges += 1
         }
@@ -299,22 +318,43 @@ class IncrementalSync {
             }
         }
 
+        // Note: For "new" sidebar objects, we still check sidebarMap by syncId to prevent duplicates
+        // when syncing back after publishing from another client.
         for file in categorized.sidebar.new {
             progressUpdate(IncrementalSyncProgress(step: "Adding sidebar content...", phase: .applying, progress: Double(appliedChanges) / Double(max(1, totalChanges))))
             if let entityId = SyncChecker.extractEntityId(from: file.path) {
                 let sidebarData = try await downloadFile(from: "\(baseURL)/sync/\(file.path)")
                 let syncSidebar = try decoder.decode(SyncDataGenerator.SyncSidebarObject.self, from: sidebarData)
 
-                let sidebarType: SidebarObjectType = syncSidebar.type == "linkList" ? .linkList : .text
-                let sidebar = SidebarObject(blog: blog, title: syncSidebar.title, type: sidebarType, order: syncSidebar.order)
-                sidebar.content = syncSidebar.content
-                sidebar.syncId = syncSidebar.id
-                modelContext.insert(sidebar)
+                if let existingSidebar = sidebarMap[syncSidebar.id] {
+                    // Update existing sidebar
+                    existingSidebar.title = syncSidebar.title
+                    existingSidebar.content = syncSidebar.content
+                    existingSidebar.order = syncSidebar.order
 
-                if let links = syncSidebar.links {
-                    for syncLink in links {
-                        let link = LinkItem(sidebarObject: sidebar, title: syncLink.title, url: syncLink.url, order: syncLink.order)
-                        modelContext.insert(link)
+                    // Update links
+                    for link in existingSidebar.links {
+                        modelContext.delete(link)
+                    }
+                    if let links = syncSidebar.links {
+                        for syncLink in links {
+                            let link = LinkItem(sidebarObject: existingSidebar, title: syncLink.title, url: syncLink.url, order: syncLink.order)
+                            modelContext.insert(link)
+                        }
+                    }
+                } else {
+                    let sidebarType: SidebarObjectType = syncSidebar.type == "linkList" ? .linkList : .text
+                    let sidebar = SidebarObject(blog: blog, title: syncSidebar.title, type: sidebarType, order: syncSidebar.order)
+                    sidebar.content = syncSidebar.content
+                    sidebar.syncId = syncSidebar.id
+                    modelContext.insert(sidebar)
+                    sidebarMap[syncSidebar.id] = sidebar
+
+                    if let links = syncSidebar.links {
+                        for syncLink in links {
+                            let link = LinkItem(sidebarObject: sidebar, title: syncLink.title, url: syncLink.url, order: syncLink.order)
+                            modelContext.insert(link)
+                        }
                     }
                 }
             }
@@ -364,26 +404,37 @@ class IncrementalSync {
             }
         }
 
+        // Note: For "new" static files, we still check staticFileMap by syncId to prevent duplicates
+        // when syncing back after publishing from another client.
         for file in categorized.staticFiles.new {
             progressUpdate(IncrementalSyncProgress(step: "Downloading static files...", phase: .applying, progress: Double(appliedChanges) / Double(max(1, totalChanges))))
             let filename = file.path.replacingOccurrences(of: "static-files/", with: "")
-            let fileData = try await downloadFile(from: "\(baseURL)/sync/\(file.path)")
 
-            // Get file info from static files index
-            let staticIndexData = try await downloadFile(from: "\(baseURL)/sync/static-files/index.json")
-            let staticIndex = try decoder.decode(SyncDataGenerator.SyncStaticFilesIndex.self, from: staticIndexData)
-            let fileEntry = staticIndex.files.first { $0.filename == filename }
+            // Check if static file already exists locally
+            if let existingStaticFile = staticFileMap[filename] {
+                // Update existing static file
+                let fileData = try await downloadFile(from: "\(baseURL)/sync/\(file.path)")
+                existingStaticFile.data = fileData
+            } else {
+                let fileData = try await downloadFile(from: "\(baseURL)/sync/\(file.path)")
 
-            let staticFile = StaticFile(
-                blog: blog,
-                filename: filename,
-                data: fileData,
-                mimeType: fileEntry?.mimeType ?? "application/octet-stream"
-            )
-            staticFile.isSpecialFile = fileEntry?.isSpecialFile ?? false
-            staticFile.specialFileType = fileEntry?.specialFileType
-            staticFile.syncId = filename
-            modelContext.insert(staticFile)
+                // Get file info from static files index
+                let staticIndexData = try await downloadFile(from: "\(baseURL)/sync/static-files/index.json")
+                let staticIndex = try decoder.decode(SyncDataGenerator.SyncStaticFilesIndex.self, from: staticIndexData)
+                let fileEntry = staticIndex.files.first { $0.filename == filename }
+
+                let staticFile = StaticFile(
+                    blog: blog,
+                    filename: filename,
+                    data: fileData,
+                    mimeType: fileEntry?.mimeType ?? "application/octet-stream"
+                )
+                staticFile.isSpecialFile = fileEntry?.isSpecialFile ?? false
+                staticFile.specialFileType = fileEntry?.specialFileType
+                staticFile.syncId = filename
+                modelContext.insert(staticFile)
+                staticFileMap[filename] = staticFile
+            }
 
             appliedChanges += 1
         }
