@@ -69,6 +69,7 @@
 		44E4AA2D2EEFEF6800364738 /* SyncChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44E4AA2C2EEFEF6800364738 /* SyncChecker.swift */; };
 		44E4AA2E2EEFEF6800364738 /* IncrementalSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44E4AA2B2EEFEF6800364738 /* IncrementalSync.swift */; };
 		44EB9B502F07444D0058E2C0 /* SyncSessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44EB9B4F2F07444D0058E2C0 /* SyncSessionManager.swift */; };
+		44EB9BC72F0866330058E2C0 /* Logging.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44EB9BC52F0866330058E2C0 /* Logging.swift */; };
 		44F858B82DC43FAD00B8179B /* BlogDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44F858B72DC43FAD00B8179B /* BlogDashboardView.swift */; };
 /* End PBXBuildFile section */
 
@@ -149,6 +150,7 @@
 		44E4AA2B2EEFEF6800364738 /* IncrementalSync.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IncrementalSync.swift; sourceTree = "<group>"; };
 		44E4AA2C2EEFEF6800364738 /* SyncChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncChecker.swift; sourceTree = "<group>"; };
 		44EB9B4F2F07444D0058E2C0 /* SyncSessionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncSessionManager.swift; sourceTree = "<group>"; };
+		44EB9BC52F0866330058E2C0 /* Logging.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Logging.swift; sourceTree = "<group>"; };
 		44F858B72DC43FAD00B8179B /* BlogDashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlogDashboardView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -340,6 +342,7 @@
 				44C364102DB768DB0057567C /* Services */,
 				44C3641B2DB768DB0057567C /* Views */,
 				44EB9BB72F079CDE0058E2C0 /* Resources */,
+				44EB9BC62F0866330058E2C0 /* Utils */,
 			);
 			path = Postalgic;
 			sourceTree = "<group>";
@@ -381,6 +384,14 @@
 				44E4AA252EEF86E500364738 /* SyncSettingsView.swift */,
 			);
 			path = Sync;
+			sourceTree = "<group>";
+		};
+		44EB9BC62F0866330058E2C0 /* Utils */ = {
+			isa = PBXGroup;
+			children = (
+				44EB9BC52F0866330058E2C0 /* Logging.swift */,
+			);
+			path = Utils;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -574,6 +585,7 @@
 				44362EDF2DBD82B700EA704F /* TemplateEngine.swift in Sources */,
 				44E4AA222EEF86CE00364738 /* SyncDataGenerator.swift in Sources */,
 				44E4AA232EEF86CE00364738 /* SyncImporter.swift in Sources */,
+				44EB9BC72F0866330058E2C0 /* Logging.swift in Sources */,
 				443F0B512DBAD7AC00034EF1 /* PreviewData.swift in Sources */,
 				44499DE42DC5CD1E00A9624B /* PostsView.swift in Sources */,
 				44362EDD2DBD829000EA704F /* TemplateModels.swift in Sources */,

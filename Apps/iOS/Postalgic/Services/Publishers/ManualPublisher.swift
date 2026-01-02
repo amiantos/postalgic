@@ -20,39 +20,39 @@ class ManualPublisher: Publisher {
     /// - Throws: Error if zipping fails
     func publish(directoryURL: URL, statusUpdate: @escaping (String) -> Void) async throws -> URL? {
         statusUpdate("Creating ZIP file...")
-        print("📝 Creating ZIP file from site directory: \(directoryURL.path)")
-        
+        Log.info("Creating ZIP file from site directory: \(directoryURL.path)")
+
         // Create a temporary file URL for the zip file with a unique timestamp
         let timestamp = Int(Date().timeIntervalSince1970)
         let zipFileName = "site_\(timestamp).zip"
         let zipFilePath = FileManager.default.temporaryDirectory.appendingPathComponent(zipFileName)
-        
+
         // Remove existing file if it exists
         let fileManager = FileManager.default
         if fileManager.fileExists(atPath: zipFilePath.path) {
             try fileManager.removeItem(at: zipFilePath)
-            print("🗑️ Removed existing ZIP file at path: \(zipFilePath.path)")
+            Log.debug("Removed existing ZIP file at path: \(zipFilePath.path)")
         }
-        
+
         // Make sure the directory exists
         try fileManager.createDirectory(
             at: zipFilePath.deletingLastPathComponent(),
             withIntermediateDirectories: true,
             attributes: nil
         )
-        
+
         do {
-            print("📦 Adding directory contents: \(directoryURL.path) to ZIP")
+            Log.debug("Adding directory contents: \(directoryURL.path) to ZIP")
             statusUpdate("Adding files to ZIP...")
-            
+
             // Zip the directory contents
             try fileManager.zipItem(at: directoryURL, to: zipFilePath, shouldKeepParent: false)
-            
-            print("✅ ZIP file created successfully at: \(zipFilePath.path)")
+
+            Log.info("ZIP file created successfully at: \(zipFilePath.path)")
             statusUpdate("ZIP file created successfully")
             return zipFilePath
         } catch {
-            print("❌ Error creating ZIP file: \(error.localizedDescription)")
+            Log.error("Error creating ZIP file: \(error.localizedDescription)")
             throw StaticSiteGenerator.SiteGeneratorError.publishingFailed("Failed to create ZIP file: \(error.localizedDescription)")
         }
     }

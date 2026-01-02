@@ -135,26 +135,26 @@ class IncrementalSync {
         }
 
         // Step 2.5: Process theme changes (new and modified)
-        print("🎨 IncrementalSync: Processing \(categorized.themes.new.count) new and \(categorized.themes.modified.count) modified themes")
+        Log.debug("IncrementalSync: Processing \(categorized.themes.new.count) new and \(categorized.themes.modified.count) modified themes")
         for file in categorized.themes.new + categorized.themes.modified {
-            print("🎨 IncrementalSync: Processing theme file: \(file.path)")
+            Log.debug("IncrementalSync: Processing theme file: \(file.path)")
             progressUpdate(IncrementalSyncProgress(step: "Updating theme...", phase: .applying, progress: Double(appliedChanges) / Double(max(1, totalChanges))))
             let themeData = try await downloadFile(from: "\(baseURL)/sync/\(file.path)")
             let syncTheme = try decoder.decode(SyncDataGenerator.SyncTheme.self, from: themeData)
-            print("🎨 IncrementalSync: Downloaded theme '\(syncTheme.name)' with \(syncTheme.templates.count) templates")
+            Log.debug("IncrementalSync: Downloaded theme '\(syncTheme.name)' with \(syncTheme.templates.count) templates")
 
             // Check if theme already exists
             if let existingTheme = ThemeService.shared.getTheme(identifier: syncTheme.identifier) {
                 // Update existing theme's templates
                 existingTheme.templates = syncTheme.templates
-                print("🎨 IncrementalSync: Updated existing theme '\(syncTheme.identifier)'")
+                Log.debug("IncrementalSync: Updated existing theme '\(syncTheme.identifier)'")
             } else {
                 // Create new theme with templates
                 let theme = Theme(name: syncTheme.name, identifier: syncTheme.identifier, isCustomized: true)
                 theme.templates = syncTheme.templates
                 modelContext.insert(theme)
                 ThemeService.shared.addTheme(theme)
-                print("🎨 IncrementalSync: Created new theme '\(syncTheme.identifier)'")
+                Log.debug("IncrementalSync: Created new theme '\(syncTheme.identifier)'")
             }
             appliedChanges += 1
         }

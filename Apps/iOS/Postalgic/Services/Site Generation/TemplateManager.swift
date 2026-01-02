@@ -76,7 +76,7 @@ class TemplateManager {
             }
 
             if !loaded {
-                print("Warning: Could not load template file: \(name).\(ext ?? "") - searched in: \(possibleSubdirectories)")
+                Log.warn("Could not load template file: \(name).\(ext ?? "") - searched in: \(possibleSubdirectories)")
             }
         }
     }
@@ -92,16 +92,16 @@ class TemplateManager {
             do {
                 try library.register(content, named: name)
             } catch {
-                print("Error registering default template \(name): \(error)")
+                Log.error("Error registering default template \(name): \(error)")
             }
         }
-        
+
         // Then register custom templates (overriding defaults if names match)
         for (name, content) in customTemplates {
             do {
                 try library.register(content, named: name)
             } catch {
-                print("Error registering custom template \(name): \(error)")
+                Log.error("Error registering custom template \(name): \(error)")
             }
         }
         
@@ -130,35 +130,35 @@ class TemplateManager {
     private func loadCustomTheme() {
         guard let themeIdentifier = blog.themeIdentifier, themeIdentifier != "default" else {
             // Use default templates
-            print("Using default theme")
+            Log.debug("Using default theme")
             return
         }
-        
+
         // Try to find the custom theme using the model context
         guard let modelContext = blog.modelContext else {
-            print("No model context available for blog, using default theme")
+            Log.debug("No model context available for blog, using default theme")
             return
         }
-        
+
         // Try to find the theme
         let descriptor = FetchDescriptor<Theme>()
-        
+
         do {
             let allThemes = try modelContext.fetch(descriptor)
-            
+
             // Find the theme with matching identifier
             if let customTheme = allThemes.first(where: { $0.identifier == themeIdentifier }) {
-                print("Found theme: \(customTheme.name)")
-                
+                Log.debug("Found theme: \(customTheme.name)")
+
                 // Load all templates from the dictionary
                 customTemplates = customTheme.templates
-                
-                print("Loaded \(customTemplates.count) templates from theme")
+
+                Log.debug("Loaded \(customTemplates.count) templates from theme")
             } else {
-                print("Theme with ID \(themeIdentifier) not found, using default theme")
+                Log.debug("Theme with ID \(themeIdentifier) not found, using default theme")
             }
         } catch {
-            print("Error loading custom theme: \(error)")
+            Log.error("Error loading custom theme: \(error)")
         }
     }
     

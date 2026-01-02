@@ -60,23 +60,23 @@ class KeychainService {
             let attributesToUpdate: [String: Any] = [
                 kSecValueData as String: passwordData
             ]
-            
+
             let updateStatus = SecItemUpdate(query as CFDictionary, attributesToUpdate as CFDictionary)
             guard updateStatus == errSecSuccess else {
-                print("error update")
+                Log.error("Keychain update failed")
                 throw KeychainError.unexpectedStatus(updateStatus)
             }
         } else if searchStatus == errSecItemNotFound {
             // Add new item
             query[kSecValueData as String] = passwordData
-            
+
             let addStatus = SecItemAdd(query as CFDictionary, nil)
             guard addStatus == errSecSuccess else {
-                print("error add")
+                Log.error("Keychain add failed")
                 throw KeychainError.unexpectedStatus(addStatus)
             }
         } else {
-            print("error search")
+            Log.error("Keychain search failed")
             throw KeychainError.unexpectedStatus(searchStatus)
         }
     }
@@ -168,25 +168,25 @@ extension Blog {
         do {
             try KeychainService.storePassword(password, for: persistentModelID, type: .aws)
         } catch {
-            print("Failed to store AWS secret key in keychain: \(error)")
+            Log.error("Failed to store AWS secret key in keychain: \(error)")
         }
     }
-    
+
     /// Sets the FTP password in keychain
     func setFtpPassword(_ password: String) {
         do {
             try KeychainService.storePassword(password, for: persistentModelID, type: .ftp)
         } catch {
-            print("Failed to store FTP password in keychain: \(error)")
+            Log.error("Failed to store FTP password in keychain: \(error)")
         }
     }
-    
+
     /// Sets the Git password in keychain
     func setGitPassword(_ password: String) {
         do {
             try KeychainService.storePassword(password, for: persistentModelID, type: .git)
         } catch {
-            print("Failed to store Git password in keychain: \(error)")
+            Log.error("Failed to store Git password in keychain: \(error)")
         }
     }
 

@@ -64,11 +64,11 @@ class LinkMetadataService {
             
             return (title, description, imageUrl, imageData)
         } catch {
-            print("Error fetching metadata: \(error.localizedDescription)")
+            Log.error("Error fetching metadata: \(error.localizedDescription)")
             return (nil, nil, nil, nil)
         }
     }
-    
+
     /// Fetches YouTube video title using LinkPresentation
     /// - Parameter urlString: The YouTube video URL
     /// - Returns: The video title, if available
@@ -76,13 +76,13 @@ class LinkMetadataService {
         guard let url = URL(string: urlString) else {
             return nil
         }
-        
+
         do {
             let metadataProvider = LPMetadataProvider()
             let metadata = try await metadataProvider.startFetchingMetadata(for: url)
             return metadata.title
         } catch {
-            print("Error fetching YouTube title: \(error.localizedDescription)")
+            Log.error("Error fetching YouTube title: \(error.localizedDescription)")
             return nil
         }
     }

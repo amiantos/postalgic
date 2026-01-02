@@ -212,14 +212,14 @@ class GitPublisher: Publisher {
             let hashFilePath = tempRepoURL.appendingPathComponent(Self.hashFilePath)
 
             guard fileManager.fileExists(atPath: hashFilePath.path) else {
-                print("📦 No remote hash file found in repository")
+                Log.debug("No remote hash file found in repository")
                 try? fileManager.removeItem(at: tempRepoURL)
                 return nil
             }
 
             let data = try Data(contentsOf: hashFilePath)
             let hashFile = try JSONDecoder().decode(RemoteHashFile.self, from: data)
-            print("📦 Found remote hash file from \(hashFile.publishedBy) with \(hashFile.fileHashes.count) files")
+            Log.debug("Found remote hash file from \(hashFile.publishedBy) with \(hashFile.fileHashes.count) files")
 
             // Clean up temp directory
             try? fileManager.removeItem(at: tempRepoURL)
@@ -227,7 +227,7 @@ class GitPublisher: Publisher {
             return hashFile
 
         } catch {
-            print("📦 Failed to fetch remote hashes from Git: \(error.localizedDescription)")
+            Log.error("Failed to fetch remote hashes from Git: \(error.localizedDescription)")
             try? fileManager.removeItem(at: tempRepoURL)
             return nil
         }
@@ -239,7 +239,7 @@ class GitPublisher: Publisher {
         // For Git publisher, the hash file is written to the site directory
         // by StaticSiteGenerator before publish() is called, so this is a no-op.
         // The hash file gets committed along with the rest of the site.
-        print("📦 Git publisher: hash file should be written to site directory before publish")
+        Log.debug("Git publisher: hash file should be written to site directory before publish")
     }
 
     /// Writes the hash file to a specific directory (used by StaticSiteGenerator for Git publishing)
@@ -256,7 +256,7 @@ class GitPublisher: Publisher {
         // Write the hash file
         let hashFilePath = directoryURL.appendingPathComponent(Self.hashFilePath)
         try data.write(to: hashFilePath)
-        print("📦 Wrote hash file to \(hashFilePath.path) with \(hashes.count) file hashes")
+        Log.debug("Wrote hash file to \(hashFilePath.path) with \(hashes.count) file hashes")
     }
 
     /// Error types that can occur during Git operations

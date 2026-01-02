@@ -572,7 +572,7 @@ class SyncDataGenerator {
                     modified: isoFormatter.string(from: post.updatedAt ?? post.createdAt)
                 ))
             } catch {
-                print("⚠️ Error generating sync data for post \(post.stub ?? stableId): \(error)")
+                Log.warn("Error generating sync data for post \(post.stub ?? stableId): \(error)")
                 throw error
             }
         }
@@ -791,13 +791,13 @@ class SyncDataGenerator {
         // Build embed if exists
         var syncEmbed: SyncEmbed? = nil
         if let embed = post.embed {
-            print("📎 Processing embed for post: type=\(embed.type), images count=\(embed.images.count)")
+            Log.verbose("Processing embed for post: type=\(embed.type), images count=\(embed.images.count)")
 
             // Use deterministicImageFilename which uses SHA256 hash for cross-platform compatibility
             let imageFilename = embed.deterministicImageFilename
 
             let embedImages = embed.images.sorted { $0.order < $1.order }.map { image in
-                print("   📷 Embed image: \(image.filename)")
+                Log.verbose("   Embed image: \(image.filename)")
                 return SyncEmbedImage(filename: image.filename, order: image.order)
             }
 

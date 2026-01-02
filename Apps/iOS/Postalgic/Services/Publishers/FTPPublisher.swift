@@ -34,7 +34,7 @@ class FTPPublisher: Publisher {
         self.remotePath = remotePath
         
         if !useSFTP {
-            print("⚠️ Warning: Only SFTP is supported. FTP mode will be ignored.")
+            Log.warn("Only SFTP is supported. FTP mode will be ignored.")
         }
     }
     
@@ -67,55 +67,55 @@ class FTPPublisher: Publisher {
                                                reconnect: .never)
             statusUpdate("Connected and authenticated to \(host)")
         } catch {
-            print("❌ SFTP connection failed: \(error.localizedDescription)")
+            Log.error("SFTP connection failed: \(error.localizedDescription)")
             statusUpdate("Connection failed: \(error.localizedDescription)")
             throw FTPPublisherError.connectionFailed("Failed to connect to \(host):\(port) - \(error.localizedDescription)")
         }
-        
+
         // Create SFTP session
         statusUpdate("Opening SFTP session...")
         let sftp = try await client.openSFTP()
-        
+
         // Track processed directories to avoid redundant checks/creation
         var processedDirectories: Set<String> = []
-        
+
         // First upload modified files
         if !modifiedFiles.isEmpty {
             statusUpdate("Preparing to upload \(modifiedFiles.count) modified files...")
-            
+
             for (index, relativePath) in modifiedFiles.enumerated() {
                 // Create the full file URL
                 let fileURL = directoryURL.appendingPathComponent(relativePath)
-                
+
                 // Skip if file doesn't exist
                 guard fileManager.fileExists(atPath: fileURL.path) else {
                     continue
                 }
-                
+
                 // Combine with remote path
                 let remoteFilePath = remotePath.hasSuffix("/") ?
                     "\(remotePath)\(relativePath)" :
                     "\(remotePath)/\(relativePath)"
-                
+
                 // Get the remote directory path for this file
                 let remoteFileComponents = remoteFilePath.components(separatedBy: "/")
                 let remoteDirectoryPath = remoteFileComponents.dropLast().joined(separator: "/")
-                
+
                 // Create remote directory if it doesn't exist yet and isn't in our processed list
                 if !processedDirectories.contains(remoteDirectoryPath) {
                     statusUpdate("Creating remote directory: \(remoteDirectoryPath)")
                     try await createRemoteDirectoryStructure(sftp: sftp, path: remoteDirectoryPath)
                     processedDirectories.insert(remoteDirectoryPath)
                 }
-                
+
                 // Update status with current file being uploaded
                 let progressPercent = Int(Double(index + 1) / Double(modifiedFiles.count) * 100)
                 statusUpdate("Uploading file \(index + 1)/\(modifiedFiles.count) (\(progressPercent)%): \(relativePath)")
-                
+
                 do {
                     // Read file data
                     let fileData = try Data(contentsOf: fileURL)
-                    
+
                     // Upload the file
                     try await uploadFile(
                         sftp: sftp,
@@ -123,7 +123,7 @@ class FTPPublisher: Publisher {
                         remotePath: remoteFilePath
                     )
                 } catch {
-                    print("❌ Error uploading \(relativePath): \(error.localizedDescription)")
+                    Log.error("Error uploading \(relativePath): \(error.localizedDescription)")
                     statusUpdate("Error uploading \(relativePath): \(error.localizedDescription)")
                     
                     // Close connections and throw the error
@@ -152,12 +152,12 @@ class FTPPublisher: Publisher {
                     try await sftp.remove(at: remoteFilePath)
                 } catch {
                     // Just log the error but continue with other files
-                    print("⚠️ Error deleting \(relativePath): \(error.localizedDescription)")
+                    Log.warn("Error deleting \(relativePath): \(error.localizedDescription)")
                     statusUpdate("Warning: Could not delete \(relativePath): \(error.localizedDescription)")
                 }
             }
         }
-        
+
         // Close the SFTP session and SSH connection
         statusUpdate("Closing SFTP connection...")
         try await sftp.close()
@@ -218,18 +218,18 @@ class FTPPublisher: Publisher {
                                                  reconnect: .never)
             statusUpdate("Connected and authenticated to \(host)")
         } catch {
-            print("❌ SFTP connection failed: \(error.localizedDescription)")
+            Log.error("SFTP connection failed: \(error.localizedDescription)")
             statusUpdate("Connection failed: \(error.localizedDescription)")
             throw FTPPublisherError.connectionFailed("Failed to connect to \(host):\(port) - \(error.localizedDescription)")
         }
-        
+
         // Create SFTP session
         statusUpdate("Opening SFTP session...")
         let sftp = try await client.openSFTP()
-        
+
         // Track processed directories to avoid redundant checks/creation
         var processedDirectories: Set<String> = []
-        
+
         // Upload each file to SFTP
         for (index, fileURL) in filesToUpload.enumerated() {
             // Determine the relative path from the base directory
@@ -271,21 +271,21 @@ class FTPPublisher: Publisher {
                 )
                 
                 fileCount += 1
-                
+
             } catch {
-                print("❌ Error uploading \(relativePath): \(error.localizedDescription)")
+                Log.error("Error uploading \(relativePath): \(error.localizedDescription)")
                 statusUpdate("Error uploading \(relativePath): \(error.localizedDescription)")
                 uploadErrors.append(
                     "\(relativePath): \(error.localizedDescription)"
                 )
             }
         }
-        
+
         // Close the SFTP session and SSH connection
         statusUpdate("Closing SFTP connection...")
         try await sftp.close()
         try await client.close()
-        
+
         statusUpdate("Completed upload of \(fileCount) files to \(host)")
         
         if fileCount == 0 {
@@ -383,11 +383,11 @@ class FTPPublisher: Publisher {
             let fileData = Data(buffer: data)
 
             let hashFile = try JSONDecoder().decode(RemoteHashFile.self, from: fileData)
-            print("📦 Found remote hash file from \(hashFile.publishedBy) with \(hashFile.fileHashes.count) files")
+            Log.debug("Found remote hash file from \(hashFile.publishedBy) with \(hashFile.fileHashes.count) files")
             return hashFile
 
         } catch {
-            print("📦 No remote hash file found (or error): \(error.localizedDescription)")
+            Log.debug("No remote hash file found (or error): \(error.localizedDescription)")
             return nil
         }
     }
@@ -431,7 +431,7 @@ class FTPPublisher: Publisher {
 
         // Upload the file
         try await uploadFile(sftp: sftp, fileData: data, remotePath: hashFilePath)
-        print("📦 Uploaded remote hash file with \(hashes.count) file hashes")
+        Log.debug("Uploaded remote hash file with \(hashes.count) file hashes")
     }
 
     /// Error types that can occur during SFTP operations

@@ -64,7 +64,6 @@ describe('Sync Data Compatibility', () => {
     // Enable sync for the blog
     storage.saveSyncConfig(blogId, {
       syncEnabled: true,
-      syncPassword: canonicalBlog.encryption.testPassword,
       lastSyncedAt: null,
       lastSyncedVersion: 0,
     });
@@ -173,8 +172,7 @@ describe('Sync Data Compatibility', () => {
       syncResult = await generateSyncDirectory(
         storage,
         blogId,
-        syncOutputDir,
-        canonicalBlog.encryption.testPassword
+        syncOutputDir
       );
     });
 

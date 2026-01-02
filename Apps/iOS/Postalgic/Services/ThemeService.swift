@@ -22,7 +22,7 @@ class ThemeService {
     /// Add a theme to the cache
     func addTheme(_ theme: Theme) {
         themeCache[theme.identifier] = theme
-        print("ThemeService: Added theme \(theme.identifier) to cache")
+        Log.debug("ThemeService: Added theme \(theme.identifier) to cache")
     }
     
     /// Get a theme by identifier
@@ -69,25 +69,25 @@ class ThemeService {
         let descriptor = FetchDescriptor<Theme>()
         do {
             let themes = try modelContext.fetch(descriptor)
-            print("ThemeService: Loaded \(themes.count) themes from database")
-            
+            Log.debug("ThemeService: Loaded \(themes.count) themes from database")
+
             // Add each to the cache
             for theme in themes {
                 addTheme(theme)
-                print("ThemeService: Cached theme \(theme.identifier) with \(theme.templates.count) templates")
+                Log.verbose("ThemeService: Cached theme \(theme.identifier) with \(theme.templates.count) templates")
             }
         } catch {
-            print("ThemeService: Error loading themes from database - \(error)")
+            Log.error("ThemeService: Error loading themes from database - \(error)")
         }
     }
-    
+
     /// Get template content for a specific theme
     func getTemplateContent(themeId: String, templateName: String) -> String? {
         guard let theme = themeCache[themeId] else {
-            print("ThemeService: Theme \(themeId) not found in cache")
+            Log.debug("ThemeService: Theme \(themeId) not found in cache")
             return nil
         }
-        
+
         return theme.template(named: templateName)
     }
 }

@@ -115,13 +115,13 @@ class StaticSiteGenerator {
         if !FileManager.default.fileExists(atPath: embedsDir.path) {
             do {
                 try FileManager.default.createDirectory(at: embedsDir, withIntermediateDirectories: true)
-                print("📁 Created directory for embed images: \(embedsDir.path)")
+                Log.debug("Created directory for embed images: \(embedsDir.path)")
             } catch {
-                print("⚠️ Error creating embed images directory: \(error)")
+                Log.warn("Error creating embed images directory: \(error)")
             }
         }
 
-        print("🔍 Processing images for \(publishedPosts.count) published posts")
+        Log.debug("Processing images for \(publishedPosts.count) published posts")
 
         for post in publishedPosts {
             if let embed = post.embed {
@@ -129,30 +129,30 @@ class StaticSiteGenerator {
                    let imageFilename = embed.deterministicImageFilename {
                     let imagePath = embedsDir.appendingPathComponent(imageFilename)
 
-                    print("📸 Saving link image to: \(imagePath.path)")
+                    Log.debug("Saving link image to: \(imagePath.path)")
 
                     // Save the image data
                     do {
                         try imageData.write(to: imagePath)
                     } catch {
-                        print("⚠️ Error saving link image: \(error)")
+                        Log.warn("Error saving link image: \(error)")
                     }
                 }
                 else if embed.embedType == .image {
                     // Save all images from the image embed
                     let sortedImages = embed.images.sorted { $0.order < $1.order }
 
-                    print("📸 Saving \(sortedImages.count) images from image embed for post: \(post.title ?? "Untitled")")
+                    Log.debug("Saving \(sortedImages.count) images from image embed for post: \(post.title ?? "Untitled")")
 
                     for (index, image) in sortedImages.enumerated() {
                         let imagePath = embedsDir.appendingPathComponent(image.filename)
 
-                        print("📸 Saving image \(index + 1)/\(sortedImages.count) to: \(imagePath.path)")
+                        Log.verbose("Saving image \(index + 1)/\(sortedImages.count) to: \(imagePath.path)")
 
                         do {
                             try image.imageData.write(to: imagePath)
                         } catch {
-                            print("⚠️ Error saving image: \(error)")
+                            Log.warn("Error saving image: \(error)")
                         }
                     }
                 }
@@ -162,35 +162,35 @@ class StaticSiteGenerator {
     
     /// Saves all static files to the site directory
     private func saveStaticFiles(to directory: URL) {
-        print("📁 Processing \(blog.staticFiles.count) static files")
-        
+        Log.debug("Processing \(blog.staticFiles.count) static files")
+
         for staticFile in blog.staticFiles {
             // Handle favicon specially to generate multiple sizes
             if staticFile.isSpecialFile && staticFile.fileType == .favicon {
                 saveFaviconFiles(staticFile: staticFile, to: directory)
             } else {
                 let filename = staticFile.filename
-                
+
                 // Create intermediate directories if needed
                 let fileURL = directory.appendingPathComponent(filename)
                 let directoryPath = fileURL.deletingLastPathComponent()
-                
+
                 if !FileManager.default.fileExists(atPath: directoryPath.path) {
                     do {
                         try FileManager.default.createDirectory(at: directoryPath, withIntermediateDirectories: true)
-                        print("📁 Created directory: \(directoryPath.path)")
+                        Log.debug("Created directory: \(directoryPath.path)")
                     } catch {
-                        print("⚠️ Error creating directory for static file \(filename): \(error)")
+                        Log.warn("Error creating directory for static file \(filename): \(error)")
                         continue
                     }
                 }
-                
+
                 // Write the file data
                 do {
                     try staticFile.data.write(to: fileURL)
-                    print("📄 Saved static file: \(filename) (\(staticFile.fileSizeString))")
+                    Log.debug("Saved static file: \(filename) (\(staticFile.fileSizeString))")
                 } catch {
-                    print("⚠️ Error saving static file \(filename): \(error)")
+                    Log.warn("Error saving static file \(filename): \(error)")
                 }
             }
         }
@@ -198,50 +198,50 @@ class StaticSiteGenerator {
     
     /// Saves favicon files in multiple sizes (32x32, 192x192, 180x180 for apple-touch-icon)
     private func saveFaviconFiles(staticFile: StaticFile, to directory: URL) {
-        print("🎨 Processing favicon: generating multiple sizes")
-        
+        Log.debug("Processing favicon: generating multiple sizes")
+
         guard staticFile.isImage else {
-            print("⚠️ Favicon is not an image format, saving as-is")
+            Log.warn("Favicon is not an image format, saving as-is")
             do {
                 let fileURL = directory.appendingPathComponent(staticFile.filename)
                 try staticFile.data.write(to: fileURL)
-                print("📄 Saved favicon: \(staticFile.filename)")
+                Log.debug("Saved favicon: \(staticFile.filename)")
             } catch {
-                print("⚠️ Error saving favicon: \(error)")
+                Log.warn("Error saving favicon: \(error)")
             }
             return
         }
-        
+
         // Generate 32x32 favicon
         if let favicon32Data = Utils.resizeImage(imageData: staticFile.data, to: CGSize(width: 32, height: 32)) {
             do {
                 let favicon32URL = directory.appendingPathComponent("favicon-32x32.png")
                 try favicon32Data.write(to: favicon32URL)
-                print("📄 Generated favicon-32x32.png")
+                Log.debug("Generated favicon-32x32.png")
             } catch {
-                print("⚠️ Error saving 32x32 favicon: \(error)")
+                Log.warn("Error saving 32x32 favicon: \(error)")
             }
         }
-        
+
         // Generate 192x192 favicon
         if let favicon192Data = Utils.resizeImage(imageData: staticFile.data, to: CGSize(width: 192, height: 192)) {
             do {
                 let favicon192URL = directory.appendingPathComponent("favicon-192x192.png")
                 try favicon192Data.write(to: favicon192URL)
-                print("📄 Generated favicon-192x192.png")
+                Log.debug("Generated favicon-192x192.png")
             } catch {
-                print("⚠️ Error saving 192x192 favicon: \(error)")
+                Log.warn("Error saving 192x192 favicon: \(error)")
             }
         }
-        
+
         // Generate 180x180 apple-touch-icon
         if let appleTouchIconData = Utils.resizeImage(imageData: staticFile.data, to: CGSize(width: 180, height: 180)) {
             do {
                 let appleTouchIconURL = directory.appendingPathComponent("apple-touch-icon.png")
                 try appleTouchIconData.write(to: appleTouchIconURL)
-                print("📄 Generated apple-touch-icon.png")
+                Log.debug("Generated apple-touch-icon.png")
             } catch {
-                print("⚠️ Error saving apple-touch-icon: \(error)")
+                Log.warn("Error saving apple-touch-icon: \(error)")
             }
         }
     }
@@ -320,7 +320,7 @@ class StaticSiteGenerator {
         do {
             try modelContext.save()
         } catch {
-            print("Error saving published files: \(error)")
+            Log.error("Error saving published files: \(error)")
         }
     }
     
@@ -333,7 +333,7 @@ class StaticSiteGenerator {
     func generateSiteToDirectory(_ outputDirectory: URL) async throws -> [String: String] {
         self.siteDirectory = outputDirectory
 
-        print("📝 Generating site in \(outputDirectory.path)")
+        Log.info("Generating site in \(outputDirectory.path)")
 
         // Create CSS directory and file
         let cssDirectory = outputDirectory.appendingPathComponent("css")
@@ -380,7 +380,7 @@ class StaticSiteGenerator {
                 in: outputDirectory
             ) { _ in }
         } catch {
-            print("⚠️ Failed to generate sync data: \(error)")
+            Log.warn("Failed to generate sync data: \(error)")
         }
 
         // Calculate and return file hashes
@@ -403,7 +403,7 @@ class StaticSiteGenerator {
         )
         self.siteDirectory = siteDirectory
 
-        print("📝 Generating site in \(siteDirectory.path)")
+        Log.info("Generating site in \(siteDirectory.path)")
 
         // Create CSS directory and file
         let cssDirectory = siteDirectory.appendingPathComponent("css")
@@ -460,7 +460,7 @@ class StaticSiteGenerator {
                     )
                 }
             } catch {
-                print("⚠️ Failed to generate sync data: \(error)")
+                Log.warn("Failed to generate sync data: \(error)")
                 // Don't fail the whole publish - sync is optional
                 NotificationCenter.default.post(
                     name: .publishStatusUpdated,
@@ -524,7 +524,7 @@ class StaticSiteGenerator {
         }
         
         do {
-            print("🚀 Publishing site using \(publisher.publisherType.displayName) publisher...")
+            Log.info("Publishing site using \(publisher.publisherType.displayName) publisher...")
 
             // Calculate hashes for the newly generated files
             let newFileHashes = try calculateFileHashes(in: siteDirectory)
