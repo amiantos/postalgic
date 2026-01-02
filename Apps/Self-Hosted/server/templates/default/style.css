@@ -863,7 +863,6 @@ footer {
         right: 0; /* Slide in from right */
     }
 
-
     aside .sidebar-text div,
     .sidebar .sidebar-text div {
         font-size: 1em;
@@ -874,7 +873,6 @@ footer {
     .sidebar .sidebar-links ul {
         font-size: 1em;
     }
-
 
     /* Hide regular aside on mobile */
     aside:not(.sidebar) {

@@ -30,9 +30,6 @@ class TemplateEngine {
     
     /// Creates the base context with shared properties for all templates
     private func createBaseContext() -> [String: Any] {
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        
         // Check if there are any published posts with tags or categories
         let publishedPosts = blog.posts.filter { !$0.isDraft }
         let hasTags = !Set(publishedPosts.flatMap { $0.tags }).isEmpty
@@ -41,11 +38,26 @@ class TemplateEngine {
         // Check if social share image exists
         let hasSocialShareImage = blog.socialShareImage != nil
 
+        // RFC 822 date formatter for RSS buildDate (matches JavaScript's toUTCString())
+        let rfcFormatter = DateFormatter()
+        rfcFormatter.dateFormat = "EEE, dd MMM yyyy HH:mm:ss 'GMT'"
+        rfcFormatter.locale = Locale(identifier: "en_US_POSIX")
+        rfcFormatter.timeZone = TimeZone(abbreviation: "GMT")
+
+        // Use most recent post's date for buildDate, or current date if no posts
+        let mostRecentPost = publishedPosts.sorted { ($0.updatedAt ?? $0.createdAt) > ($1.updatedAt ?? $1.createdAt) }.first
+        let buildDateValue: Date
+        if let post = mostRecentPost {
+            buildDateValue = post.updatedAt ?? post.createdAt
+        } else {
+            buildDateValue = Date()
+        }
+
         var context: [String: Any] = [
             "blogName": blog.name,
             "blogUrl": blog.url,
             "currentYear": Calendar.current.component(.year, from: Date()),
-            "buildDate": formatter.string(from: Date()),
+            "buildDate": rfcFormatter.string(from: buildDateValue),
             "accentColor": blog.accentColor ?? "#FFA100",
             "backgroundColor": blog.backgroundColor ?? "#efefef",
             "textColor": blog.textColor ?? "#2d3748",
@@ -102,18 +114,34 @@ class TemplateEngine {
 
         let rendered = layoutTemplate.render(context, library: templateManager.getLibrary())
 
-        // Normalize whitespace-only lines to empty lines
-        // This fixes differences between Swift and Node.js Mustache handling of empty conditionals
-        return rendered.split(separator: "\n", omittingEmptySubsequences: false)
+        // Normalize whitespace-only lines to empty lines for cross-platform consistency
+        // This ensures iOS and self-hosted produce identical output
+        let lines = rendered.split(separator: "\n", omittingEmptySubsequences: false)
             .map { line in
                 let s = String(line)
-                // If line contains only whitespace, return empty string
                 if s.trimmingCharacters(in: .whitespaces).isEmpty {
                     return ""
                 }
                 return s
             }
-            .joined(separator: "\n")
+
+        // Collapse consecutive empty lines to max 1 for cross-platform consistency
+        // Different Mustache libraries (Swift vs Node.js) produce different whitespace
+        var result: [String] = []
+        var consecutiveEmptyCount = 0
+        for line in lines {
+            if line.isEmpty {
+                consecutiveEmptyCount += 1
+                if consecutiveEmptyCount <= 1 {
+                    result.append(line)
+                }
+            } else {
+                consecutiveEmptyCount = 0
+                result.append(line)
+            }
+        }
+
+        return result.joined(separator: "\n")
     }
     
     /// Generates the HTML content for the sidebar based on the blog's sidebar objects
@@ -172,7 +200,12 @@ class TemplateEngine {
         
         // Add most recent month's archive URL
         if hasMorePosts {
-            let publishedPosts = blog.posts.filter { !$0.isDraft }.sorted { $0.createdAt > $1.createdAt }
+            let publishedPosts = blog.posts.filter { !$0.isDraft }.sorted {
+                if $0.createdAt != $1.createdAt {
+                    return $0.createdAt > $1.createdAt
+                }
+                return ($0.syncId ?? "") < ($1.syncId ?? "")
+            }
             if let mostRecentPost = publishedPosts.first {
                 let calendar = Calendar.current
                 let year = calendar.component(.year, from: mostRecentPost.createdAt)
@@ -469,7 +502,11 @@ class TemplateEngine {
         
         let content = categoryTemplate.render(context, library: templateManager.getLibrary())
         let pageTitle = currentPage == 1 ? "Posts in \"\(category.name)\" - \(blog.name)" : "Posts in \"\(category.name)\" (Page \(currentPage)) - \(blog.name)"
-        return try renderLayout(content: content, pageTitle: pageTitle)
+        return try renderLayout(
+            content: content,
+            pageTitle: pageTitle,
+            customHead: "<link rel=\"sitemap\" type=\"application/xml\" title=\"Sitemap\" href=\"/sitemap.xml\" />"
+        )
     }
     
     /// Renders the RSS feed
@@ -503,33 +540,92 @@ class TemplateEngine {
     /// - Throws: Error if rendering fails
     func renderSitemap(posts: [Post], tags: [Tag], categories: [Category], monthlyArchives: [(year: Int, month: Int)] = []) throws -> String {
         let sitemapTemplate = try templateManager.getTemplate(for: "sitemap")
-        
+
         var context = createBaseContext()
-        context["posts"] = posts.map { TemplateDataConverter.convert(post: $0, blog: blog) }
-        
-        // Convert tags
-        context["tags"] = tags.map { tag -> [String: Any] in
-            // Create dummy TagTemplateData
-            let emptyPosts: [Post] = []
-            return TemplateDataConverter.convert(tag: tag, posts: emptyPosts)
+
+        // ISO8601 formatter for sitemap dates
+        let isoFormatter = ISO8601DateFormatter()
+        isoFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+
+        // Get most recent post date for index/archives lastmod
+        let sortedPosts = posts.sorted {
+            let date0 = $0.updatedAt ?? $0.createdAt
+            let date1 = $1.updatedAt ?? $1.createdAt
+            return date0 > date1
         }
-        
-        // Convert categories
-        context["categories"] = categories.map { category -> [String: Any] in
-            // Create dummy CategoryTemplateData
-            let emptyPosts: [Post] = []
-            return TemplateDataConverter.convert(category: category, posts: emptyPosts)
+        let mostRecentPostDate: String
+        if let mostRecent = sortedPosts.first {
+            mostRecentPostDate = isoFormatter.string(from: mostRecent.updatedAt ?? mostRecent.createdAt)
+        } else {
+            mostRecentPostDate = isoFormatter.string(from: Date())
         }
-        
-        // Add monthly archives
-        let formatter = ISO8601DateFormatter()
-        context["monthlyArchives"] = monthlyArchives.map { yearMonth in
+
+        // Override buildDate with ISO8601 format for sitemap
+        context["buildDate"] = mostRecentPostDate
+
+        // Posts with their lastmod
+        context["posts"] = posts.map { post -> [String: Any] in
+            var dict = TemplateDataConverter.convert(post: post, blog: blog)
+            dict["lastmod"] = isoFormatter.string(from: post.updatedAt ?? post.createdAt)
+            return dict
+        }
+
+        // Convert tags with lastmod from most recent post in that tag (sorted by name ASC like self-hosted)
+        context["tags"] = tags.sorted { $0.name < $1.name }.map { tag -> [String: Any] in
+            let tagPosts = posts.filter { $0.tags.contains(tag) }
+                .sorted { ($0.updatedAt ?? $0.createdAt) > ($1.updatedAt ?? $1.createdAt) }
+            let lastmod: String
+            if let mostRecent = tagPosts.first {
+                lastmod = isoFormatter.string(from: mostRecent.updatedAt ?? mostRecent.createdAt)
+            } else {
+                lastmod = mostRecentPostDate
+            }
+            var dict = TemplateDataConverter.convert(tag: tag, posts: [])
+            dict["lastmod"] = lastmod
+            return dict
+        }
+
+        // Convert categories with lastmod from most recent post in that category (sorted by name ASC like self-hosted)
+        context["categories"] = categories.sorted { $0.name < $1.name }.map { category -> [String: Any] in
+            let categoryPosts = posts.filter { $0.category?.id == category.id }
+                .sorted { ($0.updatedAt ?? $0.createdAt) > ($1.updatedAt ?? $1.createdAt) }
+            let lastmod: String
+            if let mostRecent = categoryPosts.first {
+                lastmod = isoFormatter.string(from: mostRecent.updatedAt ?? mostRecent.createdAt)
+            } else {
+                lastmod = mostRecentPostDate
+            }
+            var dict = TemplateDataConverter.convert(category: category, posts: [])
+            dict["lastmod"] = lastmod
+            return dict
+        }
+
+        // Add monthly archives with lastmod from most recent post in that month
+        var calendar = Calendar(identifier: .gregorian)
+        if let tz = TimeZone(identifier: blog.timezone) {
+            calendar.timeZone = tz
+        }
+
+        context["monthlyArchives"] = monthlyArchives.map { yearMonth -> [String: Any] in
+            let monthPosts = posts.filter { post in
+                let year = calendar.component(.year, from: post.createdAt)
+                let month = calendar.component(.month, from: post.createdAt)
+                return year == yearMonth.year && month == yearMonth.month
+            }.sorted { ($0.updatedAt ?? $0.createdAt) > ($1.updatedAt ?? $1.createdAt) }
+
+            let lastmod: String
+            if let mostRecent = monthPosts.first {
+                lastmod = isoFormatter.string(from: mostRecent.updatedAt ?? mostRecent.createdAt)
+            } else {
+                lastmod = mostRecentPostDate
+            }
+
             return [
                 "url": "/\(String(format: "%04d", yearMonth.year))/\(String(format: "%02d", yearMonth.month))/",
-                "lastmod": formatter.string(from: Date())
+                "lastmod": lastmod
             ]
         }
-        
+
         return sitemapTemplate.render(context, library: templateManager.getLibrary())
     }
     

@@ -91,10 +91,17 @@ class StaticSiteGenerator {
     // MARK: - Site Generation Helpers
 
     /// Filter and sort posts to get only published posts in descending date order
+    /// Secondary sort by syncId for deterministic ordering when timestamps are equal
     private func publishedPostsSorted() -> [Post] {
         return blog.posts
             .filter { !$0.isDraft }
-            .sorted { $0.createdAt > $1.createdAt }
+            .sorted {
+                if $0.createdAt != $1.createdAt {
+                    return $0.createdAt > $1.createdAt
+                }
+                // Secondary sort by syncId DESC for deterministic ordering
+                return ($0.syncId ?? "") > ($1.syncId ?? "")
+            }
     }
 
     // MARK: - Embed Helper
@@ -780,8 +787,13 @@ class StaticSiteGenerator {
                 
                 let monthlyArchivePath = monthDirectory.appendingPathComponent("index.html")
                 
-                // Sort posts within the month chronologically (newest first)
-                let sortedMonthPosts = posts.sorted { $0.createdAt > $1.createdAt }
+                // Sort posts within the month chronologically (newest first, with secondary sort by syncId)
+                let sortedMonthPosts = posts.sorted {
+                    if $0.createdAt != $1.createdAt {
+                        return $0.createdAt > $1.createdAt
+                    }
+                    return ($0.syncId ?? "") < ($1.syncId ?? "")
+                }
                 
                 // Get previous and next month info for navigation
                 let navInfo = getMonthNavigationInfo(currentYear: year, currentMonth: month, allYearMonths: yearMonthPosts)
@@ -882,7 +894,12 @@ class StaticSiteGenerator {
         // Create individual tag pages with pagination
         for tag in sortedTags {
             let tagPosts = publishedPosts.filter { $0.tags.contains(tag) }
-                .sorted { $0.createdAt > $1.createdAt }
+                .sorted {
+                    if $0.createdAt != $1.createdAt {
+                        return $0.createdAt > $1.createdAt
+                    }
+                    return ($0.syncId ?? "") < ($1.syncId ?? "")
+                }
             
             try generatePaginatedTagPages(tag: tag, posts: tagPosts, tagsDirectory: tagsDirectory)
         }
@@ -994,7 +1011,12 @@ class StaticSiteGenerator {
         for category in sortedCategories {
             let categoryPosts = publishedPosts.filter {
                 $0.category?.id == category.id
-            }.sorted { $0.createdAt > $1.createdAt }
+            }.sorted {
+                if $0.createdAt != $1.createdAt {
+                    return $0.createdAt > $1.createdAt
+                }
+                return ($0.syncId ?? "") < ($1.syncId ?? "")
+            }
             
             try generatePaginatedCategoryPages(category: category, posts: categoryPosts, categoriesDirectory: categoriesDirectory)
         }
@@ -1098,7 +1120,15 @@ class StaticSiteGenerator {
                 yearMonthCombos.append((year: year, month: month))
             }
         }
-        
+
+        // Sort by year DESC, then month DESC (newer months first, matching self-hosted)
+        yearMonthCombos.sort { lhs, rhs in
+            if lhs.year != rhs.year {
+                return lhs.year > rhs.year
+            }
+            return lhs.month > rhs.month
+        }
+
         do {
             let sitemapContent = try templateEngine.renderSitemap(
                 posts: sortedPosts,

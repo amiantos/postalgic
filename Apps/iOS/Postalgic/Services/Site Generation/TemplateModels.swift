@@ -33,24 +33,16 @@ struct PostTemplateData {
         let embedId = post.syncId
 
         // Handle embeds based on position
+        // Note: Use the same HTML for RSS as for regular pages (matching self-hosted behavior)
         if let embed = post.embed, embed.embedPosition == .above {
-            if forRSS {
-                finalContent += embed.generateRSSHtml(blog: blog) + "\n"
-            } else {
-                finalContent += embed.generateHtml(embedId: embedId) + "\n"
-            }
+            finalContent += embed.generateHtml(embedId: embedId) + "\n"
         }
 
         finalContent += postContent
 
         if let embed = post.embed, embed.embedPosition == .below {
-            if forRSS {
-                // For RSS, add one blank line before embed (two newlines), no trailing newline
-                finalContent += "\n\n" + embed.generateRSSHtml(blog: blog)
-            } else {
-                // For HTML, add one blank line before embed (two newlines), no trailing newline
-                finalContent += "\n\n" + embed.generateHtml(embedId: embedId)
-            }
+            // Add one blank line before embed (two newlines), no trailing newline
+            finalContent += "\n\n" + embed.generateHtml(embedId: embedId)
             // When there's an embed below, no trailing newline
             dict["contentHtml"] = finalContent
         } else {
@@ -79,20 +71,18 @@ struct PostTemplateData {
             }
         }
         
-        // ISO8601 formatted date for sitemap and general use
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        dict["lastmod"] = formatter.string(from: post.createdAt)
-        
-        // Atom feed requires RFC-3339 dates (ISO8601 with specific formatting)
-        dict["published"] = formatter.string(from: post.createdAt)
-        dict["updated"] = formatter.string(from: post.createdAt)
-        
-        // RFC 822 formatted date for RSS (required by RSS 2.0)
+        // ISO8601 formatted date for sitemap (use updatedAt if available, like self-hosted)
+        let isoFormatter = ISO8601DateFormatter()
+        isoFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        dict["lastmod"] = isoFormatter.string(from: post.updatedAt ?? post.createdAt)
+
+        // RFC 822 formatted date for RSS feeds (matches JavaScript's toUTCString())
         let rfcDateFormatter = DateFormatter()
-        rfcDateFormatter.dateFormat = "EEE, dd MMM yyyy HH:mm:ss zzz"
+        rfcDateFormatter.dateFormat = "EEE, dd MMM yyyy HH:mm:ss 'GMT'"
         rfcDateFormatter.locale = Locale(identifier: "en_US_POSIX")
         rfcDateFormatter.timeZone = TimeZone(abbreviation: "GMT")
+        dict["published"] = rfcDateFormatter.string(from: post.createdAt)
+        dict["updated"] = rfcDateFormatter.string(from: post.createdAt)
         dict["pubDate"] = rfcDateFormatter.string(from: post.createdAt)
         
         // Blog author information

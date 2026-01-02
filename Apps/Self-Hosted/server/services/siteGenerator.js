@@ -416,8 +416,30 @@ function writeFile(outputDir, relativePath, content, fileHashes) {
     fs.mkdirSync(dir, { recursive: true });
   }
 
-  fs.writeFileSync(fullPath, content);
-  fileHashes[relativePath] = calculateHash(content);
+  // Normalize whitespace-only lines to empty lines for cross-platform consistency
+  // This ensures iOS and self-hosted produce identical output
+  const lines = content.split('\n')
+    .map(line => line.trim() === '' ? '' : line);
+
+  // Collapse consecutive empty lines to max 1 for cross-platform consistency
+  // Different Mustache libraries (Swift vs Node.js) produce different whitespace
+  const result = [];
+  let consecutiveEmptyCount = 0;
+  for (const line of lines) {
+    if (line === '') {
+      consecutiveEmptyCount++;
+      if (consecutiveEmptyCount <= 1) {
+        result.push(line);
+      }
+    } else {
+      consecutiveEmptyCount = 0;
+      result.push(line);
+    }
+  }
+  const normalizedContent = result.join('\n');
+
+  fs.writeFileSync(fullPath, normalizedContent);
+  fileHashes[relativePath] = calculateHash(normalizedContent);
 }
 
 /**

@@ -168,7 +168,7 @@ router.get('/:id/debug-export', async (req, res) => {
     fs.mkdirSync(postalgicDir, { recursive: true });
     fs.writeFileSync(
       path.join(postalgicDir, 'hashes.json'),
-      JSON.stringify({ fileHashes: result.fileHashes }, null, 2)
+      JSON.stringify({ fileHashes: result.fileHashes })
     );
 
     // Create temp directory for the zip

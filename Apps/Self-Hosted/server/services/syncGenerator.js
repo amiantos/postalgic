@@ -38,7 +38,8 @@ function sortObjectKeys(obj) {
  * @returns {string} - JSON string with sorted keys
  */
 function stringifyWithSortedKeys(obj) {
-  return JSON.stringify(sortObjectKeys(obj), null, 2);
+  // Use compact JSON (no formatting) for cross-platform consistency with iOS
+  return JSON.stringify(sortObjectKeys(obj));
 }
 
 /**
@@ -428,7 +429,7 @@ function createSyncPost(post, stableId, categoryIdMap, tagIdMap) {
 
     if (embedType === 'youtube') {
       embed = {
-        type: 'youtube',
+        type: 'YouTube',
         position: (srcEmbed.position || 'above').toLowerCase(),
         url: srcEmbed.url || '',
         title: null,
@@ -439,7 +440,7 @@ function createSyncPost(post, stableId, categoryIdMap, tagIdMap) {
       };
     } else if (embedType === 'link') {
       embed = {
-        type: 'link',
+        type: 'Link',
         position: (srcEmbed.position || 'above').toLowerCase(),
         url: srcEmbed.url || '',
         title: srcEmbed.title || null,
@@ -450,7 +451,7 @@ function createSyncPost(post, stableId, categoryIdMap, tagIdMap) {
       };
     } else if (embedType === 'image') {
       embed = {
-        type: 'image',
+        type: 'Image',
         position: (srcEmbed.position || 'above').toLowerCase(),
         url: '',
         title: null,

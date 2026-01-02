@@ -256,7 +256,7 @@ class Storage {
     if (!includeDrafts) {
       query += ' AND is_draft = 0';
     }
-    query += ' ORDER BY created_at DESC';
+    query += ' ORDER BY created_at DESC, id DESC';
 
     const rows = db.prepare(query).all(blogId);
     return rows.map(row => this.mapPostRow(row));

@@ -432,7 +432,8 @@ class SyncDataGenerator {
         try fileManager.createDirectory(at: syncDirectory.appendingPathComponent("themes"), withIntermediateDirectories: true)
 
         let encoder = JSONEncoder()
-        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        // Use compact JSON (sorted keys only, no pretty printing) for cross-platform consistency
+        encoder.outputFormatting = [.sortedKeys, .withoutEscapingSlashes]
 
         var fileHashes: [String: String] = [:]
 

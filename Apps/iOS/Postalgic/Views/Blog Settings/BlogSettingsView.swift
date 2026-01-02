@@ -376,7 +376,9 @@ struct BlogSettingsView: View {
                 // Write hashes to .postalgic/hashes.json for comparison
                 let postalgicDir = siteDirectory.appendingPathComponent(".postalgic")
                 try FileManager.default.createDirectory(at: postalgicDir, withIntermediateDirectories: true)
-                let hashesData = try JSONEncoder().encode(["fileHashes": fileHashes])
+                let hashEncoder = JSONEncoder()
+                hashEncoder.outputFormatting = [.sortedKeys, .withoutEscapingSlashes]
+                let hashesData = try hashEncoder.encode(["fileHashes": fileHashes])
                 try hashesData.write(to: postalgicDir.appendingPathComponent("hashes.json"))
 
                 // Create a zip file

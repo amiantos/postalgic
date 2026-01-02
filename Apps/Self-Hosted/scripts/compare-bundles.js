@@ -2,12 +2,36 @@
 /**
  * Compare two Postalgic debug export bundles
  *
- * Usage: node compare-bundles.js <bundle1.zip> <bundle2.zip>
+ * This script compares debug exports from iOS and Self-Hosted to verify
+ * cross-platform site generation parity. Debug exports contain the full
+ * generated static site plus sync data.
  *
- * Outputs:
- * - Files only in bundle 1
- * - Files only in bundle 2
- * - Files with different content (with diff preview for text files)
+ * USAGE:
+ *   node scripts/compare-bundles.js <bundle1.zip> <bundle2.zip>
+ *
+ * EXAMPLES:
+ *   # Compare iOS and Self-Hosted debug exports
+ *   node scripts/compare-bundles.js data/debugs/postalgic-debug-ios.zip data/debugs/postalgic-debug-self-hosted.zip
+ *
+ *   # From project root
+ *   node Apps/Self-Hosted/scripts/compare-bundles.js \
+ *     Apps/Self-Hosted/data/debugs/postalgic-debug-ios.zip \
+ *     Apps/Self-Hosted/data/debugs/postalgic-debug-self-hosted.zip
+ *
+ * DEBUG EXPORTS:
+ *   - iOS: Use Debug menu > "Export Debug Bundle" (saves to Files app)
+ *   - Self-Hosted: Use Blog Settings > "Download Debug Export"
+ *   - Both should be placed in data/debugs/ folder for comparison
+ *
+ * OUTPUTS:
+ *   - Files only in bundle 1
+ *   - Files only in bundle 2
+ *   - Files with different content (with diff preview for text files)
+ *   - Summary showing total/identical/different file counts
+ *
+ * EXPECTED DIFFERENCES:
+ *   - sync/manifest.json: appSource field ("ios" vs "self-hosted")
+ *   - Other files should be identical when parity is achieved
  */
 
 import fs from 'fs';
