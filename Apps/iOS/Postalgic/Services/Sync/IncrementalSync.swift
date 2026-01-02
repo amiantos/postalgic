@@ -356,6 +356,7 @@ class IncrementalSync {
                     // Update existing sidebar
                     existingSidebar.title = syncSidebar.title
                     existingSidebar.content = syncSidebar.content
+                    existingSidebar.contentHtml = syncSidebar.contentHtml
                     existingSidebar.order = syncSidebar.order
 
                     // Update links
@@ -370,7 +371,7 @@ class IncrementalSync {
                     }
                 } else {
                     let sidebarType: SidebarObjectType = syncSidebar.type == "linkList" ? .linkList : .text
-                    let sidebar = SidebarObject(blog: blog, title: syncSidebar.title, type: sidebarType, order: syncSidebar.order)
+                    let sidebar = SidebarObject(blog: blog, title: syncSidebar.title, type: sidebarType, order: syncSidebar.order, contentHtml: syncSidebar.contentHtml)
                     sidebar.content = syncSidebar.content
                     sidebar.syncId = syncSidebar.id
                     modelContext.insert(sidebar)
@@ -396,6 +397,7 @@ class IncrementalSync {
                 if let existingSidebar = sidebarMap[syncSidebar.id] {
                     existingSidebar.title = syncSidebar.title
                     existingSidebar.content = syncSidebar.content
+                    existingSidebar.contentHtml = syncSidebar.contentHtml
                     existingSidebar.order = syncSidebar.order
 
                     // Update links
@@ -546,6 +548,7 @@ class IncrementalSync {
         if let existing = existingPost {
             post = existing
             post.content = syncPost.content
+            post.contentHtml = syncPost.contentHtml
             post.title = syncPost.title
             post.stub = syncPost.stub
             post.isDraft = isDraft
@@ -558,7 +561,7 @@ class IncrementalSync {
                 modelContext.delete(oldEmbed)
             }
         } else {
-            post = Post(content: syncPost.content)
+            post = Post(content: syncPost.content, contentHtml: syncPost.contentHtml)
             post.blog = blog
             post.title = syncPost.title
             post.stub = syncPost.stub

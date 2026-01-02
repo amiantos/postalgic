@@ -173,6 +173,7 @@ class SyncDataGenerator {
         let id: String
         let title: String?
         let content: String
+        let contentHtml: String?  // Pre-rendered HTML from markdown
         let stub: String?
         let createdAt: String
         let updatedAt: String
@@ -185,6 +186,7 @@ class SyncDataGenerator {
             var container = encoder.container(keyedBy: CodingKeys.self)
             try container.encode(categoryId, forKey: .categoryId)
             try container.encode(content, forKey: .content)
+            try container.encode(contentHtml, forKey: .contentHtml)
             try container.encode(createdAt, forKey: .createdAt)
             try container.encode(embed, forKey: .embed)
             try container.encode(id, forKey: .id)
@@ -308,6 +310,7 @@ class SyncDataGenerator {
         let type: String
         let title: String
         let content: String?
+        let contentHtml: String?  // Pre-rendered HTML from markdown
         let order: Int
         let links: [SyncLink]?
         let createdAt: String  // ISO8601 formatted date for sync parity
@@ -316,6 +319,7 @@ class SyncDataGenerator {
         func encode(to encoder: Encoder) throws {
             var container = encoder.container(keyedBy: CodingKeys.self)
             try container.encode(content, forKey: .content)
+            try container.encode(contentHtml, forKey: .contentHtml)
             try container.encode(createdAt, forKey: .createdAt)
             try container.encode(id, forKey: .id)
             try container.encode(links, forKey: .links)
@@ -601,6 +605,7 @@ class SyncDataGenerator {
                 type: syncType,
                 title: sidebarObject.title,
                 content: sidebarObject.content,
+                contentHtml: sidebarObject.contentHtml,
                 order: sidebarObject.order,
                 links: links,
                 createdAt: isoFormatter.string(from: sidebarObject.createdAt)
@@ -812,6 +817,7 @@ class SyncDataGenerator {
             id: stableId,
             title: post.title,
             content: post.content,
+            contentHtml: post.contentHtml,
             stub: post.stub,
             createdAt: isoFormatter.string(from: post.createdAt),
             updatedAt: isoFormatter.string(from: post.updatedAt ?? post.createdAt),

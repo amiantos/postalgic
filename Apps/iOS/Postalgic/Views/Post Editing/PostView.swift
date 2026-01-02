@@ -1,6 +1,7 @@
 import SwiftUI
 import UIKit
 import SwiftData
+import Ink
 
 /// Captures the initial state of a post for dirty tracking
 private struct PostSnapshot {
@@ -347,6 +348,10 @@ struct PostView: View {
 
     /// Saves the post and updates `updatedAt` if the post has changed
     private func savePost() {
+        // Render markdown to HTML
+        let markdownParser = MarkdownParser()
+        post.contentHtml = markdownParser.html(from: post.content)
+
         // For existing posts, check if content has changed
         if !isNewPost, let snapshot = initialSnapshot {
             if snapshot.hasChanged(from: post) {

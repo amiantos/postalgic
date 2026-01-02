@@ -250,7 +250,7 @@ class SyncImporter {
             let syncSidebar = try decoder.decode(SyncDataGenerator.SyncSidebarObject.self, from: sidebarData)
 
             let sidebarType: SidebarObjectType = syncSidebar.type == "linkList" ? .linkList : .text
-            let sidebar = SidebarObject(blog: blog, title: syncSidebar.title, type: sidebarType, order: syncSidebar.order)
+            let sidebar = SidebarObject(blog: blog, title: syncSidebar.title, type: sidebarType, order: syncSidebar.order, contentHtml: syncSidebar.contentHtml)
             sidebar.content = syncSidebar.content
             sidebar.syncId = syncSidebar.id  // Store remote ID for incremental sync matching
             modelContext.insert(sidebar)
@@ -451,7 +451,7 @@ class SyncImporter {
         isDraft: Bool,
         modelContext: ModelContext
     ) throws {
-        let post = Post(content: syncPost.content)
+        let post = Post(content: syncPost.content, contentHtml: syncPost.contentHtml)
         post.blog = blog
         post.title = syncPost.title
         post.stub = syncPost.stub

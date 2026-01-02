@@ -26,7 +26,13 @@ struct PostTemplateData {
         ]
         
         // Generate post content with embeds
-        let postContent = markdownParser.html(from: post.content)
+        // Use stored HTML if available, otherwise render from markdown
+        let postContent: String
+        if let storedHtml = post.contentHtml, !storedHtml.isEmpty {
+            postContent = storedHtml
+        } else {
+            postContent = markdownParser.html(from: post.content)
+        }
         var finalContent = ""
         
         // Use syncId for embed identifiers to ensure cross-platform parity

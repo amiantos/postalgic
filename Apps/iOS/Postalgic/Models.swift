@@ -602,6 +602,7 @@ final class Post {
             updateStub()
         }
     }
+    var contentHtml: String?  // Pre-rendered HTML from markdown
     var createdAt: Date
     var updatedAt: Date?  // Tracks when the post was last modified
     var stub: String?
@@ -655,6 +656,7 @@ final class Post {
     init(
         title: String? = nil,
         content: String,
+        contentHtml: String? = nil,
         createdAt: Date = Date(),
         isDraft: Bool = false,
         stub: String? = nil,
@@ -662,6 +664,7 @@ final class Post {
     ) {
         self.title = title
         self.content = content
+        self.contentHtml = contentHtml
         self.createdAt = createdAt
         self.isDraft = isDraft
         // Auto-generate syncId for new entities if not provided
@@ -840,12 +843,13 @@ final class SidebarObject {
 
     // For text blocks
     var content: String?
+    var contentHtml: String?  // Pre-rendered HTML from markdown
 
     // For link lists
     @Relationship(deleteRule: .cascade, inverse: \LinkItem.sidebarObject)
     var links: [LinkItem] = []
 
-    init(blog: Blog, title: String, type: SidebarObjectType, order: Int, createdAt: Date = Date(), syncId: String? = nil) {
+    init(blog: Blog, title: String, type: SidebarObjectType, order: Int, createdAt: Date = Date(), syncId: String? = nil, contentHtml: String? = nil) {
         self.blog = blog
         self.title = title
         self.type = type.rawValue
@@ -853,6 +857,7 @@ final class SidebarObject {
         self.createdAt = createdAt
         // Auto-generate syncId for new entities if not provided
         self.syncId = syncId ?? UUID().uuidString
+        self.contentHtml = contentHtml
     }
     
     var objectType: SidebarObjectType {
@@ -863,14 +868,20 @@ final class SidebarObject {
         switch objectType {
         case .text:
             if let content = content {
-                let markdownParser = MarkdownParser()
-                let contentHtml = markdownParser.html(from: content)
-                
+                // Use stored HTML if available, otherwise render from markdown
+                let html: String
+                if let storedHtml = contentHtml, !storedHtml.isEmpty {
+                    html = storedHtml
+                } else {
+                    let markdownParser = MarkdownParser()
+                    html = markdownParser.html(from: content)
+                }
+
                 return """
                 <div class="sidebar-text">
                     <h2>\(title)</h2>
                     <div class="sidebar-text-content">
-                        \(contentHtml)
+                        \(html)
                     </div>
                 </div>
                 """
