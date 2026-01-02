@@ -18,6 +18,14 @@ struct BlogDashboardView: View {
     @State private var showingSettingsView = false
     @State private var showingPostsView = false
 
+    // Sync on load state
+    @State private var isCheckingSyncOnLoad = false
+    @State private var showingSyncPrompt = false
+    @State private var syncCheckResult: SyncCheckResult?
+    @State private var isSyncingFromPrompt = false
+    @State private var syncError: String?
+    @State private var showingSyncError = false
+
     // Computed property for draft posts
     private var draftPosts: [Post] {
         return blog.posts.filter { $0.isDraft }.sorted { $0.createdAt > $1.createdAt }
@@ -195,6 +203,86 @@ struct BlogDashboardView: View {
         }
         .sheet(isPresented: $showingPostsView) {
             PostsView(blog: blog)
+        }
+        .onAppear {
+            checkForSyncChangesIfNeeded()
+        }
+        .alert("Changes Available", isPresented: $showingSyncPrompt) {
+            Button("Sync Now") {
+                performSync()
+            }
+            Button("Later", role: .cancel) { }
+        } message: {
+            Text("Remote changes detected: \(syncCheckResult?.changeSummary ?? "updates available"). Would you like to sync now?")
+        }
+        .alert("Sync Error", isPresented: $showingSyncError) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text(syncError ?? "An unknown error occurred while syncing.")
+        }
+    }
+
+    // MARK: - Sync on Load
+
+    /// Checks for remote sync changes if conditions are met:
+    /// - Sync is enabled on the blog
+    /// - Blog has a URL configured
+    /// - This blog hasn't been checked this session yet
+    private func checkForSyncChangesIfNeeded() {
+        guard blog.syncEnabled,
+              !blog.url.isEmpty,
+              !SyncSessionManager.shared.hasCheckedThisSession(blogId: blog.id.uuidString)
+        else { return }
+
+        isCheckingSyncOnLoad = true
+
+        Task {
+            do {
+                let result = try await SyncChecker.checkForChanges(blog: blog)
+
+                await MainActor.run {
+                    SyncSessionManager.shared.markAsChecked(blogId: blog.id.uuidString)
+                    isCheckingSyncOnLoad = false
+
+                    if result.hasChanges {
+                        syncCheckResult = result
+                        showingSyncPrompt = true
+                    }
+                }
+            } catch {
+                await MainActor.run {
+                    isCheckingSyncOnLoad = false
+                    // Silent fail on load check - don't interrupt user flow
+                    // They can manually sync if needed
+                }
+            }
+        }
+    }
+
+    /// Performs the sync when user confirms the prompt
+    private func performSync() {
+        isSyncingFromPrompt = true
+
+        Task {
+            do {
+                _ = try await IncrementalSync.pullChanges(
+                    blog: blog,
+                    modelContext: modelContext
+                ) { _ in
+                    // Progress updates could be shown in UI if desired
+                }
+
+                await MainActor.run {
+                    isSyncingFromPrompt = false
+                    syncCheckResult = nil
+                }
+            } catch {
+                await MainActor.run {
+                    isSyncingFromPrompt = false
+                    syncError = error.localizedDescription
+                    showingSyncError = true
+                }
+            }
         }
     }
 

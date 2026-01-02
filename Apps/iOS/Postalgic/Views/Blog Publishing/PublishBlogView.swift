@@ -28,6 +28,12 @@ struct PublishBlogView: View {
     @State private var showingShareSheet = false
     @State private var showingSuccessAlert = false
     @State private var showingPublishSettingsView = false
+
+    // Pre-publish sync state
+    @State private var isPrePublishSyncing = false
+    @State private var prePublishSyncError: String?
+    @State private var showingPrePublishSyncError = false
+
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
 
@@ -163,6 +169,14 @@ struct PublishBlogView: View {
                     )
                 }
             }
+            .alert("Sync Failed", isPresented: $showingPrePublishSyncError) {
+                Button("Retry") {
+                    performPrePublishSyncAndGenerate()
+                }
+                Button("Cancel", role: .cancel) { }
+            } message: {
+                Text(prePublishSyncError ?? "An unknown error occurred while syncing. Please try again.")
+            }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Close") {
@@ -176,7 +190,7 @@ struct PublishBlogView: View {
             if autoPublish {
                 // Use smart publishing for auto-publish by default
                 forceFullUpload = false
-                generateSite()
+                performPrePublishSyncAndGenerate()
             }
         }
         .onDisappear {
@@ -250,7 +264,7 @@ struct PublishBlogView: View {
             VStack(spacing: 12) {
                 Button(action: {
                     forceFullUpload = false
-                    generateSite()
+                    performPrePublishSyncAndGenerate()
                 }) {
                     Label("Smart Publish to AWS", systemImage: "arrow.up.to.line")
                         .frame(maxWidth: .infinity)
@@ -258,10 +272,10 @@ struct PublishBlogView: View {
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
                 .tint(Color("PBlue"))
-                
+
                 Button(action: {
                     forceFullUpload = true
-                    generateSite()
+                    performPrePublishSyncAndGenerate()
                 }) {
                     Label("Full Publish to AWS", systemImage: "arrow.up.to.line.square")
                         .frame(maxWidth: .infinity)
@@ -298,7 +312,7 @@ struct PublishBlogView: View {
             VStack(spacing: 12) {
                 Button(action: {
                     forceFullUpload = false
-                    generateSite()
+                    performPrePublishSyncAndGenerate()
                 }) {
                     Label("Smart Publish via SFTP", systemImage: "arrow.up.to.line")
                         .frame(maxWidth: .infinity)
@@ -306,10 +320,10 @@ struct PublishBlogView: View {
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
                 .tint(Color("PBlue"))
-                
+
                 Button(action: {
                     forceFullUpload = true
-                    generateSite()
+                    performPrePublishSyncAndGenerate()
                 }) {
                     Label("Full Publish via SFTP", systemImage: "arrow.up.to.line.square")
                         .frame(maxWidth: .infinity)
@@ -346,7 +360,7 @@ struct PublishBlogView: View {
             VStack(spacing: 12) {
                 Button(action: {
                     forceFullUpload = false
-                    generateSite()
+                    performPrePublishSyncAndGenerate()
                 }) {
                     Label("Smart Publish to Git Repository", systemImage: "arrow.up.to.line")
                         .frame(maxWidth: .infinity)
@@ -354,10 +368,10 @@ struct PublishBlogView: View {
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
                 .tint(Color("PBlue"))
-                
+
                 Button(action: {
                     forceFullUpload = true
-                    generateSite()
+                    performPrePublishSyncAndGenerate()
                 }) {
                     Label("Full Publish to Git Repository", systemImage: "arrow.up.to.line.square")
                         .frame(maxWidth: .infinity)
@@ -403,7 +417,7 @@ struct PublishBlogView: View {
                 .tint(Color("PBlue"))
             } else {
                 Button(action: {
-                    generateSite()
+                    performPrePublishSyncAndGenerate()
                 }) {
                     Label("Generate Site ZIP", systemImage: "globe")
                         .frame(maxWidth: .infinity)
@@ -484,11 +498,11 @@ struct PublishBlogView: View {
             do {
                 // Pass modelContext and forceFullUpload flags to StaticSiteGenerator
                 let generator = StaticSiteGenerator(
-                    blog: blog, 
+                    blog: blog,
                     modelContext: modelContext,
                     forceFullUpload: forceFullUpload
                 )
-                
+
                 let publishMode = forceFullUpload ? "full" : "smart"
                 statusMessage = "Generating site content for \(publishMode) publishing..."
                 let result = try await generator.generateSite()
@@ -529,6 +543,59 @@ struct PublishBlogView: View {
                     self.errorMessage = "Error: \(error.localizedDescription)"
                     self.statusMessage = "Error occurred during publishing"
                     self.isGenerating = false
+                }
+            }
+        }
+    }
+
+    /// Performs pre-publish sync check if sync is enabled, then generates and publishes the site.
+    /// This ensures the local blog is up-to-date with remote changes before publishing.
+    private func performPrePublishSyncAndGenerate() {
+        // If sync is not enabled or no URL is set, skip sync and go straight to generate
+        guard blog.syncEnabled, !blog.url.isEmpty else {
+            generateSite()
+            return
+        }
+
+        isGenerating = true
+        isPrePublishSyncing = true
+        errorMessage = nil
+        publishSuccessMessage = nil
+        prePublishSyncError = nil
+        statusMessage = "Checking for remote changes..."
+
+        Task {
+            do {
+                // Check for remote changes
+                let checkResult = try await SyncChecker.checkForChanges(blog: blog)
+
+                if checkResult.hasChanges {
+                    await MainActor.run {
+                        statusMessage = "Syncing remote changes: \(checkResult.changeSummary)..."
+                    }
+
+                    // Pull changes before publishing
+                    _ = try await IncrementalSync.pullChanges(
+                        blog: blog,
+                        modelContext: modelContext
+                    ) { progress in
+                        Task { @MainActor in
+                            statusMessage = "Syncing: \(progress.description)"
+                        }
+                    }
+                }
+
+                await MainActor.run {
+                    isPrePublishSyncing = false
+                    // Continue with site generation
+                    generateSite()
+                }
+            } catch {
+                await MainActor.run {
+                    isPrePublishSyncing = false
+                    isGenerating = false
+                    prePublishSyncError = error.localizedDescription
+                    showingPrePublishSyncError = true
                 }
             }
         }

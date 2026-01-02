@@ -2,7 +2,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { useBlogStore } from '@/stores/blog';
-import { publishApi } from '@/api';
+import { publishApi, syncApi } from '@/api';
 import PageToolbar from '@/components/PageToolbar.vue';
 
 const route = useRoute();
@@ -23,6 +23,10 @@ const showNewFiles = ref(false);
 const showModifiedFiles = ref(false);
 const showDeletedFiles = ref(false);
 
+// Pre-publish sync state
+const prePublishSyncing = ref(false);
+const prePublishSyncStatus = ref(null);
+
 onMounted(async () => {
   await loadStatus();
 });
@@ -32,6 +36,54 @@ async function loadStatus() {
     publishStatus.value = await publishApi.status(blogId.value);
   } catch (e) {
     console.error('Failed to load publish status:', e);
+  }
+}
+
+/**
+ * Performs pre-publish sync if the blog has sync enabled (has a URL).
+ * Returns true if sync succeeded or was not needed, false if sync failed.
+ */
+async function performPrePublishSync() {
+  // Skip sync if blog has no URL configured
+  if (!blogStore.currentBlog?.url) {
+    return true;
+  }
+
+  prePublishSyncing.value = true;
+  prePublishSyncStatus.value = 'Checking for remote changes...';
+  error.value = null;
+
+  try {
+    // Check for remote changes
+    const checkResult = await syncApi.checkChanges(blogId.value);
+
+    if (checkResult.hasChanges) {
+      prePublishSyncStatus.value = `Syncing remote changes: ${checkResult.changeSummary || 'updating...'}`;
+
+      // Pull changes
+      const pullResult = await syncApi.pull(blogId.value);
+
+      if (!pullResult.success) {
+        throw new Error(pullResult.message || 'Sync failed');
+      }
+
+      // Refresh store data after sync
+      await Promise.all([
+        blogStore.fetchBlog(blogId.value),
+        blogStore.fetchPosts(blogId.value),
+        blogStore.fetchCategories(blogId.value),
+        blogStore.fetchTags(blogId.value)
+      ]);
+    }
+
+    prePublishSyncing.value = false;
+    prePublishSyncStatus.value = null;
+    return true;
+  } catch (e) {
+    prePublishSyncing.value = false;
+    prePublishSyncStatus.value = null;
+    error.value = `Sync failed: ${e.message}. Please resolve this before publishing.`;
+    return false;
   }
 }
 
@@ -85,6 +137,13 @@ async function publishToAWS(forceUploadAll = false) {
   successMessage.value = null;
 
   try {
+    // Perform pre-publish sync first
+    const syncOk = await performPrePublishSync();
+    if (!syncOk) {
+      publishing.value = false;
+      return;
+    }
+
     const result = await publishApi.publishToAWS(blogId.value, { forceUploadAll });
     successMessage.value = result.message;
     await loadStatus();
@@ -101,6 +160,13 @@ async function publishToSFTP(forceUploadAll = false) {
   successMessage.value = null;
 
   try {
+    // Perform pre-publish sync first
+    const syncOk = await performPrePublishSync();
+    if (!syncOk) {
+      publishing.value = false;
+      return;
+    }
+
     const result = await publishApi.publishToSFTP(blogId.value, { forceUploadAll });
     successMessage.value = result.message;
     await loadStatus();
@@ -117,6 +183,13 @@ async function publishToGit() {
   successMessage.value = null;
 
   try {
+    // Perform pre-publish sync first
+    const syncOk = await performPrePublishSync();
+    if (!syncOk) {
+      publishing.value = false;
+      return;
+    }
+
     const result = await publishApi.publishToGit(blogId.value);
     successMessage.value = result.message;
     await loadStatus();
@@ -149,6 +222,17 @@ function getPublisherLabel(type) {
     <PageToolbar title="Publish" />
 
     <div class="px-6 pb-6">
+    <!-- Pre-publish Sync Status -->
+    <div v-if="prePublishSyncing" class="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+      <div class="flex items-center gap-3">
+        <svg class="w-5 h-5 text-blue-600 dark:text-blue-400 animate-spin" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <span class="text-blue-800 dark:text-blue-300">{{ prePublishSyncStatus }}</span>
+      </div>
+    </div>
+
     <!-- Error -->
     <div v-if="error" class="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-800 dark:text-red-400">
       {{ error }}

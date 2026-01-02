@@ -2,12 +2,14 @@
 import { ref, computed, watch, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { useBlogStore } from '@/stores/blog';
+import { useSyncStore } from '@/stores/sync';
 import { syncApi } from '@/api';
 import PageToolbar from '@/components/PageToolbar.vue';
 import SettingsTabs from '@/components/SettingsTabs.vue';
 
 const route = useRoute();
 const blogStore = useBlogStore();
+const syncStore = useSyncStore();
 
 const blogId = computed(() => route.params.blogId);
 
@@ -76,6 +78,9 @@ async function pullChanges() {
     syncDownResult.value = result;
     syncCheckResult.value = null;
     await fetchSyncConfig();
+
+    // Clear the sync badge since we've synced
+    syncStore.clearChanges();
 
     // Refresh blog data to show pulled changes
     if (result.updated) {
