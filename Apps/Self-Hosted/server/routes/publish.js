@@ -1,3 +1,15 @@
+/**
+ * Publish Routes
+ *
+ * Handles publishing the generated static site to various destinations (AWS, SFTP, Git).
+ *
+ * IMPORTANT: This file interacts with TWO separate hash systems:
+ * 1. Smart Publishing (.postalgic/hashes.json) - Full site hashes uploaded to remote
+ * 2. Cross-Platform Sync (localFileHashes) - Sync data hashes stored locally
+ *
+ * See siteGenerator.js header for full explanation of these systems.
+ */
+
 import express from 'express';
 import path from 'path';
 import Storage from '../utils/storage.js';
@@ -9,6 +21,24 @@ const router = express.Router({ mergeParams: true });
 
 function getStorage(req) {
   return new Storage(req.app.locals.dataRoot);
+}
+
+/**
+ * Extract sync file hashes from full site file hashes.
+ * Filters to only sync/ prefixed files and strips the prefix.
+ * @param {Object} fileHashes - Full site file hashes (includes sync/, css/, etc.)
+ * @returns {Object} - Only sync file hashes with prefix stripped
+ */
+function extractSyncHashes(fileHashes) {
+  const syncHashes = {};
+  for (const [filePath, hash] of Object.entries(fileHashes)) {
+    if (filePath.startsWith('sync/')) {
+      // Strip the 'sync/' prefix to match manifest format
+      const syncPath = filePath.slice(5);
+      syncHashes[syncPath] = hash;
+    }
+  }
+  return syncHashes;
 }
 
 // POST /api/blogs/:blogId/publish/generate - Generate static site
@@ -223,8 +253,9 @@ router.post('/aws', async (req, res) => {
     // Upload hash file to remote after successful publish
     await publisher.uploadHashFile(generateResult.fileHashes, 'self-hosted');
 
-    // Update sync version
-    storage.updateSyncVersion(blogId, generateResult.syncVersion);
+    // Update sync version and store SYNC file hashes locally (not full site hashes)
+    // See siteGenerator.js header for explanation of the two hash systems
+    storage.updateSyncVersion(blogId, generateResult.syncVersion, extractSyncHashes(generateResult.fileHashes));
 
     res.json({
       success: true,
@@ -294,8 +325,9 @@ router.post('/sftp', async (req, res) => {
     // Upload hash file to remote after successful publish
     await publisher.uploadHashFile(generateResult.fileHashes, 'self-hosted');
 
-    // Update sync version
-    storage.updateSyncVersion(blogId, generateResult.syncVersion);
+    // Update sync version and store SYNC file hashes locally (not full site hashes)
+    // See siteGenerator.js header for explanation of the two hash systems
+    storage.updateSyncVersion(blogId, generateResult.syncVersion, extractSyncHashes(generateResult.fileHashes));
 
     res.json({
       success: true,
@@ -345,8 +377,9 @@ router.post('/git', async (req, res) => {
     // Publish (hash file is included in the commit)
     const result = await publisher.publish(generateResult.outputDir);
 
-    // Update sync version
-    storage.updateSyncVersion(blogId, generateResult.syncVersion);
+    // Update sync version and store SYNC file hashes locally (not full site hashes)
+    // See siteGenerator.js header for explanation of the two hash systems
+    storage.updateSyncVersion(blogId, generateResult.syncVersion, extractSyncHashes(generateResult.fileHashes));
 
     res.json({
       success: true,

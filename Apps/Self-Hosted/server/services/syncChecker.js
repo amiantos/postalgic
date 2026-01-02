@@ -3,6 +3,12 @@
  *
  * Checks for changes between local and remote sync data.
  * Used for incremental sync (pull/download changes).
+ *
+ * IMPORTANT: This is part of the CROSS-PLATFORM SYNC SYSTEM, not the smart publishing system.
+ * - Compares sync data hashes (blog.json, posts/*.json, etc.) NOT full site hashes
+ * - localFileHashes should contain paths like: `blog.json`, `posts/xxx.json` (no sync/ prefix)
+ * - Remote manifest at /sync/manifest.json contains the same path format
+ * - See siteGenerator.js header for full explanation of the two hash systems
  */
 
 import { fetchManifest } from './syncImporter.js';

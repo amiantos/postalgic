@@ -4,6 +4,25 @@
 //
 //  Created by Brad Root on 4/19/25.
 //
+//  IMPORTANT: There are TWO separate hash/file tracking systems in Postalgic:
+//
+//  1. SMART PUBLISHING SYSTEM (`.postalgic/hashes.json`)
+//     - Tracks hashes of ALL generated site files (HTML, CSS, images, sync/, etc.)
+//     - Used for incremental/smart publishing to avoid re-uploading unchanged files
+//     - Stored remotely on the published site in `.postalgic/hashes.json`
+//     - Paths include everything: `index.html`, `css/style.css`, `sync/blog.json`, etc.
+//
+//  2. CROSS-PLATFORM SYNC SYSTEM (`/sync/manifest.json` + local sync state)
+//     - Tracks hashes of ONLY sync data files (blog.json, posts/*.json, etc.)
+//     - Used for syncing blog data between iOS and Self-Hosted apps
+//     - Manifest stored at `/sync/manifest.json` on the published site
+//     - Local hashes stored in Blog model's sync properties
+//     - Paths are relative to sync folder: `blog.json`, `posts/xxx.json` (NO `sync/` prefix)
+//
+//  These systems are UNRELATED and should not be confused:
+//  - `.postalgic/` = smart publishing hashes (full site)
+//  - `/sync/` = cross-platform sync data (blog content only)
+//
 
 import Foundation
 import Ink
