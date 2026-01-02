@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+    <channel>
+        <title>{{blogName}}</title>
+        <link>{{{blogUrl}}}/</link>
+        <description>{{#blogTagline}}{{blogTagline}}{{/blogTagline}}{{^blogTagline}}Posts from {{blogName}}{{/blogTagline}}</description>
+        <lastBuildDate>{{buildDate}}</lastBuildDate>
+        <generator>Postalgic</generator>
+        <docs>https://www.rssboard.org/rss-specification</docs>
+        {{#blogAuthor}}
+        <managingEditor>{{#blogAuthorEmail}}{{blogAuthorEmail}} ({{blogAuthor}}){{/blogAuthorEmail}}{{^blogAuthorEmail}}{{blogAuthor}}{{/blogAuthorEmail}}</managingEditor>
+        {{/blogAuthor}}
+
+        {{#posts}}
+        <item>
+            <title>{{displayTitle}}</title>
+            <link>{{{blogUrl}}}/{{{urlPath}}}/</link>
+            <description><![CDATA[{{{contentHtml}}}]]></description>
+            <pubDate>{{published}}</pubDate>
+            <guid isPermaLink="true">{{{blogUrl}}}/{{{urlPath}}}/</guid>
+            {{#blogAuthor}}
+            {{#blogAuthorEmail}}
+            <author>{{blogAuthorEmail}} ({{blogAuthor}})</author>
+            {{/blogAuthorEmail}}
+            {{/blogAuthor}}
+            {{#hasCategory}}
+            <category>{{categoryName}}</category>
+            {{/hasCategory}}
+        </item>
+        {{/posts}}
+    </channel>
+</rss>

@@ -100,17 +100,7 @@ class TemplateEngine {
         let sidebarContent = generateSidebarContent()
         context["sidebarContent"] = sidebarContent
 
-        let rendered = layoutTemplate.render(context, library: templateManager.getLibrary())
-        // Strip trailing whitespace from each line to match self-hosted output
-        return rendered.split(separator: "\n", omittingEmptySubsequences: false)
-            .map { line in
-                var s = String(line)
-                while s.hasSuffix(" ") || s.hasSuffix("\t") {
-                    s.removeLast()
-                }
-                return s
-            }
-            .joined(separator: "\n")
+        return layoutTemplate.render(context, library: templateManager.getLibrary())
     }
     
     /// Generates the HTML content for the sidebar based on the blog's sidebar objects

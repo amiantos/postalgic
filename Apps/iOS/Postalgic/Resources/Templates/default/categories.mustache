@@ -1,0 +1,10 @@
+<h1>All Categories</h1>
+<div class="archive-separator"></div>
+<div class="category-list">
+    {{#categories}}
+        <div class="category-item">
+            <h2><a href="/categories/{{urlPath}}/">{{name}}</a> <span class="category-count">({{postCount}})</span></h2>
+            {{#hasDescription}}<p class="category-description">{{description}}</p>{{/hasDescription}}
+        </div>
+    {{/categories}}
+</div>
