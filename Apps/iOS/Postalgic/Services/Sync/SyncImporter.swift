@@ -135,7 +135,7 @@ class SyncImporter {
         let syncBlog = try decoder.decode(SyncDataGenerator.SyncBlog.self, from: blogData)
 
         // Step 3: Create the blog
-        let blog = Blog(name: syncBlog.name, url: syncBlog.url)
+        let blog = Blog(name: syncBlog.name, url: syncBlog.url ?? "")
         blog.tagline = syncBlog.tagline
         blog.authorName = syncBlog.authorName
         blog.authorUrl = syncBlog.authorUrl

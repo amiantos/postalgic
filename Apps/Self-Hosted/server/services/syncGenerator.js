@@ -11,6 +11,37 @@ import path from 'path';
 import { calculateHash, calculateBufferHash } from '../utils/helpers.js';
 
 /**
+ * Recursively sort object keys alphabetically.
+ * This ensures consistent JSON output across platforms.
+ * @param {any} obj - The object to sort
+ * @returns {any} - Object with sorted keys
+ */
+function sortObjectKeys(obj) {
+  if (obj === null || typeof obj !== 'object') {
+    return obj;
+  }
+  if (Array.isArray(obj)) {
+    return obj.map(sortObjectKeys);
+  }
+  const sorted = {};
+  const keys = Object.keys(obj).sort();
+  for (const key of keys) {
+    sorted[key] = sortObjectKeys(obj[key]);
+  }
+  return sorted;
+}
+
+/**
+ * Stringify object with sorted keys for cross-platform consistency.
+ * iOS uses JSONEncoder with .sortedKeys which sorts alphabetically.
+ * @param {any} obj - The object to stringify
+ * @returns {string} - JSON string with sorted keys
+ */
+function stringifyWithSortedKeys(obj) {
+  return JSON.stringify(sortObjectKeys(obj), null, 2);
+}
+
+/**
  * Get the stable sync ID for an entity.
  * Uses syncId if available (preserves ID from import), otherwise falls back to local id.
  * This ensures entity IDs remain stable across all copies of a synced blog.
@@ -104,23 +135,23 @@ export async function generateSyncDirectory(storage, blogId, outputDir) {
   // === Generate blog.json ===
   const blogData = {
     name: blog.name,
-    url: blog.url || '',
-    tagline: blog.tagline || '',
-    authorName: blog.authorName || '',
-    authorUrl: blog.authorUrl || '',
-    authorEmail: blog.authorEmail || '',
+    url: blog.url || null,
+    tagline: blog.tagline || null,
+    authorName: blog.authorName || null,
+    authorUrl: blog.authorUrl || null,
+    authorEmail: blog.authorEmail || null,
     timezone: blog.timezone || 'UTC',
     colors: {
-      accent: blog.accentColor || '#FFA100',
-      background: blog.backgroundColor || '#efefef',
-      text: blog.textColor || '#2d3748',
-      lightShade: blog.lightShade || '#dedede',
-      mediumShade: blog.mediumShade || '#a0aec0',
-      darkShade: blog.darkShade || '#4a5568'
+      accent: blog.accentColor || null,
+      background: blog.backgroundColor || null,
+      text: blog.textColor || null,
+      lightShade: blog.lightShade || null,
+      mediumShade: blog.mediumShade || null,
+      darkShade: blog.darkShade || null
     },
-    themeIdentifier: blog.themeIdentifier || 'default'
+    themeIdentifier: blog.themeIdentifier || null
   };
-  const blogJson = JSON.stringify(blogData, null, 2);
+  const blogJson = stringifyWithSortedKeys(blogData);
   fs.writeFileSync(path.join(syncDir, 'blog.json'), blogJson);
   fileHashes['blog.json'] = calculateHash(blogJson);
 
@@ -131,11 +162,11 @@ export async function generateSyncDirectory(storage, blogId, outputDir) {
     const categoryData = {
       id: stableId,
       name: category.name,
-      description: category.description || '',
+      description: category.description || null,
       stub: category.stub,
       createdAt: category.createdAt
     };
-    const categoryJson = JSON.stringify(categoryData, null, 2);
+    const categoryJson = stringifyWithSortedKeys(categoryData);
     fs.writeFileSync(path.join(syncDir, 'categories', `${stableId}.json`), categoryJson);
     const hash = calculateHash(categoryJson);
     fileHashes[`categories/${stableId}.json`] = hash;
@@ -148,7 +179,7 @@ export async function generateSyncDirectory(storage, blogId, outputDir) {
   }
   // Sort by id for deterministic output
   categoryIndex.categories.sort((a, b) => a.id.localeCompare(b.id));
-  const categoryIndexJson = JSON.stringify(categoryIndex, null, 2);
+  const categoryIndexJson = stringifyWithSortedKeys(categoryIndex);
   fs.writeFileSync(path.join(syncDir, 'categories', 'index.json'), categoryIndexJson);
   fileHashes['categories/index.json'] = calculateHash(categoryIndexJson);
 
@@ -162,7 +193,7 @@ export async function generateSyncDirectory(storage, blogId, outputDir) {
       stub: tag.stub,
       createdAt: tag.createdAt
     };
-    const tagJson = JSON.stringify(tagData, null, 2);
+    const tagJson = stringifyWithSortedKeys(tagData);
     fs.writeFileSync(path.join(syncDir, 'tags', `${stableId}.json`), tagJson);
     const hash = calculateHash(tagJson);
     fileHashes[`tags/${stableId}.json`] = hash;
@@ -175,7 +206,7 @@ export async function generateSyncDirectory(storage, blogId, outputDir) {
   }
   // Sort by id for deterministic output
   tagIndex.tags.sort((a, b) => a.id.localeCompare(b.id));
-  const tagIndexJson = JSON.stringify(tagIndex, null, 2);
+  const tagIndexJson = stringifyWithSortedKeys(tagIndex);
   fs.writeFileSync(path.join(syncDir, 'tags', 'index.json'), tagIndexJson);
   fileHashes['tags/index.json'] = calculateHash(tagIndexJson);
 
@@ -194,7 +225,7 @@ export async function generateSyncDirectory(storage, blogId, outputDir) {
   for (const post of publishedPosts) {
     const stableId = getStableSyncId(post);
     const postData = createSyncPost(post, stableId, categoryIdMap, tagIdMap);
-    const postJson = JSON.stringify(postData, null, 2);
+    const postJson = stringifyWithSortedKeys(postData);
     fs.writeFileSync(path.join(syncDir, 'posts', `${stableId}.json`), postJson);
     const hash = calculateHash(postJson);
     fileHashes[`posts/${stableId}.json`] = hash;
@@ -208,7 +239,7 @@ export async function generateSyncDirectory(storage, blogId, outputDir) {
   }
   // Sort by id for deterministic output
   postIndex.posts.sort((a, b) => a.id.localeCompare(b.id));
-  const postIndexJson = JSON.stringify(postIndex, null, 2);
+  const postIndexJson = stringifyWithSortedKeys(postIndex);
   fs.writeFileSync(path.join(syncDir, 'posts', 'index.json'), postIndexJson);
   fileHashes['posts/index.json'] = calculateHash(postIndexJson);
 
@@ -229,7 +260,7 @@ export async function generateSyncDirectory(storage, blogId, outputDir) {
         order: l.order
       })) : null
     };
-    const sidebarJson = JSON.stringify(sidebarData, null, 2);
+    const sidebarJson = stringifyWithSortedKeys(sidebarData);
     fs.writeFileSync(path.join(syncDir, 'sidebar', `${stableId}.json`), sidebarJson);
     const hash = calculateHash(sidebarJson);
     fileHashes[`sidebar/${stableId}.json`] = hash;
@@ -241,7 +272,7 @@ export async function generateSyncDirectory(storage, blogId, outputDir) {
   }
   // Sort by id for deterministic output
   sidebarIndex.sidebar.sort((a, b) => a.id.localeCompare(b.id));
-  const sidebarIndexJson = JSON.stringify(sidebarIndex, null, 2);
+  const sidebarIndexJson = stringifyWithSortedKeys(sidebarIndex);
   fs.writeFileSync(path.join(syncDir, 'sidebar', 'index.json'), sidebarIndexJson);
   fileHashes['sidebar/index.json'] = calculateHash(sidebarIndexJson);
 
@@ -268,7 +299,7 @@ export async function generateSyncDirectory(storage, blogId, outputDir) {
   }
   // Sort by filename for deterministic output
   staticFilesIndex.files.sort((a, b) => a.filename.localeCompare(b.filename));
-  const staticFilesIndexJson = JSON.stringify(staticFilesIndex, null, 2);
+  const staticFilesIndexJson = stringifyWithSortedKeys(staticFilesIndex);
   fs.writeFileSync(path.join(syncDir, 'static-files', 'index.json'), staticFilesIndexJson);
   fileHashes['static-files/index.json'] = calculateHash(staticFilesIndexJson);
 
@@ -310,7 +341,7 @@ export async function generateSyncDirectory(storage, blogId, outputDir) {
   }
   // Sort by filename for deterministic output
   embedImagesIndex.images.sort((a, b) => a.filename.localeCompare(b.filename));
-  const embedImagesIndexJson = JSON.stringify(embedImagesIndex, null, 2);
+  const embedImagesIndexJson = stringifyWithSortedKeys(embedImagesIndex);
   fs.writeFileSync(path.join(syncDir, 'embed-images', 'index.json'), embedImagesIndexJson);
   fileHashes['embed-images/index.json'] = calculateHash(embedImagesIndexJson);
 
@@ -321,7 +352,7 @@ export async function generateSyncDirectory(storage, blogId, outputDir) {
       name: theme.name,
       templates: theme.templates
     };
-    const themeJson = JSON.stringify(themeData, null, 2);
+    const themeJson = stringifyWithSortedKeys(themeData);
     fs.writeFileSync(path.join(syncDir, 'themes', `${theme.identifier}.json`), themeJson);
     fileHashes[`themes/${theme.identifier}.json`] = calculateHash(themeJson);
   }
@@ -369,7 +400,7 @@ export async function generateSyncDirectory(storage, blogId, outputDir) {
     files: manifestFiles
   };
 
-  const manifestJson = JSON.stringify(manifest, null, 2);
+  const manifestJson = stringifyWithSortedKeys(manifest);
   fs.writeFileSync(path.join(syncDir, 'manifest.json'), manifestJson);
   fileHashes['manifest.json'] = calculateHash(manifestJson);
 

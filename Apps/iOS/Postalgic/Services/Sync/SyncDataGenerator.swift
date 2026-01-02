@@ -84,7 +84,7 @@ class SyncDataGenerator {
 
     struct SyncBlog: Codable {
         let name: String
-        let url: String
+        let url: String?
         let tagline: String?
         let authorName: String?
         let authorUrl: String?
@@ -315,7 +315,7 @@ class SyncDataGenerator {
         statusUpdate("Generating blog settings...")
         let syncBlog = SyncBlog(
             name: blog.name,
-            url: blog.url,
+            url: blog.url.isEmpty ? nil : blog.url,
             tagline: blog.tagline,
             authorName: blog.authorName,
             authorUrl: blog.authorUrl,
@@ -451,9 +451,11 @@ class SyncDataGenerator {
                 }
             }
 
+            // Convert iOS type format to self-hosted format
+            let syncType = sidebarObject.objectType == .linkList ? "linkList" : "text"
             let syncSidebar = SyncSidebarObject(
                 id: stableId,
-                type: sidebarObject.type,
+                type: syncType,
                 title: sidebarObject.title,
                 content: sidebarObject.content,
                 order: sidebarObject.order,
@@ -592,8 +594,9 @@ class SyncDataGenerator {
         }
 
         // Compute contentVersion as SHA256 of all file hashes (sorted for consistency)
-        let sortedHashes = fileHashes.keys.sorted().compactMap { fileHashes[$0] }
-        let combinedHashes = sortedHashes.joined()
+        // Format: "filePath:hash\n" to match self-hosted sync generator
+        let sortedHashEntries = fileHashes.keys.sorted().map { "\($0):\(fileHashes[$0]!)" }
+        let combinedHashes = sortedHashEntries.joined(separator: "\n")
         let contentVersion = combinedHashes.data(using: .utf8)?.sha256Hash() ?? UUID().uuidString
 
         let manifest = SyncManifest(
@@ -653,7 +656,7 @@ class SyncDataGenerator {
 
             syncEmbed = SyncEmbed(
                 type: embed.type,
-                position: embed.position,
+                position: embed.position.lowercased(),  // Self-hosted uses lowercase positions
                 url: embed.url,
                 title: embed.title,
                 description: embed.embedDescription,

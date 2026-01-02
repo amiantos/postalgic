@@ -254,14 +254,17 @@ final class Category {
         name: String,
         categoryDescription: String? = nil,
         createdAt: Date = Date(),
-        stub: String? = nil
+        stub: String? = nil,
+        syncId: String? = nil
     ) {
         self.blog = blog
         self.name = name.capitalized
         self.categoryDescription = categoryDescription
         self.createdAt = createdAt
         self.stub = stub
-        
+        // Auto-generate syncId for new entities if not provided
+        self.syncId = syncId ?? UUID().uuidString
+
         // Generate stub if not provided
         if self.stub == nil {
             self.stub = Utils.generateStub(from: name)
@@ -288,12 +291,14 @@ final class Tag {
     var blog: Blog?
     var posts: [Post] = []
 
-    init(blog: Blog, name: String, createdAt: Date = Date(), stub: String? = nil) {
+    init(blog: Blog, name: String, createdAt: Date = Date(), stub: String? = nil, syncId: String? = nil) {
         self.blog = blog
         self.name = name.lowercased()
         self.createdAt = createdAt
         self.stub = stub
-        
+        // Auto-generate syncId for new entities if not provided
+        self.syncId = syncId ?? UUID().uuidString
+
         // Generate stub if not provided
         if self.stub == nil {
             self.stub = Utils.generateStub(from: name)
@@ -641,26 +646,29 @@ final class Post {
         content: String,
         createdAt: Date = Date(),
         isDraft: Bool = false,
-        stub: String? = nil
+        stub: String? = nil,
+        syncId: String? = nil
     ) {
         self.title = title
         self.content = content
         self.createdAt = createdAt
         self.isDraft = isDraft
-        
+        // Auto-generate syncId for new entities if not provided
+        self.syncId = syncId ?? UUID().uuidString
+
         // Generate stub if not provided
         if let providedStub = stub, !providedStub.isEmpty {
             self.stub = providedStub
         } else {
             let sourceText: String
-            
+
             if let title = title, !title.isEmpty {
                 sourceText = title
             } else {
                 // Use the content, but strip Markdown formatting first
                 sourceText = stripMarkdown(from: content)
             }
-            
+
             self.stub = Utils.generateStub(from: sourceText)
         }
     }
@@ -795,12 +803,14 @@ final class SidebarObject {
     @Relationship(deleteRule: .cascade, inverse: \LinkItem.sidebarObject)
     var links: [LinkItem] = []
 
-    init(blog: Blog, title: String, type: SidebarObjectType, order: Int, createdAt: Date = Date()) {
+    init(blog: Blog, title: String, type: SidebarObjectType, order: Int, createdAt: Date = Date(), syncId: String? = nil) {
         self.blog = blog
         self.title = title
         self.type = type.rawValue
         self.order = order
         self.createdAt = createdAt
+        // Auto-generate syncId for new entities if not provided
+        self.syncId = syncId ?? UUID().uuidString
     }
     
     var objectType: SidebarObjectType {
@@ -990,7 +1000,7 @@ final class StaticFile {
     var createdAt: Date
     var syncId: String?  // Remote sync ID for incremental sync matching
 
-    init(blog: Blog, filename: String, data: Data, mimeType: String, isSpecialFile: Bool = false, specialFileType: SpecialFileType? = nil, createdAt: Date = Date()) {
+    init(blog: Blog, filename: String, data: Data, mimeType: String, isSpecialFile: Bool = false, specialFileType: SpecialFileType? = nil, createdAt: Date = Date(), syncId: String? = nil) {
         self.blog = blog
         self.filename = filename
         self.data = data
@@ -998,6 +1008,8 @@ final class StaticFile {
         self.isSpecialFile = isSpecialFile
         self.specialFileType = specialFileType?.rawValue
         self.createdAt = createdAt
+        // Auto-generate syncId for new entities if not provided
+        self.syncId = syncId ?? UUID().uuidString
     }
     
     var fileType: SpecialFileType? {

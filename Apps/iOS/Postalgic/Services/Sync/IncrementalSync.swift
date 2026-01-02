@@ -116,7 +116,7 @@ class IncrementalSync {
             let syncBlog = try decoder.decode(SyncDataGenerator.SyncBlog.self, from: blogData)
 
             blog.name = syncBlog.name
-            blog.url = syncBlog.url
+            blog.url = syncBlog.url ?? ""
             blog.tagline = syncBlog.tagline
             blog.authorName = syncBlog.authorName
             blog.authorUrl = syncBlog.authorUrl
