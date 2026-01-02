@@ -100,7 +100,20 @@ class TemplateEngine {
         let sidebarContent = generateSidebarContent()
         context["sidebarContent"] = sidebarContent
 
-        return layoutTemplate.render(context, library: templateManager.getLibrary())
+        let rendered = layoutTemplate.render(context, library: templateManager.getLibrary())
+
+        // Normalize whitespace-only lines to empty lines
+        // This fixes differences between Swift and Node.js Mustache handling of empty conditionals
+        return rendered.split(separator: "\n", omittingEmptySubsequences: false)
+            .map { line in
+                let s = String(line)
+                // If line contains only whitespace, return empty string
+                if s.trimmingCharacters(in: .whitespaces).isEmpty {
+                    return ""
+                }
+                return s
+            }
+            .joined(separator: "\n")
     }
     
     /// Generates the HTML content for the sidebar based on the blog's sidebar objects
@@ -384,7 +397,11 @@ class TemplateEngine {
         
         let content = tagTemplate.render(context, library: templateManager.getLibrary())
         let pageTitle = currentPage == 1 ? "Posts tagged \"\(tag.name)\" - \(blog.name)" : "Posts tagged \"\(tag.name)\" (Page \(currentPage)) - \(blog.name)"
-        return try renderLayout(content: content, pageTitle: pageTitle)
+        return try renderLayout(
+            content: content,
+            pageTitle: pageTitle,
+            customHead: "<link rel=\"sitemap\" type=\"application/xml\" title=\"Sitemap\" href=\"/sitemap.xml\" />"
+        )
     }
     
     /// Renders the categories index page
