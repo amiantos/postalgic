@@ -102,7 +102,7 @@ struct ThemeEditorView: View {
             }
             .onAppear {
                 // Load all templates from the theme
-                print("ThemeEditor: Opening theme \(theme.identifier) - \(theme.name)")
+                Log.debug("ThemeEditor: Opening theme \(theme.identifier) - \(theme.name)")
                 
                 // Get all template keys
                 templateNames = Array(theme.templates.keys).sorted()

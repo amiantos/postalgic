@@ -171,7 +171,7 @@ struct ThemesView: View {
                 let content = try templateManager.getTemplateString(for: templateType)
                 customTheme.setTemplate(named: templateType, content: content)
             } catch {
-                print("Error copying template: \(error)")
+                Log.error("Error copying template: \(error)")
             }
         }
         
