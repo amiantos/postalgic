@@ -380,7 +380,8 @@ struct BlogSettingsView: View {
                 try hashesData.write(to: postalgicDir.appendingPathComponent("hashes.json"))
 
                 // Create a zip file
-                let zipURL = tempDirectory.appendingPathComponent("postalgic-debug-\(blog.id.uuidString.prefix(8)).zip")
+                let sanitizedName = blog.name.replacingOccurrences(of: " ", with: "-").lowercased()
+                let zipURL = tempDirectory.appendingPathComponent("postalgic-debug-\(sanitizedName).zip")
 
                 // Remove existing zip if present
                 if FileManager.default.fileExists(atPath: zipURL.path) {
