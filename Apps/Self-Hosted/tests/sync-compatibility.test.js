@@ -1168,4 +1168,194 @@ describe('Sync Data Compatibility', () => {
       expect(result2.fileHashes['categories/index.html']).toBe(result1.fileHashes['categories/index.html']);
     });
   });
+
+  describe('Static Files Sync', () => {
+    let syncOutputDir;
+
+    beforeAll(async () => {
+      syncOutputDir = path.join(testDir, 'output');
+    });
+
+    it('should create static-files index', () => {
+      const indexPath = path.join(syncOutputDir, 'sync', 'static-files', 'index.json');
+      expect(fs.existsSync(indexPath)).toBe(true);
+
+      const index = JSON.parse(fs.readFileSync(indexPath, 'utf8'));
+      expect(index).toHaveProperty('files');
+      expect(Array.isArray(index.files)).toBe(true);
+    });
+
+    it('should include file metadata in static-files index', () => {
+      const indexPath = path.join(syncOutputDir, 'sync', 'static-files', 'index.json');
+      const index = JSON.parse(fs.readFileSync(indexPath, 'utf8'));
+
+      for (const file of index.files) {
+        expect(file).toHaveProperty('filename');
+        expect(file).toHaveProperty('mimeType');
+        // specialFileType can be null for regular files
+        expect(file).toHaveProperty('specialFileType');
+      }
+    });
+
+    it('should create embed-images index', () => {
+      const indexPath = path.join(syncOutputDir, 'sync', 'embed-images', 'index.json');
+      expect(fs.existsSync(indexPath)).toBe(true);
+
+      const index = JSON.parse(fs.readFileSync(indexPath, 'utf8'));
+      expect(index).toHaveProperty('images');
+      expect(Array.isArray(index.images)).toBe(true);
+    });
+  });
+
+  describe('Embed Types', () => {
+    let syncOutputDir;
+    let posts;
+
+    beforeAll(async () => {
+      syncOutputDir = path.join(testDir, 'output');
+
+      // Load all posts from sync data
+      const postIndex = JSON.parse(
+        fs.readFileSync(path.join(syncOutputDir, 'sync', 'posts', 'index.json'), 'utf8')
+      );
+      posts = postIndex.posts.map(entry => {
+        return JSON.parse(
+          fs.readFileSync(path.join(syncOutputDir, 'sync', 'posts', `${entry.id}.json`), 'utf8')
+        );
+      });
+    });
+
+    it('should correctly export YouTube embed structure', () => {
+      const youtubePost = posts.find(p => p.embed?.type === 'YouTube');
+      expect(youtubePost).toBeDefined();
+
+      expect(youtubePost.embed).toHaveProperty('type', 'YouTube');
+      expect(youtubePost.embed).toHaveProperty('position');
+      expect(youtubePost.embed).toHaveProperty('url');
+      expect(youtubePost.embed.url).toContain('youtube.com');
+    });
+
+    it('should correctly export Link embed structure', () => {
+      const linkPost = posts.find(p => p.embed?.type === 'Link');
+      expect(linkPost).toBeDefined();
+
+      expect(linkPost.embed).toHaveProperty('type', 'Link');
+      expect(linkPost.embed).toHaveProperty('position');
+      expect(linkPost.embed).toHaveProperty('url');
+      expect(linkPost.embed).toHaveProperty('title');
+      expect(linkPost.embed).toHaveProperty('description');
+    });
+
+    it('should correctly export Image embed structure', () => {
+      const imagePost = posts.find(p => p.embed?.type === 'Image');
+      expect(imagePost).toBeDefined();
+
+      expect(imagePost.embed).toHaveProperty('type', 'Image');
+      expect(imagePost.embed).toHaveProperty('position');
+      expect(imagePost.embed).toHaveProperty('images');
+      expect(Array.isArray(imagePost.embed.images)).toBe(true);
+      expect(imagePost.embed.images.length).toBeGreaterThan(0);
+
+      // Each image should have filename and order
+      for (const img of imagePost.embed.images) {
+        expect(img).toHaveProperty('filename');
+        expect(img).toHaveProperty('order');
+      }
+    });
+
+    it('should generate deterministic HTML for YouTube embed posts', async () => {
+      const result1 = await generateSite(storage, blogId);
+      const result2 = await generateSite(storage, blogId);
+
+      // Find the YouTube post page
+      const youtubePostPath = '2025/01/17/post-with-youtube-embed/index.html';
+      expect(result1.fileHashes[youtubePostPath]).toBeDefined();
+      expect(result2.fileHashes[youtubePostPath]).toBe(result1.fileHashes[youtubePostPath]);
+    });
+
+    it('should generate deterministic HTML for Link embed posts', async () => {
+      const result1 = await generateSite(storage, blogId);
+      const result2 = await generateSite(storage, blogId);
+
+      // Find the Link post page
+      const linkPostPath = '2025/01/18/post-with-link-embed/index.html';
+      expect(result1.fileHashes[linkPostPath]).toBeDefined();
+      expect(result2.fileHashes[linkPostPath]).toBe(result1.fileHashes[linkPostPath]);
+    });
+
+    it('should generate deterministic HTML for Image embed posts', async () => {
+      const result1 = await generateSite(storage, blogId);
+      const result2 = await generateSite(storage, blogId);
+
+      // Find the Image post page
+      const imagePostPath = '2025/01/19/post-with-image-embed/index.html';
+      expect(result1.fileHashes[imagePostPath]).toBeDefined();
+      expect(result2.fileHashes[imagePostPath]).toBe(result1.fileHashes[imagePostPath]);
+    });
+
+    it('should use syncId for image gallery identifiers (not local post ID)', async () => {
+      // Create a clone of the blog with imported data
+      const originalSyncDir = path.join(testDir, 'output', 'sync');
+
+      const cloneBlog = storage.createBlog({
+        name: canonicalBlog.blog.name,
+        url: canonicalBlog.blog.url,
+        tagline: canonicalBlog.blog.tagline,
+        authorName: canonicalBlog.blog.authorName,
+        authorUrl: canonicalBlog.blog.authorUrl,
+        authorEmail: canonicalBlog.blog.authorEmail,
+        accentColor: canonicalBlog.blog.colors.accent,
+        backgroundColor: canonicalBlog.blog.colors.background,
+        textColor: canonicalBlog.blog.colors.text,
+        lightShade: canonicalBlog.blog.colors.lightShade,
+        mediumShade: canonicalBlog.blog.colors.mediumShade,
+        darkShade: canonicalBlog.blog.colors.darkShade,
+        themeIdentifier: canonicalBlog.blog.themeIdentifier,
+      });
+      const cloneBlogId = cloneBlog.id;
+
+      // Import entities
+      const catIndex = JSON.parse(fs.readFileSync(path.join(originalSyncDir, 'categories', 'index.json'), 'utf8'));
+      const catMap = new Map();
+      for (const entry of catIndex.categories) {
+        const catData = JSON.parse(fs.readFileSync(path.join(originalSyncDir, 'categories', `${entry.id}.json`), 'utf8'));
+        const created = storage.createCategory(cloneBlogId, { name: catData.name, description: catData.description, stub: catData.stub, syncId: catData.id, createdAt: catData.createdAt });
+        catMap.set(catData.id, created.id);
+      }
+
+      const tagIndex = JSON.parse(fs.readFileSync(path.join(originalSyncDir, 'tags', 'index.json'), 'utf8'));
+      const tagMap = new Map();
+      for (const entry of tagIndex.tags) {
+        const tagData = JSON.parse(fs.readFileSync(path.join(originalSyncDir, 'tags', `${entry.id}.json`), 'utf8'));
+        const created = storage.createTag(cloneBlogId, { name: tagData.name, stub: tagData.stub, syncId: tagData.id, createdAt: tagData.createdAt });
+        tagMap.set(tagData.id, created.id);
+      }
+
+      const sidebarIndex = JSON.parse(fs.readFileSync(path.join(originalSyncDir, 'sidebar', 'index.json'), 'utf8'));
+      for (const entry of sidebarIndex.sidebar) {
+        const sidebarData = JSON.parse(fs.readFileSync(path.join(originalSyncDir, 'sidebar', `${entry.id}.json`), 'utf8'));
+        storage.createSidebarObject(cloneBlogId, { title: sidebarData.title, type: sidebarData.type, content: sidebarData.content, order: sidebarData.order, links: sidebarData.links || [], syncId: sidebarData.id, createdAt: sidebarData.createdAt });
+      }
+
+      const postIndex = JSON.parse(fs.readFileSync(path.join(originalSyncDir, 'posts', 'index.json'), 'utf8'));
+      for (const entry of postIndex.posts) {
+        const postData = JSON.parse(fs.readFileSync(path.join(originalSyncDir, 'posts', `${entry.id}.json`), 'utf8'));
+        const categoryId = postData.categoryId ? catMap.get(postData.categoryId) : null;
+        const tagIds = (postData.tagIds || []).map(id => tagMap.get(id)).filter(Boolean);
+        let embed = null;
+        if (postData.embed) {
+          embed = { type: postData.embed.type.toLowerCase(), position: postData.embed.position.toLowerCase(), url: postData.embed.url, title: postData.embed.title, description: postData.embed.description, imageUrl: postData.embed.imageUrl, imageFilename: postData.embed.imageFilename, images: postData.embed.images };
+        }
+        storage.createPost(cloneBlogId, { title: postData.title, content: postData.content, stub: postData.stub, isDraft: false, categoryId: categoryId, tagIds: tagIds, embed: embed, syncId: postData.id, createdAt: postData.createdAt, updatedAt: postData.updatedAt });
+      }
+
+      // Generate site for both
+      const originalResult = await generateSite(storage, blogId);
+      const cloneResult = await generateSite(storage, cloneBlogId);
+
+      // The image embed post should have identical HTML
+      const imagePostPath = '2025/01/19/post-with-image-embed/index.html';
+      expect(cloneResult.fileHashes[imagePostPath]).toBe(originalResult.fileHashes[imagePostPath]);
+    });
+  });
 });
