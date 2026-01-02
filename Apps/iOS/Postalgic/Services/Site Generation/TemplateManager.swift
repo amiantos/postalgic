@@ -65,14 +65,6 @@ class TemplateManager {
         }
     }
 
-    // MARK: - Custom Theme Loading
-
-    /// Loads custom theme templates if available
-    private func loadCustomTheme() {
-        // TODO: Implement custom theme loading if needed
-        // For now, custom themes can override default templates
-    }
-
     // MARK: - Template Compilation
     
     // Create a library to store all templates for partials
