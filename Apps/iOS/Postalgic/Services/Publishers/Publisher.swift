@@ -10,13 +10,15 @@ import Foundation
 /// Remote hash file structure for cross-client change detection
 /// Stored at `.postalgic/hashes.json` on the published site
 struct RemoteHashFile: Codable {
-    let appSource: String
-    let publishedAt: String
+    let version: Int
+    let lastPublishedDate: String
+    let publishedBy: String
     let fileHashes: [String: String]
 
-    init(appSource: String = "ios", fileHashes: [String: String]) {
-        self.appSource = appSource
-        self.publishedAt = ISO8601DateFormatter().string(from: Date())
+    init(publishedBy: String = "ios", fileHashes: [String: String]) {
+        self.version = 1
+        self.publishedBy = publishedBy
+        self.lastPublishedDate = ISO8601DateFormatter().string(from: Date())
         self.fileHashes = fileHashes
     }
 }

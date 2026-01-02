@@ -383,7 +383,7 @@ class FTPPublisher: Publisher {
             let fileData = Data(buffer: data)
 
             let hashFile = try JSONDecoder().decode(RemoteHashFile.self, from: fileData)
-            print("📦 Found remote hash file from \(hashFile.appSource) with \(hashFile.fileHashes.count) files")
+            print("📦 Found remote hash file from \(hashFile.publishedBy) with \(hashFile.fileHashes.count) files")
             return hashFile
 
         } catch {
@@ -394,7 +394,7 @@ class FTPPublisher: Publisher {
 
     /// Uploads the hash file to SFTP after successful publish
     func uploadHashFile(hashes: [String: String]) async throws {
-        let hashFile = RemoteHashFile(appSource: "ios", fileHashes: hashes)
+        let hashFile = RemoteHashFile(publishedBy: "ios", fileHashes: hashes)
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
         let data = try encoder.encode(hashFile)

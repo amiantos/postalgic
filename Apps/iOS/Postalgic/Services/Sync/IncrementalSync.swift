@@ -105,12 +105,12 @@ class IncrementalSync {
         totalChanges += categorized.posts.new.count + categorized.posts.modified.count + categorized.posts.deleted.count
         totalChanges += categorized.sidebar.new.count + categorized.sidebar.modified.count + categorized.sidebar.deleted.count
         totalChanges += categorized.staticFiles.new.count + categorized.staticFiles.deleted.count
-        totalChanges += categorized.blog.modified.count
+        totalChanges += categorized.blog.new.count + categorized.blog.modified.count
 
         let decoder = JSONDecoder()
 
-        // Step 2: Process blog changes
-        if !categorized.blog.modified.isEmpty {
+        // Step 2: Process blog changes (handle both new and modified)
+        if !categorized.blog.new.isEmpty || !categorized.blog.modified.isEmpty {
             progressUpdate(IncrementalSyncProgress(step: "Updating blog settings...", phase: .applying, progress: Double(appliedChanges) / Double(max(1, totalChanges))))
             let blogData = try await downloadFile(from: "\(baseURL)/sync/blog.json")
             let syncBlog = try decoder.decode(SyncDataGenerator.SyncBlog.self, from: blogData)
@@ -530,7 +530,13 @@ class IncrementalSync {
                 embed.imageData = embedImageData[imageFilename]
             }
 
-            modelContext.insert(embed)
+            // Set the relationship first, then insert if needed
+            post.embed = embed
+
+            // Only explicitly insert for new posts; for existing posts the relationship handles it
+            if existingPost == nil {
+                modelContext.insert(embed)
+            }
 
             // Create embed images for image type
             if embedType == .image {
@@ -541,8 +547,6 @@ class IncrementalSync {
                     }
                 }
             }
-
-            post.embed = embed
         }
     }
 

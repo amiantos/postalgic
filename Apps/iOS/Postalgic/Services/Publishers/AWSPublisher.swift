@@ -486,7 +486,7 @@ class AWSPublisher: Publisher {
 
                 do {
                     let hashFile = try JSONDecoder().decode(RemoteHashFile.self, from: data)
-                    print("📦 Found remote hash file from \(hashFile.appSource) with \(hashFile.fileHashes.count) files")
+                    print("📦 Found remote hash file from \(hashFile.publishedBy) with \(hashFile.fileHashes.count) files")
                     continuation.resume(returning: hashFile)
                 } catch {
                     print("📦 Failed to decode remote hash file: \(error.localizedDescription)")
@@ -498,7 +498,7 @@ class AWSPublisher: Publisher {
 
     /// Uploads the hash file to S3 after successful publish
     func uploadHashFile(hashes: [String: String]) async throws {
-        let hashFile = RemoteHashFile(appSource: "ios", fileHashes: hashes)
+        let hashFile = RemoteHashFile(publishedBy: "ios", fileHashes: hashes)
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
         let data = try encoder.encode(hashFile)

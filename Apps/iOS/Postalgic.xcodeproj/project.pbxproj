@@ -68,6 +68,7 @@
 		44E4AA282EEF86E500364738 /* SyncSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44E4AA252EEF86E500364738 /* SyncSettingsView.swift */; };
 		44E4AA2D2EEFEF6800364738 /* SyncChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44E4AA2C2EEFEF6800364738 /* SyncChecker.swift */; };
 		44E4AA2E2EEFEF6800364738 /* IncrementalSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44E4AA2B2EEFEF6800364738 /* IncrementalSync.swift */; };
+		44EB9B502F07444D0058E2C0 /* SyncSessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44EB9B4F2F07444D0058E2C0 /* SyncSessionManager.swift */; };
 		44F858B82DC43FAD00B8179B /* BlogDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44F858B72DC43FAD00B8179B /* BlogDashboardView.swift */; };
 /* End PBXBuildFile section */
 
@@ -147,6 +148,7 @@
 		44E4AA252EEF86E500364738 /* SyncSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncSettingsView.swift; sourceTree = "<group>"; };
 		44E4AA2B2EEFEF6800364738 /* IncrementalSync.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IncrementalSync.swift; sourceTree = "<group>"; };
 		44E4AA2C2EEFEF6800364738 /* SyncChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncChecker.swift; sourceTree = "<group>"; };
+		44EB9B4F2F07444D0058E2C0 /* SyncSessionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncSessionManager.swift; sourceTree = "<group>"; };
 		44F858B72DC43FAD00B8179B /* BlogDashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlogDashboardView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -361,6 +363,7 @@
 				44E4AA2C2EEFEF6800364738 /* SyncChecker.swift */,
 				44E4AA1D2EEF86CE00364738 /* SyncDataGenerator.swift */,
 				44E4AA1F2EEF86CE00364738 /* SyncImporter.swift */,
+				44EB9B4F2F07444D0058E2C0 /* SyncSessionManager.swift */,
 			);
 			path = Sync;
 			sourceTree = "<group>";
@@ -533,6 +536,7 @@
 			files = (
 				44788A822DE2752D003F02E1 /* IntroductionView.swift in Sources */,
 				44E4AA2D2EEFEF6800364738 /* SyncChecker.swift in Sources */,
+				44EB9B502F07444D0058E2C0 /* SyncSessionManager.swift in Sources */,
 				44E4AA2E2EEFEF6800364738 /* IncrementalSync.swift in Sources */,
 				443F0B2D2DB8D47500034EF1 /* EmbedView.swift in Sources */,
 				44DE43692DD589A200F31204 /* GitPublisher.swift in Sources */,

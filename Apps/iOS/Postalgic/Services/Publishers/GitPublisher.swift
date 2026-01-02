@@ -219,7 +219,7 @@ class GitPublisher: Publisher {
 
             let data = try Data(contentsOf: hashFilePath)
             let hashFile = try JSONDecoder().decode(RemoteHashFile.self, from: data)
-            print("📦 Found remote hash file from \(hashFile.appSource) with \(hashFile.fileHashes.count) files")
+            print("📦 Found remote hash file from \(hashFile.publishedBy) with \(hashFile.fileHashes.count) files")
 
             // Clean up temp directory
             try? fileManager.removeItem(at: tempRepoURL)
@@ -244,7 +244,7 @@ class GitPublisher: Publisher {
 
     /// Writes the hash file to a specific directory (used by StaticSiteGenerator for Git publishing)
     func writeHashFile(to directoryURL: URL, hashes: [String: String]) throws {
-        let hashFile = RemoteHashFile(appSource: "ios", fileHashes: hashes)
+        let hashFile = RemoteHashFile(publishedBy: "ios", fileHashes: hashes)
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
         let data = try encoder.encode(hashFile)
