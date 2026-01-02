@@ -14,6 +14,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 // Import the modules we're testing
 import { generateSyncDirectory } from '../server/services/syncGenerator.js';
+import { generateSite } from '../server/services/siteGenerator.js';
 import Storage from '../server/utils/storage.js';
 import { initDatabase, closeDatabase } from '../server/utils/database.js';
 import { calculateHash } from '../server/utils/helpers.js';
@@ -654,6 +655,188 @@ describe('Sync Data Compatibility', () => {
 
         expect(importedHash).toBe(originalHash);
       }
+    });
+  });
+
+  describe('Deterministic Site Generation', () => {
+    it('should generate identical site hashes when called twice', async () => {
+      // Generate site first time
+      const result1 = await generateSite(storage, blogId);
+
+      // Generate site second time
+      const result2 = await generateSite(storage, blogId);
+
+      // Compare all file hashes
+      const files1 = Object.keys(result1.fileHashes).sort();
+      const files2 = Object.keys(result2.fileHashes).sort();
+
+      expect(files1).toEqual(files2);
+
+      for (const file of files1) {
+        expect(result2.fileHashes[file]).toBe(result1.fileHashes[file]);
+      }
+    });
+
+    it('should generate identical HTML for imported blog as original', async () => {
+      // First, import the blog data into a fresh blog
+      const clonedBlog = storage.createBlog({
+        name: canonicalBlog.blog.name,
+        url: canonicalBlog.blog.url,
+        tagline: canonicalBlog.blog.tagline,
+        authorName: canonicalBlog.blog.authorName,
+        authorUrl: canonicalBlog.blog.authorUrl,
+        authorEmail: canonicalBlog.blog.authorEmail,
+        accentColor: canonicalBlog.blog.colors.accent,
+        backgroundColor: canonicalBlog.blog.colors.background,
+        textColor: canonicalBlog.blog.colors.text,
+        lightShade: canonicalBlog.blog.colors.lightShade,
+        mediumShade: canonicalBlog.blog.colors.mediumShade,
+        darkShade: canonicalBlog.blog.colors.darkShade,
+        themeIdentifier: canonicalBlog.blog.themeIdentifier,
+      });
+      const clonedBlogId = clonedBlog.id;
+
+      // Read sync data from original blog's output
+      const originalSyncDir = path.join(testDir, 'output', 'sync');
+
+      // Import categories with syncId preserved
+      const catIndex = JSON.parse(
+        fs.readFileSync(path.join(originalSyncDir, 'categories', 'index.json'), 'utf8')
+      );
+      const clonedCategoryMap = new Map();
+      for (const entry of catIndex.categories) {
+        const catData = JSON.parse(
+          fs.readFileSync(path.join(originalSyncDir, 'categories', `${entry.id}.json`), 'utf8')
+        );
+        const created = storage.createCategory(clonedBlogId, {
+          name: catData.name,
+          description: catData.description,
+          stub: catData.stub,
+          syncId: catData.id,
+          createdAt: catData.createdAt,
+        });
+        clonedCategoryMap.set(catData.id, created.id);
+      }
+
+      // Import tags with syncId preserved
+      const tagIndex = JSON.parse(
+        fs.readFileSync(path.join(originalSyncDir, 'tags', 'index.json'), 'utf8')
+      );
+      const clonedTagMap = new Map();
+      for (const entry of tagIndex.tags) {
+        const tagData = JSON.parse(
+          fs.readFileSync(path.join(originalSyncDir, 'tags', `${entry.id}.json`), 'utf8')
+        );
+        const created = storage.createTag(clonedBlogId, {
+          name: tagData.name,
+          stub: tagData.stub,
+          syncId: tagData.id,
+          createdAt: tagData.createdAt,
+        });
+        clonedTagMap.set(tagData.id, created.id);
+      }
+
+      // Import sidebar with syncId preserved
+      const sidebarIndex = JSON.parse(
+        fs.readFileSync(path.join(originalSyncDir, 'sidebar', 'index.json'), 'utf8')
+      );
+      for (const entry of sidebarIndex.sidebar) {
+        const sidebarData = JSON.parse(
+          fs.readFileSync(path.join(originalSyncDir, 'sidebar', `${entry.id}.json`), 'utf8')
+        );
+        storage.createSidebarObject(clonedBlogId, {
+          title: sidebarData.title,
+          type: sidebarData.type,
+          content: sidebarData.content,
+          order: sidebarData.order,
+          links: sidebarData.links || [],
+          syncId: sidebarData.id,
+          createdAt: sidebarData.createdAt,
+        });
+      }
+
+      // Import posts with syncId preserved
+      const postIndex = JSON.parse(
+        fs.readFileSync(path.join(originalSyncDir, 'posts', 'index.json'), 'utf8')
+      );
+      for (const entry of postIndex.posts) {
+        const postData = JSON.parse(
+          fs.readFileSync(path.join(originalSyncDir, 'posts', `${entry.id}.json`), 'utf8')
+        );
+
+        const categoryId = postData.categoryId ? clonedCategoryMap.get(postData.categoryId) : null;
+        const tagIds = (postData.tagIds || []).map(id => clonedTagMap.get(id)).filter(Boolean);
+
+        let embed = null;
+        if (postData.embed) {
+          embed = {
+            type: postData.embed.type.toLowerCase(),
+            position: postData.embed.position.toLowerCase(),
+            url: postData.embed.url,
+            title: postData.embed.title,
+            description: postData.embed.description,
+            imageUrl: postData.embed.imageUrl,
+            imageFilename: postData.embed.imageFilename,
+            images: postData.embed.images,
+          };
+        }
+
+        storage.createPost(clonedBlogId, {
+          title: postData.title,
+          content: postData.content,
+          stub: postData.stub,
+          isDraft: false,
+          categoryId: categoryId,
+          tagIds: tagIds,
+          embed: embed,
+          syncId: postData.id,
+          createdAt: postData.createdAt,
+          updatedAt: postData.updatedAt,
+        });
+      }
+
+      // Generate site for original blog
+      const originalResult = await generateSite(storage, blogId);
+
+      // Generate site for cloned/imported blog
+      const clonedResult = await generateSite(storage, clonedBlogId);
+
+      // Compare HTML file hashes (excluding sync files which may have different IDs)
+      const htmlFiles = Object.keys(originalResult.fileHashes)
+        .filter(f => f.endsWith('.html'))
+        .sort();
+
+      const mismatches = [];
+      for (const file of htmlFiles) {
+        const originalHash = originalResult.fileHashes[file];
+        const clonedHash = clonedResult.fileHashes[file];
+
+        if (originalHash !== clonedHash) {
+          mismatches.push(file);
+        }
+      }
+
+      if (mismatches.length > 0) {
+        // Read the actual content to see the difference
+        const firstMismatch = mismatches[0];
+        const originalContent = fs.readFileSync(path.join(originalResult.outputDir, firstMismatch), 'utf8');
+        const clonedContent = fs.readFileSync(path.join(clonedResult.outputDir, firstMismatch), 'utf8');
+
+        console.log(`Mismatched files: ${mismatches.join(', ')}`);
+        console.log(`First mismatch: ${firstMismatch}`);
+
+        // Find the first difference
+        for (let i = 0; i < Math.min(originalContent.length, clonedContent.length); i++) {
+          if (originalContent[i] !== clonedContent[i]) {
+            console.log(`First difference at position ${i}:`);
+            console.log(`Original: ...${originalContent.substring(Math.max(0, i - 50), i + 100)}...`);
+            console.log(`Cloned:   ...${clonedContent.substring(Math.max(0, i - 50), i + 100)}...`);
+            break;
+          }
+        }
+      }
+
+      expect(mismatches).toHaveLength(0);
     });
   });
 });

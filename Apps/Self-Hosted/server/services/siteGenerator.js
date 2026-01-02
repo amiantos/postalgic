@@ -206,8 +206,9 @@ function buildPostContext(post, baseContext, inList = false) {
   let contentHtml = marked(post.content || '');
 
   // Insert embed HTML (with newlines matching iOS)
+  // Use syncId for stable identifiers across sync (falls back to id for local posts)
   if (post.embed) {
-    const embedHtml = generateEmbedHtml(post.embed, post.id);
+    const embedHtml = generateEmbedHtml(post.embed, post.syncId || post.id);
     if (post.embed.position === 'above') {
       contentHtml = embedHtml + '\n' + contentHtml;
     } else {
