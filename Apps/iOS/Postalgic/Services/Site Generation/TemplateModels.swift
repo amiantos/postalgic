@@ -45,14 +45,18 @@ struct PostTemplateData {
 
         if let embed = post.embed, embed.embedPosition == .below {
             if forRSS {
-                finalContent += "\n" + embed.generateRSSHtml(blog: blog)
+                // For RSS, add one blank line before embed (two newlines), no trailing newline
+                finalContent += "\n\n" + embed.generateRSSHtml(blog: blog)
             } else {
-                finalContent += "\n" + embed.generateHtml(embedId: embedId)
+                // For HTML, add one blank line before embed (two newlines), no trailing newline
+                finalContent += "\n\n" + embed.generateHtml(embedId: embedId)
             }
+            // When there's an embed below, no trailing newline
+            dict["contentHtml"] = finalContent
+        } else {
+            // Add trailing newline to match self-hosted markdown output
+            dict["contentHtml"] = finalContent + "\n"
         }
-
-        // Add trailing newline to match self-hosted markdown output
-        dict["contentHtml"] = finalContent + "\n"
         
         // Add tags if present (sorted by name for deterministic output)
         if !post.tags.isEmpty {
@@ -174,17 +178,20 @@ struct ArchiveMonthData {
 /// Structure that represents a post in the archives template
 struct ArchivePostData {
     let post: Post
-    
+    let timezone: TimeZone
+
     func toDictionary() -> [String: Any] {
-        let calendar = Calendar.current
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = timezone
         let day = calendar.component(.day, from: post.createdAt)
-        let month = calendar.component(.month, from: post.createdAt)
-        
-        // Generate 3-letter month abbreviation
+
+        // Generate 3-letter month abbreviation using correct timezone
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "MMM"
+        dateFormatter.locale = Locale(identifier: "en_US")
+        dateFormatter.timeZone = timezone
         let monthAbbr = dateFormatter.string(from: post.createdAt)
-        
+
         return [
             "displayTitle": post.displayTitle,
             "urlPath": post.urlPath,
@@ -248,64 +255,66 @@ struct TemplateDataConverter {
     }
     
     /// Creates archive data organized by year and month
-    static func createArchiveData(from posts: [Post]) -> [[String: Any]] {
-        let calendar = Calendar.current
+    static func createArchiveData(from posts: [Post], timezone: TimeZone) -> [[String: Any]] {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = timezone
         var yearMonthPosts: [Int: [Int: [Post]]] = [:]
-        
-        // Group posts by year and month
+
+        // Group posts by year and month using the blog's timezone
         for post in posts {
             let year = calendar.component(.year, from: post.createdAt)
             let month = calendar.component(.month, from: post.createdAt)
-            
+
             if yearMonthPosts[year] == nil {
                 yearMonthPosts[year] = [:]
             }
-            
+
             if yearMonthPosts[year]?[month] == nil {
                 yearMonthPosts[year]?[month] = []
             }
-            
+
             yearMonthPosts[year]?[month]?.append(post)
         }
-        
+
         // Sort years in descending order
         let years = yearMonthPosts.keys.sorted(by: >)
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "MMMM"
-        
+        dateFormatter.locale = Locale(identifier: "en_US")
+
         // Create year data
         var archiveYears: [ArchiveYearData] = []
-        
+
         for year in years {
             let months = yearMonthPosts[year]?.keys.sorted(by: >) ?? []
             var archiveMonths: [ArchiveMonthData] = []
-            
+
             for month in months {
                 let monthName = dateFormatter.monthSymbols[month - 1]
                 let postsInMonth = yearMonthPosts[year]?[month] ?? []
-                
-                // Sort posts within month by day
+
+                // Sort posts within month by day (using timezone-aware calendar)
                 let sortedPosts = postsInMonth.sorted { p1, p2 in
                     let day1 = calendar.component(.day, from: p1.createdAt)
                     let day2 = calendar.component(.day, from: p2.createdAt)
                     return day1 > day2
                 }
-                
-                let archivePosts = sortedPosts.map { ArchivePostData(post: $0) }
-                
+
+                let archivePosts = sortedPosts.map { ArchivePostData(post: $0, timezone: timezone) }
+
                 archiveMonths.append(ArchiveMonthData(
                     month: month,
                     monthName: monthName,
                     posts: archivePosts
                 ))
             }
-            
+
             archiveYears.append(ArchiveYearData(
                 year: year,
                 months: archiveMonths
             ))
         }
-        
+
         // Convert to dictionaries for template rendering
         return archiveYears.map { $0.toDictionary() }
     }

@@ -251,10 +251,18 @@ class TemplateEngine {
     /// - Throws: Error if rendering fails
     func renderArchivesPage(posts: [Post]) throws -> String {
         let archivesTemplate = try templateManager.getTemplate(for: "archives")
-        
+
+        // Get the blog's timezone for correct date display
+        let timezone: TimeZone
+        if let tzIdentifier = blog.timezone, let tz = TimeZone(identifier: tzIdentifier) {
+            timezone = tz
+        } else {
+            timezone = TimeZone(identifier: "UTC")!
+        }
+
         var context = createBaseContext()
-        context["years"] = TemplateDataConverter.createArchiveData(from: posts)
-        
+        context["years"] = TemplateDataConverter.createArchiveData(from: posts, timezone: timezone)
+
         let content = archivesTemplate.render(context, library: templateManager.getLibrary())
         return try renderLayout(
             content: content,

@@ -330,198 +330,198 @@ class TemplateManager {
         
         // Post template (used for both individual post pages and list items)
         defaultTemplates["post"] = """
-        <article class="post-item">
-            {{#hasTitle}}
-                {{#inList}}<h2>{{displayTitle}}</h2>{{/inList}}
-                {{^inList}}<h1>{{displayTitle}}</h1>{{/inList}}
-            {{/hasTitle}}
+<article class="post-item">
+    {{#hasTitle}}
+        {{#inList}}<h2>{{displayTitle}}</h2>{{/inList}}
+        {{^inList}}<h1>{{displayTitle}}</h1>{{/inList}}
+    {{/hasTitle}}
 
-            <div class="post-date"><a href="/{{{urlPath}}}/">{{formattedDate}}</a></div>
+    <div class="post-date"><a href="/{{{urlPath}}}/">{{formattedDate}}</a></div>
 
-            {{#blogAuthor}}
-                <div class="post-author"> by {{#blogAuthorUrl}}<a href="{{{blogAuthorUrl}}}">{{blogAuthor}}</a>{{/blogAuthorUrl}}{{^blogAuthorUrl}}{{blogAuthor}}{{/blogAuthorUrl}}</div>
-            {{/blogAuthor}}
+    {{#blogAuthor}}
+        <div class="post-author"> by {{#blogAuthorUrl}}<a href="{{{blogAuthorUrl}}}">{{blogAuthor}}</a>{{/blogAuthorUrl}}{{^blogAuthorUrl}}{{blogAuthor}}{{/blogAuthorUrl}}</div>
+    {{/blogAuthor}}
 
-            <div class="post-content">
-                {{{contentHtml}}}
-            </div>
+    <div class="post-content">
+        {{{contentHtml}}}
+    </div>
 
-            <div>
-            {{#hasCategory}}
-                <div class="post-category">
-                    <a href="/categories/{{{categoryUrlPath}}}/">{{categoryName}}</a>
-                </div>
-            {{/hasCategory}}
+    <div>
+    {{#hasCategory}}
+        <div class="post-category">
+            <a href="/categories/{{{categoryUrlPath}}}/">{{categoryName}}</a>
+        </div>
+    {{/hasCategory}}
 
-            {{#hasTags}}
-                <div class="post-tags">
-                    {{#tags}}<a href="/tags/{{{urlPath}}}/" class="tag">#{{name}}</a> {{/tags}}
-                </div>
-            {{/hasTags}}
-            </div>
+    {{#hasTags}}
+        <div class="post-tags">
+            {{#tags}}<a href="/tags/{{{urlPath}}}/" class="tag">#{{name}}</a> {{/tags}}
+        </div>
+    {{/hasTags}}
+    </div>
 
-        </article>
-        <div class="post-separator"></div>
+</article>
+<div class="post-separator"></div>
 
-        """
+"""
         
         // Index page template
         defaultTemplates["index"] = """
-        {{#posts}}
-            {{> post}}
-        {{/posts}}
-        {{#hasMorePosts}}
-        <div class="archives-link">
-            <a href="{{#recentArchiveUrl}}{{{recentArchiveUrl}}}{{/recentArchiveUrl}}{{^recentArchiveUrl}}/archives{{/recentArchiveUrl}}">← View more posts in the archives</a>
-        </div>
-        {{/hasMorePosts}}
-        """
+{{#posts}}
+    {{> post}}
+{{/posts}}
+{{#hasMorePosts}}
+<div class="archives-link">
+    <a href="{{#recentArchiveUrl}}{{{recentArchiveUrl}}}{{/recentArchiveUrl}}{{^recentArchiveUrl}}/archives{{/recentArchiveUrl}}">← View more posts in the archives</a>
+</div>
+{{/hasMorePosts}}
+"""
         
         // Archives template
         defaultTemplates["archives"] = """
-        <h1>Archives</h1>
-        {{#years}}
-            <div class="archive-separator"></div>
-            <div class="archive-year">{{year}}</div>
-            {{#months}}
-                <div class="archive-month">
-                    <a href="/{{year}}/{{monthPadded}}/">{{monthName}}</a>
-                </div>
-                <ul class="archive-posts">
-                    {{#posts}}
-                        <li>
-                            <span class="archive-date">{{dayPadded}} {{monthAbbr}}</span>
-                            <a href="/{{urlPath}}/">{{displayTitle}}</a>
-                        </li>
-                    {{/posts}}
-                </ul>
-            {{/months}}
-        {{/years}}
-        """
+<h1>Archives</h1>
+{{#years}}
+    <div class="archive-separator"></div>
+    <div class="archive-year">{{year}}</div>
+    {{#months}}
+        <div class="archive-month">
+            <a href="/{{year}}/{{monthPadded}}/">{{monthName}}</a>
+        </div>
+        <ul class="archive-posts">
+            {{#posts}}
+                <li>
+                    <span class="archive-date">{{dayPadded}} {{monthAbbr}}</span>
+                    <a href="/{{{urlPath}}}/">{{displayTitle}}</a>
+                </li>
+            {{/posts}}
+        </ul>
+    {{/months}}
+{{/years}}
+"""
         
         // Monthly archive template
         defaultTemplates["monthly-archive"] = """
-        <h1>{{monthName}} {{year}}</h1>
-        <p class="archive-meta">{{postCount}} {{postCountText}} in this month</p>
-        <div class="archive-separator"></div>
+<h1>{{monthName}} {{year}}</h1>
+<p class="archive-meta">{{postCount}} {{postCountText}} in this month</p>
+<div class="archive-separator"></div>
 
-        <div class="post-list">
-            {{#posts}}
-                {{> post}}
-            {{/posts}}
-        </div>
+<div class="post-list">
+    {{#posts}}
+        {{> post}}
+    {{/posts}}
+</div>
 
-        {{#hasPreviousMonth}}{{#hasNextMonth}}
-        <nav class="month-navigation">
-            <div class="nav-previous">
-                <a href="{{{previousMonthUrl}}}">&larr; {{previousMonthName}} {{previousYear}}</a>
-            </div>
-            <div class="nav-next">
-                <a href="{{{nextMonthUrl}}}">{{nextMonthName}} {{nextYear}} &rarr;</a>
-            </div>
-        </nav>
-        {{/hasNextMonth}}{{/hasPreviousMonth}}
+{{#hasPreviousMonth}}{{#hasNextMonth}}
+<nav class="month-navigation">
+    <div class="nav-previous">
+        <a href="{{{previousMonthUrl}}}">&larr; {{previousMonthName}} {{previousYear}}</a>
+    </div>
+    <div class="nav-next">
+        <a href="{{{nextMonthUrl}}}">{{nextMonthName}} {{nextYear}} &rarr;</a>
+    </div>
+</nav>
+{{/hasNextMonth}}{{/hasPreviousMonth}}
 
-        {{#hasPreviousMonth}}{{^hasNextMonth}}
-        <nav class="month-navigation">
-            <div class="nav-previous">
-                <a href="{{{previousMonthUrl}}}">&larr; {{previousMonthName}} {{previousYear}}</a>
-            </div>
-        </nav>
-        {{/hasNextMonth}}{{/hasPreviousMonth}}
+{{#hasPreviousMonth}}{{^hasNextMonth}}
+<nav class="month-navigation">
+    <div class="nav-previous">
+        <a href="{{{previousMonthUrl}}}">&larr; {{previousMonthName}} {{previousYear}}</a>
+    </div>
+</nav>
+{{/hasNextMonth}}{{/hasPreviousMonth}}
 
-        {{^hasPreviousMonth}}{{#hasNextMonth}}
-        <nav class="month-navigation">
-            <div class="nav-next">
-                <a href="{{{nextMonthUrl}}}">{{nextMonthName}} {{nextYear}} &rarr;</a>
-            </div>
-        </nav>
-        {{/hasNextMonth}}{{/hasPreviousMonth}}
-        """
+{{^hasPreviousMonth}}{{#hasNextMonth}}
+<nav class="month-navigation">
+    <div class="nav-next">
+        <a href="{{{nextMonthUrl}}}">{{nextMonthName}} {{nextYear}} &rarr;</a>
+    </div>
+</nav>
+{{/hasNextMonth}}{{/hasPreviousMonth}}
+"""
         
         // Tags list template
         defaultTemplates["tags"] = """
-        <h1>All Tags</h1>
-        <div class="archive-separator"></div>
-        <div class="tag-list">
-            {{#tags}}
-                <div class="tag-item">
-                    <h2><a href="/tags/{{urlPath}}/">{{name}}</a> <span class="tag-count">({{postCount}})</span></h2>
-                </div>
-            {{/tags}}
+<h1>All Tags</h1>
+<div class="archive-separator"></div>
+<div class="tag-list">
+    {{#tags}}
+        <div class="tag-item">
+            <h2><a href="/tags/{{urlPath}}/">{{name}}</a> <span class="tag-count">({{postCount}})</span></h2>
         </div>
-        """
+    {{/tags}}
+</div>
+"""
         
         // Single tag template
         defaultTemplates["tag"] = """
-        <h1>Posts tagged with "{{tagName}}"</h1>
-        <p class="tag-meta">{{totalPosts}} {{postCountText}} with this tag{{#hasPagination}} (showing page {{currentPage}} of {{totalPages}}){{/hasPagination}}</p>
-        <div class="archive-separator"></div>
-        
-        <div class="post-list">
-            {{#posts}}
-                {{> post}}
-            {{/posts}}
-        </div>
-        
-        {{#hasPagination}}
-        <nav class="pagination-navigation">
-            {{#hasPreviousPage}}
-            <div class="nav-previous">
-                <a href="{{previousPageUrl}}">&larr; Previous</a>
-            </div>
-            {{/hasPreviousPage}}
-            {{#hasNextPage}}
-            <div class="nav-next">
-                <a href="{{nextPageUrl}}">Next &rarr;</a>
-            </div>
-            {{/hasNextPage}}
-        </nav>
-        {{/hasPagination}}
-        """
+<h1>Posts tagged with "{{tagName}}"</h1>
+<p class="tag-meta">{{totalPosts}} {{postCountText}} with this tag{{#hasPagination}} (showing page {{currentPage}} of {{totalPages}}){{/hasPagination}}</p>
+<div class="archive-separator"></div>
+
+<div class="post-list">
+    {{#posts}}
+        {{> post}}
+    {{/posts}}
+</div>
+
+{{#hasPagination}}
+<nav class="pagination-navigation">
+    {{#hasPreviousPage}}
+    <div class="nav-previous">
+        <a href="{{{previousPageUrl}}}">&larr; Previous</a>
+    </div>
+    {{/hasPreviousPage}}
+    {{#hasNextPage}}
+    <div class="nav-next">
+        <a href="{{{nextPageUrl}}}">Next &rarr;</a>
+    </div>
+    {{/hasNextPage}}
+</nav>
+{{/hasPagination}}
+"""
         
         // Categories list template
         defaultTemplates["categories"] = """
-        <h1>All Categories</h1>
-        <div class="archive-separator"></div>
-        <div class="category-list">
-            {{#categories}}
-                <div class="category-item">
-                    <h2><a href="/categories/{{urlPath}}/">{{name}}</a> <span class="category-count">({{postCount}})</span></h2>
-                    {{#hasDescription}}<p class="category-description">{{description}}</p>{{/hasDescription}}
-                </div>
-            {{/categories}}
+<h1>All Categories</h1>
+<div class="archive-separator"></div>
+<div class="category-list">
+    {{#categories}}
+        <div class="category-item">
+            <h2><a href="/categories/{{urlPath}}/">{{name}}</a> <span class="category-count">({{postCount}})</span></h2>
+            {{#hasDescription}}<p class="category-description">{{description}}</p>{{/hasDescription}}
         </div>
-        """
-        
+    {{/categories}}
+</div>
+"""
+
         // Single category template
         defaultTemplates["category"] = """
-        <h1>Posts in category "{{categoryName}}"</h1>
-        {{#hasDescription}}<p class="category-description">{{description}}</p>{{/hasDescription}}
-        <p class="category-meta">{{totalPosts}} {{postCountText}} in this category{{#hasPagination}} (showing page {{currentPage}} of {{totalPages}}){{/hasPagination}}</p>
-        <div class="archive-separator"></div>
-        
-        <div class="post-list">
-            {{#posts}}
-                {{> post}}
-            {{/posts}}
-        </div>
-        
-        {{#hasPagination}}
-        <nav class="pagination-navigation">
-            {{#hasPreviousPage}}
-            <div class="nav-previous">
-                <a href="{{previousPageUrl}}">&larr; Previous</a>
-            </div>
-            {{/hasPreviousPage}}
-            {{#hasNextPage}}
-            <div class="nav-next">
-                <a href="{{nextPageUrl}}">Next &rarr;</a>
-            </div>
-            {{/hasNextPage}}
-        </nav>
-        {{/hasPagination}}
-        """
+<h1>Posts in category "{{categoryName}}"</h1>
+{{#hasDescription}}<p class="category-description">{{description}}</p>{{/hasDescription}}
+<p class="category-meta">{{totalPosts}} {{postCountText}} in this category{{#hasPagination}} (showing page {{currentPage}} of {{totalPages}}){{/hasPagination}}</p>
+<div class="archive-separator"></div>
+
+<div class="post-list">
+    {{#posts}}
+        {{> post}}
+    {{/posts}}
+</div>
+
+{{#hasPagination}}
+<nav class="pagination-navigation">
+    {{#hasPreviousPage}}
+    <div class="nav-previous">
+        <a href="{{{previousPageUrl}}}">&larr; Previous</a>
+    </div>
+    {{/hasPreviousPage}}
+    {{#hasNextPage}}
+    <div class="nav-next">
+        <a href="{{{nextPageUrl}}}">Next &rarr;</a>
+    </div>
+    {{/hasNextPage}}
+</nav>
+{{/hasPagination}}
+"""
         
         // Default CSS style
         defaultTemplates["css"] = """
