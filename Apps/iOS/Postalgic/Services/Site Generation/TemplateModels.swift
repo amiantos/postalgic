@@ -50,8 +50,9 @@ struct PostTemplateData {
                 finalContent += "\n" + embed.generateHtml(embedId: embedId)
             }
         }
-        
-        dict["contentHtml"] = finalContent
+
+        // Add trailing newline to match self-hosted markdown output
+        dict["contentHtml"] = finalContent + "\n"
         
         // Add tags if present (sorted by name for deterministic output)
         if !post.tags.isEmpty {

@@ -325,6 +325,7 @@ class TemplateManager {
             </script>
         </body>
         </html>
+
         """
         
         // Post template (used for both individual post pages and list items)
@@ -361,6 +362,7 @@ class TemplateManager {
 
         </article>
         <div class="post-separator"></div>
+
         """
         
         // Index page template
