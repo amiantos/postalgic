@@ -1497,8 +1497,8 @@ class TemplateManager {
         defaultTemplates["robots"] = """
         User-agent: *
         Allow: /
-        
-        Sitemap: {{blogUrl}}/sitemap.xml
+
+        Sitemap: {{{blogUrl}}}/sitemap.xml
         """
         
         // Sitemap template

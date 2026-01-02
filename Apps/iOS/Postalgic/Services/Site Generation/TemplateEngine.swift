@@ -519,6 +519,16 @@ class TemplateEngine {
     func renderCSS() throws -> String {
         let cssTemplate = try templateManager.getTemplate(for: "css")
         let context = createBaseContext()
-        return cssTemplate.render(context, library: templateManager.getLibrary())
+        let rendered = cssTemplate.render(context, library: templateManager.getLibrary())
+        // Strip trailing whitespace from each line to match self-hosted output
+        return rendered.split(separator: "\n", omittingEmptySubsequences: false)
+            .map { line in
+                var s = String(line)
+                while s.hasSuffix(" ") || s.hasSuffix("\t") {
+                    s.removeLast()
+                }
+                return s
+            }
+            .joined(separator: "\n")
     }
 }

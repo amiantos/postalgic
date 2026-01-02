@@ -203,7 +203,9 @@ function buildPostContext(post, baseContext, inList = false) {
   const urlPath = `${formatDatePath(post.createdAt, timezone)}/${post.stub}`;
 
   // Convert markdown to HTML
-  let contentHtml = marked(post.content || '');
+  // Strip trailing whitespace from inside paragraph tags to match iOS Ink parser behavior
+  let contentHtml = marked(post.content || '')
+    .replace(/<p>([^<]*?) <\/p>/g, '<p>$1</p>');
 
   // Insert embed HTML (with newlines matching iOS)
   // Use syncId for stable identifiers across sync (falls back to id for local posts)
