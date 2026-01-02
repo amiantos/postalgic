@@ -1,6 +1,11 @@
 import express from 'express';
+import fs from 'fs';
+import path from 'path';
+import os from 'os';
+import archiver from 'archiver';
 import Storage from '../utils/storage.js';
 import { generateStub } from '../utils/helpers.js';
+import { generateSite } from '../services/siteGenerator.js';
 
 const router = express.Router();
 
@@ -137,6 +142,54 @@ router.get('/:id/stats', (req, res) => {
       totalCategories: categories.length,
       totalTags: tags.length
     });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/blogs/:id/debug-export - Export full site bundle for debugging
+router.get('/:id/debug-export', async (req, res) => {
+  try {
+    const storage = getStorage(req);
+    const blog = storage.getBlog(req.params.id);
+
+    if (!blog) {
+      return res.status(404).json({ error: 'Blog not found' });
+    }
+
+    // Create temp directory for the export
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'postalgic-debug-'));
+    const outputDir = path.join(tempDir, 'site');
+    fs.mkdirSync(outputDir, { recursive: true });
+
+    // Generate the full site (includes sync directory)
+    await generateSite(storage, req.params.id, outputDir);
+
+    // Create zip file
+    const zipPath = path.join(tempDir, `debug-export-${blog.id}.zip`);
+    const output = fs.createWriteStream(zipPath);
+    const archive = archiver('zip', { zlib: { level: 9 } });
+
+    output.on('close', () => {
+      // Send the zip file
+      res.download(zipPath, `postalgic-debug-${blog.id}.zip`, (err) => {
+        // Cleanup temp directory
+        fs.rmSync(tempDir, { recursive: true, force: true });
+        if (err && !res.headersSent) {
+          res.status(500).json({ error: 'Failed to send zip file' });
+        }
+      });
+    });
+
+    archive.on('error', (err) => {
+      fs.rmSync(tempDir, { recursive: true, force: true });
+      res.status(500).json({ error: err.message });
+    });
+
+    archive.pipe(output);
+    archive.directory(outputDir, false);
+    await archive.finalize();
+
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

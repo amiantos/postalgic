@@ -323,7 +323,7 @@ describe('Sync Data Compatibility', () => {
         if (post.embed) {
           expect(post.embed).toHaveProperty('type');
           expect(post.embed).toHaveProperty('position');
-          expect(['YouTube', 'Link', 'Image']).toContain(post.embed.type);
+          expect(['youtube', 'link', 'image']).toContain(post.embed.type);
           expect(['above', 'below']).toContain(post.embed.position);
         }
       }
@@ -1226,20 +1226,20 @@ describe('Sync Data Compatibility', () => {
     });
 
     it('should correctly export YouTube embed structure', () => {
-      const youtubePost = posts.find(p => p.embed?.type === 'YouTube');
+      const youtubePost = posts.find(p => p.embed?.type === 'youtube');
       expect(youtubePost).toBeDefined();
 
-      expect(youtubePost.embed).toHaveProperty('type', 'YouTube');
+      expect(youtubePost.embed).toHaveProperty('type', 'youtube');
       expect(youtubePost.embed).toHaveProperty('position');
       expect(youtubePost.embed).toHaveProperty('url');
       expect(youtubePost.embed.url).toContain('youtube.com');
     });
 
     it('should correctly export Link embed structure', () => {
-      const linkPost = posts.find(p => p.embed?.type === 'Link');
+      const linkPost = posts.find(p => p.embed?.type === 'link');
       expect(linkPost).toBeDefined();
 
-      expect(linkPost.embed).toHaveProperty('type', 'Link');
+      expect(linkPost.embed).toHaveProperty('type', 'link');
       expect(linkPost.embed).toHaveProperty('position');
       expect(linkPost.embed).toHaveProperty('url');
       expect(linkPost.embed).toHaveProperty('title');
@@ -1247,10 +1247,10 @@ describe('Sync Data Compatibility', () => {
     });
 
     it('should correctly export Image embed structure', () => {
-      const imagePost = posts.find(p => p.embed?.type === 'Image');
+      const imagePost = posts.find(p => p.embed?.type === 'image');
       expect(imagePost).toBeDefined();
 
-      expect(imagePost.embed).toHaveProperty('type', 'Image');
+      expect(imagePost.embed).toHaveProperty('type', 'image');
       expect(imagePost.embed).toHaveProperty('position');
       expect(imagePost.embed).toHaveProperty('images');
       expect(Array.isArray(imagePost.embed.images)).toBe(true);

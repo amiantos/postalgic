@@ -428,8 +428,8 @@ function createSyncPost(post, stableId, categoryIdMap, tagIdMap) {
 
     if (embedType === 'youtube') {
       embed = {
-        type: 'YouTube',
-        position: srcEmbed.position || 'above',
+        type: 'youtube',
+        position: (srcEmbed.position || 'above').toLowerCase(),
         url: srcEmbed.url || '',
         title: null,
         description: null,
@@ -439,8 +439,8 @@ function createSyncPost(post, stableId, categoryIdMap, tagIdMap) {
       };
     } else if (embedType === 'link') {
       embed = {
-        type: 'Link',
-        position: srcEmbed.position || 'above',
+        type: 'link',
+        position: (srcEmbed.position || 'above').toLowerCase(),
         url: srcEmbed.url || '',
         title: srcEmbed.title || null,
         description: srcEmbed.description || null,
@@ -450,8 +450,8 @@ function createSyncPost(post, stableId, categoryIdMap, tagIdMap) {
       };
     } else if (embedType === 'image') {
       embed = {
-        type: 'Image',
-        position: srcEmbed.position || 'above',
+        type: 'image',
+        position: (srcEmbed.position || 'above').toLowerCase(),
         url: '',
         title: null,
         description: null,

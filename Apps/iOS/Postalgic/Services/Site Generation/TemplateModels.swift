@@ -29,30 +29,33 @@ struct PostTemplateData {
         let postContent = markdownParser.html(from: post.content)
         var finalContent = ""
         
+        // Use syncId for embed identifiers to ensure cross-platform parity
+        let embedId = post.syncId
+
         // Handle embeds based on position
         if let embed = post.embed, embed.embedPosition == .above {
             if forRSS {
                 finalContent += embed.generateRSSHtml(blog: blog) + "\n"
             } else {
-                finalContent += embed.generateHtml() + "\n"
+                finalContent += embed.generateHtml(embedId: embedId) + "\n"
             }
         }
-        
+
         finalContent += postContent
-        
+
         if let embed = post.embed, embed.embedPosition == .below {
             if forRSS {
                 finalContent += "\n" + embed.generateRSSHtml(blog: blog)
             } else {
-                finalContent += "\n" + embed.generateHtml()
+                finalContent += "\n" + embed.generateHtml(embedId: embedId)
             }
         }
         
         dict["contentHtml"] = finalContent
         
-        // Add tags if present
+        // Add tags if present (sorted by name for deterministic output)
         if !post.tags.isEmpty {
-            dict["tags"] = post.tags.map { tag in
+            dict["tags"] = post.tags.sorted { $0.name < $1.name }.map { tag in
                 return [
                     "name": tag.name,
                     "urlPath": tag.urlPath

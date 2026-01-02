@@ -354,6 +354,7 @@ final class Embed {
     var embedDescription: String?
     var imageUrl: String? // Remote URL for the image
     @Attribute(.externalStorage) var imageData: Data? // Actual image data stored in the database
+    var imageFilename: String? // Deterministic filename for the image (for sync parity)
 
     // These properties are for Image type embeds
     @Relationship(deleteRule: .cascade, inverse: \EmbedImage.embed)
@@ -368,6 +369,7 @@ final class Embed {
         embedDescription: String? = nil,
         imageUrl: String? = nil,
         imageData: Data? = nil,
+        imageFilename: String? = nil,
         createdAt: Date = Date()
     ) {
         self.post = post
@@ -378,6 +380,7 @@ final class Embed {
         self.embedDescription = embedDescription
         self.imageUrl = imageUrl
         self.imageData = imageData
+        self.imageFilename = imageFilename
         self.createdAt = createdAt
     }
     
@@ -465,7 +468,10 @@ final class Embed {
     }
     
     // Generate HTML for the embed based on type
-    func generateHtml() -> String {
+    // embedId parameter allows overriding the identifier (use post.syncId for cross-platform parity)
+    func generateHtml(embedId: String? = nil) -> String {
+        let id = embedId ?? self.identifier
+
         switch embedType {
         case .youtube:
             // Extract YouTube video ID from URL
@@ -479,30 +485,29 @@ final class Embed {
                 return "<!-- Invalid YouTube URL: \(url) -->"
             }
         case .link:
-            var html = "<div class=\"embed link-embed\">"
-            html += "<a href=\"\(url)\" target=\"_blank\" rel=\"noopener noreferrer\">"
+            var html = "<div class=\"embed link-embed\">\n"
+            html += "    <a href=\"\(url)\" target=\"_blank\" rel=\"noopener noreferrer\">\n"
 
-            if let title = title {
-                html += "<div class=\"link-title\">\(title)</div>"
+            // Image comes BEFORE title (matching self-hosted structure)
+            // Only include if we have image data or an imageUrl
+            if let _ = imageData, let storedFilename = imageFilename {
+                // Use stored filename for deterministic output
+                html += "        <div class=\"link-image\"><img src=\"/images/embeds/\(storedFilename)\" alt=\"\"></div>\n"
+            } else if let imgUrl = imageUrl, !imgUrl.hasPrefix("file://") {
+                // Fallback to direct URL if no local data
+                html += "        <div class=\"link-image\"><img src=\"\(imgUrl)\" alt=\"\"></div>\n"
             }
 
-            if let _ = imageData {
-                // When we have image data, we'll create a unique filename for the image
-                // based on a hash of the URL to ensure stability across generations
-                let imageFilename = "embed-\(url.hash).jpg"
-                let imagePath = "/images/embeds/\(imageFilename)"
-                html += "<div class=\"link-image\"><img src=\"\(imagePath)\" alt=\"\(title ?? "Link preview")\" /></div>"
-            } else if let imageUrl = imageUrl {
-                // Fallback to direct URL if we don't have image data stored
-                html += "<div class=\"link-image\"><img src=\"\(imageUrl)\" alt=\"\(title ?? "Link preview")\" /></div>"
+            if let title = title {
+                html += "        <div class=\"link-title\">\(title)</div>\n"
             }
 
             if let description = embedDescription {
-                html += "<div class=\"link-description\">\(description)</div>"
+                html += "        <div class=\"link-description\">\(description)</div>\n"
             }
 
-            html += "<div class=\"link-url\">\(url)</div>"
-            html += "</a></div>"
+            html += "        <div class=\"link-url\">\(url)</div>\n"
+            html += "    </a>\n</div>"
 
             return html
 
@@ -513,8 +518,8 @@ final class Embed {
             if sortedImages.count == 1, let image = sortedImages.first {
                 return """
                 <div class="embed image-embed single-image">
-                    <a href="/images/embeds/\(image.filename)" class="lightbox-trigger" data-lightbox="embed-\(self.identifier)" data-title="">
-                        <img src="/images/embeds/\(image.filename)" alt="Image" class="embed-image" />
+                    <a href="/images/embeds/\(image.filename)" class="lightbox-trigger" data-lightbox="embed-\(id)" data-title="">
+                        <img src="/images/embeds/\(image.filename)" class="embed-image" alt="">
                     </a>
                 </div>
                 """
@@ -522,16 +527,17 @@ final class Embed {
             // Multiple images gallery
             else if sortedImages.count > 1 {
                 var html = """
-                <div class="embed image-embed gallery" id="gallery-\(self.identifier)">
+                <div class="embed image-embed gallery" id="gallery-\(id)">
                     <div class="gallery-container">
                 """
 
                 // Add all images
                 for image in sortedImages {
                     html += """
+
                         <div class="gallery-slide">
-                            <a href="/images/embeds/\(image.filename)" class="lightbox-trigger" data-lightbox="embed-\(self.identifier)" data-title="">
-                                <img src="/images/embeds/\(image.filename)" alt="Image \(image.order + 1)" class="embed-image" />
+                            <a href="/images/embeds/\(image.filename)" class="lightbox-trigger" data-lightbox="embed-\(id)" data-title="">
+                                <img src="/images/embeds/\(image.filename)" alt="">
                             </a>
                         </div>
                     """
@@ -539,9 +545,10 @@ final class Embed {
 
                 // Add navigation arrows if more than one image
                 html += """
+
                         <div class="gallery-nav">
-                            <button class="gallery-prev" onclick="prevSlide('gallery-\(self.identifier)')">❮</button>
-                            <button class="gallery-next" onclick="nextSlide('gallery-\(self.identifier)')">❯</button>
+                            <button class="gallery-prev" onclick="prevSlide('gallery-\(id)')">❮</button>
+                            <button class="gallery-next" onclick="nextSlide('gallery-\(id)')">❯</button>
                         </div>
                     </div>
                     <div class="gallery-dots">
@@ -550,16 +557,17 @@ final class Embed {
                 // Add indicator dots
                 for i in 0..<sortedImages.count {
                     html += """
-                        <span class="gallery-dot" onclick="showSlide('gallery-\(self.identifier)', \(i))"></span>
+
+                        <span class="gallery-dot" onclick="showSlide('gallery-\(id)', \(i))"></span>
                     """
                 }
 
+                // Single line script format (matching self-hosted)
                 html += """
+
                     </div>
                 </div>
-                <script>
-                    initGallery('gallery-\(self.identifier)');
-                </script>
+                <script>initGallery('gallery-\(id)');</script>
                 """
 
                 return html
@@ -676,13 +684,15 @@ final class Post {
 
     var formattedDate: String {
         let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US")
         formatter.dateStyle = .long
         formatter.timeStyle = .short
         return formatter.string(from: createdAt)
     }
-    
+
     var shortFormattedDate: String {
         let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US")
         formatter.dateStyle = .long
         formatter.timeStyle = .none
         return formatter.string(from: createdAt)

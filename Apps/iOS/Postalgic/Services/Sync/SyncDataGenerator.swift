@@ -310,11 +310,13 @@ class SyncDataGenerator {
         let content: String?
         let order: Int
         let links: [SyncLink]?
+        let createdAt: String  // ISO8601 formatted date for sync parity
 
         // Explicitly encode nil as null to match self-hosted output
         func encode(to encoder: Encoder) throws {
             var container = encoder.container(keyedBy: CodingKeys.self)
             try container.encode(content, forKey: .content)
+            try container.encode(createdAt, forKey: .createdAt)
             try container.encode(id, forKey: .id)
             try container.encode(links, forKey: .links)
             try container.encode(order, forKey: .order)
@@ -599,7 +601,8 @@ class SyncDataGenerator {
                 title: sidebarObject.title,
                 content: sidebarObject.content,
                 order: sidebarObject.order,
-                links: links
+                links: links,
+                createdAt: isoFormatter.string(from: sidebarObject.createdAt)
             )
             let sidebarData = try encoder.encode(syncSidebar)
             let sidebarPath = syncDirectory.appendingPathComponent("sidebar/\(stableId).json")
