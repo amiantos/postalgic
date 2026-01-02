@@ -2,12 +2,14 @@
 import { ref, computed, watch, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { useBlogStore } from '@/stores/blog';
+import { useSyncStore } from '@/stores/sync';
 import { syncApi } from '@/api';
 import PageToolbar from '@/components/PageToolbar.vue';
 import SettingsTabs from '@/components/SettingsTabs.vue';
 
 const route = useRoute();
 const blogStore = useBlogStore();
+const syncStore = useSyncStore();
 
 const blogId = computed(() => route.params.blogId);
 
@@ -19,12 +21,6 @@ const success = ref(false);
 // Sync settings state
 const syncConfig = ref(null);
 const syncLoading = ref(false);
-const syncError = ref(null);
-const syncPassword = ref('');
-const syncConfirmPassword = ref('');
-const showPassword = ref(false);
-const showConfirmPassword = ref(false);
-const changingPassword = ref(false);
 
 // Sync Down state
 const checkingChanges = ref(false);
@@ -46,82 +42,13 @@ onMounted(async () => {
 
 async function fetchSyncConfig() {
   syncLoading.value = true;
-  syncError.value = null;
   try {
     syncConfig.value = await syncApi.getStatus(blogId.value);
   } catch (e) {
     // Config doesn't exist yet, that's fine
-    syncConfig.value = { syncEnabled: false, hasPassword: false };
+    syncConfig.value = { lastSyncedVersion: 0 };
   } finally {
     syncLoading.value = false;
-  }
-}
-
-const passwordsMatch = computed(() => {
-  return syncPassword.value && syncPassword.value === syncConfirmPassword.value;
-});
-
-const canEnableSync = computed(() => {
-  if (syncConfig.value?.hasPassword) {
-    return true;
-  }
-  return passwordsMatch.value && syncPassword.value.length >= 8;
-});
-
-async function enableSync() {
-  syncError.value = null;
-
-  if (!syncConfig.value?.hasPassword) {
-    if (!passwordsMatch.value) {
-      syncError.value = 'Passwords do not match';
-      return;
-    }
-    if (syncPassword.value.length < 8) {
-      syncError.value = 'Password must be at least 8 characters';
-      return;
-    }
-  }
-
-  try {
-    await syncApi.enable(blogId.value, syncPassword.value || undefined);
-    syncPassword.value = '';
-    syncConfirmPassword.value = '';
-    await fetchSyncConfig();
-  } catch (e) {
-    syncError.value = e.message;
-  }
-}
-
-async function disableSync() {
-  syncError.value = null;
-  try {
-    await syncApi.disable(blogId.value);
-    await fetchSyncConfig();
-  } catch (e) {
-    syncError.value = e.message;
-  }
-}
-
-async function changePassword() {
-  syncError.value = null;
-
-  if (!passwordsMatch.value) {
-    syncError.value = 'Passwords do not match';
-    return;
-  }
-  if (syncPassword.value.length < 8) {
-    syncError.value = 'Password must be at least 8 characters';
-    return;
-  }
-
-  try {
-    await syncApi.updatePassword(blogId.value, syncPassword.value);
-    syncPassword.value = '';
-    syncConfirmPassword.value = '';
-    changingPassword.value = false;
-    await fetchSyncConfig();
-  } catch (e) {
-    syncError.value = e.message;
   }
 }
 
@@ -147,10 +74,13 @@ async function pullChanges() {
   syncDownProgress.value = 'Starting sync...';
 
   try {
-    const result = await syncApi.pull(blogId.value, syncPassword.value || undefined);
+    const result = await syncApi.pull(blogId.value);
     syncDownResult.value = result;
     syncCheckResult.value = null;
     await fetchSyncConfig();
+
+    // Clear the sync badge since we've synced
+    syncStore.clearChanges();
 
     // Refresh blog data to show pulled changes
     if (result.updated) {
@@ -403,120 +333,30 @@ async function saveSettings() {
 
       <!-- Sync Settings -->
       <section class="surface p-6">
-        <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Sync Settings</h3>
+        <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Sync</h3>
         <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-          When enabled, sync data will be generated alongside your published site, allowing you to import your blog on other devices or the iOS app.
+          Sync data is automatically generated alongside your published site, allowing you to import your blog on other devices or the iOS app.
+          Drafts are not synced - they remain local to each device.
         </p>
-
-        <!-- Sync Error -->
-        <div v-if="syncError" class="mb-4 p-4 bg-red-500/10 rounded-xl text-red-600 dark:text-red-400">
-          {{ syncError }}
-        </div>
 
         <!-- Loading -->
         <div v-if="syncLoading" class="text-center py-4">
           <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600 mx-auto"></div>
         </div>
 
-        <!-- Sync Enabled -->
-        <div v-else-if="syncConfig?.syncEnabled" class="space-y-4">
-          <div class="flex items-center justify-between p-4 bg-green-500/10 rounded-xl">
-            <div class="flex items-center gap-3">
-              <svg class="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-              </svg>
-              <div>
-                <p class="font-medium text-green-800 dark:text-green-400">Sync Enabled</p>
-                <p v-if="syncConfig.lastSyncedAt" class="text-sm text-green-700 dark:text-green-500">
-                  Last synced: {{ new Date(syncConfig.lastSyncedAt).toLocaleString() }}
-                </p>
-                <p v-else class="text-sm text-green-700 dark:text-green-500">
-                  Sync data will be generated when you publish your blog.
-                </p>
-              </div>
-            </div>
-            <button
-              type="button"
-              @click="disableSync"
-              class="px-4 py-2 text-sm text-red-500 dark:text-red-400 hover:bg-red-500/10 rounded-xl transition-colors"
-            >
-              Disable
-            </button>
-          </div>
-
-          <!-- Change Password -->
-          <div v-if="!changingPassword">
-            <button
-              type="button"
-              @click="changingPassword = true"
-              class="text-sm text-primary-600 dark:text-primary-400 hover:underline"
-            >
-              Change sync password
-            </button>
-          </div>
-          <div v-else class="space-y-3 p-4 bg-black/5 dark:bg-white/5 rounded-xl">
-            <h4 class="font-medium text-gray-900 dark:text-gray-100">Change Password</h4>
-            <div class="relative">
-              <input
-                v-model="syncPassword"
-                :type="showPassword ? 'text' : 'password'"
-                placeholder="New password (min 8 characters)"
-                class="w-full px-3.5 py-2.5 pr-10 rounded-xl bg-white/80 dark:bg-white/10 text-gray-900 dark:text-gray-100 border-0 focus:ring-2 focus:ring-primary-500/50 transition-colors"
-              />
-              <button
-                type="button"
-                @click="showPassword = !showPassword"
-                class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-              >
-                <svg v-if="showPassword" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                </svg>
-                <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                </svg>
-              </button>
-            </div>
-            <div class="relative">
-              <input
-                v-model="syncConfirmPassword"
-                :type="showConfirmPassword ? 'text' : 'password'"
-                placeholder="Confirm new password"
-                class="w-full px-3.5 py-2.5 pr-10 rounded-xl bg-white/80 dark:bg-white/10 text-gray-900 dark:text-gray-100 border-0 focus:ring-2 focus:ring-primary-500/50 transition-colors"
-              />
-              <button
-                type="button"
-                @click="showConfirmPassword = !showConfirmPassword"
-                class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-              >
-                <svg v-if="showConfirmPassword" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                </svg>
-                <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                </svg>
-              </button>
-            </div>
-            <p v-if="syncPassword && syncConfirmPassword && !passwordsMatch" class="text-sm text-red-600 dark:text-red-400">
-              Passwords do not match
-            </p>
-            <div class="flex gap-2">
-              <button
-                type="button"
-                @click="changingPassword = false; syncPassword = ''; syncConfirmPassword = '';"
-                class="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-black/5 dark:hover:bg-white/10 rounded-xl transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                @click="changePassword"
-                :disabled="!passwordsMatch || syncPassword.length < 8"
-                class="px-4 py-2 text-sm bg-primary-500 text-white rounded-xl font-medium hover:bg-primary-600 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Update Password
-              </button>
+        <!-- Sync Status -->
+        <div v-else class="space-y-4">
+          <div class="flex items-center gap-3 p-4 bg-black/5 dark:bg-white/5 rounded-xl">
+            <svg class="w-5 h-5 text-primary-600 dark:text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            <div>
+              <p v-if="syncConfig?.lastSyncedAt" class="text-sm text-gray-700 dark:text-gray-300">
+                Last published: {{ new Date(syncConfig.lastSyncedAt).toLocaleString() }}
+              </p>
+              <p v-else class="text-sm text-gray-700 dark:text-gray-300">
+                Sync data will be generated when you publish your blog.
+              </p>
             </div>
           </div>
 
@@ -733,86 +573,6 @@ async function saveSettings() {
             <p class="text-sm text-gray-500 dark:text-gray-400">
               Set a Blog URL to enable sync down functionality.
             </p>
-          </div>
-        </div>
-
-        <!-- Sync Not Enabled -->
-        <div v-else class="space-y-4">
-          <!-- Password already set -->
-          <div v-if="syncConfig?.hasPassword" class="space-y-3">
-            <div class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-              <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-              </svg>
-              Password is set
-            </div>
-            <button
-              type="button"
-              @click="enableSync"
-              class="px-5 py-2.5 bg-primary-500 text-white rounded-xl font-medium hover:bg-primary-600 transition-colors shadow-sm"
-            >
-              Enable Sync
-            </button>
-          </div>
-
-          <!-- Need to set password -->
-          <div v-else class="space-y-3">
-            <p class="text-sm text-gray-600 dark:text-gray-400">
-              Set a password to encrypt your draft posts. You'll need this password to import your blog on another device.
-            </p>
-            <div class="relative">
-              <input
-                v-model="syncPassword"
-                :type="showPassword ? 'text' : 'password'"
-                placeholder="Password (min 8 characters)"
-                class="w-full px-3.5 py-2.5 pr-10 rounded-xl bg-black/5 dark:bg-white/5 text-gray-900 dark:text-gray-100 border-0 focus:ring-2 focus:ring-primary-500/50 focus:bg-white dark:focus:bg-white/10 transition-colors"
-              />
-              <button
-                type="button"
-                @click="showPassword = !showPassword"
-                class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-              >
-                <svg v-if="showPassword" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                </svg>
-                <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                </svg>
-              </button>
-            </div>
-            <div class="relative">
-              <input
-                v-model="syncConfirmPassword"
-                :type="showConfirmPassword ? 'text' : 'password'"
-                placeholder="Confirm password"
-                class="w-full px-3.5 py-2.5 pr-10 rounded-xl bg-black/5 dark:bg-white/5 text-gray-900 dark:text-gray-100 border-0 focus:ring-2 focus:ring-primary-500/50 focus:bg-white dark:focus:bg-white/10 transition-colors"
-              />
-              <button
-                type="button"
-                @click="showConfirmPassword = !showConfirmPassword"
-                class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-              >
-                <svg v-if="showConfirmPassword" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                </svg>
-                <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                </svg>
-              </button>
-            </div>
-            <p v-if="syncPassword && syncConfirmPassword && !passwordsMatch" class="text-sm text-red-600 dark:text-red-400">
-              Passwords do not match
-            </p>
-            <button
-              type="button"
-              @click="enableSync"
-              :disabled="!canEnableSync"
-              class="px-5 py-2.5 bg-primary-500 text-white rounded-xl font-medium hover:bg-primary-600 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Enable Sync
-            </button>
           </div>
         </div>
       </section>

@@ -343,6 +343,14 @@ extension Data {
     }
 }
 
+extension String {
+    /// Calculate the SHA-256 hash of the string
+    func sha256Hash() -> String {
+        guard let data = self.data(using: .utf8) else { return "" }
+        return data.sha256Hash()
+    }
+}
+
 extension PersistentIdentifier {
 
     public func stringRepresentation() -> String? {

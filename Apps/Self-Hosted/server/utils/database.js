@@ -1,6 +1,7 @@
 import Database from 'better-sqlite3';
 import path from 'path';
 import fs from 'fs';
+import { renderMarkdown } from './markdown.js';
 
 /**
  * SQLite database setup and schema management.
@@ -129,6 +130,57 @@ function runMigrations(database) {
     console.log('[Database] Running migration: adding local_content_hashes column to sync_config table');
     database.exec(`ALTER TABLE sync_config ADD COLUMN local_content_hashes TEXT`);
   }
+
+  // Migration: Add encryption_salt column for stable encrypted file generation
+  const syncConfigColumns2 = database.prepare(`PRAGMA table_info(sync_config)`).all();
+  if (!syncConfigColumns2.some(col => col.name === 'encryption_salt')) {
+    console.log('[Database] Running migration: adding encryption_salt column to sync_config table');
+    database.exec(`ALTER TABLE sync_config ADD COLUMN encryption_salt TEXT`);
+  }
+
+  // Migration: Add content_html column to posts for pre-rendered HTML
+  const postColumnsHtml = database.prepare(`PRAGMA table_info(posts)`).all();
+  if (!postColumnsHtml.some(col => col.name === 'content_html')) {
+    console.log('[Database] Running migration: adding content_html column to posts table');
+    database.exec(`ALTER TABLE posts ADD COLUMN content_html TEXT`);
+  }
+
+  // Migration: Add content_html column to sidebar_objects for pre-rendered HTML
+  const sidebarColumnsHtml = database.prepare(`PRAGMA table_info(sidebar_objects)`).all();
+  if (!sidebarColumnsHtml.some(col => col.name === 'content_html')) {
+    console.log('[Database] Running migration: adding content_html column to sidebar_objects table');
+    database.exec(`ALTER TABLE sidebar_objects ADD COLUMN content_html TEXT`);
+  }
+
+  // Backfill: Render HTML for existing posts that don't have content_html
+  const postsToBackfill = database.prepare(`
+    SELECT id, content FROM posts WHERE content_html IS NULL AND content IS NOT NULL
+  `).all();
+
+  if (postsToBackfill.length > 0) {
+    console.log(`[Database] Running backfill: rendering HTML for ${postsToBackfill.length} posts`);
+    const updatePost = database.prepare(`UPDATE posts SET content_html = ? WHERE id = ?`);
+    for (const post of postsToBackfill) {
+      const html = renderMarkdown(post.content);
+      updatePost.run(html, post.id);
+    }
+    console.log('[Database] Post backfill complete');
+  }
+
+  // Backfill: Render HTML for existing text sidebar objects that don't have content_html
+  const sidebarToBackfill = database.prepare(`
+    SELECT id, content FROM sidebar_objects WHERE content_html IS NULL AND type = 'text' AND content IS NOT NULL
+  `).all();
+
+  if (sidebarToBackfill.length > 0) {
+    console.log(`[Database] Running backfill: rendering HTML for ${sidebarToBackfill.length} sidebar objects`);
+    const updateSidebar = database.prepare(`UPDATE sidebar_objects SET content_html = ? WHERE id = ?`);
+    for (const obj of sidebarToBackfill) {
+      const html = renderMarkdown(obj.content);
+      updateSidebar.run(html, obj.id);
+    }
+    console.log('[Database] Sidebar backfill complete');
+  }
 }
 
 /**
@@ -218,6 +270,7 @@ function createSchema(database) {
       blog_id TEXT NOT NULL REFERENCES blogs(id) ON DELETE CASCADE,
       title TEXT,
       content TEXT NOT NULL,
+      content_html TEXT,
       stub TEXT NOT NULL,
       is_draft INTEGER DEFAULT 1,
       category_id TEXT REFERENCES categories(id) ON DELETE SET NULL,
@@ -244,6 +297,7 @@ function createSchema(database) {
       title TEXT NOT NULL,
       type TEXT NOT NULL,
       content TEXT,
+      content_html TEXT,
       sort_order INTEGER DEFAULT 0,
       sync_id TEXT,
       created_at TEXT NOT NULL

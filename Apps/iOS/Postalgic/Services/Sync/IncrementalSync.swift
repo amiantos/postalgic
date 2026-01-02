@@ -7,7 +7,6 @@
 
 import Foundation
 import SwiftData
-import CryptoKit
 
 /// Result of incremental sync operation
 struct IncrementalSyncResult {
@@ -44,7 +43,6 @@ class IncrementalSync {
         case blogNotFound
         case noSyncUrl
         case networkError(String)
-        case decryptionFailed
         case importFailed(String)
 
         var errorDescription: String? {
@@ -55,8 +53,6 @@ class IncrementalSync {
                 return "Blog URL is not configured"
             case .networkError(let message):
                 return "Network error: \(message)"
-            case .decryptionFailed:
-                return "Failed to decrypt data. Check your password."
             case .importFailed(let message):
                 return "Sync failed: \(message)"
             }
@@ -100,37 +96,28 @@ class IncrementalSync {
 
         let categorized = SyncChecker.categorizeChanges(checkResult)
 
-        // Prepare encryption key if needed
-        var encryptionKey: SymmetricKey? = nil
-        if manifest.hasDrafts, let password = blog.getSyncPassword(), let encInfo = manifest.encryption {
-            guard let saltData = SyncEncryption.base64Decode(encInfo.salt) else {
-                throw SyncError.decryptionFailed
-            }
-            encryptionKey = SyncEncryption.deriveKey(password: password, salt: saltData)
-        }
-
         var totalChanges = 0
         var appliedChanges = 0
 
-        // Count total changes
+        // Count total changes (drafts are local-only, not synced)
         totalChanges += categorized.categories.new.count + categorized.categories.modified.count + categorized.categories.deleted.count
         totalChanges += categorized.tags.new.count + categorized.tags.modified.count + categorized.tags.deleted.count
         totalChanges += categorized.posts.new.count + categorized.posts.modified.count + categorized.posts.deleted.count
-        totalChanges += categorized.drafts.new.count + categorized.drafts.modified.count + categorized.drafts.deleted.count
         totalChanges += categorized.sidebar.new.count + categorized.sidebar.modified.count + categorized.sidebar.deleted.count
         totalChanges += categorized.staticFiles.new.count + categorized.staticFiles.deleted.count
-        totalChanges += categorized.blog.modified.count
+        totalChanges += categorized.blog.new.count + categorized.blog.modified.count
+        totalChanges += categorized.themes.new.count + categorized.themes.modified.count
 
         let decoder = JSONDecoder()
 
-        // Step 2: Process blog changes
-        if !categorized.blog.modified.isEmpty {
+        // Step 2: Process blog changes (handle both new and modified)
+        if !categorized.blog.new.isEmpty || !categorized.blog.modified.isEmpty {
             progressUpdate(IncrementalSyncProgress(step: "Updating blog settings...", phase: .applying, progress: Double(appliedChanges) / Double(max(1, totalChanges))))
             let blogData = try await downloadFile(from: "\(baseURL)/sync/blog.json")
             let syncBlog = try decoder.decode(SyncDataGenerator.SyncBlog.self, from: blogData)
 
             blog.name = syncBlog.name
-            blog.url = syncBlog.url
+            blog.url = syncBlog.url ?? ""
             blog.tagline = syncBlog.tagline
             blog.authorName = syncBlog.authorName
             blog.authorUrl = syncBlog.authorUrl
@@ -142,7 +129,33 @@ class IncrementalSync {
             blog.mediumShade = syncBlog.colors.mediumShade
             blog.darkShade = syncBlog.colors.darkShade
             blog.themeIdentifier = syncBlog.themeIdentifier
+            blog.timezone = syncBlog.timezone
 
+            appliedChanges += 1
+        }
+
+        // Step 2.5: Process theme changes (new and modified)
+        Log.debug("IncrementalSync: Processing \(categorized.themes.new.count) new and \(categorized.themes.modified.count) modified themes")
+        for file in categorized.themes.new + categorized.themes.modified {
+            Log.debug("IncrementalSync: Processing theme file: \(file.path)")
+            progressUpdate(IncrementalSyncProgress(step: "Updating theme...", phase: .applying, progress: Double(appliedChanges) / Double(max(1, totalChanges))))
+            let themeData = try await downloadFile(from: "\(baseURL)/sync/\(file.path)")
+            let syncTheme = try decoder.decode(SyncDataGenerator.SyncTheme.self, from: themeData)
+            Log.debug("IncrementalSync: Downloaded theme '\(syncTheme.name)' with \(syncTheme.templates.count) templates")
+
+            // Check if theme already exists
+            if let existingTheme = ThemeService.shared.getTheme(identifier: syncTheme.identifier) {
+                // Update existing theme's templates
+                existingTheme.templates = syncTheme.templates
+                Log.debug("IncrementalSync: Updated existing theme '\(syncTheme.identifier)'")
+            } else {
+                // Create new theme with templates
+                let theme = Theme(name: syncTheme.name, identifier: syncTheme.identifier, isCustomized: true)
+                theme.templates = syncTheme.templates
+                modelContext.insert(theme)
+                ThemeService.shared.addTheme(theme)
+                Log.debug("IncrementalSync: Created new theme '\(syncTheme.identifier)'")
+            }
             appliedChanges += 1
         }
 
@@ -162,18 +175,26 @@ class IncrementalSync {
         }
 
         // Step 3: Process category changes
+        // Note: For "new" categories, we still check categoryMap by syncId to prevent duplicates
+        // when syncing back after publishing from another client.
         for file in categorized.categories.new {
             progressUpdate(IncrementalSyncProgress(step: "Adding new categories...", phase: .applying, progress: Double(appliedChanges) / Double(max(1, totalChanges))))
             if let entityId = SyncChecker.extractEntityId(from: file.path) {
                 let categoryData = try await downloadFile(from: "\(baseURL)/sync/\(file.path)")
                 let syncCategory = try decoder.decode(SyncDataGenerator.SyncCategory.self, from: categoryData)
 
-                let category = Category(blog: blog, name: syncCategory.name)
-                category.categoryDescription = syncCategory.description
-                category.stub = syncCategory.stub
-                category.syncId = syncCategory.id
-                modelContext.insert(category)
-                categoryMap[syncCategory.id] = category
+                if let existingCategory = categoryMap[syncCategory.id] {
+                    existingCategory.name = syncCategory.name
+                    existingCategory.categoryDescription = syncCategory.description
+                    existingCategory.stub = syncCategory.stub
+                } else {
+                    let category = Category(blog: blog, name: syncCategory.name)
+                    category.categoryDescription = syncCategory.description
+                    category.stub = syncCategory.stub
+                    category.syncId = syncCategory.id
+                    modelContext.insert(category)
+                    categoryMap[syncCategory.id] = category
+                }
             }
             appliedChanges += 1
         }
@@ -211,17 +232,24 @@ class IncrementalSync {
         }
 
         // Step 4: Process tag changes
+        // Note: For "new" tags, we still check tagMap by syncId to prevent duplicates
+        // when syncing back after publishing from another client.
         for file in categorized.tags.new {
             progressUpdate(IncrementalSyncProgress(step: "Adding new tags...", phase: .applying, progress: Double(appliedChanges) / Double(max(1, totalChanges))))
             if let entityId = SyncChecker.extractEntityId(from: file.path) {
                 let tagData = try await downloadFile(from: "\(baseURL)/sync/\(file.path)")
                 let syncTag = try decoder.decode(SyncDataGenerator.SyncTag.self, from: tagData)
 
-                let tag = Tag(blog: blog, name: syncTag.name)
-                tag.stub = syncTag.stub
-                tag.syncId = syncTag.id
-                modelContext.insert(tag)
-                tagMap[syncTag.id] = tag
+                if let existingTag = tagMap[syncTag.id] {
+                    existingTag.name = syncTag.name
+                    existingTag.stub = syncTag.stub
+                } else {
+                    let tag = Tag(blog: blog, name: syncTag.name)
+                    tag.stub = syncTag.stub
+                    tag.syncId = syncTag.id
+                    modelContext.insert(tag)
+                    tagMap[syncTag.id] = tag
+                }
             }
             appliedChanges += 1
         }
@@ -274,12 +302,16 @@ class IncrementalSync {
         }
 
         // Step 6: Process post changes
+        // Note: For "new" posts, we still check postMap by syncId because if a post was created
+        // locally and published, it won't be in localSyncHashes but will exist with that syncId.
+        // This prevents duplicate posts when syncing back after publishing from another client.
         for file in categorized.posts.new {
             progressUpdate(IncrementalSyncProgress(step: "Adding new posts...", phase: .applying, progress: Double(appliedChanges) / Double(max(1, totalChanges))))
             if let entityId = SyncChecker.extractEntityId(from: file.path) {
                 let postData = try await downloadFile(from: "\(baseURL)/sync/\(file.path)")
                 let syncPost = try decoder.decode(SyncDataGenerator.SyncPost.self, from: postData)
-                try createOrUpdatePost(syncPost, blog: blog, categoryMap: categoryMap, tagMap: tagMap, embedImageData: embedImageData, isDraft: false, modelContext: modelContext, existingPost: nil)
+                let existingPost = postMap[syncPost.id]
+                try createOrUpdatePost(syncPost, blog: blog, categoryMap: categoryMap, tagMap: tagMap, embedImageData: embedImageData, isDraft: false, modelContext: modelContext, existingPost: existingPost)
             }
             appliedChanges += 1
         }
@@ -304,46 +336,7 @@ class IncrementalSync {
             appliedChanges += 1
         }
 
-        // Step 7: Process draft changes (encrypted)
-        if let key = encryptionKey {
-            for file in categorized.drafts.new {
-                progressUpdate(IncrementalSyncProgress(step: "Adding new drafts...", phase: .applying, progress: Double(appliedChanges) / Double(max(1, totalChanges))))
-                if let entityId = SyncChecker.extractEntityId(from: file.path),
-                   let iv = file.iv,
-                   let ivData = SyncEncryption.base64Decode(iv) {
-                    let draftEncData = try await downloadFile(from: "\(baseURL)/sync/\(file.path)")
-                    let draftData = try SyncEncryption.decrypt(ciphertext: draftEncData, iv: ivData, key: key)
-                    let syncDraft = try decoder.decode(SyncDataGenerator.SyncPost.self, from: draftData)
-                    try createOrUpdatePost(syncDraft, blog: blog, categoryMap: categoryMap, tagMap: tagMap, embedImageData: embedImageData, isDraft: true, modelContext: modelContext, existingPost: nil)
-                }
-                appliedChanges += 1
-            }
-
-            for file in categorized.drafts.modified {
-                progressUpdate(IncrementalSyncProgress(step: "Updating drafts...", phase: .applying, progress: Double(appliedChanges) / Double(max(1, totalChanges))))
-                if let entityId = SyncChecker.extractEntityId(from: file.path),
-                   let iv = file.iv,
-                   let ivData = SyncEncryption.base64Decode(iv) {
-                    let draftEncData = try await downloadFile(from: "\(baseURL)/sync/\(file.path)")
-                    let draftData = try SyncEncryption.decrypt(ciphertext: draftEncData, iv: ivData, key: key)
-                    let syncDraft = try decoder.decode(SyncDataGenerator.SyncPost.self, from: draftData)
-                    let existingDraft = postMap[syncDraft.id]
-                    try createOrUpdatePost(syncDraft, blog: blog, categoryMap: categoryMap, tagMap: tagMap, embedImageData: embedImageData, isDraft: true, modelContext: modelContext, existingPost: existingDraft)
-                }
-                appliedChanges += 1
-            }
-
-            for file in categorized.drafts.deleted {
-                progressUpdate(IncrementalSyncProgress(step: "Removing deleted drafts...", phase: .applying, progress: Double(appliedChanges) / Double(max(1, totalChanges))))
-                if let entityId = SyncChecker.extractEntityId(from: file.path),
-                   let draft = postMap[entityId] {
-                    modelContext.delete(draft)
-                }
-                appliedChanges += 1
-            }
-        }
-
-        // Step 8: Process sidebar changes
+        // Step 7: Process sidebar changes
         var sidebarMap: [String: SidebarObject] = [:]
         for sidebar in blog.sidebarObjects {
             if let syncId = sidebar.syncId {
@@ -351,22 +344,44 @@ class IncrementalSync {
             }
         }
 
+        // Note: For "new" sidebar objects, we still check sidebarMap by syncId to prevent duplicates
+        // when syncing back after publishing from another client.
         for file in categorized.sidebar.new {
             progressUpdate(IncrementalSyncProgress(step: "Adding sidebar content...", phase: .applying, progress: Double(appliedChanges) / Double(max(1, totalChanges))))
             if let entityId = SyncChecker.extractEntityId(from: file.path) {
                 let sidebarData = try await downloadFile(from: "\(baseURL)/sync/\(file.path)")
                 let syncSidebar = try decoder.decode(SyncDataGenerator.SyncSidebarObject.self, from: sidebarData)
 
-                let sidebarType: SidebarObjectType = syncSidebar.type == "linkList" ? .linkList : .text
-                let sidebar = SidebarObject(blog: blog, title: syncSidebar.title, type: sidebarType, order: syncSidebar.order)
-                sidebar.content = syncSidebar.content
-                sidebar.syncId = syncSidebar.id
-                modelContext.insert(sidebar)
+                if let existingSidebar = sidebarMap[syncSidebar.id] {
+                    // Update existing sidebar
+                    existingSidebar.title = syncSidebar.title
+                    existingSidebar.content = syncSidebar.content
+                    existingSidebar.contentHtml = syncSidebar.contentHtml
+                    existingSidebar.order = syncSidebar.order
 
-                if let links = syncSidebar.links {
-                    for syncLink in links {
-                        let link = LinkItem(sidebarObject: sidebar, title: syncLink.title, url: syncLink.url, order: syncLink.order)
-                        modelContext.insert(link)
+                    // Update links
+                    for link in existingSidebar.links {
+                        modelContext.delete(link)
+                    }
+                    if let links = syncSidebar.links {
+                        for syncLink in links {
+                            let link = LinkItem(sidebarObject: existingSidebar, title: syncLink.title, url: syncLink.url, order: syncLink.order)
+                            modelContext.insert(link)
+                        }
+                    }
+                } else {
+                    let sidebarType: SidebarObjectType = syncSidebar.type == "linkList" ? .linkList : .text
+                    let sidebar = SidebarObject(blog: blog, title: syncSidebar.title, type: sidebarType, order: syncSidebar.order, contentHtml: syncSidebar.contentHtml)
+                    sidebar.content = syncSidebar.content
+                    sidebar.syncId = syncSidebar.id
+                    modelContext.insert(sidebar)
+                    sidebarMap[syncSidebar.id] = sidebar
+
+                    if let links = syncSidebar.links {
+                        for syncLink in links {
+                            let link = LinkItem(sidebarObject: sidebar, title: syncLink.title, url: syncLink.url, order: syncLink.order)
+                            modelContext.insert(link)
+                        }
                     }
                 }
             }
@@ -382,6 +397,7 @@ class IncrementalSync {
                 if let existingSidebar = sidebarMap[syncSidebar.id] {
                     existingSidebar.title = syncSidebar.title
                     existingSidebar.content = syncSidebar.content
+                    existingSidebar.contentHtml = syncSidebar.contentHtml
                     existingSidebar.order = syncSidebar.order
 
                     // Update links
@@ -408,7 +424,7 @@ class IncrementalSync {
             appliedChanges += 1
         }
 
-        // Step 9: Process static file changes
+        // Step 8: Process static file changes
         var staticFileMap: [String: StaticFile] = [:]
         for staticFile in blog.staticFiles {
             if let syncId = staticFile.syncId {
@@ -416,26 +432,37 @@ class IncrementalSync {
             }
         }
 
+        // Note: For "new" static files, we still check staticFileMap by syncId to prevent duplicates
+        // when syncing back after publishing from another client.
         for file in categorized.staticFiles.new {
             progressUpdate(IncrementalSyncProgress(step: "Downloading static files...", phase: .applying, progress: Double(appliedChanges) / Double(max(1, totalChanges))))
             let filename = file.path.replacingOccurrences(of: "static-files/", with: "")
-            let fileData = try await downloadFile(from: "\(baseURL)/sync/\(file.path)")
 
-            // Get file info from static files index
-            let staticIndexData = try await downloadFile(from: "\(baseURL)/sync/static-files/index.json")
-            let staticIndex = try decoder.decode(SyncDataGenerator.SyncStaticFilesIndex.self, from: staticIndexData)
-            let fileEntry = staticIndex.files.first { $0.filename == filename }
+            // Check if static file already exists locally
+            if let existingStaticFile = staticFileMap[filename] {
+                // Update existing static file
+                let fileData = try await downloadFile(from: "\(baseURL)/sync/\(file.path)")
+                existingStaticFile.data = fileData
+            } else {
+                let fileData = try await downloadFile(from: "\(baseURL)/sync/\(file.path)")
 
-            let staticFile = StaticFile(
-                blog: blog,
-                filename: filename,
-                data: fileData,
-                mimeType: fileEntry?.mimeType ?? "application/octet-stream"
-            )
-            staticFile.isSpecialFile = fileEntry?.isSpecialFile ?? false
-            staticFile.specialFileType = fileEntry?.specialFileType
-            staticFile.syncId = filename
-            modelContext.insert(staticFile)
+                // Get file info from static files index
+                let staticIndexData = try await downloadFile(from: "\(baseURL)/sync/static-files/index.json")
+                let staticIndex = try decoder.decode(SyncDataGenerator.SyncStaticFilesIndex.self, from: staticIndexData)
+                let fileEntry = staticIndex.files.first { $0.filename == filename }
+
+                let staticFile = StaticFile(
+                    blog: blog,
+                    filename: filename,
+                    data: fileData,
+                    mimeType: fileEntry?.mimeType ?? "application/octet-stream"
+                )
+                staticFile.isSpecialFile = fileEntry?.isSpecialFile ?? false
+                staticFile.specialFileType = fileEntry?.specialFileType
+                staticFile.syncId = filename
+                modelContext.insert(staticFile)
+                staticFileMap[filename] = staticFile
+            }
 
             appliedChanges += 1
         }
@@ -449,21 +476,16 @@ class IncrementalSync {
             appliedChanges += 1
         }
 
-        // Step 10: Update sync state
-        blog.lastSyncedVersion = manifest.syncVersion
+        // Step 9: Update sync state
+        blog.lastSyncedVersion = manifest.contentVersion
         blog.lastSyncedAt = Date()
 
+        // Store file hashes for incremental sync change detection
         var newHashes: [String: String] = [:]
-        var newContentHashes: [String: String] = [:]
         for (path, fileInfo) in manifest.files {
             newHashes[path] = fileInfo.hash
-            // Store contentHash for encrypted files (allows change detection without IV false positives)
-            if let contentHash = fileInfo.contentHash {
-                newContentHashes[path] = contentHash
-            }
         }
         blog.localSyncHashes = newHashes
-        blog.localContentHashes = newContentHashes
 
         // Save changes
         try modelContext.save()
@@ -526,6 +548,7 @@ class IncrementalSync {
         if let existing = existingPost {
             post = existing
             post.content = syncPost.content
+            post.contentHtml = syncPost.contentHtml
             post.title = syncPost.title
             post.stub = syncPost.stub
             post.isDraft = isDraft
@@ -538,7 +561,7 @@ class IncrementalSync {
                 modelContext.delete(oldEmbed)
             }
         } else {
-            post = Post(content: syncPost.content)
+            post = Post(content: syncPost.content, contentHtml: syncPost.contentHtml)
             post.blog = blog
             post.title = syncPost.title
             post.stub = syncPost.stub
@@ -550,6 +573,11 @@ class IncrementalSync {
         // Parse created date
         if let createdAt = parseDate(syncPost.createdAt) {
             post.createdAt = createdAt
+        }
+
+        // Parse updated date
+        if let updatedAt = parseDate(syncPost.updatedAt) {
+            post.updatedAt = updatedAt
         }
 
         // Set category
@@ -587,7 +615,13 @@ class IncrementalSync {
                 embed.imageData = embedImageData[imageFilename]
             }
 
-            modelContext.insert(embed)
+            // Set the relationship first, then insert if needed
+            post.embed = embed
+
+            // Only explicitly insert for new posts; for existing posts the relationship handles it
+            if existingPost == nil {
+                modelContext.insert(embed)
+            }
 
             // Create embed images for image type
             if embedType == .image {
@@ -598,8 +632,6 @@ class IncrementalSync {
                     }
                 }
             }
-
-            post.embed = embed
         }
     }
 
@@ -609,8 +641,53 @@ class IncrementalSync {
         return formatter
     }()
 
+    private static let isoFormatterNoFractional: ISO8601DateFormatter = {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime]
+        return formatter
+    }()
+
+    private static let dateFormatterNoTimezone: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
+        formatter.timeZone = TimeZone(identifier: "UTC")
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        return formatter
+    }()
+
+    private static let dateFormatterNoTimezoneFractional: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS"
+        formatter.timeZone = TimeZone(identifier: "UTC")
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        return formatter
+    }()
+
+    private static let dateFormatterDateOnly: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        formatter.timeZone = TimeZone(identifier: "UTC")
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        return formatter
+    }()
+
     private static func parseDate(_ dateString: String) -> Date? {
-        return isoFormatter.date(from: dateString)
+        if let date = isoFormatter.date(from: dateString) {
+            return date
+        }
+        if let date = isoFormatterNoFractional.date(from: dateString) {
+            return date
+        }
+        if let date = dateFormatterNoTimezoneFractional.date(from: dateString) {
+            return date
+        }
+        if let date = dateFormatterNoTimezone.date(from: dateString) {
+            return date
+        }
+        if let date = dateFormatterDateOnly.date(from: dateString) {
+            return date
+        }
+        return nil
     }
 }
 

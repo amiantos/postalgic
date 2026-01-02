@@ -30,19 +30,34 @@ class TemplateEngine {
     
     /// Creates the base context with shared properties for all templates
     private func createBaseContext() -> [String: Any] {
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        
         // Check if there are any published posts with tags or categories
         let publishedPosts = blog.posts.filter { !$0.isDraft }
         let hasTags = !Set(publishedPosts.flatMap { $0.tags }).isEmpty
         let hasCategories = !Set(publishedPosts.compactMap { $0.category }).isEmpty
 
+        // Check if social share image exists
+        let hasSocialShareImage = blog.socialShareImage != nil
+
+        // RFC 822 date formatter for RSS buildDate (matches JavaScript's toUTCString())
+        let rfcFormatter = DateFormatter()
+        rfcFormatter.dateFormat = "EEE, dd MMM yyyy HH:mm:ss 'GMT'"
+        rfcFormatter.locale = Locale(identifier: "en_US_POSIX")
+        rfcFormatter.timeZone = TimeZone(abbreviation: "GMT")
+
+        // Use most recent post's date for buildDate, or current date if no posts
+        let mostRecentPost = publishedPosts.sorted { ($0.updatedAt ?? $0.createdAt) > ($1.updatedAt ?? $1.createdAt) }.first
+        let buildDateValue: Date
+        if let post = mostRecentPost {
+            buildDateValue = post.updatedAt ?? post.createdAt
+        } else {
+            buildDateValue = Date()
+        }
+
         var context: [String: Any] = [
             "blogName": blog.name,
             "blogUrl": blog.url,
             "currentYear": Calendar.current.component(.year, from: Date()),
-            "buildDate": formatter.string(from: Date()),
+            "buildDate": rfcFormatter.string(from: buildDateValue),
             "accentColor": blog.accentColor ?? "#FFA100",
             "backgroundColor": blog.backgroundColor ?? "#efefef",
             "textColor": blog.textColor ?? "#2d3748",
@@ -50,7 +65,8 @@ class TemplateEngine {
             "mediumShade": blog.mediumShade ?? "#a0aec0",
             "darkShade": blog.darkShade ?? "#4a5568",
             "hasTags": hasTags,
-            "hasCategories": hasCategories
+            "hasCategories": hasCategories,
+            "hasSocialShareImage": hasSocialShareImage
         ]
 
         // Add optional values only if they exist
@@ -96,7 +112,36 @@ class TemplateEngine {
         let sidebarContent = generateSidebarContent()
         context["sidebarContent"] = sidebarContent
 
-        return layoutTemplate.render(context, library: templateManager.getLibrary())
+        let rendered = layoutTemplate.render(context, library: templateManager.getLibrary())
+
+        // Normalize whitespace-only lines to empty lines for cross-platform consistency
+        // This ensures iOS and self-hosted produce identical output
+        let lines = rendered.split(separator: "\n", omittingEmptySubsequences: false)
+            .map { line in
+                let s = String(line)
+                if s.trimmingCharacters(in: .whitespaces).isEmpty {
+                    return ""
+                }
+                return s
+            }
+
+        // Collapse consecutive empty lines to max 1 for cross-platform consistency
+        // Different Mustache libraries (Swift vs Node.js) produce different whitespace
+        var result: [String] = []
+        var consecutiveEmptyCount = 0
+        for line in lines {
+            if line.isEmpty {
+                consecutiveEmptyCount += 1
+                if consecutiveEmptyCount <= 1 {
+                    result.append(line)
+                }
+            } else {
+                consecutiveEmptyCount = 0
+                result.append(line)
+            }
+        }
+
+        return result.joined(separator: "\n")
     }
     
     /// Generates the HTML content for the sidebar based on the blog's sidebar objects
@@ -117,29 +162,26 @@ class TemplateEngine {
     /// - Returns: HTML meta tags for special static files
     private func generateStaticFilesHead() -> String {
         var headContent = "<meta name=\"apple-mobile-web-app-title\" content=\"\(blog.name)\"/>"
-        
-        // Add favicon if it exists - generate multiple sizes following WordPress pattern
-        if let favicon = blog.favicon {
-            if favicon.isImage {
-                // Generate multiple favicon link tags for different sizes
-                headContent += "<link rel=\"icon\" href=\"/favicon-32x32.png\" sizes=\"32x32\" type=\"image/png\">"
-                headContent += "\n<link rel=\"icon\" href=\"/favicon-192x192.png\" sizes=\"192x192\" type=\"image/png\">"
-                headContent += "\n<link rel=\"apple-touch-icon\" href=\"/apple-touch-icon.png\" sizes=\"180x180\">"
-            } else {
-                // For ICO files, use the original file
-                headContent += "<link rel=\"icon\" href=\"/\(favicon.filename)\" type=\"\(favicon.mimeType)\" sizes=\"any\">"
-            }
+
+        // Always add favicon links for cross-platform consistency
+        // These may point to default favicons if no custom one is set
+        if let favicon = blog.favicon, !favicon.isImage {
+            // For ICO files, use the original file
+            headContent += "<link rel=\"icon\" href=\"/\(favicon.filename)\" type=\"\(favicon.mimeType)\" sizes=\"any\">"
+        } else {
+            // Generate multiple favicon link tags for different sizes (matches self-hosted)
+            headContent += "<link rel=\"icon\" href=\"/favicon-32x32.png\" sizes=\"32x32\" type=\"image/png\">"
+            headContent += "\n<link rel=\"icon\" href=\"/favicon-192x192.png\" sizes=\"192x192\" type=\"image/png\">"
+            headContent += "\n<link rel=\"apple-touch-icon\" href=\"/apple-touch-icon.png\" sizes=\"180x180\">"
         }
-        
+
         // Add social share image meta tags if it exists
         if let socialShareImage = blog.socialShareImage {
-            if !headContent.isEmpty {
-                headContent += "\n"
-            }
+            headContent += "\n"
             headContent += "<meta property=\"og:image\" content=\"\(blog.url.hasSuffix("/") ? blog.url : blog.url + "/")\(socialShareImage.filename)\">"
             headContent += "\n<meta name=\"twitter:image\" content=\"\(blog.url.hasSuffix("/") ? blog.url : blog.url + "/")\(socialShareImage.filename)\">"
         }
-        
+
         return headContent
     }
     
@@ -158,7 +200,12 @@ class TemplateEngine {
         
         // Add most recent month's archive URL
         if hasMorePosts {
-            let publishedPosts = blog.posts.filter { !$0.isDraft }.sorted { $0.createdAt > $1.createdAt }
+            let publishedPosts = blog.posts.filter { !$0.isDraft }.sorted {
+                if $0.createdAt != $1.createdAt {
+                    return $0.createdAt > $1.createdAt
+                }
+                return ($0.syncId ?? "") < ($1.syncId ?? "")
+            }
             if let mostRecentPost = publishedPosts.first {
                 let calendar = Calendar.current
                 let year = calendar.component(.year, from: mostRecentPost.createdAt)
@@ -220,6 +267,9 @@ class TemplateEngine {
         // Get the full URL for the post
         let postUrl = "\(blog.url)/\(post.urlPath)"
 
+        // Determine twitter card type based on social share image
+        let twitterCardType = blog.socialShareImage != nil ? "summary_large_image" : "summary"
+
         // Create comprehensive meta tags for SEO and social sharing
         let customHead = """
         <!-- Primary Meta Tags -->
@@ -232,7 +282,7 @@ class TemplateEngine {
         <meta property="og:description" content="\(escapedDescription)">
 
         <!-- Twitter -->
-        <meta property="twitter:card" content="summary_large_image">
+        <meta property="twitter:card" content="\(twitterCardType)">
         <meta property="twitter:url" content="\(postUrl)">
         <meta property="twitter:title" content="\(escapedTitle)">
         <meta property="twitter:description" content="\(escapedDescription)">
@@ -247,12 +297,19 @@ class TemplateEngine {
     /// - Throws: Error if rendering fails
     func renderArchivesPage(posts: [Post]) throws -> String {
         let archivesTemplate = try templateManager.getTemplate(for: "archives")
-        
+
+        // Get the blog's timezone for correct date display
+        let timezone = TimeZone(identifier: blog.timezone) ?? TimeZone(identifier: "UTC")!
+
         var context = createBaseContext()
-        context["years"] = TemplateDataConverter.createArchiveData(from: posts)
-        
+        context["years"] = TemplateDataConverter.createArchiveData(from: posts, timezone: timezone)
+
         let content = archivesTemplate.render(context, library: templateManager.getLibrary())
-        return try renderLayout(content: content, pageTitle: "Archives - \(blog.name)")
+        return try renderLayout(
+            content: content,
+            pageTitle: "Archives - \(blog.name)",
+            customHead: "<link rel=\"sitemap\" type=\"application/xml\" title=\"Sitemap\" href=\"/sitemap.xml\" />"
+        )
     }
     
     /// Renders a monthly archive page
@@ -302,7 +359,11 @@ class TemplateEngine {
         }
         
         let content = monthlyArchiveTemplate.render(context, library: templateManager.getLibrary())
-        return try renderLayout(content: content, pageTitle: "\(monthName) \(year) - Archives - \(blog.name)")
+        return try renderLayout(
+            content: content,
+            pageTitle: "\(monthName) \(year) - \(blog.name)",
+            customHead: "<link rel=\"sitemap\" type=\"application/xml\" title=\"Sitemap\" href=\"/sitemap.xml\" />"
+        )
     }
     
     /// Renders the tags index page
@@ -318,7 +379,11 @@ class TemplateEngine {
         }
         
         let content = tagsTemplate.render(context, library: templateManager.getLibrary())
-        return try renderLayout(content: content, pageTitle: "Tags - \(blog.name)")
+        return try renderLayout(
+            content: content,
+            pageTitle: "Tags - \(blog.name)",
+            customHead: "<link rel=\"sitemap\" type=\"application/xml\" title=\"Sitemap\" href=\"/sitemap.xml\" />"
+        )
     }
     
     /// Renders a single tag page
@@ -364,8 +429,12 @@ class TemplateEngine {
         }
         
         let content = tagTemplate.render(context, library: templateManager.getLibrary())
-        let pageTitle = currentPage == 1 ? "Tag: \(tag.name) - \(blog.name)" : "Tag: \(tag.name) (Page \(currentPage)) - \(blog.name)"
-        return try renderLayout(content: content, pageTitle: pageTitle)
+        let pageTitle = currentPage == 1 ? "Posts tagged \"\(tag.name)\" - \(blog.name)" : "Posts tagged \"\(tag.name)\" (Page \(currentPage)) - \(blog.name)"
+        return try renderLayout(
+            content: content,
+            pageTitle: pageTitle,
+            customHead: "<link rel=\"sitemap\" type=\"application/xml\" title=\"Sitemap\" href=\"/sitemap.xml\" />"
+        )
     }
     
     /// Renders the categories index page
@@ -381,7 +450,11 @@ class TemplateEngine {
         }
         
         let content = categoriesTemplate.render(context, library: templateManager.getLibrary())
-        return try renderLayout(content: content, pageTitle: "Categories - \(blog.name)")
+        return try renderLayout(
+            content: content,
+            pageTitle: "Categories - \(blog.name)",
+            customHead: "<link rel=\"sitemap\" type=\"application/xml\" title=\"Sitemap\" href=\"/sitemap.xml\" />"
+        )
     }
     
     /// Renders a single category page
@@ -428,8 +501,12 @@ class TemplateEngine {
         }
         
         let content = categoryTemplate.render(context, library: templateManager.getLibrary())
-        let pageTitle = currentPage == 1 ? "Category: \(category.name) - \(blog.name)" : "Category: \(category.name) (Page \(currentPage)) - \(blog.name)"
-        return try renderLayout(content: content, pageTitle: pageTitle)
+        let pageTitle = currentPage == 1 ? "Posts in \"\(category.name)\" - \(blog.name)" : "Posts in \"\(category.name)\" (Page \(currentPage)) - \(blog.name)"
+        return try renderLayout(
+            content: content,
+            pageTitle: pageTitle,
+            customHead: "<link rel=\"sitemap\" type=\"application/xml\" title=\"Sitemap\" href=\"/sitemap.xml\" />"
+        )
     }
     
     /// Renders the RSS feed
@@ -463,33 +540,92 @@ class TemplateEngine {
     /// - Throws: Error if rendering fails
     func renderSitemap(posts: [Post], tags: [Tag], categories: [Category], monthlyArchives: [(year: Int, month: Int)] = []) throws -> String {
         let sitemapTemplate = try templateManager.getTemplate(for: "sitemap")
-        
+
         var context = createBaseContext()
-        context["posts"] = posts.map { TemplateDataConverter.convert(post: $0, blog: blog) }
-        
-        // Convert tags
-        context["tags"] = tags.map { tag -> [String: Any] in
-            // Create dummy TagTemplateData
-            let emptyPosts: [Post] = []
-            return TemplateDataConverter.convert(tag: tag, posts: emptyPosts)
+
+        // ISO8601 formatter for sitemap dates
+        let isoFormatter = ISO8601DateFormatter()
+        isoFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+
+        // Get most recent post date for index/archives lastmod
+        let sortedPosts = posts.sorted {
+            let date0 = $0.updatedAt ?? $0.createdAt
+            let date1 = $1.updatedAt ?? $1.createdAt
+            return date0 > date1
         }
-        
-        // Convert categories
-        context["categories"] = categories.map { category -> [String: Any] in
-            // Create dummy CategoryTemplateData
-            let emptyPosts: [Post] = []
-            return TemplateDataConverter.convert(category: category, posts: emptyPosts)
+        let mostRecentPostDate: String
+        if let mostRecent = sortedPosts.first {
+            mostRecentPostDate = isoFormatter.string(from: mostRecent.updatedAt ?? mostRecent.createdAt)
+        } else {
+            mostRecentPostDate = isoFormatter.string(from: Date())
         }
-        
-        // Add monthly archives
-        let formatter = ISO8601DateFormatter()
-        context["monthlyArchives"] = monthlyArchives.map { yearMonth in
+
+        // Override buildDate with ISO8601 format for sitemap
+        context["buildDate"] = mostRecentPostDate
+
+        // Posts with their lastmod
+        context["posts"] = posts.map { post -> [String: Any] in
+            var dict = TemplateDataConverter.convert(post: post, blog: blog)
+            dict["lastmod"] = isoFormatter.string(from: post.updatedAt ?? post.createdAt)
+            return dict
+        }
+
+        // Convert tags with lastmod from most recent post in that tag (sorted by name ASC like self-hosted)
+        context["tags"] = tags.sorted { $0.name < $1.name }.map { tag -> [String: Any] in
+            let tagPosts = posts.filter { $0.tags.contains(tag) }
+                .sorted { ($0.updatedAt ?? $0.createdAt) > ($1.updatedAt ?? $1.createdAt) }
+            let lastmod: String
+            if let mostRecent = tagPosts.first {
+                lastmod = isoFormatter.string(from: mostRecent.updatedAt ?? mostRecent.createdAt)
+            } else {
+                lastmod = mostRecentPostDate
+            }
+            var dict = TemplateDataConverter.convert(tag: tag, posts: [])
+            dict["lastmod"] = lastmod
+            return dict
+        }
+
+        // Convert categories with lastmod from most recent post in that category (sorted by name ASC like self-hosted)
+        context["categories"] = categories.sorted { $0.name < $1.name }.map { category -> [String: Any] in
+            let categoryPosts = posts.filter { $0.category?.id == category.id }
+                .sorted { ($0.updatedAt ?? $0.createdAt) > ($1.updatedAt ?? $1.createdAt) }
+            let lastmod: String
+            if let mostRecent = categoryPosts.first {
+                lastmod = isoFormatter.string(from: mostRecent.updatedAt ?? mostRecent.createdAt)
+            } else {
+                lastmod = mostRecentPostDate
+            }
+            var dict = TemplateDataConverter.convert(category: category, posts: [])
+            dict["lastmod"] = lastmod
+            return dict
+        }
+
+        // Add monthly archives with lastmod from most recent post in that month
+        var calendar = Calendar(identifier: .gregorian)
+        if let tz = TimeZone(identifier: blog.timezone) {
+            calendar.timeZone = tz
+        }
+
+        context["monthlyArchives"] = monthlyArchives.map { yearMonth -> [String: Any] in
+            let monthPosts = posts.filter { post in
+                let year = calendar.component(.year, from: post.createdAt)
+                let month = calendar.component(.month, from: post.createdAt)
+                return year == yearMonth.year && month == yearMonth.month
+            }.sorted { ($0.updatedAt ?? $0.createdAt) > ($1.updatedAt ?? $1.createdAt) }
+
+            let lastmod: String
+            if let mostRecent = monthPosts.first {
+                lastmod = isoFormatter.string(from: mostRecent.updatedAt ?? mostRecent.createdAt)
+            } else {
+                lastmod = mostRecentPostDate
+            }
+
             return [
                 "url": "/\(String(format: "%04d", yearMonth.year))/\(String(format: "%02d", yearMonth.month))/",
-                "lastmod": formatter.string(from: Date())
+                "lastmod": lastmod
             ]
         }
-        
+
         return sitemapTemplate.render(context, library: templateManager.getLibrary())
     }
     
@@ -499,6 +635,16 @@ class TemplateEngine {
     func renderCSS() throws -> String {
         let cssTemplate = try templateManager.getTemplate(for: "css")
         let context = createBaseContext()
-        return cssTemplate.render(context, library: templateManager.getLibrary())
+        let rendered = cssTemplate.render(context, library: templateManager.getLibrary())
+        // Strip trailing whitespace from each line to match self-hosted output
+        return rendered.split(separator: "\n", omittingEmptySubsequences: false)
+            .map { line in
+                var s = String(line)
+                while s.hasSuffix(" ") || s.hasSuffix("\t") {
+                    s.removeLast()
+                }
+                return s
+            }
+            .joined(separator: "\n")
     }
 }

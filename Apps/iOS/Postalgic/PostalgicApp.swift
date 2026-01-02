@@ -10,6 +10,14 @@ import SwiftUI
 
 @main
 struct PostalgicApp: App {
+    init() {
+        #if DEBUG
+        Log.logLevel = .debug
+        #else
+        Log.logLevel = .error
+        #endif
+    }
+
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             Blog.self,

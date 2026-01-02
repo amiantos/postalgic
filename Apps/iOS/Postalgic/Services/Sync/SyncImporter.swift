@@ -16,8 +16,6 @@ class SyncImporter {
         case networkError(String)
         case manifestNotFound
         case invalidManifest
-        case decryptionFailed
-        case passwordRequired
         case importFailed(String)
 
         var errorDescription: String? {
@@ -30,10 +28,6 @@ class SyncImporter {
                 return "Sync manifest not found at this URL. Make sure the site has sync enabled."
             case .invalidManifest:
                 return "Invalid sync manifest format"
-            case .decryptionFailed:
-                return "Failed to decrypt data. Check your password."
-            case .passwordRequired:
-                return "This blog has drafts that require a password to import"
             case .importFailed(let message):
                 return "Import failed: \(message)"
             }
@@ -44,28 +38,18 @@ class SyncImporter {
 
     struct SyncManifest: Codable {
         let version: String
-        let syncVersion: Int
+        let contentVersion: String
         let lastModified: String
         let appSource: String
         let appVersion: String
         let blogName: String
-        let hasDrafts: Bool
-        let encryption: EncryptionInfo?
+        let fileCount: Int?
         let files: [String: FileInfo]
-
-        struct EncryptionInfo: Codable {
-            let method: String
-            let salt: String
-            let iterations: Int
-        }
 
         struct FileInfo: Codable {
             let hash: String
             let size: Int
             let modified: String?
-            let encrypted: Bool?
-            let iv: String?
-            let contentHash: String?  // Hash of plaintext before encryption (for drafts)
         }
     }
 
@@ -114,7 +98,7 @@ class SyncImporter {
         } catch let error as ImportError {
             throw error
         } catch let error as DecodingError {
-            print("Manifest decoding error: \(error)")
+            Log.error("Manifest decoding error: \(error)")
             throw ImportError.invalidManifest
         } catch {
             throw ImportError.networkError(error.localizedDescription)
@@ -124,13 +108,12 @@ class SyncImporter {
     /// Imports a blog from a sync URL
     /// - Parameters:
     ///   - urlString: The base URL of the published site
-    ///   - password: The sync password (required if blog has drafts)
     ///   - modelContext: The SwiftData model context
     ///   - progressUpdate: Closure for progress updates
     /// - Returns: The imported blog
+    @MainActor
     static func importBlog(
         from urlString: String,
-        password: String?,
         modelContext: ModelContext,
         progressUpdate: @escaping (ImportProgress) -> Void
     ) async throws -> Blog {
@@ -140,22 +123,8 @@ class SyncImporter {
         progressUpdate(ImportProgress(currentStep: "Fetching manifest...", filesDownloaded: 0, totalFiles: 0, isComplete: false))
         let manifest = try await fetchManifest(from: baseURL)
 
-        // Check if password is required
-        if manifest.hasDrafts && (password == nil || password!.isEmpty) {
-            throw ImportError.passwordRequired
-        }
-
         let totalFiles = manifest.files.count
         var filesDownloaded = 0
-
-        // Prepare encryption key if needed
-        var encryptionKey: SymmetricKey? = nil
-        if manifest.hasDrafts, let password = password, let encInfo = manifest.encryption {
-            guard let saltData = SyncEncryption.base64Decode(encInfo.salt) else {
-                throw ImportError.decryptionFailed
-            }
-            encryptionKey = SyncEncryption.deriveKey(password: password, salt: saltData)
-        }
 
         // Step 2: Download blog.json
         progressUpdate(ImportProgress(currentStep: "Downloading blog settings...", filesDownloaded: filesDownloaded, totalFiles: totalFiles, isComplete: false))
@@ -166,7 +135,7 @@ class SyncImporter {
         let syncBlog = try decoder.decode(SyncDataGenerator.SyncBlog.self, from: blogData)
 
         // Step 3: Create the blog
-        let blog = Blog(name: syncBlog.name, url: syncBlog.url)
+        let blog = Blog(name: syncBlog.name, url: syncBlog.url ?? "")
         blog.tagline = syncBlog.tagline
         blog.authorName = syncBlog.authorName
         blog.authorUrl = syncBlog.authorUrl
@@ -178,18 +147,14 @@ class SyncImporter {
         blog.mediumShade = syncBlog.colors.mediumShade
         blog.darkShade = syncBlog.colors.darkShade
         blog.themeIdentifier = syncBlog.themeIdentifier
+        blog.timezone = syncBlog.timezone
 
         // Enable sync and store sync info
         blog.syncEnabled = true
-        blog.lastSyncedVersion = manifest.syncVersion
+        blog.lastSyncedVersion = manifest.contentVersion
         blog.lastSyncedAt = Date()
 
         modelContext.insert(blog)
-
-        // Store sync password if provided
-        if let password = password {
-            blog.setSyncPassword(password)
-        }
 
         // Step 4: Download and create categories
         progressUpdate(ImportProgress(currentStep: "Downloading categories...", filesDownloaded: filesDownloaded, totalFiles: totalFiles, isComplete: false))
@@ -273,40 +238,7 @@ class SyncImporter {
             progressUpdate(ImportProgress(currentStep: "Downloading posts...", filesDownloaded: filesDownloaded, totalFiles: totalFiles, isComplete: false))
         }
 
-        // Step 8: Download and create drafts (encrypted)
-        if manifest.hasDrafts, let key = encryptionKey {
-            progressUpdate(ImportProgress(currentStep: "Downloading drafts...", filesDownloaded: filesDownloaded, totalFiles: totalFiles, isComplete: false))
-
-            // Download encrypted draft index
-            let draftIndexEncData = try await downloadFile(from: "\(baseURL)/sync/drafts/index.json.enc")
-            filesDownloaded += 1
-
-            guard let draftIndexIV = manifest.files["drafts/index.json.enc"]?.iv,
-                  let ivData = SyncEncryption.base64Decode(draftIndexIV) else {
-                throw ImportError.decryptionFailed
-            }
-
-            let draftIndexData = try SyncEncryption.decrypt(ciphertext: draftIndexEncData, iv: ivData, key: key)
-            let draftIndex = try decoder.decode(SyncDataGenerator.SyncDraftIndex.self, from: draftIndexData)
-
-            for entry in draftIndex.drafts {
-                let draftEncData = try await downloadFile(from: "\(baseURL)/sync/drafts/\(entry.id).json.enc")
-                filesDownloaded += 1
-
-                guard let draftIV = manifest.files["drafts/\(entry.id).json.enc"]?.iv,
-                      let draftIVData = SyncEncryption.base64Decode(draftIV) else {
-                    throw ImportError.decryptionFailed
-                }
-
-                let draftData = try SyncEncryption.decrypt(ciphertext: draftEncData, iv: draftIVData, key: key)
-                let syncDraft = try decoder.decode(SyncDataGenerator.SyncPost.self, from: draftData)
-
-                try createPost(from: syncDraft, blog: blog, categoryMap: categoryMap, tagMap: tagMap, embedImageData: embedImageData, isDraft: true, modelContext: modelContext)
-                progressUpdate(ImportProgress(currentStep: "Downloading drafts...", filesDownloaded: filesDownloaded, totalFiles: totalFiles, isComplete: false))
-            }
-        }
-
-        // Step 9: Download and create sidebar objects
+        // Step 8: Download and create sidebar objects
         progressUpdate(ImportProgress(currentStep: "Downloading sidebar content...", filesDownloaded: filesDownloaded, totalFiles: totalFiles, isComplete: false))
         let sidebarIndexData = try await downloadFile(from: "\(baseURL)/sync/sidebar/index.json")
         filesDownloaded += 1
@@ -318,7 +250,7 @@ class SyncImporter {
             let syncSidebar = try decoder.decode(SyncDataGenerator.SyncSidebarObject.self, from: sidebarData)
 
             let sidebarType: SidebarObjectType = syncSidebar.type == "linkList" ? .linkList : .text
-            let sidebar = SidebarObject(blog: blog, title: syncSidebar.title, type: sidebarType, order: syncSidebar.order)
+            let sidebar = SidebarObject(blog: blog, title: syncSidebar.title, type: sidebarType, order: syncSidebar.order, contentHtml: syncSidebar.contentHtml)
             sidebar.content = syncSidebar.content
             sidebar.syncId = syncSidebar.id  // Store remote ID for incremental sync matching
             modelContext.insert(sidebar)
@@ -332,7 +264,7 @@ class SyncImporter {
             }
         }
 
-        // Step 10: Download and create static files
+        // Step 9: Download and create static files
         progressUpdate(ImportProgress(currentStep: "Downloading static files...", filesDownloaded: filesDownloaded, totalFiles: totalFiles, isComplete: false))
         let staticFilesIndexData = try await downloadFile(from: "\(baseURL)/sync/static-files/index.json")
         filesDownloaded += 1
@@ -350,38 +282,53 @@ class SyncImporter {
             progressUpdate(ImportProgress(currentStep: "Downloading static files...", filesDownloaded: filesDownloaded, totalFiles: totalFiles, isComplete: false))
         }
 
-        // Step 11: Download custom theme if present
+        // Step 10: Download custom theme if present
         if let themeId = syncBlog.themeIdentifier, themeId != "default" {
             let themePath = "themes/\(themeId).json"
+            Log.debug("Theme import: Looking for theme '\(themeId)' at path '\(themePath)'")
+            Log.debug("Theme import: Manifest has \(manifest.files.count) files")
+            Log.debug("Theme import: Theme in manifest? \(manifest.files[themePath] != nil)")
+
             if manifest.files[themePath] != nil {
                 progressUpdate(ImportProgress(currentStep: "Downloading theme...", filesDownloaded: filesDownloaded, totalFiles: totalFiles, isComplete: false))
                 let themeData = try await downloadFile(from: "\(baseURL)/sync/\(themePath)")
                 filesDownloaded += 1
                 let syncTheme = try decoder.decode(SyncDataGenerator.SyncTheme.self, from: themeData)
+                Log.debug("Theme import: Downloaded theme '\(syncTheme.name)' with \(syncTheme.templates.count) templates")
 
                 // Check if theme already exists
                 if ThemeService.shared.getTheme(identifier: syncTheme.identifier) == nil {
-                    let theme = Theme(name: syncTheme.name, identifier: syncTheme.identifier)
+                    let theme = Theme(name: syncTheme.name, identifier: syncTheme.identifier, isCustomized: true)
+                    theme.templates = syncTheme.templates
                     modelContext.insert(theme)
+                    ThemeService.shared.addTheme(theme)
+                    Log.debug("Theme import: Created new theme '\(syncTheme.identifier)'")
+                } else {
+                    // Update existing theme's templates if it already exists
+                    if let existingTheme = ThemeService.shared.getTheme(identifier: syncTheme.identifier) {
+                        existingTheme.templates = syncTheme.templates
+                        Log.debug("Theme import: Updated existing theme '\(syncTheme.identifier)'")
+                    }
                 }
+            } else {
+                Log.debug("Theme import: Theme file not found in manifest!")
+                // List all theme-related paths in manifest for debugging
+                let themePaths = manifest.files.keys.filter { $0.hasPrefix("themes/") }
+                Log.debug("Theme import: Available theme paths: \(themePaths)")
             }
+        } else {
+            Log.debug("Theme import: No custom theme to import (themeIdentifier: \(syncBlog.themeIdentifier ?? "nil"))")
         }
+
+        // Store sync manifest hashes for future sync comparisons
+        var localHashes: [String: String] = [:]
+        for (path, fileInfo) in manifest.files {
+            localHashes[path] = fileInfo.hash
+        }
+        blog.localSyncHashes = localHashes
 
         // Save all changes
         try modelContext.save()
-
-        // Store local file hashes for future sync
-        var localHashes: [String: String] = [:]
-        var localContentHashes: [String: String] = [:]
-        for (path, fileInfo) in manifest.files {
-            localHashes[path] = fileInfo.hash
-            // Store contentHash for encrypted files (allows change detection without IV false positives)
-            if let contentHash = fileInfo.contentHash {
-                localContentHashes[path] = contentHash
-            }
-        }
-        blog.localSyncHashes = localHashes
-        blog.localContentHashes = localContentHashes
 
         progressUpdate(ImportProgress(currentStep: "Import complete!", filesDownloaded: totalFiles, totalFiles: totalFiles, isComplete: true))
 
@@ -439,8 +386,60 @@ class SyncImporter {
         return formatter
     }()
 
+    private static let isoFormatterNoFractional: ISO8601DateFormatter = {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime]
+        return formatter
+    }()
+
+    // Fallback for dates without timezone (assumes UTC)
+    private static let dateFormatterNoTimezone: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
+        formatter.timeZone = TimeZone(identifier: "UTC")
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        return formatter
+    }()
+
+    // Fallback for dates without timezone but with fractional seconds
+    private static let dateFormatterNoTimezoneFractional: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS"
+        formatter.timeZone = TimeZone(identifier: "UTC")
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        return formatter
+    }()
+
+    // Fallback for date-only strings (midnight UTC)
+    private static let dateFormatterDateOnly: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        formatter.timeZone = TimeZone(identifier: "UTC")
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        return formatter
+    }()
+
     private static func parseDate(_ dateString: String) -> Date? {
-        return isoFormatter.date(from: dateString)
+        // Try ISO8601 with fractional seconds first (most common)
+        if let date = isoFormatter.date(from: dateString) {
+            return date
+        }
+        // Try ISO8601 without fractional seconds
+        if let date = isoFormatterNoFractional.date(from: dateString) {
+            return date
+        }
+        // Try without timezone indicator (assumes UTC)
+        if let date = dateFormatterNoTimezoneFractional.date(from: dateString) {
+            return date
+        }
+        if let date = dateFormatterNoTimezone.date(from: dateString) {
+            return date
+        }
+        // Try date-only (midnight UTC)
+        if let date = dateFormatterDateOnly.date(from: dateString) {
+            return date
+        }
+        return nil
     }
 
     private static func createPost(
@@ -452,7 +451,7 @@ class SyncImporter {
         isDraft: Bool,
         modelContext: ModelContext
     ) throws {
-        let post = Post(content: syncPost.content)
+        let post = Post(content: syncPost.content, contentHtml: syncPost.contentHtml)
         post.blog = blog
         post.title = syncPost.title
         post.stub = syncPost.stub
@@ -461,6 +460,10 @@ class SyncImporter {
 
         if let createdAt = parseDate(syncPost.createdAt) {
             post.createdAt = createdAt
+        }
+
+        if let updatedAt = parseDate(syncPost.updatedAt) {
+            post.updatedAt = updatedAt
         }
 
         // Set category
@@ -518,7 +521,3 @@ class SyncImporter {
         }
     }
 }
-
-// MARK: - CryptoKit Import
-import CryptoKit
-

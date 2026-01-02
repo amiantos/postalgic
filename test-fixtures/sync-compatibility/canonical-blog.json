@@ -181,10 +181,5 @@
       "mimeType": "image/x-icon",
       "specialFileType": "favicon"
     }
-  ],
-  "encryption": {
-    "testPassword": "test-sync-password-123",
-    "expectedSalt": "dGVzdC1zYWx0LWZvci1zeW5j",
-    "expectedIterations": 100000
-  }
+  ]
 }

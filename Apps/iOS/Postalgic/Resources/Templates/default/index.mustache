@@ -1,0 +1,8 @@
+{{#posts}}
+    {{> post}}
+{{/posts}}
+{{#hasMorePosts}}
+<div class="archives-link">
+    <a href="{{#recentArchiveUrl}}{{{recentArchiveUrl}}}{{/recentArchiveUrl}}{{^recentArchiveUrl}}/archives{{/recentArchiveUrl}}">← View more posts in the archives</a>
+</div>
+{{/hasMorePosts}}

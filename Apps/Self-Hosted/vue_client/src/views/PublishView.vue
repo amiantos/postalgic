@@ -2,7 +2,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { useBlogStore } from '@/stores/blog';
-import { publishApi } from '@/api';
+import { publishApi, syncApi } from '@/api';
 import PageToolbar from '@/components/PageToolbar.vue';
 
 const route = useRoute();
@@ -19,6 +19,13 @@ const successMessage = ref(null);
 const previewUrl = ref(null);
 const publishStatus = ref(null);
 const changes = ref(null);
+const showNewFiles = ref(false);
+const showModifiedFiles = ref(false);
+const showDeletedFiles = ref(false);
+
+// Pre-publish sync state
+const prePublishSyncing = ref(false);
+const prePublishSyncStatus = ref(null);
 
 onMounted(async () => {
   await loadStatus();
@@ -29,6 +36,54 @@ async function loadStatus() {
     publishStatus.value = await publishApi.status(blogId.value);
   } catch (e) {
     console.error('Failed to load publish status:', e);
+  }
+}
+
+/**
+ * Performs pre-publish sync if the blog has sync enabled (has a URL).
+ * Returns true if sync succeeded or was not needed, false if sync failed.
+ */
+async function performPrePublishSync() {
+  // Skip sync if blog has no URL configured
+  if (!blogStore.currentBlog?.url) {
+    return true;
+  }
+
+  prePublishSyncing.value = true;
+  prePublishSyncStatus.value = 'Checking for remote changes...';
+  error.value = null;
+
+  try {
+    // Check for remote changes
+    const checkResult = await syncApi.checkChanges(blogId.value);
+
+    if (checkResult.hasChanges) {
+      prePublishSyncStatus.value = `Syncing remote changes: ${checkResult.changeSummary || 'updating...'}`;
+
+      // Pull changes
+      const pullResult = await syncApi.pull(blogId.value);
+
+      if (!pullResult.success) {
+        throw new Error(pullResult.message || 'Sync failed');
+      }
+
+      // Refresh store data after sync
+      await Promise.all([
+        blogStore.fetchBlog(blogId.value),
+        blogStore.fetchPosts(blogId.value),
+        blogStore.fetchCategories(blogId.value),
+        blogStore.fetchTags(blogId.value)
+      ]);
+    }
+
+    prePublishSyncing.value = false;
+    prePublishSyncStatus.value = null;
+    return true;
+  } catch (e) {
+    prePublishSyncing.value = false;
+    prePublishSyncStatus.value = null;
+    error.value = `Sync failed: ${e.message}. Please resolve this before publishing.`;
+    return false;
   }
 }
 
@@ -76,12 +131,21 @@ async function downloadSite() {
   }
 }
 
-async function publishToAWS(forceUploadAll = false) {
+async function publishToAWS(forceUploadAll = false, skipSync = false) {
   publishing.value = true;
   error.value = null;
   successMessage.value = null;
 
   try {
+    // Perform pre-publish sync first (unless skipped)
+    if (!skipSync) {
+      const syncOk = await performPrePublishSync();
+      if (!syncOk) {
+        publishing.value = false;
+        return;
+      }
+    }
+
     const result = await publishApi.publishToAWS(blogId.value, { forceUploadAll });
     successMessage.value = result.message;
     await loadStatus();
@@ -92,12 +156,21 @@ async function publishToAWS(forceUploadAll = false) {
   }
 }
 
-async function publishToSFTP(forceUploadAll = false) {
+async function publishToSFTP(forceUploadAll = false, skipSync = false) {
   publishing.value = true;
   error.value = null;
   successMessage.value = null;
 
   try {
+    // Perform pre-publish sync first (unless skipped)
+    if (!skipSync) {
+      const syncOk = await performPrePublishSync();
+      if (!syncOk) {
+        publishing.value = false;
+        return;
+      }
+    }
+
     const result = await publishApi.publishToSFTP(blogId.value, { forceUploadAll });
     successMessage.value = result.message;
     await loadStatus();
@@ -108,12 +181,21 @@ async function publishToSFTP(forceUploadAll = false) {
   }
 }
 
-async function publishToGit() {
+async function publishToGit(skipSync = false) {
   publishing.value = true;
   error.value = null;
   successMessage.value = null;
 
   try {
+    // Perform pre-publish sync first (unless skipped)
+    if (!skipSync) {
+      const syncOk = await performPrePublishSync();
+      if (!syncOk) {
+        publishing.value = false;
+        return;
+      }
+    }
+
     const result = await publishApi.publishToGit(blogId.value);
     successMessage.value = result.message;
     await loadStatus();
@@ -146,6 +228,17 @@ function getPublisherLabel(type) {
     <PageToolbar title="Publish" />
 
     <div class="px-6 pb-6">
+    <!-- Pre-publish Sync Status -->
+    <div v-if="prePublishSyncing" class="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+      <div class="flex items-center gap-3">
+        <svg class="w-5 h-5 text-blue-600 dark:text-blue-400 animate-spin" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <span class="text-blue-800 dark:text-blue-300">{{ prePublishSyncStatus }}</span>
+      </div>
+    </div>
+
     <!-- Error -->
     <div v-if="error" class="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-800 dark:text-red-400">
       {{ error }}
@@ -269,21 +362,31 @@ function getPublisherLabel(type) {
           <p class="font-medium text-gray-900 dark:text-gray-100">2. Publish to AWS S3</p>
           <p class="text-sm text-gray-500 dark:text-gray-400">Upload directly to your S3 bucket</p>
         </div>
-        <div class="flex gap-2">
+        <div class="flex flex-col items-end gap-2">
+          <div class="flex gap-2">
+            <button
+              @click="publishToAWS(false)"
+              :disabled="publishing || blogStore.publishedPosts.length === 0"
+              class="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50"
+            >
+              {{ publishing ? 'Publishing...' : 'Publish' }}
+            </button>
+            <button
+              @click="publishToAWS(true)"
+              :disabled="publishing || blogStore.publishedPosts.length === 0"
+              class="px-4 py-2 bg-orange-800 text-white rounded-lg hover:bg-orange-900 transition-colors disabled:opacity-50"
+              title="Re-upload all files, even if they already exist in S3"
+            >
+              {{ publishing ? 'Publishing...' : 'Full Publish' }}
+            </button>
+          </div>
           <button
-            @click="publishToAWS(false)"
+            @click="publishToAWS(true, true)"
             :disabled="publishing || blogStore.publishedPosts.length === 0"
-            class="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50"
+            class="text-xs text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 underline"
+            title="Skip pre-publish sync and force upload all files (use to recover from sync issues)"
           >
-            {{ publishing ? 'Publishing...' : 'Publish' }}
-          </button>
-          <button
-            @click="publishToAWS(true)"
-            :disabled="publishing || blogStore.publishedPosts.length === 0"
-            class="px-4 py-2 bg-orange-800 text-white rounded-lg hover:bg-orange-900 transition-colors disabled:opacity-50"
-            title="Re-upload all files, even if they already exist in S3"
-          >
-            {{ publishing ? 'Publishing...' : 'Full Publish' }}
+            Force Publish (Skip Sync)
           </button>
         </div>
       </div>
@@ -294,21 +397,31 @@ function getPublisherLabel(type) {
           <p class="font-medium text-gray-900 dark:text-gray-100">2. Publish via SFTP</p>
           <p class="text-sm text-gray-500 dark:text-gray-400">Upload directly to your server</p>
         </div>
-        <div class="flex gap-2">
+        <div class="flex flex-col items-end gap-2">
+          <div class="flex gap-2">
+            <button
+              @click="publishToSFTP(false)"
+              :disabled="publishing || blogStore.publishedPosts.length === 0"
+              class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+            >
+              {{ publishing ? 'Publishing...' : 'Publish' }}
+            </button>
+            <button
+              @click="publishToSFTP(true)"
+              :disabled="publishing || blogStore.publishedPosts.length === 0"
+              class="px-4 py-2 bg-blue-800 text-white rounded-lg hover:bg-blue-900 transition-colors disabled:opacity-50"
+              title="Re-upload all files, even if they already exist on the server"
+            >
+              {{ publishing ? 'Publishing...' : 'Full Publish' }}
+            </button>
+          </div>
           <button
-            @click="publishToSFTP(false)"
+            @click="publishToSFTP(true, true)"
             :disabled="publishing || blogStore.publishedPosts.length === 0"
-            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+            class="text-xs text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 underline"
+            title="Skip pre-publish sync and force upload all files (use to recover from sync issues)"
           >
-            {{ publishing ? 'Publishing...' : 'Publish' }}
-          </button>
-          <button
-            @click="publishToSFTP(true)"
-            :disabled="publishing || blogStore.publishedPosts.length === 0"
-            class="px-4 py-2 bg-blue-800 text-white rounded-lg hover:bg-blue-900 transition-colors disabled:opacity-50"
-            title="Re-upload all files, even if they already exist on the server"
-          >
-            {{ publishing ? 'Publishing...' : 'Full Publish' }}
+            Force Publish (Skip Sync)
           </button>
         </div>
       </div>
@@ -319,31 +432,99 @@ function getPublisherLabel(type) {
           <p class="font-medium text-gray-900 dark:text-gray-100">2. Publish to Git</p>
           <p class="text-sm text-gray-500 dark:text-gray-400">Push to your Git repository</p>
         </div>
-        <button
-          @click="publishToGit"
-          :disabled="publishing || blogStore.publishedPosts.length === 0"
-          class="px-4 py-2 bg-gray-800 dark:bg-gray-600 text-white rounded-lg hover:bg-gray-900 dark:hover:bg-gray-500 transition-colors disabled:opacity-50"
-        >
-          {{ publishing ? 'Publishing...' : 'Push to Git' }}
-        </button>
+        <div class="flex flex-col items-end gap-2">
+          <button
+            @click="publishToGit()"
+            :disabled="publishing || blogStore.publishedPosts.length === 0"
+            class="px-4 py-2 bg-gray-800 dark:bg-gray-600 text-white rounded-lg hover:bg-gray-900 dark:hover:bg-gray-500 transition-colors disabled:opacity-50"
+          >
+            {{ publishing ? 'Publishing...' : 'Push to Git' }}
+          </button>
+          <button
+            @click="publishToGit(true)"
+            :disabled="publishing || blogStore.publishedPosts.length === 0"
+            class="text-xs text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 underline"
+            title="Skip pre-publish sync (use to recover from sync issues)"
+          >
+            Force Publish (Skip Sync)
+          </button>
+        </div>
       </div>
 
       <!-- Changes Summary -->
       <div v-if="changes" class="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-        <p class="font-medium text-gray-900 dark:text-gray-100 mb-2">Changes Since Last Publish</p>
-        <div class="text-sm space-y-1">
-          <p v-if="changes.newFiles.length > 0" class="text-green-600 dark:text-green-400">
-            + {{ changes.newFiles.length }} new files
-          </p>
-          <p v-if="changes.modifiedFiles.length > 0" class="text-yellow-600 dark:text-yellow-400">
-            ~ {{ changes.modifiedFiles.length }} modified files
-          </p>
-          <p v-if="changes.deletedFiles.length > 0" class="text-red-600 dark:text-red-400">
-            - {{ changes.deletedFiles.length }} deleted files
-          </p>
-          <p v-if="!changes.hasChanges" class="text-gray-500 dark:text-gray-400">
+        <p class="font-medium text-gray-900 dark:text-gray-100 mb-3">Changes Since Last Publish</p>
+
+        <!-- Summary -->
+        <div class="text-sm mb-3 p-3 bg-white dark:bg-gray-800 rounded-lg">
+          <div class="flex flex-wrap gap-3 text-center">
+            <div v-if="changes.newFiles.length > 0" class="flex items-center gap-1 text-green-600 dark:text-green-400">
+              <span class="font-semibold">+{{ changes.newFiles.length }}</span> new
+            </div>
+            <div v-if="changes.modifiedFiles.length > 0" class="flex items-center gap-1 text-yellow-600 dark:text-yellow-400">
+              <span class="font-semibold">~{{ changes.modifiedFiles.length }}</span> modified
+            </div>
+            <div v-if="changes.deletedFiles.length > 0" class="flex items-center gap-1 text-red-600 dark:text-red-400">
+              <span class="font-semibold">-{{ changes.deletedFiles.length }}</span> deleted
+            </div>
+            <div v-if="changes.unchangedCount > 0" class="flex items-center gap-1 text-gray-500 dark:text-gray-400">
+              <span class="font-semibold">{{ changes.unchangedCount }}</span> unchanged
+            </div>
+          </div>
+          <p v-if="!changes.hasChanges" class="text-gray-500 dark:text-gray-400 mt-2">
             No changes since last publish
           </p>
+        </div>
+
+        <!-- Expandable File Lists -->
+        <div class="space-y-2">
+          <!-- New Files -->
+          <div v-if="changes.newFiles.length > 0">
+            <button
+              @click="showNewFiles = !showNewFiles"
+              class="flex items-center gap-2 text-sm font-medium text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300"
+            >
+              <svg :class="{ 'rotate-90': showNewFiles }" class="w-4 h-4 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              </svg>
+              New files ({{ changes.newFiles.length }})
+            </button>
+            <div v-if="showNewFiles" class="mt-2 ml-6 text-xs text-gray-600 dark:text-gray-400 max-h-40 overflow-y-auto bg-white dark:bg-gray-800 rounded p-2">
+              <div v-for="file in changes.newFiles" :key="file" class="py-0.5 truncate">{{ file }}</div>
+            </div>
+          </div>
+
+          <!-- Modified Files -->
+          <div v-if="changes.modifiedFiles.length > 0">
+            <button
+              @click="showModifiedFiles = !showModifiedFiles"
+              class="flex items-center gap-2 text-sm font-medium text-yellow-600 dark:text-yellow-400 hover:text-yellow-700 dark:hover:text-yellow-300"
+            >
+              <svg :class="{ 'rotate-90': showModifiedFiles }" class="w-4 h-4 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              </svg>
+              Modified files ({{ changes.modifiedFiles.length }})
+            </button>
+            <div v-if="showModifiedFiles" class="mt-2 ml-6 text-xs text-gray-600 dark:text-gray-400 max-h-40 overflow-y-auto bg-white dark:bg-gray-800 rounded p-2">
+              <div v-for="file in changes.modifiedFiles" :key="file" class="py-0.5 truncate">{{ file }}</div>
+            </div>
+          </div>
+
+          <!-- Deleted Files -->
+          <div v-if="changes.deletedFiles.length > 0">
+            <button
+              @click="showDeletedFiles = !showDeletedFiles"
+              class="flex items-center gap-2 text-sm font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
+            >
+              <svg :class="{ 'rotate-90': showDeletedFiles }" class="w-4 h-4 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              </svg>
+              Deleted files ({{ changes.deletedFiles.length }})
+            </button>
+            <div v-if="showDeletedFiles" class="mt-2 ml-6 text-xs text-gray-600 dark:text-gray-400 max-h-40 overflow-y-auto bg-white dark:bg-gray-800 rounded p-2">
+              <div v-for="file in changes.deletedFiles" :key="file" class="py-0.5 truncate">{{ file }}</div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

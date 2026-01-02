@@ -3,6 +3,12 @@
  *
  * Checks for changes between local and remote sync data.
  * Used for incremental sync (pull/download changes).
+ *
+ * IMPORTANT: This is part of the CROSS-PLATFORM SYNC SYSTEM, not the smart publishing system.
+ * - Compares sync data hashes (blog.json, posts/*.json, etc.) NOT full site hashes
+ * - localFileHashes should contain paths like: `blog.json`, `posts/xxx.json` (no sync/ prefix)
+ * - Remote manifest at /sync/manifest.json contains the same path format
+ * - See siteGenerator.js header for full explanation of the two hash systems
  */
 
 import { fetchManifest } from './syncImporter.js';
@@ -19,15 +25,14 @@ export async function checkForChanges(storage, blogId, syncUrl) {
   const syncConfig = storage.getSyncConfig(blogId);
   const localVersion = syncConfig.lastSyncedVersion || 0;
   const localHashes = syncConfig.localFileHashes || {};
-  const localContentHashes = syncConfig.localContentHashes || {};
 
   // Fetch remote manifest
   const manifest = await fetchManifest(syncUrl);
-  const remoteVersion = manifest.syncVersion;
+  const remoteVersion = manifest.contentVersion || manifest.syncVersion;  // Support both old and new format
   const remoteFiles = manifest.files;
 
-  // If versions match and we have hashes, no changes
-  if (remoteVersion === localVersion && Object.keys(localHashes).length > 0) {
+  // If versions match, no changes needed
+  if (remoteVersion === localVersion) {
     return {
       hasChanges: false,
       localVersion,
@@ -39,53 +44,40 @@ export async function checkForChanges(storage, blogId, syncUrl) {
     };
   }
 
-  // Compare file hashes
+  // Compare individual file hashes to determine actual changes
   const newFiles = [];
   const modifiedFiles = [];
   const deletedFiles = [];
 
-  // Check for new and modified files
+  // Check each remote file against local hashes
   for (const [filePath, fileInfo] of Object.entries(remoteFiles)) {
-    if (!localHashes[filePath]) {
-      // New file
+    const localHash = localHashes[filePath];
+
+    if (!localHash) {
+      // File doesn't exist locally - it's new
       newFiles.push({
         path: filePath,
         hash: fileInfo.hash,
-        contentHash: fileInfo.contentHash,
-        size: fileInfo.size,
-        encrypted: fileInfo.encrypted,
-        iv: fileInfo.iv
+        size: fileInfo.size
       });
-    } else {
-      // For encrypted files (drafts), compare contentHash if available
-      // This prevents false positives from random IV changes
-      const localHash = localHashes[filePath];
-      const localContentHash = localContentHashes?.[filePath];
-      const remoteHash = fileInfo.contentHash || fileInfo.hash;
-      const compareHash = localContentHash || localHash;
-
-      if (compareHash !== remoteHash) {
-        // Modified file
-        modifiedFiles.push({
-          path: filePath,
-          hash: fileInfo.hash,
-          contentHash: fileInfo.contentHash,
-          size: fileInfo.size,
-          encrypted: fileInfo.encrypted,
-          iv: fileInfo.iv,
-          oldHash: localHash,
-          oldContentHash: localContentHash
-        });
-      }
+    } else if (localHash !== fileInfo.hash) {
+      // File exists but hash differs - it's modified
+      modifiedFiles.push({
+        path: filePath,
+        hash: fileInfo.hash,
+        oldHash: localHash,
+        size: fileInfo.size
+      });
     }
+    // If hashes match, file is unchanged - don't include it
   }
 
-  // Check for deleted files
-  for (const filePath of Object.keys(localHashes)) {
+  // Check for deleted files (exist locally but not in remote)
+  for (const [filePath, localHash] of Object.entries(localHashes)) {
     if (!remoteFiles[filePath]) {
       deletedFiles.push({
         path: filePath,
-        oldHash: localHashes[filePath]
+        hash: localHash
       });
     }
   }
@@ -114,7 +106,6 @@ export function categorizeChanges(changeSet) {
     categories: { new: [], modified: [], deleted: [] },
     tags: { new: [], modified: [], deleted: [] },
     posts: { new: [], modified: [], deleted: [] },
-    drafts: { new: [], modified: [], deleted: [] },
     sidebar: { new: [], modified: [], deleted: [] },
     staticFiles: { new: [], modified: [], deleted: [] },
     embedImages: { new: [], modified: [], deleted: [] },
@@ -132,8 +123,6 @@ export function categorizeChanges(changeSet) {
       categories.tags[list].push(file);
     } else if (path.startsWith('posts/') && path !== 'posts/index.json') {
       categories.posts[list].push(file);
-    } else if (path.startsWith('drafts/') && path !== 'drafts/index.json.enc') {
-      categories.drafts[list].push(file);
     } else if (path.startsWith('sidebar/') && path !== 'sidebar/index.json') {
       categories.sidebar[list].push(file);
     } else if (path.startsWith('static-files/') && path !== 'static-files/index.json') {
@@ -166,7 +155,7 @@ export function categorizeChanges(changeSet) {
  * @returns {string|null} The entity ID or null
  */
 export function extractEntityId(filePath) {
-  const match = filePath.match(/\/([^/]+)\.(json|json\.enc)$/);
+  const match = filePath.match(/\/([^/]+)\.json$/);
   if (match && match[1] !== 'index') {
     return match[1];
   }

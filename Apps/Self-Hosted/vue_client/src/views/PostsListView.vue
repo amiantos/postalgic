@@ -146,12 +146,14 @@ function getYouTubeVideoId(embed) {
 
 function formatLocalDateTime(dateString) {
   const date = new Date(dateString);
+  const timezone = blogStore.currentBlog?.timezone || 'UTC';
   return date.toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
     hour: 'numeric',
-    minute: '2-digit'
+    minute: '2-digit',
+    timeZone: timezone
   });
 }
 </script>

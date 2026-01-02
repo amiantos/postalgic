@@ -3,6 +3,8 @@ import fs from 'fs';
 import path from 'path';
 import os from 'os';
 
+const HASH_FILE_PATH = '.postalgic/hashes.json';
+
 /**
  * Git Publisher
  * Publishes generated site to a Git repository (e.g., GitHub Pages)
@@ -144,6 +146,74 @@ export class GitPublisher {
         fs.copyFileSync(srcPath, destPath);
       }
     }
+  }
+
+  /**
+   * Fetch remote hash file by cloning repo and reading the file
+   * @returns {Promise<Object|null>} - Hash data or null if not found
+   */
+  async fetchRemoteHashes() {
+    const tempDir = path.join(os.tmpdir(), `postalgic-git-fetch-${Date.now()}`);
+    fs.mkdirSync(tempDir, { recursive: true });
+
+    console.log('[Git Publisher] Fetching remote hashes from repo...');
+
+    try {
+      const git = simpleGit(tempDir);
+      const repoUrl = this.buildAuthenticatedUrl();
+
+      // Clone only the specific file if possible, otherwise shallow clone
+      await git.clone(repoUrl, tempDir, ['--branch', this.branch, '--single-branch', '--depth', '1']);
+
+      // Check if hash file exists
+      const hashFilePath = path.join(tempDir, HASH_FILE_PATH);
+      if (!fs.existsSync(hashFilePath)) {
+        console.log('[Git Publisher] No remote hash file found (first publish or old version)');
+        return null;
+      }
+
+      // Read and parse the hash file
+      const content = fs.readFileSync(hashFilePath, 'utf8');
+      const hashData = JSON.parse(content);
+      console.log('[Git Publisher] Remote hashes found, published by:', hashData.publishedBy || 'unknown');
+      console.log('[Git Publisher] Remote hash count:', Object.keys(hashData.fileHashes || {}).length);
+      return hashData;
+    } catch (error) {
+      console.error('[Git Publisher] Error fetching remote hashes:', error.message);
+      return null;
+    } finally {
+      try {
+        fs.rmSync(tempDir, { recursive: true, force: true });
+      } catch (e) { /* ignore */ }
+    }
+  }
+
+  /**
+   * Write hash file to the source directory so it gets committed with the site
+   * @param {string} sourceDir - The generated site directory
+   * @param {Object} fileHashes - Map of file paths to hashes
+   * @param {string} publishedBy - Identifier of the publishing client
+   */
+  writeHashFile(sourceDir, fileHashes, publishedBy = 'self-hosted') {
+    console.log('[Git Publisher] Writing hash file with', Object.keys(fileHashes).length, 'entries');
+
+    const hashData = {
+      version: 1,
+      lastPublishedDate: new Date().toISOString(),
+      publishedBy,
+      fileHashes
+    };
+
+    // Ensure .postalgic directory exists
+    const hashDir = path.join(sourceDir, '.postalgic');
+    if (!fs.existsSync(hashDir)) {
+      fs.mkdirSync(hashDir, { recursive: true });
+    }
+
+    // Write the hash file
+    const hashFilePath = path.join(sourceDir, HASH_FILE_PATH);
+    fs.writeFileSync(hashFilePath, JSON.stringify(hashData, null, 2));
+    console.log('[Git Publisher] Hash file written to:', hashFilePath);
   }
 }
 

@@ -44,6 +44,7 @@ final class Blog {
     var mediumShade: String?
     var darkShade: String?
     var themeIdentifier: String?
+    var timezone: String = "UTC"
 
     // Publisher Type
     var publisherType: String?
@@ -69,10 +70,9 @@ final class Blog {
 
     // Sync Configuration
     var syncEnabled: Bool = false
-    var lastSyncedVersion: Int = 0
+    var lastSyncedVersion: String?  // Content version hash for sync comparison
     var lastSyncedAt: Date?
     var localSyncHashes: [String: String] = [:]  // For tracking local sync state
-    var localContentHashes: [String: String] = [:]  // Content hashes for encrypted files (hash of plaintext)
 
     // Future Netlify Configuration
     // var netlifyToken: String?
@@ -144,8 +144,8 @@ final class Blog {
     }
 
     var hasSyncConfigured: Bool {
-        // Sync is configured if enabled and has a password set
-        return syncEnabled && KeychainService.passwordExists(for: persistentModelID, type: .syncPassword)
+        // Sync is configured if enabled
+        return syncEnabled
     }
 
     var currentPublisherType: PublisherType {
@@ -254,14 +254,17 @@ final class Category {
         name: String,
         categoryDescription: String? = nil,
         createdAt: Date = Date(),
-        stub: String? = nil
+        stub: String? = nil,
+        syncId: String? = nil
     ) {
         self.blog = blog
         self.name = name.capitalized
         self.categoryDescription = categoryDescription
         self.createdAt = createdAt
         self.stub = stub
-        
+        // Auto-generate syncId for new entities if not provided
+        self.syncId = syncId ?? UUID().uuidString
+
         // Generate stub if not provided
         if self.stub == nil {
             self.stub = Utils.generateStub(from: name)
@@ -288,12 +291,14 @@ final class Tag {
     var blog: Blog?
     var posts: [Post] = []
 
-    init(blog: Blog, name: String, createdAt: Date = Date(), stub: String? = nil) {
+    init(blog: Blog, name: String, createdAt: Date = Date(), stub: String? = nil, syncId: String? = nil) {
         self.blog = blog
         self.name = name.lowercased()
         self.createdAt = createdAt
         self.stub = stub
-        
+        // Auto-generate syncId for new entities if not provided
+        self.syncId = syncId ?? UUID().uuidString
+
         // Generate stub if not provided
         if self.stub == nil {
             self.stub = Utils.generateStub(from: name)
@@ -323,7 +328,7 @@ enum EmbedPosition: String, Codable {
 
 enum SpecialFileType: String, Codable, CaseIterable {
     case favicon = "favicon"
-    case socialShareImage = "social-share.png"
+    case socialShareImage = "social-share"
     
     var displayName: String {
         switch self {
@@ -349,6 +354,7 @@ final class Embed {
     var embedDescription: String?
     var imageUrl: String? // Remote URL for the image
     @Attribute(.externalStorage) var imageData: Data? // Actual image data stored in the database
+    var imageFilename: String? // Deterministic filename for the image (for sync parity)
 
     // These properties are for Image type embeds
     @Relationship(deleteRule: .cascade, inverse: \EmbedImage.embed)
@@ -363,6 +369,7 @@ final class Embed {
         embedDescription: String? = nil,
         imageUrl: String? = nil,
         imageData: Data? = nil,
+        imageFilename: String? = nil,
         createdAt: Date = Date()
     ) {
         self.post = post
@@ -374,18 +381,40 @@ final class Embed {
         self.imageUrl = imageUrl
         self.imageData = imageData
         self.createdAt = createdAt
+
+        // Auto-generate imageFilename if imageData is provided but no filename was specified
+        if imageData != nil && imageFilename == nil {
+            // Use SHA256 hash of the URL for deterministic, cross-platform compatible filenames
+            let urlHash = url.sha256Hash()
+            self.imageFilename = "embed-\(urlHash.prefix(16)).jpg"
+        } else {
+            self.imageFilename = imageFilename
+        }
     }
-    
+
     var embedType: EmbedType {
         return EmbedType(rawValue: type) ?? .link
     }
-    
+
     var embedPosition: EmbedPosition {
         return EmbedPosition(rawValue: position) ?? .above
     }
-    
+
     var identifier: String {
         return self.persistentModelID.stringRepresentation() ?? "\(self.hashValue)"
+    }
+
+    /// Returns the deterministic image filename, generating one from the URL if not already stored
+    /// This provides backward compatibility for embeds created before imageFilename was stored
+    var deterministicImageFilename: String? {
+        // If we already have a stored filename, use it
+        if let stored = imageFilename, !stored.isEmpty {
+            return stored
+        }
+        // Generate a deterministic filename for backward compatibility
+        guard imageData != nil else { return nil }
+        let urlHash = url.sha256Hash()
+        return "embed-\(urlHash.prefix(16)).jpg"
     }
     
     // Generate RSS-friendly HTML for the embed based on type
@@ -412,9 +441,8 @@ final class Embed {
                 """
             }
             
-            if let _ = imageData {
-                let imageFilename = "embed-\(url.hash).jpg"
-                let imageUrl = "\(blog.url)/images/embeds/\(imageFilename)"
+            if let filename = deterministicImageFilename {
+                let imageUrl = "\(blog.url)/images/embeds/\(filename)"
                 html += """
                 <div style="margin: 8px 0;"><img src="\(imageUrl)" alt="\(title ?? "Link preview")" style="max-width: 100%; height: auto; border-radius: 4px;" /></div>
                 """
@@ -460,44 +488,48 @@ final class Embed {
     }
     
     // Generate HTML for the embed based on type
-    func generateHtml() -> String {
+    // embedId parameter allows overriding the identifier (use post.syncId for cross-platform parity)
+    func generateHtml(embedId: String? = nil) -> String {
+        let id = embedId ?? self.identifier
+
         switch embedType {
         case .youtube:
-            // Extract YouTube video ID from URL
+            // Extract YouTube video ID from URL (format matches self-hosted exactly)
             if let videoId = Utils.extractYouTubeId(from: url) {
                 return """
                 <div class="embed youtube-embed">
-                    <iframe width="560" height="315" src="https://www.youtube.com/embed/\(videoId)" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-                </div>
+                      <iframe width="560" height="315" src="https://www.youtube.com/embed/\(videoId)"
+                        frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowfullscreen></iframe>
+                    </div>
                 """
             } else {
                 return "<!-- Invalid YouTube URL: \(url) -->"
             }
         case .link:
-            var html = "<div class=\"embed link-embed\">"
-            html += "<a href=\"\(url)\" target=\"_blank\" rel=\"noopener noreferrer\">"
+            var html = "<div class=\"embed link-embed\">\n"
+            html += "    <a href=\"\(url)\" target=\"_blank\" rel=\"noopener noreferrer\">\n"
 
-            if let title = title {
-                html += "<div class=\"link-title\">\(title)</div>"
+            // Image comes BEFORE title (matching self-hosted structure)
+            // Only include if we have image data or an imageUrl
+            if let filename = deterministicImageFilename {
+                // Use deterministic filename for consistent cross-platform output
+                html += "        <div class=\"link-image\"><img src=\"/images/embeds/\(filename)\" alt=\"\"></div>\n"
+            } else if let imgUrl = imageUrl, !imgUrl.hasPrefix("file://") {
+                // Fallback to direct URL if no local data
+                html += "        <div class=\"link-image\"><img src=\"\(imgUrl)\" alt=\"\"></div>\n"
             }
 
-            if let _ = imageData {
-                // When we have image data, we'll create a unique filename for the image
-                // based on a hash of the URL to ensure stability across generations
-                let imageFilename = "embed-\(url.hash).jpg"
-                let imagePath = "/images/embeds/\(imageFilename)"
-                html += "<div class=\"link-image\"><img src=\"\(imagePath)\" alt=\"\(title ?? "Link preview")\" /></div>"
-            } else if let imageUrl = imageUrl {
-                // Fallback to direct URL if we don't have image data stored
-                html += "<div class=\"link-image\"><img src=\"\(imageUrl)\" alt=\"\(title ?? "Link preview")\" /></div>"
+            if let title = title {
+                html += "        <div class=\"link-title\">\(title)</div>\n"
             }
 
             if let description = embedDescription {
-                html += "<div class=\"link-description\">\(description)</div>"
+                html += "        <div class=\"link-description\">\(description)</div>\n"
             }
 
-            html += "<div class=\"link-url\">\(url)</div>"
-            html += "</a></div>"
+            html += "        <div class=\"link-url\">\(url)</div>\n"
+            html += "    </a>\n</div>"
 
             return html
 
@@ -508,56 +540,39 @@ final class Embed {
             if sortedImages.count == 1, let image = sortedImages.first {
                 return """
                 <div class="embed image-embed single-image">
-                    <a href="/images/embeds/\(image.filename)" class="lightbox-trigger" data-lightbox="embed-\(self.identifier)" data-title="">
-                        <img src="/images/embeds/\(image.filename)" alt="Image" class="embed-image" />
+                    <a href="/images/embeds/\(image.filename)" class="lightbox-trigger" data-lightbox="embed-\(id)" data-title="">
+                        <img src="/images/embeds/\(image.filename)" class="embed-image" alt="">
                     </a>
                 </div>
                 """
             }
-            // Multiple images gallery
+            // Multiple images gallery (format matches self-hosted exactly)
             else if sortedImages.count > 1 {
-                var html = """
-                <div class="embed image-embed gallery" id="gallery-\(self.identifier)">
-                    <div class="gallery-container">
-                """
-
-                // Add all images
+                // Build slides
+                var slides = ""
                 for image in sortedImages {
-                    html += """
-                        <div class="gallery-slide">
-                            <a href="/images/embeds/\(image.filename)" class="lightbox-trigger" data-lightbox="embed-\(self.identifier)" data-title="">
-                                <img src="/images/embeds/\(image.filename)" alt="Image \(image.order + 1)" class="embed-image" />
-                            </a>
-                        </div>
-                    """
+                    slides += "\n        <div class=\"gallery-slide\">\n            <a href=\"/images/embeds/\(image.filename)\" class=\"lightbox-trigger\" data-lightbox=\"embed-\(id)\" data-title=\"\">\n                <img src=\"/images/embeds/\(image.filename)\" alt=\"\">\n            </a>\n        </div>"
                 }
 
-                // Add navigation arrows if more than one image
-                html += """
+                // Build dots
+                var dots = ""
+                for i in 0..<sortedImages.count {
+                    dots += "\n            <span class=\"gallery-dot\" onclick=\"showSlide('gallery-\(id)', \(i))\"></span>"
+                }
+
+                return """
+                <div class="embed image-embed gallery" id="gallery-\(id)">
+                    <div class="gallery-container">\(slides)
                         <div class="gallery-nav">
-                            <button class="gallery-prev" onclick="prevSlide('gallery-\(self.identifier)')">❮</button>
-                            <button class="gallery-next" onclick="nextSlide('gallery-\(self.identifier)')">❯</button>
+                            <button class="gallery-prev" onclick="prevSlide('gallery-\(id)')">❮</button>
+                            <button class="gallery-next" onclick="nextSlide('gallery-\(id)')">❯</button>
                         </div>
                     </div>
-                    <div class="gallery-dots">
-                """
-
-                // Add indicator dots
-                for i in 0..<sortedImages.count {
-                    html += """
-                        <span class="gallery-dot" onclick="showSlide('gallery-\(self.identifier)', \(i))"></span>
-                    """
-                }
-
-                html += """
+                    <div class="gallery-dots">\(dots)
                     </div>
                 </div>
-                <script>
-                    initGallery('gallery-\(self.identifier)');
-                </script>
+                <script>initGallery('gallery-\(id)');</script>
                 """
-
-                return html
             }
             else {
                 return "<!-- No images available for this embed -->"
@@ -587,7 +602,9 @@ final class Post {
             updateStub()
         }
     }
+    var contentHtml: String?  // Pre-rendered HTML from markdown
     var createdAt: Date
+    var updatedAt: Date?  // Tracks when the post was last modified
     var stub: String?
     var syncId: String?  // Remote sync ID for incremental sync matching
 
@@ -639,56 +656,88 @@ final class Post {
     init(
         title: String? = nil,
         content: String,
+        contentHtml: String? = nil,
         createdAt: Date = Date(),
         isDraft: Bool = false,
-        stub: String? = nil
+        stub: String? = nil,
+        syncId: String? = nil
     ) {
         self.title = title
         self.content = content
+        self.contentHtml = contentHtml
         self.createdAt = createdAt
         self.isDraft = isDraft
-        
+        // Auto-generate syncId for new entities if not provided
+        self.syncId = syncId ?? UUID().uuidString
+
         // Generate stub if not provided
         if let providedStub = stub, !providedStub.isEmpty {
             self.stub = providedStub
         } else {
             let sourceText: String
-            
+
             if let title = title, !title.isEmpty {
                 sourceText = title
             } else {
                 // Use the content, but strip Markdown formatting first
                 sourceText = stripMarkdown(from: content)
             }
-            
+
             self.stub = Utils.generateStub(from: sourceText)
         }
     }
 
     var formattedDate: String {
         let formatter = DateFormatter()
-        formatter.dateStyle = .long
-        formatter.timeStyle = .short
+        formatter.locale = Locale(identifier: "en_US")
+        // Use explicit format for cross-platform consistency (zero-padded hour)
+        formatter.dateFormat = "MMMM d, yyyy 'at' hh:mm a"
+        // Use blog's timezone for display
+        if let timezone = blog?.timezone, let tz = TimeZone(identifier: timezone) {
+            formatter.timeZone = tz
+        } else {
+            formatter.timeZone = TimeZone(identifier: "UTC")
+        }
         return formatter.string(from: createdAt)
     }
-    
+
     var shortFormattedDate: String {
         let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US")
         formatter.dateStyle = .long
         formatter.timeStyle = .none
+        // Use blog's timezone for display
+        if let timezone = blog?.timezone, let tz = TimeZone(identifier: timezone) {
+            formatter.timeZone = tz
+        } else {
+            formatter.timeZone = TimeZone(identifier: "UTC")
+        }
         return formatter.string(from: createdAt)
     }
 
     /// Returns the date-based portion of the URL path (without the stub)
+    /// Uses the blog's timezone for consistent cross-platform output
     var dateUrlPath: String {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy/MM/dd"
+        // Use blog's timezone for URL path generation
+        if let timezone = blog?.timezone, let tz = TimeZone(identifier: timezone) {
+            formatter.timeZone = tz
+        } else {
+            formatter.timeZone = TimeZone(identifier: "UTC")
+        }
         return formatter.string(from: createdAt)
     }
-    
+
     var dateTimeUrlPath: String {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy/MM/dd/HHmmss"
+        // Use blog's timezone for URL path generation
+        if let timezone = blog?.timezone, let tz = TimeZone(identifier: timezone) {
+            formatter.timeZone = tz
+        } else {
+            formatter.timeZone = TimeZone(identifier: "UTC")
+        }
         return formatter.string(from: createdAt)
     }
     
@@ -732,25 +781,29 @@ final class Post {
         var result = text
         
         // Regular expressions for common Markdown patterns
-        let patterns = [
+        let patterns: [(String, String, NSRegularExpression.Options)] = [
+            // Blockquotes: > text -> text (multiline)
+            ("^>+\\s*", "", [.anchorsMatchLines]),
             // Links: [text](url) -> text
-            "\\[([^\\]]+)\\]\\([^)]+\\)": "$1",
+            ("\\[([^\\]]+)\\]\\([^)]+\\)", "$1", []),
             // Bold: **text** or __text__ -> text
-            "\\*\\*([^*]+)\\*\\*|__([^_]+)__": "$1$2",
+            ("\\*\\*([^*]+)\\*\\*|__([^_]+)__", "$1$2", []),
             // Italic: *text* or _text_ -> text
-            "\\*([^*]+)\\*|_([^_]+)_": "$1$2",
+            ("\\*([^*]+)\\*|_([^_]+)_", "$1$2", []),
             // Headers: #+ text -> text
-            "^#+\\s+(.+)$": "$1",
+            ("^#+\\s+(.+)$", "$1", []),
             // Code blocks: `text` -> text
-            "`([^`]+)`": "$1",
+            ("`([^`]+)`", "$1", []),
             // Strikethrough: ~~text~~ -> text
-            "~~([^~]+)~~": "$1",
+            ("~~([^~]+)~~", "$1", []),
             // Images: ![alt](url) -> alt
-            "!\\[([^\\]]+)\\]\\([^)]+\\)": "$1"
+            ("!\\[([^\\]]+)\\]\\([^)]+\\)", "$1", []),
+            // Horizontal rules: ---, ***, ___ -> empty
+            ("^[-*_]{3,}$", "", [.anchorsMatchLines])
         ]
-        
-        for (pattern, replacement) in patterns {
-            if let regex = try? NSRegularExpression(pattern: pattern, options: []) {
+
+        for (pattern, replacement, options) in patterns {
+            if let regex = try? NSRegularExpression(pattern: pattern, options: options) {
                 let range = NSRange(location: 0, length: result.utf16.count)
                 result = regex.stringByReplacingMatches(in: result, options: [], range: range, withTemplate: replacement)
             }
@@ -790,17 +843,21 @@ final class SidebarObject {
 
     // For text blocks
     var content: String?
+    var contentHtml: String?  // Pre-rendered HTML from markdown
 
     // For link lists
     @Relationship(deleteRule: .cascade, inverse: \LinkItem.sidebarObject)
     var links: [LinkItem] = []
 
-    init(blog: Blog, title: String, type: SidebarObjectType, order: Int, createdAt: Date = Date()) {
+    init(blog: Blog, title: String, type: SidebarObjectType, order: Int, createdAt: Date = Date(), syncId: String? = nil, contentHtml: String? = nil) {
         self.blog = blog
         self.title = title
         self.type = type.rawValue
         self.order = order
         self.createdAt = createdAt
+        // Auto-generate syncId for new entities if not provided
+        self.syncId = syncId ?? UUID().uuidString
+        self.contentHtml = contentHtml
     }
     
     var objectType: SidebarObjectType {
@@ -811,14 +868,20 @@ final class SidebarObject {
         switch objectType {
         case .text:
             if let content = content {
-                let markdownParser = MarkdownParser()
-                let contentHtml = markdownParser.html(from: content)
-                
+                // Use stored HTML if available, otherwise render from markdown
+                let html: String
+                if let storedHtml = contentHtml, !storedHtml.isEmpty {
+                    html = storedHtml
+                } else {
+                    let markdownParser = MarkdownParser()
+                    html = markdownParser.html(from: content)
+                }
+
                 return """
                 <div class="sidebar-text">
                     <h2>\(title)</h2>
                     <div class="sidebar-text-content">
-                        \(contentHtml)
+                        \(html)
                     </div>
                 </div>
                 """
@@ -990,7 +1053,7 @@ final class StaticFile {
     var createdAt: Date
     var syncId: String?  // Remote sync ID for incremental sync matching
 
-    init(blog: Blog, filename: String, data: Data, mimeType: String, isSpecialFile: Bool = false, specialFileType: SpecialFileType? = nil, createdAt: Date = Date()) {
+    init(blog: Blog, filename: String, data: Data, mimeType: String, isSpecialFile: Bool = false, specialFileType: SpecialFileType? = nil, createdAt: Date = Date(), syncId: String? = nil) {
         self.blog = blog
         self.filename = filename
         self.data = data
@@ -998,6 +1061,8 @@ final class StaticFile {
         self.isSpecialFile = isSpecialFile
         self.specialFileType = specialFileType?.rawValue
         self.createdAt = createdAt
+        // Auto-generate syncId for new entities if not provided
+        self.syncId = syncId ?? UUID().uuidString
     }
     
     var fileType: SpecialFileType? {

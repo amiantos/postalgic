@@ -33,6 +33,11 @@ struct BlogSettingsView: View {
     @State private var showingStaticFiles = false
     @State private var showingExportView = false
     @State private var showingSyncSettings = false
+    @State private var isExportingDebug = false
+    @State private var debugExportURL: URL?
+    @State private var showingDebugExportShare = false
+    @State private var debugExportError: String?
+    @State private var showingDebugExportError = false
 
     var body: some View {
         NavigationStack {
@@ -124,10 +129,21 @@ struct BlogSettingsView: View {
                     Button(action: { showingStubMigrationAlert = true }) {
                         Label("Regenerate URL Stubs", systemImage: "link.badge.plus")
                     }
+
+                    Button(action: { exportDebugBundle() }) {
+                        HStack {
+                            Label("Export Debug Bundle", systemImage: "ladybug")
+                            Spacer()
+                            if isExportingDebug {
+                                ProgressView()
+                            }
+                        }
+                    }
+                    .disabled(isExportingDebug)
                 } header: {
                     Text("Debug").foregroundStyle(.secondary)
                 } footer: {
-                    Text("If some posts are not getting proper URL stubs when generating your site, use this option to regenerate all URL stubs.")
+                    Text("Regenerate URL stubs if posts aren't getting proper URLs. Export debug bundle to compare site generation between iOS and Self-Hosted apps.")
                 }
 
                 Section {
@@ -224,6 +240,16 @@ struct BlogSettingsView: View {
             Button("OK", role: .cancel) {}
         } message: {
             Text(authenticationError ?? "Authentication failed")
+        }
+        .alert("Export Error", isPresented: $showingDebugExportError) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(debugExportError ?? "Failed to export debug bundle")
+        }
+        .sheet(isPresented: $showingDebugExportShare) {
+            if let url = debugExportURL {
+                ShareSheet(items: [url])
+            }
         }
     }
     
@@ -329,6 +355,60 @@ struct BlogSettingsView: View {
         // Update counts for display in success alert
         migratedStubCounts = (postsUpdated, categoriesUpdated, tagsUpdated)
         showingStubMigrationSuccessAlert = true
+    }
+
+    /// Exports a debug bundle containing the full generated site and sync data
+    private func exportDebugBundle() {
+        isExportingDebug = true
+        debugExportError = nil
+
+        Task {
+            do {
+                // Create a temporary directory for the site
+                let tempDirectory = FileManager.default.temporaryDirectory
+                let siteDirectory = tempDirectory.appendingPathComponent(UUID().uuidString)
+                try FileManager.default.createDirectory(at: siteDirectory, withIntermediateDirectories: true)
+
+                // Generate the site without publishing
+                let generator = StaticSiteGenerator(blog: blog, modelContext: modelContext)
+                let fileHashes = try await generator.generateSiteToDirectory(siteDirectory)
+
+                // Write hashes to .postalgic/hashes.json for comparison
+                let postalgicDir = siteDirectory.appendingPathComponent(".postalgic")
+                try FileManager.default.createDirectory(at: postalgicDir, withIntermediateDirectories: true)
+                let hashEncoder = JSONEncoder()
+                hashEncoder.outputFormatting = [.sortedKeys, .withoutEscapingSlashes]
+                let hashesData = try hashEncoder.encode(["fileHashes": fileHashes])
+                try hashesData.write(to: postalgicDir.appendingPathComponent("hashes.json"))
+
+                // Create a zip file
+                let sanitizedName = blog.name.replacingOccurrences(of: " ", with: "-").lowercased()
+                let zipURL = tempDirectory.appendingPathComponent("postalgic-debug-\(sanitizedName).zip")
+
+                // Remove existing zip if present
+                if FileManager.default.fileExists(atPath: zipURL.path) {
+                    try FileManager.default.removeItem(at: zipURL)
+                }
+
+                // Create the zip archive (shouldKeepParent: false puts contents at root)
+                try FileManager.default.zipItem(at: siteDirectory, to: zipURL, shouldKeepParent: false)
+
+                // Clean up the site directory
+                try? FileManager.default.removeItem(at: siteDirectory)
+
+                await MainActor.run {
+                    debugExportURL = zipURL
+                    isExportingDebug = false
+                    showingDebugExportShare = true
+                }
+            } catch {
+                await MainActor.run {
+                    debugExportError = error.localizedDescription
+                    isExportingDebug = false
+                    showingDebugExportError = true
+                }
+            }
+        }
     }
 }
 

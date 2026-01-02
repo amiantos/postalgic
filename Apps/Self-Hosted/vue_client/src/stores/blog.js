@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { blogApi, postApi, categoryApi, tagApi, sidebarApi, staticFileApi, publishApi } from '@/api';
+import { useSyncStore } from '@/stores/sync';
 
 export const useBlogStore = defineStore('blog', () => {
   // State
@@ -41,6 +42,12 @@ export const useBlogStore = defineStore('blog', () => {
     error.value = null;
     try {
       currentBlog.value = await blogApi.get(blogId);
+
+      // Start periodic sync checking if blog has a URL configured
+      if (currentBlog.value?.url) {
+        const syncStore = useSyncStore();
+        syncStore.startPeriodicCheck(blogId);
+      }
     } catch (e) {
       error.value = e.message;
     } finally {
@@ -235,6 +242,10 @@ export const useBlogStore = defineStore('blog', () => {
   }
 
   function clearBlogData() {
+    // Stop sync checking and reset sync state
+    const syncStore = useSyncStore();
+    syncStore.reset();
+
     currentBlog.value = null;
     posts.value = [];
     categories.value = [];

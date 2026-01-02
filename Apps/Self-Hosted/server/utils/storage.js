@@ -256,7 +256,7 @@ class Storage {
     if (!includeDrafts) {
       query += ' AND is_draft = 0';
     }
-    query += ' ORDER BY created_at DESC';
+    query += ' ORDER BY created_at DESC, id DESC';
 
     const rows = db.prepare(query).all(blogId);
     return rows.map(row => this.mapPostRow(row));
@@ -286,9 +286,9 @@ class Storage {
 
     const stmt = db.prepare(`
       INSERT INTO posts (
-        id, blog_id, title, content, stub, is_draft, category_id,
+        id, blog_id, title, content, content_html, stub, is_draft, category_id,
         embed_type, embed_position, embed_data, sync_id, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     stmt.run(
@@ -296,6 +296,7 @@ class Storage {
       blogId,
       postData.title || null,
       postData.content || '',
+      postData.contentHtml || null,
       postData.stub || postId,
       postData.isDraft ? 1 : 0,
       postData.categoryId || null,
@@ -304,7 +305,7 @@ class Storage {
       embedData,
       postData.syncId || null,
       postData.createdAt || now,
-      now
+      postData.updatedAt || now
     );
 
     // Handle tags
@@ -350,7 +351,7 @@ class Storage {
 
     const stmt = db.prepare(`
       UPDATE posts SET
-        title = ?, content = ?, stub = ?, is_draft = ?, category_id = ?,
+        title = ?, content = ?, content_html = ?, stub = ?, is_draft = ?, category_id = ?,
         embed_type = ?, embed_position = ?, embed_data = ?, created_at = ?, updated_at = ?
       WHERE id = ? AND blog_id = ?
     `);
@@ -358,6 +359,7 @@ class Storage {
     stmt.run(
       postData.title !== undefined ? postData.title : existing.title,
       postData.content !== undefined ? postData.content : existing.content,
+      postData.contentHtml !== undefined ? postData.contentHtml : existing.contentHtml,
       postData.stub !== undefined ? postData.stub : existing.stub,
       postData.isDraft !== undefined ? (postData.isDraft ? 1 : 0) : (existing.isDraft ? 1 : 0),
       postData.categoryId !== undefined ? postData.categoryId : existing.categoryId,
@@ -365,7 +367,7 @@ class Storage {
       embedPosition,
       embedData,
       postData.createdAt !== undefined ? postData.createdAt : existing.createdAt,
-      now,
+      postData.updatedAt !== undefined ? postData.updatedAt : now,
       postId,
       blogId
     );
@@ -395,8 +397,13 @@ class Storage {
   mapPostRow(row) {
     const db = getDatabase();
 
-    // Get tag IDs for this post
-    const tagRows = db.prepare('SELECT tag_id FROM post_tags WHERE post_id = ?').all(row.id);
+    // Get tag IDs for this post, ordered by tag name for consistent output
+    const tagRows = db.prepare(`
+      SELECT pt.tag_id FROM post_tags pt
+      JOIN tags t ON pt.tag_id = t.id
+      WHERE pt.post_id = ?
+      ORDER BY t.name ASC
+    `).all(row.id);
     const tagIds = tagRows.map(r => r.tag_id);
 
     // Parse embed data
@@ -413,6 +420,7 @@ class Storage {
       id: row.id,
       title: row.title,
       content: row.content,
+      contentHtml: row.content_html,
       stub: row.stub,
       isDraft: row.is_draft === 1,
       categoryId: row.category_id,
@@ -511,7 +519,7 @@ class Storage {
       categoryData.description || null,
       categoryData.stub || categoryId,
       categoryData.syncId || null,
-      now
+      categoryData.createdAt || now  // Use provided createdAt for sync imports
     );
 
     return this.getCategory(blogId, categoryId);
@@ -598,7 +606,7 @@ class Storage {
       (tagData.name || 'untitled').toLowerCase(),
       tagData.stub || tagId,
       tagData.syncId || null,
-      now
+      tagData.createdAt || now  // Use provided createdAt for sync imports
     );
 
     return this.getTag(blogId, tagId);
@@ -680,8 +688,8 @@ class Storage {
     `).get(blogId).max_order;
 
     const stmt = db.prepare(`
-      INSERT INTO sidebar_objects (id, blog_id, title, type, content, sort_order, sync_id, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO sidebar_objects (id, blog_id, title, type, content, content_html, sort_order, sync_id, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     stmt.run(
@@ -690,9 +698,10 @@ class Storage {
       objectData.title || 'Untitled',
       objectData.type || 'text',
       objectData.content || null,
+      objectData.contentHtml || null,
       objectData.order ?? maxOrder + 1,
       objectData.syncId || null,
-      now
+      objectData.createdAt || now  // Use provided createdAt for sync imports
     );
 
     // Handle links for linkList type
@@ -725,7 +734,7 @@ class Storage {
     }
 
     const stmt = db.prepare(`
-      UPDATE sidebar_objects SET title = ?, type = ?, content = ?, sort_order = ?
+      UPDATE sidebar_objects SET title = ?, type = ?, content = ?, content_html = ?, sort_order = ?
       WHERE id = ? AND blog_id = ?
     `);
 
@@ -733,6 +742,7 @@ class Storage {
       objectData.title !== undefined ? objectData.title : existing.title,
       objectData.type !== undefined ? objectData.type : existing.type,
       objectData.content !== undefined ? objectData.content : existing.content,
+      objectData.contentHtml !== undefined ? objectData.contentHtml : existing.contentHtml,
       objectData.order !== undefined ? objectData.order : existing.order,
       objectId,
       blogId
@@ -794,6 +804,7 @@ class Storage {
       title: row.title,
       type: row.type,
       content: row.content,
+      contentHtml: row.content_html,
       order: row.sort_order,
       links: links,
       syncId: row.sync_id,
@@ -1018,23 +1029,27 @@ class Storage {
 
     if (!row) {
       return {
-        syncEnabled: false,
-        syncPassword: null,
         lastSyncedVersion: 0,
         lastSyncedAt: null,
-        localFileHashes: {},
-        localContentHashes: {}
+        localFileHashes: {}
       };
+    }
+
+    // Parse local_file_hashes JSON
+    let localFileHashes = {};
+    if (row.local_file_hashes) {
+      try {
+        localFileHashes = JSON.parse(row.local_file_hashes);
+      } catch (e) {
+        console.error('[Storage] Failed to parse local_file_hashes:', e);
+      }
     }
 
     return {
       blogId: row.blog_id,
-      syncEnabled: !!row.sync_enabled,
-      syncPassword: row.sync_password,
       lastSyncedVersion: row.last_synced_version || 0,
       lastSyncedAt: row.last_synced_at,
-      localFileHashes: row.local_file_hashes ? JSON.parse(row.local_file_hashes) : {},
-      localContentHashes: row.local_content_hashes ? JSON.parse(row.local_content_hashes) : {},
+      localFileHashes,
       createdAt: row.created_at
     };
   }
@@ -1045,39 +1060,31 @@ class Storage {
     const stmt = db.prepare(`
       INSERT OR REPLACE INTO sync_config
         (blog_id, sync_enabled, sync_password, last_synced_version, last_synced_at, local_file_hashes, local_content_hashes, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, COALESCE((SELECT created_at FROM sync_config WHERE blog_id = ?), datetime('now')))
+      VALUES (?, 1, NULL, ?, ?, '{}', '{}', COALESCE((SELECT created_at FROM sync_config WHERE blog_id = ?), datetime('now')))
     `);
 
     stmt.run(
       blogId,
-      syncConfig.syncEnabled ? 1 : 0,
-      syncConfig.syncPassword || null,
       syncConfig.lastSyncedVersion || 0,
       syncConfig.lastSyncedAt || null,
-      JSON.stringify(syncConfig.localFileHashes || {}),
-      JSON.stringify(syncConfig.localContentHashes || {}),
       blogId
     );
   }
 
-  updateSyncVersion(blogId, version, fileHashes, contentHashes = {}) {
+  updateSyncVersion(blogId, version, fileHashes = null) {
     const db = getDatabase();
-    const existing = this.getSyncConfig(blogId);
 
     const stmt = db.prepare(`
       INSERT OR REPLACE INTO sync_config
         (blog_id, sync_enabled, sync_password, last_synced_version, last_synced_at, local_file_hashes, local_content_hashes, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, COALESCE((SELECT created_at FROM sync_config WHERE blog_id = ?), datetime('now')))
+      VALUES (?, 1, NULL, ?, ?, ?, '{}', COALESCE((SELECT created_at FROM sync_config WHERE blog_id = ?), datetime('now')))
     `);
 
     stmt.run(
       blogId,
-      existing.syncEnabled ? 1 : 0,
-      existing.syncPassword,
       version,
       new Date().toISOString(),
-      JSON.stringify(fileHashes || {}),
-      JSON.stringify(contentHashes || {}),
+      fileHashes ? JSON.stringify(fileHashes) : '{}',
       blogId
     );
   }

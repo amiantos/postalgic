@@ -257,7 +257,7 @@ struct ImageEmbedView: View {
                             }
                         }
                     } catch {
-                        print("Error reading file: \(error)")
+                        Log.error("Error reading file: \(error)")
                     }
                 }
             }
@@ -267,7 +267,7 @@ struct ImageEmbedView: View {
             }
             
         case .failure(let error):
-            print("File picker error: \(error)")
+            Log.error("File picker error: \(error)")
         }
     }
 }

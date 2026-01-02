@@ -28,7 +28,20 @@ export const blogApi = {
   create: (data) => fetchApi('/blogs', { method: 'POST', body: JSON.stringify(data) }),
   update: (id, data) => fetchApi(`/blogs/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   delete: (id) => fetchApi(`/blogs/${id}`, { method: 'DELETE' }),
-  stats: (id) => fetchApi(`/blogs/${id}/stats`)
+  stats: (id) => fetchApi(`/blogs/${id}/stats`),
+  debugExport: async (id) => {
+    const response = await fetch(`${API_BASE}/blogs/${id}/debug-export`);
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Unknown error' }));
+      throw new Error(error.error || `HTTP ${response.status}`);
+    }
+
+    const blob = await response.blob();
+    const filename = response.headers.get('content-disposition')?.split('filename=')[1]?.replace(/"/g, '') || `debug-export-${id}.zip`;
+
+    return { blob, filename };
+  }
 };
 
 // Post API
@@ -191,21 +204,15 @@ export const metadataApi = {
 export const syncApi = {
   check: (url) =>
     fetchApi('/sync/check', { method: 'POST', body: JSON.stringify({ url }) }),
-  import: (url, password = null) =>
-    fetchApi('/sync/import', { method: 'POST', body: JSON.stringify({ url, password }) }),
+  import: (url) =>
+    fetchApi('/sync/import', { method: 'POST', body: JSON.stringify({ url }) }),
   getStatus: (blogId) =>
     fetchApi(`/sync/blogs/${blogId}/status`),
-  enable: (blogId, password) =>
-    fetchApi(`/sync/blogs/${blogId}/enable`, { method: 'POST', body: JSON.stringify({ password }) }),
-  disable: (blogId) =>
-    fetchApi(`/sync/blogs/${blogId}/disable`, { method: 'POST' }),
-  updatePassword: (blogId, password) =>
-    fetchApi(`/sync/blogs/${blogId}/password`, { method: 'POST', body: JSON.stringify({ password }) }),
   // Sync Down (Pull) endpoints
   checkChanges: (blogId) =>
     fetchApi(`/sync/blogs/${blogId}/check-changes`, { method: 'POST' }),
-  pull: (blogId, password = null) =>
-    fetchApi(`/sync/blogs/${blogId}/pull`, { method: 'POST', body: JSON.stringify({ password }) })
+  pull: (blogId) =>
+    fetchApi(`/sync/blogs/${blogId}/pull`, { method: 'POST' })
 };
 
 // Import API

@@ -5,7 +5,6 @@
 
 import fs from 'fs';
 import path from 'path';
-import syncEncryption from './syncEncryption.js';
 
 /**
  * Fetches the manifest from a sync URL
@@ -55,7 +54,7 @@ async function downloadFile(url) {
  * Imports a blog from a sync URL
  * @param {Storage} storage - Storage instance
  * @param {string} baseUrl - The base URL of the published site
- * @param {string} password - The sync password (required if blog has drafts)
+ * @param {string} password - Unused (kept for API compatibility)
  * @param {Function} onProgress - Progress callback (optional)
  * @returns {Promise<Object>} - The imported blog
  */
@@ -66,20 +65,8 @@ export async function importBlog(storage, baseUrl, password, onProgress = () => 
   onProgress({ step: 'Fetching manifest...', downloaded: 0, total: 0 });
   const manifest = await fetchManifest(normalizedUrl);
 
-  // Check if password is required
-  if (manifest.hasDrafts && !password) {
-    throw new Error('This blog has drafts that require a password to import');
-  }
-
   const totalFiles = Object.keys(manifest.files).length;
   let filesDownloaded = 0;
-
-  // Prepare encryption key if needed
-  let encryptionKey = null;
-  if (manifest.hasDrafts && password && manifest.encryption) {
-    const salt = syncEncryption.base64Decode(manifest.encryption.salt);
-    encryptionKey = syncEncryption.deriveKey(password, salt);
-  }
 
   // Step 2: Download blog.json
   onProgress({ step: 'Downloading blog settings...', downloaded: filesDownloaded, total: totalFiles });
@@ -108,14 +95,14 @@ export async function importBlog(storage, baseUrl, password, onProgress = () => 
   // Use the ID from the created blog
   const blogId = blog.id;
 
-  // Enable sync and store config
-  storage.saveSyncConfig(blogId, {
-    syncEnabled: true,
-    syncPassword: password || null,
-    lastSyncedVersion: manifest.syncVersion,
-    lastSyncedAt: new Date().toISOString(),
-    localFileHashes: {}
-  });
+  // Update sync version with file hashes from manifest
+  const fileHashes = {};
+  if (manifest.files) {
+    for (const [path, fileInfo] of Object.entries(manifest.files)) {
+      fileHashes[path] = fileInfo.hash;
+    }
+  }
+  storage.updateSyncVersion(blogId, manifest.contentVersion || manifest.syncVersion, fileHashes);
 
   // Maps for ID references
   const categoryMap = new Map();
@@ -136,7 +123,8 @@ export async function importBlog(storage, baseUrl, password, onProgress = () => 
       name: syncCategory.name,
       description: syncCategory.description || '',
       stub: syncCategory.stub,
-      syncId: syncCategory.id  // Store remote ID for incremental sync matching
+      syncId: syncCategory.id,  // Store remote ID for incremental sync matching
+      createdAt: syncCategory.createdAt  // Preserve original timestamp
     });
     categoryMap.set(syncCategory.id, category.id);
   }
@@ -155,7 +143,8 @@ export async function importBlog(storage, baseUrl, password, onProgress = () => 
     const tag = storage.createTag(blogId, {
       name: syncTag.name,
       stub: syncTag.stub,
-      syncId: syncTag.id  // Store remote ID for incremental sync matching
+      syncId: syncTag.id,  // Store remote ID for incremental sync matching
+      createdAt: syncTag.createdAt  // Preserve original timestamp
     });
     tagMap.set(syncTag.id, tag.id);
   }
@@ -190,42 +179,7 @@ export async function importBlog(storage, baseUrl, password, onProgress = () => 
     onProgress({ step: 'Downloading posts...', downloaded: filesDownloaded, total: totalFiles });
   }
 
-  // Step 8: Download and create drafts (encrypted)
-  if (manifest.hasDrafts && encryptionKey) {
-    onProgress({ step: 'Downloading drafts...', downloaded: filesDownloaded, total: totalFiles });
-
-    // Download encrypted draft index
-    const draftIndexEncData = await downloadFile(`${normalizedUrl}/sync/drafts/index.json.enc`);
-    filesDownloaded++;
-
-    const draftIndexFileInfo = manifest.files['drafts/index.json.enc'];
-    if (!draftIndexFileInfo?.iv) {
-      throw new Error('Missing IV for draft index');
-    }
-
-    const draftIndexIV = syncEncryption.base64Decode(draftIndexFileInfo.iv);
-    const draftIndexData = syncEncryption.decrypt(draftIndexEncData, draftIndexIV, encryptionKey);
-    const draftIndex = JSON.parse(draftIndexData.toString());
-
-    for (const entry of draftIndex.drafts) {
-      const draftEncData = await downloadFile(`${normalizedUrl}/sync/drafts/${entry.id}.json.enc`);
-      filesDownloaded++;
-
-      const draftFileInfo = manifest.files[`drafts/${entry.id}.json.enc`];
-      if (!draftFileInfo?.iv) {
-        throw new Error(`Missing IV for draft ${entry.id}`);
-      }
-
-      const draftIV = syncEncryption.base64Decode(draftFileInfo.iv);
-      const draftData = syncEncryption.decrypt(draftEncData, draftIV, encryptionKey);
-      const syncDraft = JSON.parse(draftData.toString());
-
-      createPost(storage, blogId, syncDraft, categoryMap, tagMap, true);
-      onProgress({ step: 'Downloading drafts...', downloaded: filesDownloaded, total: totalFiles });
-    }
-  }
-
-  // Step 9: Download and create sidebar objects
+  // Step 8: Download and create sidebar objects
   onProgress({ step: 'Downloading sidebar content...', downloaded: filesDownloaded, total: totalFiles });
   const sidebarIndexData = await downloadFile(`${normalizedUrl}/sync/sidebar/index.json`);
   filesDownloaded++;
@@ -241,13 +195,15 @@ export async function importBlog(storage, baseUrl, password, onProgress = () => 
       title: syncSidebar.title,
       type: syncSidebar.type,
       content: syncSidebar.content || null,
+      contentHtml: syncSidebar.contentHtml || null,
       order: syncSidebar.order,
       links: syncSidebar.links || [],
-      syncId: syncSidebar.id  // Store remote ID for incremental sync matching
+      syncId: syncSidebar.id,  // Store remote ID for incremental sync matching
+      createdAt: syncSidebar.createdAt  // Preserve original timestamp
     });
   }
 
-  // Step 10: Download and create static files
+  // Step 9: Download and create static files
   onProgress({ step: 'Downloading static files...', downloaded: filesDownloaded, total: totalFiles });
   const staticFilesIndexData = await downloadFile(`${normalizedUrl}/sync/static-files/index.json`);
   filesDownloaded++;
@@ -266,7 +222,7 @@ export async function importBlog(storage, baseUrl, password, onProgress = () => 
     onProgress({ step: 'Downloading static files...', downloaded: filesDownloaded, total: totalFiles });
   }
 
-  // Step 11: Download custom theme if present
+  // Step 10: Download custom theme if present
   if (syncBlog.themeIdentifier && syncBlog.themeIdentifier !== 'default') {
     const themePath = `themes/${syncBlog.themeIdentifier}.json`;
     if (manifest.files[themePath]) {
@@ -286,18 +242,6 @@ export async function importBlog(storage, baseUrl, password, onProgress = () => 
       }
     }
   }
-
-  // Update local file hashes for future sync
-  const localHashes = {};
-  const localContentHashes = {};
-  for (const [filePath, fileInfo] of Object.entries(manifest.files)) {
-    localHashes[filePath] = fileInfo.hash;
-    // Store content hashes for encrypted files (for consistent comparison)
-    if (fileInfo.contentHash) {
-      localContentHashes[filePath] = fileInfo.contentHash;
-    }
-  }
-  storage.updateSyncVersion(blogId, manifest.syncVersion, localHashes, localContentHashes);
 
   onProgress({ step: 'Import complete!', downloaded: totalFiles, total: totalFiles, complete: true });
 
@@ -347,13 +291,15 @@ function createPost(storage, blogId, syncPost, categoryMap, tagMap, isDraft) {
   const post = storage.createPost(blogId, {
     title: syncPost.title || null,
     content: syncPost.content,
+    contentHtml: syncPost.contentHtml || null,
     stub: syncPost.stub,
     isDraft: isDraft,
     categoryId: categoryId,
     tagIds: tagIds,
     embed: embed,
     syncId: syncPost.id,  // Store remote ID for incremental sync matching
-    createdAt: syncPost.createdAt
+    createdAt: syncPost.createdAt,
+    updatedAt: syncPost.updatedAt
   });
 
   return post;

@@ -4,6 +4,25 @@
 //
 //  Created by Brad Root on 4/19/25.
 //
+//  IMPORTANT: There are TWO separate hash/file tracking systems in Postalgic:
+//
+//  1. SMART PUBLISHING SYSTEM (`.postalgic/hashes.json`)
+//     - Tracks hashes of ALL generated site files (HTML, CSS, images, sync/, etc.)
+//     - Used for incremental/smart publishing to avoid re-uploading unchanged files
+//     - Stored remotely on the published site in `.postalgic/hashes.json`
+//     - Paths include everything: `index.html`, `css/style.css`, `sync/blog.json`, etc.
+//
+//  2. CROSS-PLATFORM SYNC SYSTEM (`/sync/manifest.json` + local sync state)
+//     - Tracks hashes of ONLY sync data files (blog.json, posts/*.json, etc.)
+//     - Used for syncing blog data between iOS and Self-Hosted apps
+//     - Manifest stored at `/sync/manifest.json` on the published site
+//     - Local hashes stored in Blog model's sync properties
+//     - Paths are relative to sync folder: `blog.json`, `posts/xxx.json` (NO `sync/` prefix)
+//
+//  These systems are UNRELATED and should not be confused:
+//  - `.postalgic/` = smart publishing hashes (full site)
+//  - `/sync/` = cross-platform sync data (blog content only)
+//
 
 import Foundation
 import Ink
@@ -72,10 +91,17 @@ class StaticSiteGenerator {
     // MARK: - Site Generation Helpers
 
     /// Filter and sort posts to get only published posts in descending date order
+    /// Secondary sort by syncId for deterministic ordering when timestamps are equal
     private func publishedPostsSorted() -> [Post] {
         return blog.posts
             .filter { !$0.isDraft }
-            .sorted { $0.createdAt > $1.createdAt }
+            .sorted {
+                if $0.createdAt != $1.createdAt {
+                    return $0.createdAt > $1.createdAt
+                }
+                // Secondary sort by syncId DESC for deterministic ordering
+                return ($0.syncId ?? "") > ($1.syncId ?? "")
+            }
     }
 
     // MARK: - Embed Helper
@@ -89,45 +115,44 @@ class StaticSiteGenerator {
         if !FileManager.default.fileExists(atPath: embedsDir.path) {
             do {
                 try FileManager.default.createDirectory(at: embedsDir, withIntermediateDirectories: true)
-                print("📁 Created directory for embed images: \(embedsDir.path)")
+                Log.debug("Created directory for embed images: \(embedsDir.path)")
             } catch {
-                print("⚠️ Error creating embed images directory: \(error)")
+                Log.warn("Error creating embed images directory: \(error)")
             }
         }
 
-        print("🔍 Processing images for \(publishedPosts.count) published posts")
+        Log.debug("Processing images for \(publishedPosts.count) published posts")
 
         for post in publishedPosts {
             if let embed = post.embed {
-                if embed.embedType == .link, let imageData = embed.imageData {
-                    // Create a predictable filename based on URL hash
-                    let imageFilename = "embed-\(embed.url.hash).jpg"
+                if embed.embedType == .link, let imageData = embed.imageData,
+                   let imageFilename = embed.deterministicImageFilename {
                     let imagePath = embedsDir.appendingPathComponent(imageFilename)
 
-                    print("📸 Saving link image to: \(imagePath.path)")
+                    Log.debug("Saving link image to: \(imagePath.path)")
 
                     // Save the image data
                     do {
                         try imageData.write(to: imagePath)
                     } catch {
-                        print("⚠️ Error saving link image: \(error)")
+                        Log.warn("Error saving link image: \(error)")
                     }
                 }
                 else if embed.embedType == .image {
                     // Save all images from the image embed
                     let sortedImages = embed.images.sorted { $0.order < $1.order }
 
-                    print("📸 Saving \(sortedImages.count) images from image embed for post: \(post.title ?? "Untitled")")
+                    Log.debug("Saving \(sortedImages.count) images from image embed for post: \(post.title ?? "Untitled")")
 
                     for (index, image) in sortedImages.enumerated() {
                         let imagePath = embedsDir.appendingPathComponent(image.filename)
 
-                        print("📸 Saving image \(index + 1)/\(sortedImages.count) to: \(imagePath.path)")
+                        Log.verbose("Saving image \(index + 1)/\(sortedImages.count) to: \(imagePath.path)")
 
                         do {
                             try image.imageData.write(to: imagePath)
                         } catch {
-                            print("⚠️ Error saving image: \(error)")
+                            Log.warn("Error saving image: \(error)")
                         }
                     }
                 }
@@ -137,35 +162,35 @@ class StaticSiteGenerator {
     
     /// Saves all static files to the site directory
     private func saveStaticFiles(to directory: URL) {
-        print("📁 Processing \(blog.staticFiles.count) static files")
-        
+        Log.debug("Processing \(blog.staticFiles.count) static files")
+
         for staticFile in blog.staticFiles {
             // Handle favicon specially to generate multiple sizes
             if staticFile.isSpecialFile && staticFile.fileType == .favicon {
                 saveFaviconFiles(staticFile: staticFile, to: directory)
             } else {
                 let filename = staticFile.filename
-                
+
                 // Create intermediate directories if needed
                 let fileURL = directory.appendingPathComponent(filename)
                 let directoryPath = fileURL.deletingLastPathComponent()
-                
+
                 if !FileManager.default.fileExists(atPath: directoryPath.path) {
                     do {
                         try FileManager.default.createDirectory(at: directoryPath, withIntermediateDirectories: true)
-                        print("📁 Created directory: \(directoryPath.path)")
+                        Log.debug("Created directory: \(directoryPath.path)")
                     } catch {
-                        print("⚠️ Error creating directory for static file \(filename): \(error)")
+                        Log.warn("Error creating directory for static file \(filename): \(error)")
                         continue
                     }
                 }
-                
+
                 // Write the file data
                 do {
                     try staticFile.data.write(to: fileURL)
-                    print("📄 Saved static file: \(filename) (\(staticFile.fileSizeString))")
+                    Log.debug("Saved static file: \(filename) (\(staticFile.fileSizeString))")
                 } catch {
-                    print("⚠️ Error saving static file \(filename): \(error)")
+                    Log.warn("Error saving static file \(filename): \(error)")
                 }
             }
         }
@@ -173,50 +198,50 @@ class StaticSiteGenerator {
     
     /// Saves favicon files in multiple sizes (32x32, 192x192, 180x180 for apple-touch-icon)
     private func saveFaviconFiles(staticFile: StaticFile, to directory: URL) {
-        print("🎨 Processing favicon: generating multiple sizes")
-        
+        Log.debug("Processing favicon: generating multiple sizes")
+
         guard staticFile.isImage else {
-            print("⚠️ Favicon is not an image format, saving as-is")
+            Log.warn("Favicon is not an image format, saving as-is")
             do {
                 let fileURL = directory.appendingPathComponent(staticFile.filename)
                 try staticFile.data.write(to: fileURL)
-                print("📄 Saved favicon: \(staticFile.filename)")
+                Log.debug("Saved favicon: \(staticFile.filename)")
             } catch {
-                print("⚠️ Error saving favicon: \(error)")
+                Log.warn("Error saving favicon: \(error)")
             }
             return
         }
-        
+
         // Generate 32x32 favicon
         if let favicon32Data = Utils.resizeImage(imageData: staticFile.data, to: CGSize(width: 32, height: 32)) {
             do {
                 let favicon32URL = directory.appendingPathComponent("favicon-32x32.png")
                 try favicon32Data.write(to: favicon32URL)
-                print("📄 Generated favicon-32x32.png")
+                Log.debug("Generated favicon-32x32.png")
             } catch {
-                print("⚠️ Error saving 32x32 favicon: \(error)")
+                Log.warn("Error saving 32x32 favicon: \(error)")
             }
         }
-        
+
         // Generate 192x192 favicon
         if let favicon192Data = Utils.resizeImage(imageData: staticFile.data, to: CGSize(width: 192, height: 192)) {
             do {
                 let favicon192URL = directory.appendingPathComponent("favicon-192x192.png")
                 try favicon192Data.write(to: favicon192URL)
-                print("📄 Generated favicon-192x192.png")
+                Log.debug("Generated favicon-192x192.png")
             } catch {
-                print("⚠️ Error saving 192x192 favicon: \(error)")
+                Log.warn("Error saving 192x192 favicon: \(error)")
             }
         }
-        
+
         // Generate 180x180 apple-touch-icon
         if let appleTouchIconData = Utils.resizeImage(imageData: staticFile.data, to: CGSize(width: 180, height: 180)) {
             do {
                 let appleTouchIconURL = directory.appendingPathComponent("apple-touch-icon.png")
                 try appleTouchIconData.write(to: appleTouchIconURL)
-                print("📄 Generated apple-touch-icon.png")
+                Log.debug("Generated apple-touch-icon.png")
             } catch {
-                print("⚠️ Error saving apple-touch-icon: \(error)")
+                Log.warn("Error saving apple-touch-icon: \(error)")
             }
         }
     }
@@ -295,11 +320,72 @@ class StaticSiteGenerator {
         do {
             try modelContext.save()
         } catch {
-            print("Error saving published files: \(error)")
+            Log.error("Error saving published files: \(error)")
         }
     }
     
     // MARK: - Main Generation Methods
+
+    /// Generates the site files to a directory without publishing
+    /// - Parameter outputDirectory: The directory to write site files to
+    /// - Returns: Dictionary of file paths to their SHA256 hashes
+    /// - Throws: SiteGeneratorError
+    func generateSiteToDirectory(_ outputDirectory: URL) async throws -> [String: String] {
+        self.siteDirectory = outputDirectory
+
+        Log.info("Generating site in \(outputDirectory.path)")
+
+        // Create CSS directory and file
+        let cssDirectory = outputDirectory.appendingPathComponent("css")
+        try FileManager.default.createDirectory(
+            at: cssDirectory,
+            withIntermediateDirectories: true
+        )
+        try templateEngine.renderCSS().write(
+            to: cssDirectory.appendingPathComponent("style.css"),
+            atomically: true,
+            encoding: .utf8
+        )
+
+        // Create images/embeds directory for embed images
+        let embedImagesDirectory = outputDirectory.appendingPathComponent("images/embeds")
+        try FileManager.default.createDirectory(
+            at: embedImagesDirectory,
+            withIntermediateDirectories: true
+        )
+
+        // Extract and save all embed images
+        saveEmbedImages(to: outputDirectory)
+
+        // Save static files
+        saveStaticFiles(to: outputDirectory)
+
+        // Generate site content
+        try generateIndexPage()
+        try generatePostPages()
+        try generateArchivesPage()
+        try generateMonthlyArchivePages()
+        try generateTagPages()
+        try generateCategoryPages()
+        try generateRSSFeed()
+
+        // Generate robots.txt and sitemap.xml
+        try generateRobotsTxt()
+        try generateSitemap()
+
+        // Always generate sync directory for debug export
+        do {
+            _ = try SyncDataGenerator.generateSyncDirectory(
+                for: blog,
+                in: outputDirectory
+            ) { _ in }
+        } catch {
+            Log.warn("Failed to generate sync data: \(error)")
+        }
+
+        // Calculate and return file hashes
+        return try calculateFileHashes(in: outputDirectory)
+    }
 
     /// Generates a static site for the blog
     /// - Returns: URL to the generated ZIP file if not publishing to AWS
@@ -317,7 +403,7 @@ class StaticSiteGenerator {
         )
         self.siteDirectory = siteDirectory
 
-        print("📝 Generating site in \(siteDirectory.path)")
+        Log.info("Generating site in \(siteDirectory.path)")
 
         // Create CSS directory and file
         let cssDirectory = siteDirectory.appendingPathComponent("css")
@@ -358,7 +444,7 @@ class StaticSiteGenerator {
         try generateSitemap()
 
         // Generate sync directory if sync is enabled
-        if blog.syncEnabled, let syncPassword = blog.getSyncPassword() {
+        if blog.syncEnabled {
             NotificationCenter.default.post(
                 name: .publishStatusUpdated,
                 object: "Generating sync data..."
@@ -366,8 +452,7 @@ class StaticSiteGenerator {
             do {
                 _ = try SyncDataGenerator.generateSyncDirectory(
                     for: blog,
-                    in: siteDirectory,
-                    password: syncPassword
+                    in: siteDirectory
                 ) { statusMessage in
                     NotificationCenter.default.post(
                         name: .publishStatusUpdated,
@@ -375,7 +460,7 @@ class StaticSiteGenerator {
                     )
                 }
             } catch {
-                print("⚠️ Failed to generate sync data: \(error)")
+                Log.warn("Failed to generate sync data: \(error)")
                 // Don't fail the whole publish - sync is optional
                 NotificationCenter.default.post(
                     name: .publishStatusUpdated,
@@ -439,22 +524,35 @@ class StaticSiteGenerator {
         }
         
         do {
-            print("🚀 Publishing site using \(publisher.publisherType.displayName) publisher...")
-            
+            Log.info("Publishing site using \(publisher.publisherType.displayName) publisher...")
+
             // Calculate hashes for the newly generated files
             let newFileHashes = try calculateFileHashes(in: siteDirectory)
-            
+
+            // For Git publisher, write hash file to directory before publish
+            if let gitPublisher = publisher as? GitPublisher {
+                try gitPublisher.writeHashFile(to: siteDirectory, hashes: newFileHashes)
+            }
+
+            // Fetch remote hashes for cross-client change detection
+            NotificationCenter.default.post(
+                name: .publishStatusUpdated,
+                object: "Checking for remote changes..."
+            )
+            let remoteHashFile = await publisher.fetchRemoteHashes()
+            let previousHashes: [String: String]? = remoteHashFile?.fileHashes ?? getPreviousPublishedFiles()?.fileHashes
+
             // For smart publishing, we need the previous file hashes
-            if !forceFullUpload, let previousFiles = getPreviousPublishedFiles() {
+            if !forceFullUpload, let previousHashes = previousHashes {
                 // Determine which files changed
-                let changes = previousFiles.determineChanges(with: newFileHashes)
-                
+                let changes = determineChanges(oldHashes: previousHashes, newHashes: newFileHashes)
+
                 if changes.hasChanges {
                     NotificationCenter.default.post(
                         name: .publishStatusUpdated,
                         object: "Smart publishing: \(changes.modified.count) files to update, \(changes.deleted.count) files to delete"
                     )
-                    
+
                     // Selectively publish only changed files
                     let result = try await publisher.smartPublish(
                         directoryURL: siteDirectory,
@@ -466,10 +564,15 @@ class StaticSiteGenerator {
                             object: statusMessage
                         )
                     }
-                    
-                    // Save the new file hashes after successful publishing
+
+                    // Upload hash file to remote (AWS/SFTP - Git already has it in the commit)
+                    if !(publisher is GitPublisher) {
+                        try await publisher.uploadHashFile(hashes: newFileHashes)
+                    }
+
+                    // Save the new file hashes locally after successful publishing
                     saveFileHashes(newFileHashes)
-                    
+
                     return result
                 } else {
                     NotificationCenter.default.post(
@@ -491,22 +594,49 @@ class StaticSiteGenerator {
                         object: "No previous publish data found. Performing full site upload."
                     )
                 }
-                
+
                 let result = try await publisher.publish(directoryURL: siteDirectory) { statusMessage in
                     NotificationCenter.default.post(
                         name: .publishStatusUpdated,
                         object: statusMessage
                     )
                 }
-                
-                // Save the file hashes after successful publishing
+
+                // Upload hash file to remote (AWS/SFTP - Git already has it in the commit)
+                if !(publisher is GitPublisher) {
+                    try await publisher.uploadHashFile(hashes: newFileHashes)
+                }
+
+                // Save the file hashes locally after successful publishing
                 saveFileHashes(newFileHashes)
-                
+
                 return result
             }
         } catch {
             throw SiteGeneratorError.publishingFailed("\(publisher.publisherType.displayName) publishing failed: \(error.localizedDescription)")
         }
+    }
+
+    /// Determines which files have changed between old and new hashes
+    private func determineChanges(oldHashes: [String: String], newHashes: [String: String]) -> (hasChanges: Bool, modified: [String], deleted: [String]) {
+        var modified: [String] = []
+        var deleted: [String] = []
+
+        // Check for new and modified files
+        for (path, hash) in newHashes {
+            if oldHashes[path] != hash {
+                modified.append(path)
+            }
+        }
+
+        // Check for deleted files
+        for path in oldHashes.keys {
+            if newHashes[path] == nil {
+                deleted.append(path)
+            }
+        }
+
+        return (hasChanges: !modified.isEmpty || !deleted.isEmpty, modified: modified, deleted: deleted)
     }
 
     /// Generates an RSS feed for the blog posts
@@ -657,8 +787,13 @@ class StaticSiteGenerator {
                 
                 let monthlyArchivePath = monthDirectory.appendingPathComponent("index.html")
                 
-                // Sort posts within the month chronologically (newest first)
-                let sortedMonthPosts = posts.sorted { $0.createdAt > $1.createdAt }
+                // Sort posts within the month chronologically (newest first, with secondary sort by syncId)
+                let sortedMonthPosts = posts.sorted {
+                    if $0.createdAt != $1.createdAt {
+                        return $0.createdAt > $1.createdAt
+                    }
+                    return ($0.syncId ?? "") < ($1.syncId ?? "")
+                }
                 
                 // Get previous and next month info for navigation
                 let navInfo = getMonthNavigationInfo(currentYear: year, currentMonth: month, allYearMonths: yearMonthPosts)
@@ -759,7 +894,12 @@ class StaticSiteGenerator {
         // Create individual tag pages with pagination
         for tag in sortedTags {
             let tagPosts = publishedPosts.filter { $0.tags.contains(tag) }
-                .sorted { $0.createdAt > $1.createdAt }
+                .sorted {
+                    if $0.createdAt != $1.createdAt {
+                        return $0.createdAt > $1.createdAt
+                    }
+                    return ($0.syncId ?? "") < ($1.syncId ?? "")
+                }
             
             try generatePaginatedTagPages(tag: tag, posts: tagPosts, tagsDirectory: tagsDirectory)
         }
@@ -871,7 +1011,12 @@ class StaticSiteGenerator {
         for category in sortedCategories {
             let categoryPosts = publishedPosts.filter {
                 $0.category?.id == category.id
-            }.sorted { $0.createdAt > $1.createdAt }
+            }.sorted {
+                if $0.createdAt != $1.createdAt {
+                    return $0.createdAt > $1.createdAt
+                }
+                return ($0.syncId ?? "") < ($1.syncId ?? "")
+            }
             
             try generatePaginatedCategoryPages(category: category, posts: categoryPosts, categoriesDirectory: categoriesDirectory)
         }
@@ -975,7 +1120,15 @@ class StaticSiteGenerator {
                 yearMonthCombos.append((year: year, month: month))
             }
         }
-        
+
+        // Sort by year DESC, then month DESC (newer months first, matching self-hosted)
+        yearMonthCombos.sort { lhs, rhs in
+            if lhs.year != rhs.year {
+                return lhs.year > rhs.year
+            }
+            return lhs.month > rhs.month
+        }
+
         do {
             let sitemapContent = try templateEngine.renderSitemap(
                 posts: sortedPosts,

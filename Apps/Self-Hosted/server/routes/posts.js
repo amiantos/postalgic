@@ -1,5 +1,7 @@
 import express from 'express';
+import crypto from 'crypto';
 import Storage from '../utils/storage.js';
+import { renderMarkdown } from '../utils/markdown.js';
 import {
   generateStub,
   makeStubUnique,
@@ -130,6 +132,7 @@ router.post('/', (req, res) => {
     const postData = {
       title: title || null,
       content,
+      contentHtml: renderMarkdown(content),
       stub,
       isDraft: isDraft !== false,
       categoryId: categoryId || null,
@@ -178,6 +181,11 @@ router.put('/:id', (req, res) => {
       stub
     };
 
+    // Re-render HTML if content changed
+    if (content !== undefined) {
+      updateData.contentHtml = renderMarkdown(newContent);
+    }
+
     if (rest.embed !== undefined) {
       updateData.embed = processEmbed(rest.embed, storage, blogId);
     }
@@ -221,7 +229,25 @@ function processEmbed(embed, storage, blogId) {
     processed.title = embed.title || '';
     processed.description = embed.description || '';
     processed.imageUrl = embed.imageUrl || '';
-    processed.imageData = embed.imageData || null;
+
+    // Handle link embed image - generate deterministic filename and save to disk
+    if (embed.imageData && embed.imageData.startsWith('data:')) {
+      // Generate deterministic filename from URL hash (first 16 chars of SHA256)
+      const urlHash = crypto.createHash('sha256').update(embed.url || '').digest('hex').substring(0, 16);
+      const imageFilename = `embed-${urlHash}.jpg`;
+
+      // Parse and save the base64 image data
+      const matches = embed.imageData.match(/^data:([^;]+);base64,(.+)$/);
+      if (matches) {
+        const base64Data = matches[2];
+        const buffer = Buffer.from(base64Data, 'base64');
+        storage.saveEmbedImage(blogId, imageFilename, buffer);
+        processed.imageFilename = imageFilename;
+      }
+    } else if (embed.imageFilename) {
+      // Keep existing imageFilename if already set (from sync or previous edit)
+      processed.imageFilename = embed.imageFilename;
+    }
   } else if (embed.type === 'image') {
     // Process images - save base64 data to disk if present
     processed.images = (embed.images || []).map((img, index) => {

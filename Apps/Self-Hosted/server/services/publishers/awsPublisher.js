@@ -1,8 +1,10 @@
-import { S3Client, PutObjectCommand, ListObjectsV2Command, DeleteObjectsCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, GetObjectCommand, ListObjectsV2Command, DeleteObjectsCommand } from '@aws-sdk/client-s3';
 import { CloudFrontClient, CreateInvalidationCommand } from '@aws-sdk/client-cloudfront';
 import fs from 'fs';
 import path from 'path';
 import mime from 'mime-types';
+
+const HASH_FILE_PATH = '.postalgic/hashes.json';
 
 /**
  * AWS S3 Publisher
@@ -56,7 +58,8 @@ export class AWSPublisher {
     this.forceUploadAll = forceUploadAll; // Store for use in invalidation
     console.log('[AWS Publisher] Starting publish from:', sourceDir);
     console.log('[AWS Publisher] Force upload all:', forceUploadAll);
-    console.log('[AWS Publisher] Using hash-based change detection:', Object.keys(previousHashes).length > 0);
+    console.log('[AWS Publisher] Current hashes count:', Object.keys(currentHashes).length);
+    console.log('[AWS Publisher] Previous hashes count:', Object.keys(previousHashes).length);
 
     console.log('[AWS Publisher] Scanning local files...');
     const localFiles = this.getLocalFiles(sourceDir);
@@ -69,6 +72,14 @@ export class AWSPublisher {
     const filesToUpload = [];
     const filesToDelete = [];
 
+    // Track upload reasons for diagnostics
+    const uploadReasons = {
+      forced: [],
+      newFile: [],
+      noPreviousHash: [],
+      hashMismatch: []
+    };
+
     // Find files to upload (new or modified, or all if forced)
     for (const localFile of localFiles) {
       const remoteFile = remoteFiles.find(f => f.key === localFile.key);
@@ -76,10 +87,11 @@ export class AWSPublisher {
       if (forceUploadAll) {
         // Force upload all files
         filesToUpload.push(localFile);
+        uploadReasons.forced.push(localFile.key);
       } else if (!remoteFile) {
         // New file - doesn't exist in S3
-        console.log(`[AWS Publisher] New file: ${localFile.key}`);
         filesToUpload.push(localFile);
+        uploadReasons.newFile.push(localFile.key);
       } else if (Object.keys(previousHashes).length > 0) {
         // Use hash comparison if we have previous hashes
         const currentHash = currentHashes[localFile.key];
@@ -87,22 +99,41 @@ export class AWSPublisher {
 
         if (!previousHash) {
           // File exists in S3 but we don't have a previous hash - upload it
-          console.log(`[AWS Publisher] No previous hash for: ${localFile.key}`);
           filesToUpload.push(localFile);
+          uploadReasons.noPreviousHash.push(localFile.key);
         } else if (currentHash !== previousHash) {
           // File content has changed
-          console.log(`[AWS Publisher] Modified file: ${localFile.key}`);
-          filesToUpload.push(localFile);
+          filesToUpload.push({ ...localFile, currentHash, previousHash });
+          uploadReasons.hashMismatch.push(localFile.key);
         }
       }
       // If no previous hashes and file exists in S3, skip upload (legacy behavior)
     }
 
-    // Find files to delete (not in local)
+    // Find files to delete (not in local, excluding .postalgic/ which is managed separately)
     for (const remoteFile of remoteFiles) {
       const localFile = localFiles.find(f => f.key === remoteFile.key);
-      if (!localFile) {
+      if (!localFile && !remoteFile.key.startsWith('.postalgic/')) {
         filesToDelete.push(remoteFile);
+      }
+    }
+
+    // Log upload reasons summary
+    console.log('[AWS Publisher] Upload breakdown:');
+    console.log(`  - Forced: ${uploadReasons.forced.length}`);
+    console.log(`  - New files: ${uploadReasons.newFile.length}`);
+    console.log(`  - No previous hash: ${uploadReasons.noPreviousHash.length}`);
+    console.log(`  - Hash mismatch: ${uploadReasons.hashMismatch.length}`);
+
+    // Log first few hash mismatches for debugging
+    if (uploadReasons.hashMismatch.length > 0) {
+      console.log('[AWS Publisher] Sample hash mismatches (first 5):');
+      for (const file of filesToUpload.slice(0, 5)) {
+        if (file.currentHash && file.previousHash) {
+          console.log(`  - ${file.key}:`);
+          console.log(`      prev: ${file.previousHash.substring(0, 16)}...`);
+          console.log(`      curr: ${file.currentHash.substring(0, 16)}...`);
+        }
       }
     }
 
@@ -322,6 +353,62 @@ export class AWSPublisher {
       chunks.push(array.slice(i, i + size));
     }
     return chunks;
+  }
+
+  /**
+   * Fetch remote hash file from S3
+   * @returns {Promise<Object|null>} - Hash data or null if not found
+   */
+  async fetchRemoteHashes() {
+    console.log('[AWS Publisher] Fetching remote hashes from:', HASH_FILE_PATH);
+    try {
+      const response = await this.s3Client.send(new GetObjectCommand({
+        Bucket: this.bucket,
+        Key: HASH_FILE_PATH
+      }));
+
+      const bodyContents = await response.Body.transformToString();
+      const hashData = JSON.parse(bodyContents);
+      console.log('[AWS Publisher] Remote hashes found, published by:', hashData.publishedBy || 'unknown');
+      console.log('[AWS Publisher] Remote hash count:', Object.keys(hashData.fileHashes || {}).length);
+      return hashData;
+    } catch (error) {
+      if (error.name === 'NoSuchKey' || error.$metadata?.httpStatusCode === 404) {
+        console.log('[AWS Publisher] No remote hash file found (first publish or old version)');
+        return null;
+      }
+      console.error('[AWS Publisher] Error fetching remote hashes:', error.message);
+      return null;
+    }
+  }
+
+  /**
+   * Upload hash file to S3 after successful publish
+   * @param {Object} fileHashes - Map of file paths to hashes
+   * @param {string} publishedBy - Identifier of the publishing client
+   */
+  async uploadHashFile(fileHashes, publishedBy = 'self-hosted') {
+    console.log('[AWS Publisher] Uploading hash file with', Object.keys(fileHashes).length, 'entries');
+    const hashData = {
+      version: 1,
+      lastPublishedDate: new Date().toISOString(),
+      publishedBy,
+      fileHashes
+    };
+
+    try {
+      await this.s3Client.send(new PutObjectCommand({
+        Bucket: this.bucket,
+        Key: HASH_FILE_PATH,
+        Body: JSON.stringify(hashData, null, 2),
+        ContentType: 'application/json',
+        CacheControl: 'no-cache, no-store, must-revalidate'
+      }));
+      console.log('[AWS Publisher] Hash file uploaded successfully');
+    } catch (error) {
+      console.error('[AWS Publisher] Error uploading hash file:', error.message);
+      // Don't throw - hash file upload failure shouldn't fail the whole publish
+    }
   }
 }
 

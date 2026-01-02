@@ -1,5 +1,6 @@
 import express from 'express';
 import Storage from '../utils/storage.js';
+import { renderMarkdown } from '../utils/markdown.js';
 
 const router = express.Router({ mergeParams: true });
 
@@ -61,9 +62,11 @@ router.post('/', (req, res) => {
 
     if (type === 'text') {
       objectData.content = content || '';
+      objectData.contentHtml = renderMarkdown(content || '');
       objectData.links = [];
     } else {
       objectData.content = '';
+      objectData.contentHtml = null;
       objectData.links = (links || []).map((link, index) => ({
         title: link.title || '',
         url: link.url || '',
@@ -110,6 +113,7 @@ router.put('/:id', (req, res) => {
 
     if (type === 'text' && req.body.content !== undefined) {
       updateData.content = req.body.content;
+      updateData.contentHtml = renderMarkdown(req.body.content);
     }
 
     if (type === 'linkList' && req.body.links !== undefined) {

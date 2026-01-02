@@ -1,7 +1,30 @@
+/**
+ * Static Site Generator
+ *
+ * IMPORTANT: There are TWO separate hash/file tracking systems in Postalgic:
+ *
+ * 1. SMART PUBLISHING SYSTEM (`.postalgic/hashes.json`)
+ *    - Tracks hashes of ALL generated site files (HTML, CSS, images, sync/, etc.)
+ *    - Used for incremental/smart publishing to avoid re-uploading unchanged files
+ *    - Stored remotely on the published site in `.postalgic/hashes.json`
+ *    - Paths include everything: `index.html`, `css/style.css`, `sync/blog.json`, etc.
+ *
+ * 2. CROSS-PLATFORM SYNC SYSTEM (`/sync/manifest.json` + localFileHashes)
+ *    - Tracks hashes of ONLY sync data files (blog.json, posts/*.json, etc.)
+ *    - Used for syncing blog data between iOS and Self-Hosted apps
+ *    - Manifest stored at `/sync/manifest.json` on the published site
+ *    - Local hashes stored in blog's sync config (via storage.updateSyncVersion)
+ *    - Paths are relative to sync folder: `blog.json`, `posts/xxx.json` (NO `sync/` prefix)
+ *
+ * These systems are UNRELATED and should not be confused:
+ * - `.postalgic/` = smart publishing hashes (full site)
+ * - `/sync/` = cross-platform sync data (blog content only)
+ */
+
 import fs from 'fs';
 import path from 'path';
 import Mustache from 'mustache';
-import { marked } from 'marked';
+import { renderMarkdown } from '../utils/markdown.js';
 import { getDefaultTemplates } from './templates.js';
 import { generateFavicons } from './imageProcessor.js';
 import { generateSyncDirectory } from './syncGenerator.js';
@@ -16,6 +39,7 @@ import {
   calculateHash,
   calculateBufferHash,
   getExcerpt,
+  stripMarkdown,
   extractYouTubeId
 } from '../utils/helpers.js';
 
@@ -87,26 +111,21 @@ export async function generateSite(storage, blogId) {
   await generateRobotsTxt(outputDir, templates, baseContext, fileHashes);
   await generateSitemap(outputDir, templates, baseContext, posts, tags, categories, fileHashes);
 
-  // Generate sync directory if sync is enabled
+  // Always generate sync directory for iOS app sync
   let syncResult = null;
-  const syncConfig = storage.getSyncConfig(blogId);
-  if (syncConfig.syncEnabled && syncConfig.syncPassword) {
-    try {
-      console.log('[SiteGenerator] Generating sync directory...');
-      syncResult = await generateSyncDirectory(storage, blogId, outputDir, syncConfig.syncPassword);
+  try {
+    console.log('[SiteGenerator] Generating sync directory...');
+    syncResult = await generateSyncDirectory(storage, blogId, outputDir);
 
-      // Merge sync file hashes into main hashes (prefixed with sync/)
-      for (const [filePath, hash] of Object.entries(syncResult.fileHashes)) {
-        fileHashes[`sync/${filePath}`] = hash;
-      }
-
-      // Update sync version in storage
-      storage.updateSyncVersion(blogId, syncResult.syncVersion, syncResult.fileHashes);
-      console.log(`[SiteGenerator] Sync directory generated with ${syncResult.fileCount} files (version ${syncResult.syncVersion})`);
-    } catch (error) {
-      console.error('[SiteGenerator] Failed to generate sync directory:', error);
-      // Don't fail the whole publish - sync is optional
+    // Merge sync file hashes into main hashes (prefixed with sync/)
+    for (const [filePath, hash] of Object.entries(syncResult.fileHashes)) {
+      fileHashes[`sync/${filePath}`] = hash;
     }
+
+    console.log(`[SiteGenerator] Sync directory generated with ${syncResult.fileCount} files (version ${syncResult.syncVersion})`);
+  } catch (error) {
+    console.error('[SiteGenerator] Failed to generate sync directory:', error);
+    // Don't fail the whole publish - sync is optional
   }
 
   return {
@@ -129,7 +148,8 @@ function buildBaseContext(blog, categories, tags, sidebarObjects, staticFiles, t
     .sort((a, b) => a.order - b.order)
     .map(obj => {
       if (obj.type === 'text') {
-        const contentHtml = marked(obj.content || '');
+        // Use pre-rendered HTML if available, otherwise render from markdown (fallback for migration)
+        const contentHtml = obj.contentHtml || renderMarkdown(obj.content || '');
         return `<div class="sidebar-text">
     <h2>${obj.title}</h2>
     <div class="sidebar-text-content">
@@ -184,12 +204,13 @@ function buildPostContext(post, baseContext, inList = false) {
   const timezone = baseContext.timezone || 'UTC';
   const urlPath = `${formatDatePath(post.createdAt, timezone)}/${post.stub}`;
 
-  // Convert markdown to HTML
-  let contentHtml = marked(post.content || '');
+  // Use pre-rendered HTML if available, otherwise render from markdown (fallback for migration)
+  let contentHtml = post.contentHtml || renderMarkdown(post.content || '');
 
   // Insert embed HTML (with newlines matching iOS)
+  // Use syncId for stable identifiers across sync (falls back to id for local posts)
   if (post.embed) {
-    const embedHtml = generateEmbedHtml(post.embed, post.id);
+    const embedHtml = generateEmbedHtml(post.embed, post.syncId || post.id);
     if (post.embed.position === 'above') {
       contentHtml = embedHtml + '\n' + contentHtml;
     } else {
@@ -334,8 +355,12 @@ function generatePostMeta(post, baseContext) {
   const postUrl = `${blogUrl}/${formatDatePath(post.createdAt, timezone)}/${post.stub}`;
   const pageTitle = `${post.title || getExcerpt(post.content, 50)} - ${baseContext.blogName}`;
 
-  // Generate description from post content (excerpt)
-  const description = getExcerpt(post.content, 200);
+  // Generate description from post content
+  // Use same truncation as iOS: 160 chars max, simple slice at 157 + "..."
+  const plainContent = stripMarkdown(post.content);
+  const description = plainContent.length > 160
+    ? plainContent.substring(0, 157) + '...'
+    : plainContent;
 
   let meta = `<meta name="apple-mobile-web-app-title" content="${baseContext.blogName}"/>`;
   meta += `<link rel="icon" href="/favicon-32x32.png" sizes="32x32" type="image/png">\n`;
@@ -395,8 +420,30 @@ function writeFile(outputDir, relativePath, content, fileHashes) {
     fs.mkdirSync(dir, { recursive: true });
   }
 
-  fs.writeFileSync(fullPath, content);
-  fileHashes[relativePath] = calculateHash(content);
+  // Normalize whitespace-only lines to empty lines for cross-platform consistency
+  // This ensures iOS and self-hosted produce identical output
+  const lines = content.split('\n')
+    .map(line => line.trim() === '' ? '' : line);
+
+  // Collapse consecutive empty lines to max 1 for cross-platform consistency
+  // Different Mustache libraries (Swift vs Node.js) produce different whitespace
+  const result = [];
+  let consecutiveEmptyCount = 0;
+  for (const line of lines) {
+    if (line === '') {
+      consecutiveEmptyCount++;
+      if (consecutiveEmptyCount <= 1) {
+        result.push(line);
+      }
+    } else {
+      consecutiveEmptyCount = 0;
+      result.push(line);
+    }
+  }
+  const normalizedContent = result.join('\n');
+
+  fs.writeFileSync(fullPath, normalizedContent);
+  fileHashes[relativePath] = calculateHash(normalizedContent);
 }
 
 /**
@@ -786,9 +833,15 @@ async function generateRSSFeed(outputDir, templates, baseContext, posts, fileHas
     };
   });
 
+  // Use the most recent post's date as the build date (content-based, not current time)
+  const mostRecentPost = posts[0];
+  const buildDate = mostRecentPost
+    ? formatRFC822Date(mostRecentPost.updatedAt || mostRecentPost.createdAt)
+    : formatRFC822Date(new Date());
+
   const rssContent = Mustache.render(templates.rss, {
     ...baseContext,
-    buildDate: formatRFC822Date(new Date()),
+    buildDate,
     posts: rssPosts
   });
 
@@ -807,27 +860,41 @@ async function generateRobotsTxt(outputDir, templates, baseContext, fileHashes) 
  * Generate sitemap
  */
 async function generateSitemap(outputDir, templates, baseContext, posts, tags, categories, fileHashes) {
-  const now = formatISO8601Date(new Date());
   const timezone = baseContext.timezone || 'UTC';
+
+  // Get most recent post date for index/archives lastmod
+  const mostRecentPostDate = posts.length > 0
+    ? formatISO8601Date(posts[0].updatedAt || posts[0].createdAt)
+    : formatISO8601Date(new Date());
 
   const postsData = posts.map(post => ({
     urlPath: `${formatDatePath(post.createdAt, timezone)}/${post.stub}`,
     lastmod: formatISO8601Date(post.updatedAt || post.createdAt)
   }));
 
+  // For tags, use the most recent post in that tag as lastmod
   const tagsData = tags
     .filter(tag => posts.some(p => p.tags && p.tags.some(t => t.id === tag.id)))
-    .map(tag => ({
-      urlPath: tag.stub,
-      lastmod: now
-    }));
+    .map(tag => {
+      const tagPosts = posts.filter(p => p.tags && p.tags.some(t => t.id === tag.id));
+      const mostRecent = tagPosts[0]; // Posts are already sorted by date
+      return {
+        urlPath: tag.stub,
+        lastmod: mostRecent ? formatISO8601Date(mostRecent.updatedAt || mostRecent.createdAt) : mostRecentPostDate
+      };
+    });
 
+  // For categories, use the most recent post in that category as lastmod
   const categoriesData = categories
     .filter(category => posts.some(p => p.category && p.category.id === category.id))
-    .map(category => ({
-      urlPath: category.stub,
-      lastmod: now
-    }));
+    .map(category => {
+      const categoryPosts = posts.filter(p => p.category && p.category.id === category.id);
+      const mostRecent = categoryPosts[0]; // Posts are already sorted by date
+      return {
+        urlPath: category.stub,
+        lastmod: mostRecent ? formatISO8601Date(mostRecent.updatedAt || mostRecent.createdAt) : mostRecentPostDate
+      };
+    });
 
   // Monthly archives (using timezone)
   const monthlyArchives = [];
@@ -846,7 +913,7 @@ async function generateSitemap(outputDir, templates, baseContext, posts, tags, c
 
   const sitemapContent = Mustache.render(templates.sitemap, {
     ...baseContext,
-    buildDate: now,
+    buildDate: mostRecentPostDate,
     posts: postsData,
     tags: tagsData,
     categories: categoriesData,
@@ -857,14 +924,13 @@ async function generateSitemap(outputDir, templates, baseContext, posts, tags, c
 }
 
 /**
- * Escape HTML special characters
+ * Escape HTML special characters for meta tag content
+ * Match iOS behavior: only escape quotes, less-than, greater-than
  */
 function escapeHtml(text) {
   if (!text) return '';
   return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
 }

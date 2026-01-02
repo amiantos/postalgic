@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import Ink
 
 struct AddTextBlockView: View {
     @Environment(\.dismiss) private var dismiss
@@ -50,9 +51,13 @@ struct AddTextBlockView: View {
     }
     
     private func saveTextBlock() {
+        // Render markdown to HTML (trimmed to match Self-Hosted behavior)
+        let markdownParser = MarkdownParser()
+        let contentHtml = markdownParser.html(from: content).trimmingCharacters(in: .whitespacesAndNewlines)
+
         // Create a new text block with the next available order
         let nextOrder = blog.sidebarObjects.count
-        let newSidebarObject = SidebarObject(blog: blog, title: title, type: .text, order: nextOrder)
+        let newSidebarObject = SidebarObject(blog: blog, title: title, type: .text, order: nextOrder, contentHtml: contentHtml)
         newSidebarObject.content = content
         blog.sidebarObjects.append(newSidebarObject)
     }
@@ -120,6 +125,10 @@ struct EditTextBlockView: View {
     }
     
     private func saveTextBlock() {
+        // Render markdown to HTML (trimmed to match Self-Hosted behavior)
+        let markdownParser = MarkdownParser()
+        sidebarObject.contentHtml = markdownParser.html(from: content).trimmingCharacters(in: .whitespacesAndNewlines)
+
         // Update existing text block
         sidebarObject.title = title
         sidebarObject.content = content

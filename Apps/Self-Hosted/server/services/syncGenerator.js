@@ -1,12 +1,46 @@
 /**
  * Sync data generator service
  * Generates the /sync/ directory for bidirectional sync between iOS and Self-Hosted apps
+ *
+ * Note: Drafts are NOT synced - they remain local to each device.
+ * Only published posts and other content are included in the sync directory.
  */
 
 import fs from 'fs';
 import path from 'path';
-import { calculateHash, calculateBufferHash, formatISO8601Date } from '../utils/helpers.js';
-import syncEncryption from './syncEncryption.js';
+import { calculateHash, calculateBufferHash } from '../utils/helpers.js';
+
+/**
+ * Recursively sort object keys alphabetically.
+ * This ensures consistent JSON output across platforms.
+ * @param {any} obj - The object to sort
+ * @returns {any} - Object with sorted keys
+ */
+function sortObjectKeys(obj) {
+  if (obj === null || typeof obj !== 'object') {
+    return obj;
+  }
+  if (Array.isArray(obj)) {
+    return obj.map(sortObjectKeys);
+  }
+  const sorted = {};
+  const keys = Object.keys(obj).sort();
+  for (const key of keys) {
+    sorted[key] = sortObjectKeys(obj[key]);
+  }
+  return sorted;
+}
+
+/**
+ * Stringify object with sorted keys for cross-platform consistency.
+ * iOS uses JSONEncoder with .sortedKeys which sorts alphabetically.
+ * @param {any} obj - The object to stringify
+ * @returns {string} - JSON string with sorted keys
+ */
+function stringifyWithSortedKeys(obj) {
+  // Use compact JSON (no formatting) for cross-platform consistency with iOS
+  return JSON.stringify(sortObjectKeys(obj));
+}
 
 /**
  * Get the stable sync ID for an entity.
@@ -18,26 +52,55 @@ function getStableSyncId(entity) {
 }
 
 /**
+ * Calculate the latest modification date from all content entities.
+ * Returns the most recent updatedAt/createdAt from posts, categories, tags, and sidebar objects.
+ */
+function getLatestModificationDate(posts, categories, tags, sidebarObjects) {
+  let latest = new Date(0);
+
+  // Check posts
+  for (const post of posts) {
+    const date = new Date(post.updatedAt || post.createdAt);
+    if (date > latest) latest = date;
+  }
+
+  // Check categories
+  for (const category of categories) {
+    const date = new Date(category.createdAt);
+    if (date > latest) latest = date;
+  }
+
+  // Check tags
+  for (const tag of tags) {
+    const date = new Date(tag.createdAt);
+    if (date > latest) latest = date;
+  }
+
+  // Check sidebar objects (they don't have dates, so skip)
+
+  // If no content exists, return current date as fallback
+  if (latest.getTime() === 0) {
+    return new Date().toISOString();
+  }
+
+  return latest.toISOString();
+}
+
+/**
  * Generate the sync directory for a blog
  * @param {Storage} storage - Storage instance
  * @param {string} blogId - Blog ID
  * @param {string} outputDir - Output directory (site root)
- * @param {string} password - Sync password for encrypting drafts
  * @returns {Promise<Object>} - Object containing fileHashes and syncVersion
  */
-export async function generateSyncDirectory(storage, blogId, outputDir, password) {
+export async function generateSyncDirectory(storage, blogId, outputDir) {
   const blog = storage.getBlog(blogId);
   if (!blog) {
     throw new Error('Blog not found');
   }
 
-  const syncConfig = storage.getSyncConfig(blogId);
-  const newSyncVersion = (syncConfig.lastSyncedVersion || 0) + 1;
-
-  // Get all data
-  const allPosts = storage.getAllPosts(blogId, true); // Include drafts
-  const publishedPosts = allPosts.filter(p => !p.isDraft);
-  const drafts = allPosts.filter(p => p.isDraft);
+  // Get all data (published posts only - drafts stay local to each device)
+  const publishedPosts = storage.getAllPosts(blogId, false);
   const categories = storage.getAllCategories(blogId);
   const tags = storage.getAllTags(blogId);
   const sidebarObjects = storage.getAllSidebarObjects(blogId);
@@ -49,12 +112,11 @@ export async function generateSyncDirectory(storage, blogId, outputDir, password
     theme = storage.getTheme(blog.themeIdentifier);
   }
 
-  // Create sync directory structure
+  // Create sync directory structure (no drafts directory)
   const syncDir = path.join(outputDir, 'sync');
   const dirs = [
     syncDir,
     path.join(syncDir, 'posts'),
-    path.join(syncDir, 'drafts'),
     path.join(syncDir, 'categories'),
     path.join(syncDir, 'tags'),
     path.join(syncDir, 'sidebar'),
@@ -70,31 +132,29 @@ export async function generateSyncDirectory(storage, blogId, outputDir, password
   }
 
   const fileHashes = {};
-  const draftIVs = {};
-
-  // Generate encryption key from password
-  const salt = syncEncryption.generateSalt();
 
   // === Generate blog.json ===
   const blogData = {
     name: blog.name,
-    url: blog.url || '',
-    tagline: blog.tagline || '',
-    authorName: blog.authorName || '',
-    authorUrl: blog.authorUrl || '',
-    authorEmail: blog.authorEmail || '',
+    url: blog.url || null,
+    tagline: blog.tagline || null,
+    authorName: blog.authorName || null,
+    authorUrl: blog.authorUrl || null,
+    authorEmail: blog.authorEmail || null,
     timezone: blog.timezone || 'UTC',
     colors: {
-      accent: blog.accentColor || '#FFA100',
-      background: blog.backgroundColor || '#efefef',
-      text: blog.textColor || '#2d3748',
-      lightShade: blog.lightShade || '#dedede',
-      mediumShade: blog.mediumShade || '#a0aec0',
-      darkShade: blog.darkShade || '#4a5568'
+      accent: blog.accentColor || null,
+      background: blog.backgroundColor || null,
+      text: blog.textColor || null,
+      lightShade: blog.lightShade || null,
+      mediumShade: blog.mediumShade || null,
+      darkShade: blog.darkShade || null
     },
-    themeIdentifier: blog.themeIdentifier || 'default'
+    // Use theme.identifier (not blog.themeIdentifier) to match the theme file path
+    // blog.themeIdentifier may be a database row ID while theme.identifier is the actual identifier
+    themeIdentifier: theme?.identifier || blog.themeIdentifier || null
   };
-  const blogJson = JSON.stringify(blogData, null, 2);
+  const blogJson = stringifyWithSortedKeys(blogData);
   fs.writeFileSync(path.join(syncDir, 'blog.json'), blogJson);
   fileHashes['blog.json'] = calculateHash(blogJson);
 
@@ -105,11 +165,11 @@ export async function generateSyncDirectory(storage, blogId, outputDir, password
     const categoryData = {
       id: stableId,
       name: category.name,
-      description: category.description || '',
+      description: category.description || null,
       stub: category.stub,
       createdAt: category.createdAt
     };
-    const categoryJson = JSON.stringify(categoryData, null, 2);
+    const categoryJson = stringifyWithSortedKeys(categoryData);
     fs.writeFileSync(path.join(syncDir, 'categories', `${stableId}.json`), categoryJson);
     const hash = calculateHash(categoryJson);
     fileHashes[`categories/${stableId}.json`] = hash;
@@ -120,7 +180,9 @@ export async function generateSyncDirectory(storage, blogId, outputDir, password
       hash
     });
   }
-  const categoryIndexJson = JSON.stringify(categoryIndex, null, 2);
+  // Sort by id for deterministic output
+  categoryIndex.categories.sort((a, b) => a.id.localeCompare(b.id));
+  const categoryIndexJson = stringifyWithSortedKeys(categoryIndex);
   fs.writeFileSync(path.join(syncDir, 'categories', 'index.json'), categoryIndexJson);
   fileHashes['categories/index.json'] = calculateHash(categoryIndexJson);
 
@@ -134,7 +196,7 @@ export async function generateSyncDirectory(storage, blogId, outputDir, password
       stub: tag.stub,
       createdAt: tag.createdAt
     };
-    const tagJson = JSON.stringify(tagData, null, 2);
+    const tagJson = stringifyWithSortedKeys(tagData);
     fs.writeFileSync(path.join(syncDir, 'tags', `${stableId}.json`), tagJson);
     const hash = calculateHash(tagJson);
     fileHashes[`tags/${stableId}.json`] = hash;
@@ -145,7 +207,9 @@ export async function generateSyncDirectory(storage, blogId, outputDir, password
       hash
     });
   }
-  const tagIndexJson = JSON.stringify(tagIndex, null, 2);
+  // Sort by id for deterministic output
+  tagIndex.tags.sort((a, b) => a.id.localeCompare(b.id));
+  const tagIndexJson = stringifyWithSortedKeys(tagIndex);
   fs.writeFileSync(path.join(syncDir, 'tags', 'index.json'), tagIndexJson);
   fileHashes['tags/index.json'] = calculateHash(tagIndexJson);
 
@@ -164,7 +228,7 @@ export async function generateSyncDirectory(storage, blogId, outputDir, password
   for (const post of publishedPosts) {
     const stableId = getStableSyncId(post);
     const postData = createSyncPost(post, stableId, categoryIdMap, tagIdMap);
-    const postJson = JSON.stringify(postData, null, 2);
+    const postJson = stringifyWithSortedKeys(postData);
     fs.writeFileSync(path.join(syncDir, 'posts', `${stableId}.json`), postJson);
     const hash = calculateHash(postJson);
     fileHashes[`posts/${stableId}.json`] = hash;
@@ -176,45 +240,11 @@ export async function generateSyncDirectory(storage, blogId, outputDir, password
       modified: post.updatedAt || post.createdAt
     });
   }
-  const postIndexJson = JSON.stringify(postIndex, null, 2);
+  // Sort by id for deterministic output
+  postIndex.posts.sort((a, b) => a.id.localeCompare(b.id));
+  const postIndexJson = stringifyWithSortedKeys(postIndex);
   fs.writeFileSync(path.join(syncDir, 'posts', 'index.json'), postIndexJson);
   fileHashes['posts/index.json'] = calculateHash(postIndexJson);
-
-  // === Generate drafts (encrypted) ===
-  const draftIndex = { drafts: [] };
-  const draftContentHashes = {}; // Store plaintext content hashes for comparison
-  for (const draft of drafts) {
-    const stableId = getStableSyncId(draft);
-    const draftData = createSyncPost(draft, stableId, categoryIdMap, tagIdMap);
-    const draftJson = JSON.stringify(draftData, null, 2);
-    // Calculate content hash BEFORE encryption (for consistent comparison)
-    const contentHash = calculateHash(draftJson);
-    const { ciphertext, iv } = syncEncryption.encryptJSON(draftData, password, salt);
-    fs.writeFileSync(path.join(syncDir, 'drafts', `${stableId}.json.enc`), ciphertext);
-    const hash = calculateBufferHash(ciphertext);
-    fileHashes[`drafts/${stableId}.json.enc`] = hash;
-    draftIVs[`drafts/${stableId}.json.enc`] = syncEncryption.base64Encode(iv);
-    draftContentHashes[`drafts/${stableId}.json.enc`] = contentHash;
-
-    draftIndex.drafts.push({
-      id: stableId,
-      hash: contentHash, // Use contentHash for stable comparison (ciphertext hash is in manifest)
-      modified: draft.updatedAt || draft.createdAt
-    });
-  }
-
-  // Encrypt draft index if there are drafts
-  if (drafts.length > 0) {
-    // Calculate content hash for draft index before encryption
-    const draftIndexJson = JSON.stringify(draftIndex, null, 2);
-    const draftIndexContentHash = calculateHash(draftIndexJson);
-
-    const { ciphertext, iv } = syncEncryption.encryptJSON(draftIndex, password, salt);
-    fs.writeFileSync(path.join(syncDir, 'drafts', 'index.json.enc'), ciphertext);
-    fileHashes['drafts/index.json.enc'] = calculateBufferHash(ciphertext);
-    draftIVs['drafts/index.json.enc'] = syncEncryption.base64Encode(iv);
-    draftContentHashes['drafts/index.json.enc'] = draftIndexContentHash;
-  }
 
   // === Generate sidebar objects ===
   const sidebarIndex = { sidebar: [] };
@@ -225,14 +255,17 @@ export async function generateSyncDirectory(storage, blogId, outputDir, password
       type: sidebar.type,
       title: sidebar.title,
       content: sidebar.content || null,
+      contentHtml: sidebar.contentHtml || null,
       order: sidebar.order,
-      links: sidebar.links ? sidebar.links.map(l => ({
+      // Sort links by order for deterministic output
+      links: sidebar.links ? [...sidebar.links].sort((a, b) => a.order - b.order).map(l => ({
         title: l.title,
         url: l.url,
         order: l.order
-      })) : null
+      })) : null,
+      createdAt: sidebar.createdAt
     };
-    const sidebarJson = JSON.stringify(sidebarData, null, 2);
+    const sidebarJson = stringifyWithSortedKeys(sidebarData);
     fs.writeFileSync(path.join(syncDir, 'sidebar', `${stableId}.json`), sidebarJson);
     const hash = calculateHash(sidebarJson);
     fileHashes[`sidebar/${stableId}.json`] = hash;
@@ -242,7 +275,9 @@ export async function generateSyncDirectory(storage, blogId, outputDir, password
       hash
     });
   }
-  const sidebarIndexJson = JSON.stringify(sidebarIndex, null, 2);
+  // Sort by id for deterministic output
+  sidebarIndex.sidebar.sort((a, b) => a.id.localeCompare(b.id));
+  const sidebarIndexJson = stringifyWithSortedKeys(sidebarIndex);
   fs.writeFileSync(path.join(syncDir, 'sidebar', 'index.json'), sidebarIndexJson);
   fileHashes['sidebar/index.json'] = calculateHash(sidebarIndexJson);
 
@@ -267,15 +302,17 @@ export async function generateSyncDirectory(storage, blogId, outputDir, password
       });
     }
   }
-  const staticFilesIndexJson = JSON.stringify(staticFilesIndex, null, 2);
+  // Sort by filename for deterministic output
+  staticFilesIndex.files.sort((a, b) => a.filename.localeCompare(b.filename));
+  const staticFilesIndexJson = stringifyWithSortedKeys(staticFilesIndex);
   fs.writeFileSync(path.join(syncDir, 'static-files', 'index.json'), staticFilesIndexJson);
   fileHashes['static-files/index.json'] = calculateHash(staticFilesIndexJson);
 
-  // === Generate embed images ===
+  // === Generate embed images (only from published posts) ===
   const embedImagesIndex = { images: [] };
   const uploadsDir = storage.getBlogUploadsDir(blogId);
 
-  for (const post of allPosts) {
+  for (const post of publishedPosts) {
     if (post.embed) {
       const embed = post.embed;
 
@@ -307,7 +344,9 @@ export async function generateSyncDirectory(storage, blogId, outputDir, password
       }
     }
   }
-  const embedImagesIndexJson = JSON.stringify(embedImagesIndex, null, 2);
+  // Sort by filename for deterministic output
+  embedImagesIndex.images.sort((a, b) => a.filename.localeCompare(b.filename));
+  const embedImagesIndexJson = stringifyWithSortedKeys(embedImagesIndex);
   fs.writeFileSync(path.join(syncDir, 'embed-images', 'index.json'), embedImagesIndexJson);
   fileHashes['embed-images/index.json'] = calculateHash(embedImagesIndexJson);
 
@@ -318,7 +357,7 @@ export async function generateSyncDirectory(storage, blogId, outputDir, password
       name: theme.name,
       templates: theme.templates
     };
-    const themeJson = JSON.stringify(themeData, null, 2);
+    const themeJson = stringifyWithSortedKeys(themeData);
     fs.writeFileSync(path.join(syncDir, 'themes', `${theme.identifier}.json`), themeJson);
     fileHashes[`themes/${theme.identifier}.json`] = calculateHash(themeJson);
   }
@@ -334,7 +373,7 @@ export async function generateSyncDirectory(storage, blogId, outputDir, password
       size: stats.size
     };
 
-    // Add modified date for posts and drafts
+    // Add modified date for posts
     if (filePath.startsWith('posts/') && filePath !== 'posts/index.json') {
       const postId = filePath.replace('posts/', '').replace('.json', '');
       // Find post by stable sync ID (matches either syncId or id)
@@ -344,42 +383,35 @@ export async function generateSyncDirectory(storage, blogId, outputDir, password
       }
     }
 
-    // Add IV and contentHash for encrypted files
-    if (draftIVs[filePath]) {
-      fileInfo.encrypted = true;
-      fileInfo.iv = draftIVs[filePath];
-      // Add content hash for drafts (hash of plaintext for consistent comparison)
-      if (draftContentHashes[filePath]) {
-        fileInfo.contentHash = draftContentHashes[filePath];
-      }
-    }
-
     manifestFiles[filePath] = fileInfo;
   }
 
+  // Calculate a stable content version from all file hashes
+  // This only changes when actual content changes (not on every generation)
+  const sortedHashes = Object.entries(fileHashes)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([filePath, hash]) => `${filePath}:${hash}`)
+    .join('\n');
+  const contentVersion = calculateHash(sortedHashes);
+
   const manifest = {
     version: '1.0',
-    syncVersion: newSyncVersion,
-    lastModified: new Date().toISOString(),
+    contentVersion,
+    lastModified: getLatestModificationDate(publishedPosts, categories, tags, sidebarObjects),
     appSource: 'self-hosted',
     appVersion: '1.0.0',
     blogName: blog.name,
-    hasDrafts: drafts.length > 0,
-    encryption: drafts.length > 0 ? {
-      method: 'aes-256-gcm',
-      salt: syncEncryption.base64Encode(salt),
-      iterations: syncEncryption.PBKDF2_ITERATIONS
-    } : null,
+    fileCount: Object.keys(manifestFiles).length,
     files: manifestFiles
   };
 
-  const manifestJson = JSON.stringify(manifest, null, 2);
+  const manifestJson = stringifyWithSortedKeys(manifest);
   fs.writeFileSync(path.join(syncDir, 'manifest.json'), manifestJson);
   fileHashes['manifest.json'] = calculateHash(manifestJson);
 
   return {
     fileHashes,
-    syncVersion: newSyncVersion,
+    syncVersion: contentVersion,  // Use content-based version for stability
     fileCount: Object.keys(fileHashes).length
   };
 }
@@ -401,7 +433,7 @@ function createSyncPost(post, stableId, categoryIdMap, tagIdMap) {
     if (embedType === 'youtube') {
       embed = {
         type: 'YouTube',
-        position: srcEmbed.position || 'above',
+        position: (srcEmbed.position || 'above').toLowerCase(),
         url: srcEmbed.url || '',
         title: null,
         description: null,
@@ -412,7 +444,7 @@ function createSyncPost(post, stableId, categoryIdMap, tagIdMap) {
     } else if (embedType === 'link') {
       embed = {
         type: 'Link',
-        position: srcEmbed.position || 'above',
+        position: (srcEmbed.position || 'above').toLowerCase(),
         url: srcEmbed.url || '',
         title: srcEmbed.title || null,
         description: srcEmbed.description || null,
@@ -423,13 +455,14 @@ function createSyncPost(post, stableId, categoryIdMap, tagIdMap) {
     } else if (embedType === 'image') {
       embed = {
         type: 'Image',
-        position: srcEmbed.position || 'above',
+        position: (srcEmbed.position || 'above').toLowerCase(),
         url: '',
         title: null,
         description: null,
         imageUrl: null,
         imageFilename: null,
-        images: (srcEmbed.images || []).map(img => ({
+        // Sort by order for deterministic output
+        images: [...(srcEmbed.images || [])].sort((a, b) => (a.order || 0) - (b.order || 0)).map(img => ({
           filename: img.filename,
           order: img.order || 0
         }))
@@ -443,13 +476,14 @@ function createSyncPost(post, stableId, categoryIdMap, tagIdMap) {
     syncCategoryId = categoryIdMap.get(post.categoryId) || post.categoryId;
   }
 
-  // Map tag IDs to stable sync IDs
-  const syncTagIds = (post.tagIds || []).map(tagId => tagIdMap.get(tagId) || tagId);
+  // Map tag IDs to stable sync IDs and sort for deterministic output
+  const syncTagIds = (post.tagIds || []).map(tagId => tagIdMap.get(tagId) || tagId).sort();
 
   return {
     id: stableId,
     title: post.title || null,
     content: post.content,
+    contentHtml: post.contentHtml || null,
     stub: post.stub,
     createdAt: post.createdAt,
     updatedAt: post.updatedAt || post.createdAt,

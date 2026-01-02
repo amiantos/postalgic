@@ -15,12 +15,6 @@ struct SyncSettingsView: View {
     var blog: Blog
 
     @State private var syncEnabled: Bool
-    @State private var password: String = ""
-    @State private var confirmPassword: String = ""
-    @State private var showingPassword = false
-    @State private var showingConfirmPassword = false
-    @State private var showingChangePassword = false
-    @State private var errorMessage: String?
     @State private var showingDisableConfirmation = false
 
     // Sync Down state
@@ -31,24 +25,15 @@ struct SyncSettingsView: View {
     @State private var syncResult: IncrementalSyncResult?
     @State private var syncError: String?
 
+    // Force re-sync state
+    @State private var showingForceResyncConfirmation = false
+    @State private var isForceResyncing = false
+    @State private var forceResyncProgress: String?
+    @State private var forceResyncError: String?
+
     init(blog: Blog) {
         self.blog = blog
         _syncEnabled = State(initialValue: blog.syncEnabled)
-    }
-
-    private var hasExistingPassword: Bool {
-        blog.getSyncPassword() != nil
-    }
-
-    private var passwordsMatch: Bool {
-        !password.isEmpty && password == confirmPassword
-    }
-
-    private var canEnableSync: Bool {
-        if hasExistingPassword {
-            return true
-        }
-        return passwordsMatch
     }
 
     var body: some View {
@@ -151,75 +136,41 @@ struct SyncSettingsView: View {
                         Text("Pull changes from your published site to update this device.")
                     }
 
+                    // Force Re-sync section
                     Section {
-                        Button {
-                            showingChangePassword = true
-                        } label: {
-                            Label("Change Sync Password", systemImage: "key")
+                        if isForceResyncing {
+                            VStack(alignment: .leading, spacing: 8) {
+                                HStack {
+                                    ProgressView()
+                                        .padding(.trailing, 8)
+                                    Text(forceResyncProgress ?? "Re-syncing...")
+                                }
+                            }
+                        } else {
+                            Button(role: .destructive) {
+                                showingForceResyncConfirmation = true
+                            } label: {
+                                HStack {
+                                    Spacer()
+                                    Label("Force Re-sync (Reset)", systemImage: "arrow.counterclockwise.circle")
+                                    Spacer()
+                                }
+                            }
+                        }
+
+                        if let error = forceResyncError {
+                            Text(error)
+                                .foregroundColor(.red)
+                                .font(.caption)
                         }
                     } header: {
-                        Text("Security")
+                        Text("Recovery")
                     } footer: {
-                        Text("Changing your password will require you to re-import on any other devices using the new password.")
+                        Text("Erases all posts, categories, and tags from this device and re-imports everything from the remote site. Publishing settings are preserved.")
                     }
                 } else {
                     // Sync is not enabled - show setup form
                     Section {
-                        if hasExistingPassword && !showingChangePassword {
-                            HStack {
-                                Image(systemName: "checkmark.circle.fill")
-                                    .foregroundColor(.green)
-                                Text("Password is set")
-                                    .foregroundColor(.secondary)
-                                Spacer()
-                                Button("Change") {
-                                    showingChangePassword = true
-                                }
-                            }
-                        } else {
-                            HStack {
-                                if showingPassword {
-                                    TextField("Password", text: $password)
-                                        .textContentType(.newPassword)
-                                        .autocorrectionDisabled()
-                                        .textInputAutocapitalization(.never)
-                                } else {
-                                    SecureField("Password", text: $password)
-                                        .textContentType(.newPassword)
-                                }
-                                Button {
-                                    showingPassword.toggle()
-                                } label: {
-                                    Image(systemName: showingPassword ? "eye.slash" : "eye")
-                                        .foregroundColor(.secondary)
-                                }
-                            }
-
-                            HStack {
-                                if showingConfirmPassword {
-                                    TextField("Confirm Password", text: $confirmPassword)
-                                        .textContentType(.newPassword)
-                                        .autocorrectionDisabled()
-                                        .textInputAutocapitalization(.never)
-                                } else {
-                                    SecureField("Confirm Password", text: $confirmPassword)
-                                        .textContentType(.newPassword)
-                                }
-                                Button {
-                                    showingConfirmPassword.toggle()
-                                } label: {
-                                    Image(systemName: showingConfirmPassword ? "eye.slash" : "eye")
-                                        .foregroundColor(.secondary)
-                                }
-                            }
-
-                            if !password.isEmpty && !confirmPassword.isEmpty && !passwordsMatch {
-                                Text("Passwords do not match")
-                                    .foregroundColor(.red)
-                                    .font(.caption)
-                            }
-                        }
-
                         Button {
                             enableSync()
                         } label: {
@@ -229,18 +180,10 @@ struct SyncSettingsView: View {
                                 Spacer()
                             }
                         }
-                        .disabled(!canEnableSync)
                     } header: {
                         Text("Setup Sync")
                     } footer: {
-                        Text("Enter a password to encrypt your draft posts. When enabled, sync data will be generated alongside your published site, allowing you to import your blog on other devices. Keep your password safe - it cannot be recovered.")
-                    }
-                }
-
-                if let error = errorMessage {
-                    Section {
-                        Text(error)
-                            .foregroundColor(.red)
+                        Text("When enabled, sync data will be generated alongside your published site, allowing you to import your blog on other devices. Draft posts stay local to each device and are not synced.")
                     }
                 }
             }
@@ -260,41 +203,23 @@ struct SyncSettingsView: View {
                     disableSync()
                 }
             } message: {
-                Text("This will stop generating sync data when you publish. Your sync password will be kept in case you want to re-enable later.")
+                Text("This will stop generating sync data when you publish.")
             }
-            .sheet(isPresented: $showingChangePassword) {
-                ChangePasswordView(blog: blog)
+            .alert("Force Re-sync", isPresented: $showingForceResyncConfirmation) {
+                Button("Cancel", role: .cancel) { }
+                Button("Reset & Re-sync", role: .destructive) {
+                    Task { await forceResync() }
+                }
+            } message: {
+                Text("This will delete ALL posts, categories, tags, and sidebar content from this device and re-import everything from the remote site. Your publishing settings (AWS, SFTP, Git) will be preserved. This cannot be undone.")
             }
         }
     }
 
     private func enableSync() {
-        errorMessage = nil
-
-        // If we need to set a new password
-        if !hasExistingPassword || showingChangePassword {
-            guard passwordsMatch else {
-                errorMessage = "Passwords do not match"
-                return
-            }
-
-            guard password.count >= 8 else {
-                errorMessage = "Password must be at least 8 characters"
-                return
-            }
-
-            // Save password to keychain
-            blog.setSyncPassword(password)
-        }
-
-        // Enable sync
         blog.syncEnabled = true
         try? modelContext.save()
-
         syncEnabled = true
-        password = ""
-        confirmPassword = ""
-        showingChangePassword = false
     }
 
     private func disableSync() {
@@ -349,119 +274,64 @@ struct SyncSettingsView: View {
             }
         }
     }
-}
 
-struct ChangePasswordView: View {
-    @Environment(\.modelContext) private var modelContext
-    @Environment(\.dismiss) private var dismiss
+    /// Force re-sync: Delete all content and re-import from remote, keeping publishing settings
+    private func forceResync() async {
+        isForceResyncing = true
+        forceResyncError = nil
+        forceResyncProgress = "Deleting local content..."
 
-    var blog: Blog
+        do {
+            // Step 1: Delete all existing content
+            for post in blog.posts {
+                modelContext.delete(post)
+            }
+            for category in blog.categories {
+                modelContext.delete(category)
+            }
+            for tag in blog.tags {
+                modelContext.delete(tag)
+            }
+            for sidebar in blog.sidebarObjects {
+                modelContext.delete(sidebar)
+            }
+            for file in blog.staticFiles {
+                modelContext.delete(file)
+            }
 
-    @State private var newPassword: String = ""
-    @State private var confirmPassword: String = ""
-    @State private var showingPassword = false
-    @State private var showingConfirmPassword = false
-    @State private var errorMessage: String?
+            // Step 2: Clear local sync hashes so everything appears as "new"
+            blog.localSyncHashes = [:]
+            blog.lastSyncedVersion = nil
 
-    private var passwordsMatch: Bool {
-        !newPassword.isEmpty && newPassword == confirmPassword
-    }
+            try modelContext.save()
 
-    var body: some View {
-        NavigationStack {
-            Form {
-                Section {
-                    HStack {
-                        if showingPassword {
-                            TextField("New Password", text: $newPassword)
-                                .textContentType(.newPassword)
-                                .autocorrectionDisabled()
-                                .textInputAutocapitalization(.never)
-                        } else {
-                            SecureField("New Password", text: $newPassword)
-                                .textContentType(.newPassword)
-                        }
-                        Button {
-                            showingPassword.toggle()
-                        } label: {
-                            Image(systemName: showingPassword ? "eye.slash" : "eye")
-                                .foregroundColor(.secondary)
-                        }
-                    }
+            // Step 3: Use the existing IncrementalSync to pull all content
+            await MainActor.run {
+                forceResyncProgress = "Re-importing from remote..."
+            }
 
-                    HStack {
-                        if showingConfirmPassword {
-                            TextField("Confirm Password", text: $confirmPassword)
-                                .textContentType(.newPassword)
-                                .autocorrectionDisabled()
-                                .textInputAutocapitalization(.never)
-                        } else {
-                            SecureField("Confirm Password", text: $confirmPassword)
-                                .textContentType(.newPassword)
-                        }
-                        Button {
-                            showingConfirmPassword.toggle()
-                        } label: {
-                            Image(systemName: showingConfirmPassword ? "eye.slash" : "eye")
-                                .foregroundColor(.secondary)
-                        }
-                    }
-
-                    if !newPassword.isEmpty && !confirmPassword.isEmpty && !passwordsMatch {
-                        Text("Passwords do not match")
-                            .foregroundColor(.red)
-                            .font(.caption)
-                    }
-                } header: {
-                    Text("New Password")
-                } footer: {
-                    Text("After changing your password, you'll need to re-import on any other devices using the new password.")
-                }
-
-                if let error = errorMessage {
-                    Section {
-                        Text(error)
-                            .foregroundColor(.red)
-                    }
+            let result = try await IncrementalSync.pullChanges(
+                blog: blog,
+                modelContext: modelContext
+            ) { progress in
+                Task { @MainActor in
+                    forceResyncProgress = progress.step
                 }
             }
-            .navigationTitle("Change Password")
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") {
-                        savePassword()
-                    }
-                    .disabled(!passwordsMatch || newPassword.count < 8)
-                }
+
+            await MainActor.run {
+                forceResyncProgress = nil
+                isForceResyncing = false
+                syncResult = result
+                syncCheckResult = nil
+            }
+        } catch {
+            await MainActor.run {
+                forceResyncError = error.localizedDescription
+                isForceResyncing = false
+                forceResyncProgress = nil
             }
         }
-    }
-
-    private func savePassword() {
-        guard passwordsMatch else {
-            errorMessage = "Passwords do not match"
-            return
-        }
-
-        guard newPassword.count >= 8 else {
-            errorMessage = "Password must be at least 8 characters"
-            return
-        }
-
-        blog.setSyncPassword(newPassword)
-
-        // Reset sync hashes since password changed
-        blog.localSyncHashes = [:]
-        blog.localContentHashes = [:]
-        blog.lastSyncedVersion = 0
-
-        try? modelContext.save()
-        dismiss()
     }
 }
 

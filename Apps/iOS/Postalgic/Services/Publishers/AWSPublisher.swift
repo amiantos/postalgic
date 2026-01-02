@@ -120,14 +120,13 @@ class AWSPublisher: Publisher {
                     contentType: contentType
                 )
             } catch {
-                print("ERROR: ", dump(error, name: "Putting an object."))
-                print("❌ Error uploading \(relativePath): \(error.localizedDescription)")
+                Log.error("Error uploading \(relativePath): \(error.localizedDescription)")
                 uploadErrors.append("\(relativePath): \(error.localizedDescription)")
             }
         }
-        
+
         statusUpdate("Completed upload of \(fileCount) files")
-        
+
         if fileCount == 0 && totalFiles > 0 {
             throw AWSPublisherError.s3UploadFailed("No files were uploaded")
         }
@@ -150,7 +149,7 @@ class AWSPublisher: Publisher {
             do {
                 try await deleteFileFromS3(bucket: self.bucket, key: path)
             } catch {
-                print("❌ Error deleting \(path): \(error.localizedDescription)")
+                Log.error("Error deleting \(path): \(error.localizedDescription)")
                 deleteErrors.append("\(path): \(error.localizedDescription)")
             }
         }
@@ -172,10 +171,10 @@ class AWSPublisher: Publisher {
             AWSS3.default().deleteObject(deleteRequest) { (output, error) in
                 DispatchQueue.main.async {
                     if let error = error {
-                        print("Delete failed: \(error.localizedDescription)")
+                        Log.error("Delete failed: \(error.localizedDescription)")
                         continuation.resume(throwing: error)
                     } else {
-                        print("Delete succeeded: \(key)")
+                        Log.debug("Delete succeeded: \(key)")
                         continuation.resume(returning: ())
                     }
                 }
@@ -192,7 +191,7 @@ class AWSPublisher: Publisher {
         let expression = AWSS3TransferUtilityUploadExpression()
         expression.progressBlock = { (task, progress) in
             DispatchQueue.main.async(qos: .background) {
-                print("Progress: \(progress.fractionCompleted)")
+                Log.verbose("Upload progress: \(progress.fractionCompleted)")
             }
         }
         
@@ -202,10 +201,10 @@ class AWSPublisher: Publisher {
                     (task, error) in
                     DispatchQueue.main.async(qos: .background) {
                         if let error = error {
-                            print("Upload failed: \(error.localizedDescription)")
+                            Log.error("Upload failed: \(error.localizedDescription)")
                             continuation.resume(throwing: error)
                         } else {
-                            print("Upload succeeded for \(key)!")
+                            Log.debug("Upload succeeded for \(key)")
                             continuation.resume(returning: ())
                         }
                     }
@@ -221,12 +220,12 @@ class AWSPublisher: Publisher {
                 completionHandler: completionHandler
             ).continueWith { (task) -> AnyObject? in
                 if let error = task.error {
-                    print("Error: \(error.localizedDescription)")
+                    Log.error("Upload error: \(error.localizedDescription)")
                     continuation.resume(throwing: error)
                 }
                 if task.result == nil {
                     // Only consider this an error if we haven't already resolved the continuation
-                    print("Upload task failed to start")
+                    Log.warn("Upload task failed to start")
                     // We don't resolve here because the completion handler should still be called
                 }
                 return nil
@@ -302,8 +301,7 @@ class AWSPublisher: Publisher {
                 )
 
             } catch {
-                print("ERROR: ", dump(error, name: "Putting an object."))
-                print("❌ Error uploading \(relativePath): \(error.localizedDescription)")
+                Log.error("Error uploading \(relativePath): \(error.localizedDescription)")
                 uploadErrors.append("\(relativePath): \(error.localizedDescription)")
             }
         }
@@ -325,8 +323,8 @@ class AWSPublisher: Publisher {
     /// - Parameter statusUpdate: Closure for updating status messages
     func invalidateCache(statusUpdate: @escaping (String) -> Void) async throws {
         statusUpdate("Creating CloudFront invalidation...")
-        print("🔄 AWSPublisher authenticated successfully")
-        print("🔄 Distribution ID: \(distributionId)")
+        Log.info("AWSPublisher authenticated successfully")
+        Log.info("Distribution ID: \(distributionId)")
 
         // Create the invalidation JSON payload
         let timestamp = ISO8601DateFormatter().string(from: Date())
@@ -390,7 +388,7 @@ class AWSPublisher: Publisher {
                 if httpResponse.statusCode == 201 || httpResponse.statusCode == 200 {
                     // Successfully created invalidation
                     if let data = data, let jsonString = String(data: data, encoding: .utf8) {
-                        print("🔄 CloudFront invalidation successful: \(jsonString)")
+                        Log.info("CloudFront invalidation successful: \(jsonString)")
                         
                         // Try to extract the invalidation ID if needed
                         var invalidationId = "unknown"
@@ -408,13 +406,13 @@ class AWSPublisher: Publisher {
                 } else {
                     // Handle error
                     if let data = data, let errorString = String(data: data, encoding: .utf8) {
-                        print("HTTP \(httpResponse.statusCode): \(errorString)")
+                        Log.error("HTTP \(httpResponse.statusCode): \(errorString)")
                         let awsError = AWSPublisherError.cloudFrontInvalidationFailed(
                             "HTTP \(httpResponse.statusCode): \(errorString)"
                         )
                         continuation.resume(throwing: awsError)
                     } else {
-                        print("HTTP \(httpResponse.statusCode)")
+                        Log.error("HTTP \(httpResponse.statusCode)")
                         let awsError = AWSPublisherError.cloudFrontInvalidationFailed(
                             "HTTP \(httpResponse.statusCode)"
                         )
@@ -457,6 +455,59 @@ class AWSPublisher: Publisher {
         default:
             return "application/octet-stream"
         }
+    }
+
+    // MARK: - Remote Hash File Support
+
+    /// Path for the remote hash file
+    private static let hashFilePath = ".postalgic/hashes.json"
+
+    /// Fetches the remote hash file from S3 for cross-client change detection
+    func fetchRemoteHashes() async -> RemoteHashFile? {
+        return await withCheckedContinuation { continuation in
+            let getRequest = AWSS3GetObjectRequest()!
+            getRequest.bucket = bucket
+            getRequest.key = Self.hashFilePath
+
+            AWSS3.default().getObject(getRequest) { (output, error) in
+                if let error = error {
+                    Log.debug("No remote hash file found (or error): \(error.localizedDescription)")
+                    continuation.resume(returning: nil)
+                    return
+                }
+
+                guard let data = output?.body as? Data else {
+                    Log.debug("Remote hash file has no data")
+                    continuation.resume(returning: nil)
+                    return
+                }
+
+                do {
+                    let hashFile = try JSONDecoder().decode(RemoteHashFile.self, from: data)
+                    Log.debug("Found remote hash file from \(hashFile.publishedBy) with \(hashFile.fileHashes.count) files")
+                    continuation.resume(returning: hashFile)
+                } catch {
+                    Log.error("Failed to decode remote hash file: \(error.localizedDescription)")
+                    continuation.resume(returning: nil)
+                }
+            }
+        }
+    }
+
+    /// Uploads the hash file to S3 after successful publish
+    func uploadHashFile(hashes: [String: String]) async throws {
+        let hashFile = RemoteHashFile(publishedBy: "ios", fileHashes: hashes)
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        let data = try encoder.encode(hashFile)
+
+        try await uploadDataToS3(
+            data: data,
+            bucket: bucket,
+            key: Self.hashFilePath,
+            contentType: "application/json"
+        )
+        Log.debug("Uploaded remote hash file with \(hashes.count) file hashes")
     }
 
     /// Error types that can occur during AWS operations

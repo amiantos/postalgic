@@ -12,21 +12,15 @@ import SwiftData
 class SyncDataGenerator {
 
     enum SyncError: Error, LocalizedError {
-        case noSyncPassword
         case failedToCreateDirectory
         case failedToWriteFile(String)
-        case encryptionFailed(String)
 
         var errorDescription: String? {
             switch self {
-            case .noSyncPassword:
-                return "No sync password configured"
             case .failedToCreateDirectory:
                 return "Failed to create sync directory"
             case .failedToWriteFile(let filename):
                 return "Failed to write file: \(filename)"
-            case .encryptionFailed(let message):
-                return "Encryption failed: \(message)"
             }
         }
     }
@@ -73,34 +67,45 @@ class SyncDataGenerator {
 
     struct SyncManifest: Codable {
         let version: String
-        let syncVersion: Int
+        let contentVersion: String
         let lastModified: String
         let appSource: String
         let appVersion: String
         let blogName: String
-        let hasDrafts: Bool
-        let encryption: EncryptionInfo?
+        let fileCount: Int?
         var files: [String: FileInfo]
-
-        struct EncryptionInfo: Codable {
-            let method: String
-            let salt: String
-            let iterations: Int
-        }
 
         struct FileInfo: Codable {
             let hash: String
             var size: Int
             var modified: String?
-            var encrypted: Bool?
-            var iv: String?
-            var contentHash: String?  // Hash of plaintext before encryption (for drafts)
+
+            // Explicitly encode nil as null to match self-hosted output
+            func encode(to encoder: Encoder) throws {
+                var container = encoder.container(keyedBy: CodingKeys.self)
+                try container.encode(hash, forKey: .hash)
+                try container.encode(modified, forKey: .modified)
+                try container.encode(size, forKey: .size)
+            }
+        }
+
+        // Explicitly encode nil as null to match self-hosted output
+        func encode(to encoder: Encoder) throws {
+            var container = encoder.container(keyedBy: CodingKeys.self)
+            try container.encode(appSource, forKey: .appSource)
+            try container.encode(appVersion, forKey: .appVersion)
+            try container.encode(blogName, forKey: .blogName)
+            try container.encode(contentVersion, forKey: .contentVersion)
+            try container.encode(fileCount, forKey: .fileCount)
+            try container.encode(files, forKey: .files)
+            try container.encode(lastModified, forKey: .lastModified)
+            try container.encode(version, forKey: .version)
         }
     }
 
     struct SyncBlog: Codable {
         let name: String
-        let url: String
+        let url: String?
         let tagline: String?
         let authorName: String?
         let authorUrl: String?
@@ -116,6 +121,31 @@ class SyncDataGenerator {
             let lightShade: String?
             let mediumShade: String?
             let darkShade: String?
+
+            // Explicitly encode nil as null to match self-hosted output
+            func encode(to encoder: Encoder) throws {
+                var container = encoder.container(keyedBy: CodingKeys.self)
+                try container.encode(accent, forKey: .accent)
+                try container.encode(background, forKey: .background)
+                try container.encode(darkShade, forKey: .darkShade)
+                try container.encode(lightShade, forKey: .lightShade)
+                try container.encode(mediumShade, forKey: .mediumShade)
+                try container.encode(text, forKey: .text)
+            }
+        }
+
+        // Explicitly encode nil as null to match self-hosted output
+        func encode(to encoder: Encoder) throws {
+            var container = encoder.container(keyedBy: CodingKeys.self)
+            try container.encode(authorEmail, forKey: .authorEmail)
+            try container.encode(authorName, forKey: .authorName)
+            try container.encode(authorUrl, forKey: .authorUrl)
+            try container.encode(colors, forKey: .colors)
+            try container.encode(name, forKey: .name)
+            try container.encode(tagline, forKey: .tagline)
+            try container.encode(themeIdentifier, forKey: .themeIdentifier)
+            try container.encode(timezone, forKey: .timezone)
+            try container.encode(url, forKey: .url)
         }
     }
 
@@ -127,16 +157,15 @@ class SyncDataGenerator {
             let stub: String?
             let hash: String
             let modified: String
-        }
-    }
 
-    struct SyncDraftIndex: Codable {
-        let drafts: [DraftIndexEntry]
-
-        struct DraftIndexEntry: Codable {
-            let id: String
-            let hash: String
-            let modified: String
+            // Explicitly encode nil as null to match self-hosted output
+            func encode(to encoder: Encoder) throws {
+                var container = encoder.container(keyedBy: CodingKeys.self)
+                try container.encode(hash, forKey: .hash)
+                try container.encode(id, forKey: .id)
+                try container.encode(modified, forKey: .modified)
+                try container.encode(stub, forKey: .stub)
+            }
         }
     }
 
@@ -144,12 +173,28 @@ class SyncDataGenerator {
         let id: String
         let title: String?
         let content: String
+        let contentHtml: String?  // Pre-rendered HTML from markdown
         let stub: String?
         let createdAt: String
         let updatedAt: String
         let categoryId: String?
         let tagIds: [String]
         let embed: SyncEmbed?
+
+        // Explicitly encode nil as null to match self-hosted output
+        func encode(to encoder: Encoder) throws {
+            var container = encoder.container(keyedBy: CodingKeys.self)
+            try container.encode(categoryId, forKey: .categoryId)
+            try container.encode(content, forKey: .content)
+            try container.encode(contentHtml, forKey: .contentHtml)
+            try container.encode(createdAt, forKey: .createdAt)
+            try container.encode(embed, forKey: .embed)
+            try container.encode(id, forKey: .id)
+            try container.encode(stub, forKey: .stub)
+            try container.encode(tagIds, forKey: .tagIds)
+            try container.encode(title, forKey: .title)
+            try container.encode(updatedAt, forKey: .updatedAt)
+        }
     }
 
     struct SyncEmbed: Codable {
@@ -161,6 +206,19 @@ class SyncDataGenerator {
         let imageUrl: String?
         let imageFilename: String?
         let images: [SyncEmbedImage]
+
+        // Explicitly encode nil as null to match self-hosted output
+        func encode(to encoder: Encoder) throws {
+            var container = encoder.container(keyedBy: CodingKeys.self)
+            try container.encode(description, forKey: .description)
+            try container.encode(imageFilename, forKey: .imageFilename)
+            try container.encode(imageUrl, forKey: .imageUrl)
+            try container.encode(images, forKey: .images)
+            try container.encode(position, forKey: .position)
+            try container.encode(title, forKey: .title)
+            try container.encode(type, forKey: .type)
+            try container.encode(url, forKey: .url)
+        }
     }
 
     struct SyncEmbedImage: Codable {
@@ -175,6 +233,14 @@ class SyncDataGenerator {
             let id: String
             let stub: String?
             let hash: String
+
+            // Explicitly encode nil as null to match self-hosted output
+            func encode(to encoder: Encoder) throws {
+                var container = encoder.container(keyedBy: CodingKeys.self)
+                try container.encode(hash, forKey: .hash)
+                try container.encode(id, forKey: .id)
+                try container.encode(stub, forKey: .stub)
+            }
         }
     }
 
@@ -184,6 +250,16 @@ class SyncDataGenerator {
         let description: String?
         let stub: String?
         let createdAt: String
+
+        // Explicitly encode nil as null to match self-hosted output
+        func encode(to encoder: Encoder) throws {
+            var container = encoder.container(keyedBy: CodingKeys.self)
+            try container.encode(createdAt, forKey: .createdAt)
+            try container.encode(description, forKey: .description)
+            try container.encode(id, forKey: .id)
+            try container.encode(name, forKey: .name)
+            try container.encode(stub, forKey: .stub)
+        }
     }
 
     struct SyncTagIndex: Codable {
@@ -193,6 +269,14 @@ class SyncDataGenerator {
             let id: String
             let stub: String?
             let hash: String
+
+            // Explicitly encode nil as null to match self-hosted output
+            func encode(to encoder: Encoder) throws {
+                var container = encoder.container(keyedBy: CodingKeys.self)
+                try container.encode(hash, forKey: .hash)
+                try container.encode(id, forKey: .id)
+                try container.encode(stub, forKey: .stub)
+            }
         }
     }
 
@@ -201,6 +285,15 @@ class SyncDataGenerator {
         let name: String
         let stub: String?
         let createdAt: String
+
+        // Explicitly encode nil as null to match self-hosted output
+        func encode(to encoder: Encoder) throws {
+            var container = encoder.container(keyedBy: CodingKeys.self)
+            try container.encode(createdAt, forKey: .createdAt)
+            try container.encode(id, forKey: .id)
+            try container.encode(name, forKey: .name)
+            try container.encode(stub, forKey: .stub)
+        }
     }
 
     struct SyncSidebarIndex: Codable {
@@ -217,8 +310,23 @@ class SyncDataGenerator {
         let type: String
         let title: String
         let content: String?
+        let contentHtml: String?  // Pre-rendered HTML from markdown
         let order: Int
         let links: [SyncLink]?
+        let createdAt: String  // ISO8601 formatted date for sync parity
+
+        // Explicitly encode nil as null to match self-hosted output
+        func encode(to encoder: Encoder) throws {
+            var container = encoder.container(keyedBy: CodingKeys.self)
+            try container.encode(content, forKey: .content)
+            try container.encode(contentHtml, forKey: .contentHtml)
+            try container.encode(createdAt, forKey: .createdAt)
+            try container.encode(id, forKey: .id)
+            try container.encode(links, forKey: .links)
+            try container.encode(order, forKey: .order)
+            try container.encode(title, forKey: .title)
+            try container.encode(type, forKey: .type)
+        }
     }
 
     struct SyncLink: Codable {
@@ -237,6 +345,17 @@ class SyncDataGenerator {
             let specialFileType: String?
             let hash: String
             let size: Int
+
+            // Explicitly encode nil as null to match self-hosted output
+            func encode(to encoder: Encoder) throws {
+                var container = encoder.container(keyedBy: CodingKeys.self)
+                try container.encode(filename, forKey: .filename)
+                try container.encode(hash, forKey: .hash)
+                try container.encode(isSpecialFile, forKey: .isSpecialFile)
+                try container.encode(mimeType, forKey: .mimeType)
+                try container.encode(size, forKey: .size)
+                try container.encode(specialFileType, forKey: .specialFileType)
+            }
         }
     }
 
@@ -254,29 +373,61 @@ class SyncDataGenerator {
         return formatter
     }()
 
+    /// Calculate the latest modification date from all content entities.
+    /// Returns the most recent updatedAt/createdAt from posts, categories, tags.
+    private static func getLatestModificationDate(blog: Blog) -> Date {
+        var latest = Date(timeIntervalSince1970: 0)
+
+        // Check posts (use updatedAt if available, otherwise createdAt)
+        for post in blog.posts where !post.isDraft {
+            let postDate = post.updatedAt ?? post.createdAt
+            if postDate > latest {
+                latest = postDate
+            }
+        }
+
+        // Check categories
+        for category in blog.categories {
+            if category.createdAt > latest {
+                latest = category.createdAt
+            }
+        }
+
+        // Check tags
+        for tag in blog.tags {
+            if tag.createdAt > latest {
+                latest = tag.createdAt
+            }
+        }
+
+        // If no content exists, return current date as fallback
+        if latest == Date(timeIntervalSince1970: 0) {
+            return Date()
+        }
+
+        return latest
+    }
+
     // MARK: - Main Generation Method
 
     /// Generates the sync directory for a blog
     /// - Parameters:
     ///   - blog: The blog to generate sync data for
     ///   - siteDirectory: The root site directory
-    ///   - password: The sync password for encrypting drafts
     ///   - statusUpdate: Closure for status updates
     /// - Returns: Dictionary of file paths to their hashes
     static func generateSyncDirectory(
         for blog: Blog,
         in siteDirectory: URL,
-        password: String,
         statusUpdate: @escaping (String) -> Void
     ) throws -> [String: String] {
         let fileManager = FileManager.default
         let syncDirectory = siteDirectory.appendingPathComponent("sync")
 
-        // Create sync directory structure
+        // Create sync directory structure (drafts stay local, not synced)
         statusUpdate("Creating sync directory structure...")
         try fileManager.createDirectory(at: syncDirectory, withIntermediateDirectories: true)
         try fileManager.createDirectory(at: syncDirectory.appendingPathComponent("posts"), withIntermediateDirectories: true)
-        try fileManager.createDirectory(at: syncDirectory.appendingPathComponent("drafts"), withIntermediateDirectories: true)
         try fileManager.createDirectory(at: syncDirectory.appendingPathComponent("categories"), withIntermediateDirectories: true)
         try fileManager.createDirectory(at: syncDirectory.appendingPathComponent("tags"), withIntermediateDirectories: true)
         try fileManager.createDirectory(at: syncDirectory.appendingPathComponent("sidebar"), withIntermediateDirectories: true)
@@ -285,12 +436,10 @@ class SyncDataGenerator {
         try fileManager.createDirectory(at: syncDirectory.appendingPathComponent("themes"), withIntermediateDirectories: true)
 
         let encoder = JSONEncoder()
-        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        // Use compact JSON (sorted keys only, no pretty printing) for cross-platform consistency
+        encoder.outputFormatting = [.sortedKeys, .withoutEscapingSlashes]
 
         var fileHashes: [String: String] = [:]
-
-        // Generate salt for encryption (will be stored in manifest)
-        let salt = SyncEncryption.generateSalt()
 
         // Build ID maps: local persistent ID -> stable sync ID
         // This allows us to look up the stable ID when we have a reference to the local entity
@@ -313,12 +462,12 @@ class SyncDataGenerator {
         statusUpdate("Generating blog settings...")
         let syncBlog = SyncBlog(
             name: blog.name,
-            url: blog.url,
+            url: blog.url.isEmpty ? nil : blog.url,
             tagline: blog.tagline,
             authorName: blog.authorName,
             authorUrl: blog.authorUrl,
             authorEmail: blog.authorEmail,
-            timezone: "UTC", // TODO: Add timezone support
+            timezone: blog.timezone,
             colors: SyncBlog.ColorSettings(
                 accent: blog.accentColor,
                 background: blog.backgroundColor,
@@ -360,7 +509,8 @@ class SyncDataGenerator {
             ))
         }
 
-        let categoryIndex = SyncCategoryIndex(categories: categoryIndexEntries)
+        // Sort by id for deterministic output
+        let categoryIndex = SyncCategoryIndex(categories: categoryIndexEntries.sorted { $0.id < $1.id })
         let categoryIndexData = try encoder.encode(categoryIndex)
         let categoryIndexPath = syncDirectory.appendingPathComponent("categories/index.json")
         try categoryIndexData.write(to: categoryIndexPath)
@@ -391,7 +541,8 @@ class SyncDataGenerator {
             ))
         }
 
-        let tagIndex = SyncTagIndex(tags: tagIndexEntries)
+        // Sort by id for deterministic output
+        let tagIndex = SyncTagIndex(tags: tagIndexEntries.sorted { $0.id < $1.id })
         let tagIndexData = try encoder.encode(tagIndex)
         let tagIndexPath = syncDirectory.appendingPathComponent("tags/index.json")
         try tagIndexData.write(to: tagIndexPath)
@@ -418,67 +569,20 @@ class SyncDataGenerator {
                     id: stableId,
                     stub: post.stub,
                     hash: hash,
-                    modified: isoFormatter.string(from: post.createdAt)
+                    modified: isoFormatter.string(from: post.updatedAt ?? post.createdAt)
                 ))
             } catch {
-                print("⚠️ Error generating sync data for post \(post.stub ?? stableId): \(error)")
+                Log.warn("Error generating sync data for post \(post.stub ?? stableId): \(error)")
                 throw error
             }
         }
 
-        let postIndex = SyncPostIndex(posts: postIndexEntries)
+        // Sort by id for deterministic output
+        let postIndex = SyncPostIndex(posts: postIndexEntries.sorted { $0.id < $1.id })
         let postIndexData = try encoder.encode(postIndex)
         let postIndexPath = syncDirectory.appendingPathComponent("posts/index.json")
         try postIndexData.write(to: postIndexPath)
         fileHashes["posts/index.json"] = postIndexData.sha256Hash()
-
-        // MARK: Generate drafts (encrypted)
-        statusUpdate("Generating encrypted drafts...")
-        let drafts = blog.posts.filter { $0.isDraft }
-        var draftIndexEntries: [SyncDraftIndex.DraftIndexEntry] = []
-        var draftIVs: [String: String] = [:] // Store IVs for manifest
-        var draftContentHashes: [String: String] = [:] // Store contentHash (hash of plaintext before encryption)
-
-        for draft in drafts {
-            let stableId = getStableSyncId(for: draft)
-            let syncPost = try createSyncPost(from: draft, stableId: stableId, categoryIdMap: categoryIdMap, tagIdMap: tagIdMap)
-
-            // Calculate content hash BEFORE encryption
-            // This allows change detection without false positives from random IV
-            let draftData = try encoder.encode(syncPost)
-            let contentHash = draftData.sha256Hash()
-
-            // Encrypt the draft
-            let (ciphertext, iv) = try SyncEncryption.encryptJSON(syncPost, password: password, salt: salt)
-            let draftPath = syncDirectory.appendingPathComponent("drafts/\(stableId).json.enc")
-            try ciphertext.write(to: draftPath)
-            let hash = ciphertext.sha256Hash()
-            fileHashes["drafts/\(stableId).json.enc"] = hash
-            draftIVs["drafts/\(stableId).json.enc"] = SyncEncryption.base64Encode(iv)
-            draftContentHashes["drafts/\(stableId).json.enc"] = contentHash
-
-            draftIndexEntries.append(SyncDraftIndex.DraftIndexEntry(
-                id: stableId,
-                hash: contentHash, // Use contentHash for stable comparison (ciphertext hash is in manifest)
-                modified: isoFormatter.string(from: draft.createdAt)
-            ))
-        }
-
-        // Encrypt draft index
-        if !draftIndexEntries.isEmpty {
-            let draftIndex = SyncDraftIndex(drafts: draftIndexEntries)
-
-            // Calculate content hash for draft index before encryption
-            let draftIndexData = try encoder.encode(draftIndex)
-            let draftIndexContentHash = draftIndexData.sha256Hash()
-
-            let (indexCiphertext, indexIV) = try SyncEncryption.encryptJSON(draftIndex, password: password, salt: salt)
-            let draftIndexPath = syncDirectory.appendingPathComponent("drafts/index.json.enc")
-            try indexCiphertext.write(to: draftIndexPath)
-            fileHashes["drafts/index.json.enc"] = indexCiphertext.sha256Hash()
-            draftIVs["drafts/index.json.enc"] = SyncEncryption.base64Encode(indexIV)
-            draftContentHashes["drafts/index.json.enc"] = draftIndexContentHash
-        }
 
         // MARK: Generate sidebar objects
         statusUpdate("Generating sidebar content...")
@@ -494,13 +598,17 @@ class SyncDataGenerator {
                 }
             }
 
+            // Convert iOS type format to self-hosted format
+            let syncType = sidebarObject.objectType == .linkList ? "linkList" : "text"
             let syncSidebar = SyncSidebarObject(
                 id: stableId,
-                type: sidebarObject.type,
+                type: syncType,
                 title: sidebarObject.title,
                 content: sidebarObject.content,
+                contentHtml: sidebarObject.contentHtml,
                 order: sidebarObject.order,
-                links: links
+                links: links,
+                createdAt: isoFormatter.string(from: sidebarObject.createdAt)
             )
             let sidebarData = try encoder.encode(syncSidebar)
             let sidebarPath = syncDirectory.appendingPathComponent("sidebar/\(stableId).json")
@@ -514,7 +622,8 @@ class SyncDataGenerator {
             ))
         }
 
-        let sidebarIndex = SyncSidebarIndex(sidebar: sidebarIndexEntries)
+        // Sort by id for deterministic output
+        let sidebarIndex = SyncSidebarIndex(sidebar: sidebarIndexEntries.sorted { $0.id < $1.id })
         let sidebarIndexData = try encoder.encode(sidebarIndex)
         let sidebarIndexPath = syncDirectory.appendingPathComponent("sidebar/index.json")
         try sidebarIndexData.write(to: sidebarIndexPath)
@@ -541,7 +650,8 @@ class SyncDataGenerator {
             ))
         }
 
-        let staticFilesIndex = SyncStaticFilesIndex(files: staticFileEntries)
+        // Sort by filename for deterministic output
+        let staticFilesIndex = SyncStaticFilesIndex(files: staticFileEntries.sorted { $0.filename < $1.filename })
         let staticFilesIndexData = try encoder.encode(staticFilesIndex)
         let staticFilesIndexPath = syncDirectory.appendingPathComponent("static-files/index.json")
         try staticFilesIndexData.write(to: staticFilesIndexPath)
@@ -554,8 +664,8 @@ class SyncDataGenerator {
         for post in blog.posts {
             if let embed = post.embed {
                 // Save link embed image
-                if embed.embedType == .link, let imageData = embed.imageData, !imageData.isEmpty {
-                    let imageFilename = "embed-\(embed.url.hash).jpg"
+                if embed.embedType == .link, let imageData = embed.imageData, !imageData.isEmpty,
+                   let imageFilename = embed.deterministicImageFilename {
                     let imagePath = syncDirectory.appendingPathComponent("embed-images/\(imageFilename)")
                     try imageData.write(to: imagePath)
                     let hash = imageData.sha256Hash()
@@ -585,7 +695,11 @@ class SyncDataGenerator {
             }
         }
 
-        let embedImagesIndex = EmbedImagesIndex(images: embedImageHashes.map { EmbedImagesIndex.ImageEntry(filename: $0.key, hash: $0.value) })
+        // Sort by filename for deterministic output (dictionary iteration order is non-deterministic)
+        let sortedEmbedImages = embedImageHashes.keys.sorted().map { filename in
+            EmbedImagesIndex.ImageEntry(filename: filename, hash: embedImageHashes[filename]!)
+        }
+        let embedImagesIndex = EmbedImagesIndex(images: sortedEmbedImages)
         let embedImagesIndexData = try encoder.encode(embedImagesIndex)
         let embedImagesIndexPath = syncDirectory.appendingPathComponent("embed-images/index.json")
         try embedImagesIndexData.write(to: embedImagesIndexPath)
@@ -609,7 +723,6 @@ class SyncDataGenerator {
 
         // MARK: Generate manifest
         statusUpdate("Generating manifest...")
-        let newSyncVersion = blog.lastSyncedVersion + 1
 
         var manifestFiles: [String: SyncManifest.FileInfo] = [:]
         for (path, hash) in fileHashes {
@@ -617,18 +730,6 @@ class SyncDataGenerator {
                 hash: hash,
                 size: 0 // We'll update this
             )
-
-            // Add IV and contentHash for encrypted files
-            if let iv = draftIVs[path] {
-                fileInfo.encrypted = true
-                fileInfo.iv = iv
-                // Add contentHash for encrypted files (hash of plaintext before encryption)
-                // This allows change detection without false positives from random IV
-                if let contentHash = draftContentHashes[path] {
-                    fileInfo.contentHash = contentHash
-                }
-            }
-
             manifestFiles[path] = fileInfo
         }
 
@@ -641,19 +742,20 @@ class SyncDataGenerator {
             }
         }
 
+        // Compute contentVersion as SHA256 of all file hashes (sorted for consistency)
+        // Format: "filePath:hash\n" to match self-hosted sync generator
+        let sortedHashEntries = fileHashes.keys.sorted().map { "\($0):\(fileHashes[$0]!)" }
+        let combinedHashes = sortedHashEntries.joined(separator: "\n")
+        let contentVersion = combinedHashes.data(using: .utf8)?.sha256Hash() ?? UUID().uuidString
+
         let manifest = SyncManifest(
             version: "1.0",
-            syncVersion: newSyncVersion,
-            lastModified: isoFormatter.string(from: Date()),
+            contentVersion: contentVersion,
+            lastModified: isoFormatter.string(from: getLatestModificationDate(blog: blog)),
             appSource: "ios",
             appVersion: Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "unknown",
             blogName: blog.name,
-            hasDrafts: !drafts.isEmpty,
-            encryption: !drafts.isEmpty ? SyncManifest.EncryptionInfo(
-                method: "aes-256-gcm",
-                salt: SyncEncryption.base64Encode(salt),
-                iterations: Int(SyncEncryption.pbkdf2Iterations)
-            ) : nil,
+            fileCount: fileHashes.count,
             files: manifestFiles
         )
 
@@ -681,28 +783,27 @@ class SyncDataGenerator {
         }
 
         // Get stable tag IDs (use the ID map to translate)
+        // Sort tag IDs for deterministic output
         let tagIds = post.tags.map { tag in
             tagIdMap[tag.persistentModelID] ?? getStableSyncId(for: tag)
-        }
+        }.sorted()
 
         // Build embed if exists
         var syncEmbed: SyncEmbed? = nil
         if let embed = post.embed {
-            print("📎 Processing embed for post: type=\(embed.type), images count=\(embed.images.count)")
+            Log.verbose("Processing embed for post: type=\(embed.type), images count=\(embed.images.count)")
 
-            var imageFilename: String? = nil
-            if embed.embedType == .link && embed.imageData != nil {
-                imageFilename = "embed-\(embed.url.hashValue).jpg"
-            }
+            // Use deterministicImageFilename which uses SHA256 hash for cross-platform compatibility
+            let imageFilename = embed.deterministicImageFilename
 
             let embedImages = embed.images.sorted { $0.order < $1.order }.map { image in
-                print("   📷 Embed image: \(image.filename)")
+                Log.verbose("   Embed image: \(image.filename)")
                 return SyncEmbedImage(filename: image.filename, order: image.order)
             }
 
             syncEmbed = SyncEmbed(
                 type: embed.type,
-                position: embed.position,
+                position: embed.position.lowercased(),  // Self-hosted uses lowercase positions
                 url: embed.url,
                 title: embed.title,
                 description: embed.embedDescription,
@@ -716,9 +817,10 @@ class SyncDataGenerator {
             id: stableId,
             title: post.title,
             content: post.content,
+            contentHtml: post.contentHtml,
             stub: post.stub,
             createdAt: isoFormatter.string(from: post.createdAt),
-            updatedAt: isoFormatter.string(from: post.createdAt), // TODO: Add updatedAt to Post model
+            updatedAt: isoFormatter.string(from: post.updatedAt ?? post.createdAt),
             categoryId: categoryId,
             tagIds: tagIds,
             embed: syncEmbed

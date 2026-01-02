@@ -2,6 +2,7 @@
 import { computed, useSlots } from 'vue';
 import { useRoute } from 'vue-router';
 import { useBlogStore } from '@/stores/blog';
+import SyncBadge from '@/components/SyncBadge.vue';
 
 defineProps({
   title: { type: String, default: '' },
@@ -36,6 +37,9 @@ const hasControls = computed(() => !!slots.controls);
         </router-link>
 
         <div class="flex items-center gap-3">
+          <!-- Sync Badge - shows when remote changes are available -->
+          <SyncBadge />
+
           <router-link
             :to="{ name: 'publish', params: { blogId } }"
             class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
