@@ -39,28 +39,44 @@ class TemplateManager {
     /// Sets up the default templates by loading from bundled files
     private func setupDefaultTemplates() {
         // Map of template keys to their file names in the bundle
-        let templateFiles: [(key: String, filename: String)] = [
-            ("layout", "layout.mustache"),
-            ("post", "post.mustache"),
-            ("index", "index.mustache"),
-            ("archives", "archives.mustache"),
-            ("monthly-archive", "monthly-archive.mustache"),
-            ("tags", "tags.mustache"),
-            ("tag", "tag.mustache"),
-            ("categories", "categories.mustache"),
-            ("category", "category.mustache"),
-            ("css", "style.css"),
-            ("rss", "rss.xml"),
-            ("robots", "robots.txt"),
-            ("sitemap", "sitemap.xml")
+        let templateFiles: [(key: String, filename: String, ext: String?)] = [
+            ("layout", "layout", "mustache"),
+            ("post", "post", "mustache"),
+            ("index", "index", "mustache"),
+            ("archives", "archives", "mustache"),
+            ("monthly-archive", "monthly-archive", "mustache"),
+            ("tags", "tags", "mustache"),
+            ("tag", "tag", "mustache"),
+            ("categories", "categories", "mustache"),
+            ("category", "category", "mustache"),
+            ("css", "style", "css"),
+            ("rss", "rss", "xml"),
+            ("robots", "robots", "txt"),
+            ("sitemap", "sitemap", "xml")
         ]
 
-        for (key, filename) in templateFiles {
-            if let url = Bundle.main.url(forResource: filename, withExtension: nil, subdirectory: "Templates/default"),
-               let content = try? String(contentsOf: url, encoding: .utf8) {
-                defaultTemplates[key] = content
-            } else {
-                print("Warning: Could not load template file: \(filename)")
+        // Try multiple possible subdirectory paths
+        let possibleSubdirectories = [
+            "Templates/default",
+            "Resources/Templates/default",
+            "default",
+            nil  // No subdirectory - files at bundle root
+        ]
+
+        for (key, name, ext) in templateFiles {
+            var loaded = false
+
+            for subdirectory in possibleSubdirectories {
+                if let url = Bundle.main.url(forResource: name, withExtension: ext, subdirectory: subdirectory),
+                   let content = try? String(contentsOf: url, encoding: .utf8) {
+                    defaultTemplates[key] = content
+                    loaded = true
+                    break
+                }
+            }
+
+            if !loaded {
+                print("Warning: Could not load template file: \(name).\(ext ?? "") - searched in: \(possibleSubdirectories)")
             }
         }
     }

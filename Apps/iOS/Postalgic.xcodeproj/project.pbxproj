@@ -163,7 +163,7 @@
 			path = PostalgicUITests;
 			sourceTree = "<group>";
 		};
-		44EB9B7D2F079B790058E2C0 /* Resources */ = {
+		44EB9BB72F079CDE0058E2C0 /* Resources */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = Resources;
 			sourceTree = "<group>";
@@ -339,7 +339,7 @@
 				443F0B502DBAD7AC00034EF1 /* PreviewData.swift */,
 				44C364102DB768DB0057567C /* Services */,
 				44C3641B2DB768DB0057567C /* Views */,
-				44EB9B7D2F079B790058E2C0 /* Resources */,
+				44EB9BB72F079CDE0058E2C0 /* Resources */,
 			);
 			path = Postalgic;
 			sourceTree = "<group>";
@@ -399,7 +399,7 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				44EB9B7D2F079B790058E2C0 /* Resources */,
+				44EB9BB72F079CDE0058E2C0 /* Resources */,
 			);
 			name = Postalgic;
 			packageProductDependencies = (
