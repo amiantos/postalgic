@@ -258,7 +258,8 @@ export async function generateSyncDirectory(storage, blogId, outputDir) {
         title: l.title,
         url: l.url,
         order: l.order
-      })) : null
+      })) : null,
+      createdAt: sidebar.createdAt
     };
     const sidebarJson = stringifyWithSortedKeys(sidebarData);
     fs.writeFileSync(path.join(syncDir, 'sidebar', `${stableId}.json`), sidebarJson);

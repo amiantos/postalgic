@@ -511,7 +511,7 @@ class Storage {
       categoryData.description || null,
       categoryData.stub || categoryId,
       categoryData.syncId || null,
-      now
+      categoryData.createdAt || now  // Use provided createdAt for sync imports
     );
 
     return this.getCategory(blogId, categoryId);
@@ -598,7 +598,7 @@ class Storage {
       (tagData.name || 'untitled').toLowerCase(),
       tagData.stub || tagId,
       tagData.syncId || null,
-      now
+      tagData.createdAt || now  // Use provided createdAt for sync imports
     );
 
     return this.getTag(blogId, tagId);
@@ -692,7 +692,7 @@ class Storage {
       objectData.content || null,
       objectData.order ?? maxOrder + 1,
       objectData.syncId || null,
-      now
+      objectData.createdAt || now  // Use provided createdAt for sync imports
     );
 
     // Handle links for linkList type
@@ -1048,8 +1048,8 @@ class Storage {
 
     const stmt = db.prepare(`
       INSERT OR REPLACE INTO sync_config
-        (blog_id, sync_enabled, sync_password, last_synced_version, last_synced_at, local_file_hashes, local_content_hashes, encryption_salt, created_at)
-      VALUES (?, 1, NULL, ?, ?, '{}', '{}', NULL, COALESCE((SELECT created_at FROM sync_config WHERE blog_id = ?), datetime('now')))
+        (blog_id, sync_enabled, sync_password, last_synced_version, last_synced_at, local_file_hashes, local_content_hashes, created_at)
+      VALUES (?, 1, NULL, ?, ?, '{}', '{}', COALESCE((SELECT created_at FROM sync_config WHERE blog_id = ?), datetime('now')))
     `);
 
     stmt.run(
@@ -1065,8 +1065,8 @@ class Storage {
 
     const stmt = db.prepare(`
       INSERT OR REPLACE INTO sync_config
-        (blog_id, sync_enabled, sync_password, last_synced_version, last_synced_at, local_file_hashes, local_content_hashes, encryption_salt, created_at)
-      VALUES (?, 1, NULL, ?, ?, ?, '{}', NULL, COALESCE((SELECT created_at FROM sync_config WHERE blog_id = ?), datetime('now')))
+        (blog_id, sync_enabled, sync_password, last_synced_version, last_synced_at, local_file_hashes, local_content_hashes, created_at)
+      VALUES (?, 1, NULL, ?, ?, ?, '{}', COALESCE((SELECT created_at FROM sync_config WHERE blog_id = ?), datetime('now')))
     `);
 
     stmt.run(

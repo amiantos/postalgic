@@ -120,7 +120,8 @@ export async function pullChanges(storage, blogId, syncUrl, password, onProgress
         name: syncCategory.name,
         description: syncCategory.description,
         stub: syncCategory.stub,
-        syncId: syncCategory.id
+        syncId: syncCategory.id,
+        createdAt: syncCategory.createdAt  // Preserve original timestamp
       });
     }
     appliedChanges++;
@@ -147,7 +148,8 @@ export async function pullChanges(storage, blogId, syncUrl, password, onProgress
           name: syncCategory.name,
           description: syncCategory.description,
           stub: syncCategory.stub,
-          syncId: syncCategory.id
+          syncId: syncCategory.id,
+          createdAt: syncCategory.createdAt  // Preserve original timestamp
         });
       }
     }
@@ -177,7 +179,8 @@ export async function pullChanges(storage, blogId, syncUrl, password, onProgress
       storage.createTag(blogId, {
         name: syncTag.name,
         stub: syncTag.stub,
-        syncId: syncTag.id
+        syncId: syncTag.id,
+        createdAt: syncTag.createdAt  // Preserve original timestamp
       });
     }
     appliedChanges++;
@@ -200,7 +203,8 @@ export async function pullChanges(storage, blogId, syncUrl, password, onProgress
         storage.createTag(blogId, {
           name: syncTag.name,
           stub: syncTag.stub,
-          syncId: syncTag.id
+          syncId: syncTag.id,
+          createdAt: syncTag.createdAt  // Preserve original timestamp
         });
       }
     }
@@ -291,7 +295,8 @@ export async function pullChanges(storage, blogId, syncUrl, password, onProgress
         content: syncSidebar.content,
         order: syncSidebar.order,
         links: syncSidebar.links || [],
-        syncId: syncSidebar.id
+        syncId: syncSidebar.id,
+        createdAt: syncSidebar.createdAt  // Preserve original timestamp
       });
     }
     appliedChanges++;
@@ -319,7 +324,8 @@ export async function pullChanges(storage, blogId, syncUrl, password, onProgress
           content: syncSidebar.content,
           order: syncSidebar.order,
           links: syncSidebar.links || [],
-          syncId: syncSidebar.id
+          syncId: syncSidebar.id,
+          createdAt: syncSidebar.createdAt  // Preserve original timestamp
         });
       }
     }

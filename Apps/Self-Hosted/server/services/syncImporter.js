@@ -123,7 +123,8 @@ export async function importBlog(storage, baseUrl, password, onProgress = () => 
       name: syncCategory.name,
       description: syncCategory.description || '',
       stub: syncCategory.stub,
-      syncId: syncCategory.id  // Store remote ID for incremental sync matching
+      syncId: syncCategory.id,  // Store remote ID for incremental sync matching
+      createdAt: syncCategory.createdAt  // Preserve original timestamp
     });
     categoryMap.set(syncCategory.id, category.id);
   }
@@ -142,7 +143,8 @@ export async function importBlog(storage, baseUrl, password, onProgress = () => 
     const tag = storage.createTag(blogId, {
       name: syncTag.name,
       stub: syncTag.stub,
-      syncId: syncTag.id  // Store remote ID for incremental sync matching
+      syncId: syncTag.id,  // Store remote ID for incremental sync matching
+      createdAt: syncTag.createdAt  // Preserve original timestamp
     });
     tagMap.set(syncTag.id, tag.id);
   }
@@ -195,7 +197,8 @@ export async function importBlog(storage, baseUrl, password, onProgress = () => 
       content: syncSidebar.content || null,
       order: syncSidebar.order,
       links: syncSidebar.links || [],
-      syncId: syncSidebar.id  // Store remote ID for incremental sync matching
+      syncId: syncSidebar.id,  // Store remote ID for incremental sync matching
+      createdAt: syncSidebar.createdAt  // Preserve original timestamp
     });
   }
 

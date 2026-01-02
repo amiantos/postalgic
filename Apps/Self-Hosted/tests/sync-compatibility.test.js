@@ -16,6 +16,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { generateSyncDirectory } from '../server/services/syncGenerator.js';
 import Storage from '../server/utils/storage.js';
 import { initDatabase, closeDatabase } from '../server/utils/database.js';
+import { calculateHash } from '../server/utils/helpers.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -476,6 +477,262 @@ describe('Sync Data Compatibility', () => {
         const post = JSON.parse(fs.readFileSync(postPath, 'utf8'));
         expect(post.createdAt).toMatch(iso8601Regex);
         expect(post.updatedAt).toMatch(iso8601Regex);
+      }
+    });
+  });
+
+  describe('Import/Export Parity', () => {
+    let syncOutputDir;
+    let importedBlogId;
+    let importedIdMap = {};
+
+    beforeAll(async () => {
+      syncOutputDir = path.join(testDir, 'output');
+
+      // Create a new blog to import into
+      const importedBlog = storage.createBlog({
+        name: 'Imported Blog',
+        url: canonicalBlog.blog.url,
+      });
+      importedBlogId = importedBlog.id;
+
+      // Read and import categories from sync data
+      const catIndex = JSON.parse(
+        fs.readFileSync(path.join(syncOutputDir, 'sync', 'categories', 'index.json'), 'utf8')
+      );
+      for (const entry of catIndex.categories) {
+        const catData = JSON.parse(
+          fs.readFileSync(path.join(syncOutputDir, 'sync', 'categories', `${entry.id}.json`), 'utf8')
+        );
+        const created = storage.createCategory(importedBlogId, {
+          name: catData.name,
+          description: catData.description,
+          stub: catData.stub,
+          syncId: catData.id,
+          createdAt: catData.createdAt, // This is what we're testing!
+        });
+        importedIdMap[catData.id] = created.id;
+      }
+
+      // Read and import tags from sync data
+      const tagIndex = JSON.parse(
+        fs.readFileSync(path.join(syncOutputDir, 'sync', 'tags', 'index.json'), 'utf8')
+      );
+      for (const entry of tagIndex.tags) {
+        const tagData = JSON.parse(
+          fs.readFileSync(path.join(syncOutputDir, 'sync', 'tags', `${entry.id}.json`), 'utf8')
+        );
+        const created = storage.createTag(importedBlogId, {
+          name: tagData.name,
+          stub: tagData.stub,
+          syncId: tagData.id,
+          createdAt: tagData.createdAt, // This is what we're testing!
+        });
+        importedIdMap[tagData.id] = created.id;
+      }
+
+      // Read and import sidebar from sync data
+      const sidebarIndex = JSON.parse(
+        fs.readFileSync(path.join(syncOutputDir, 'sync', 'sidebar', 'index.json'), 'utf8')
+      );
+      for (const entry of sidebarIndex.sidebar) {
+        const sidebarData = JSON.parse(
+          fs.readFileSync(path.join(syncOutputDir, 'sync', 'sidebar', `${entry.id}.json`), 'utf8')
+        );
+        storage.createSidebarObject(importedBlogId, {
+          title: sidebarData.title,
+          type: sidebarData.type,
+          content: sidebarData.content,
+          order: sidebarData.order,
+          links: sidebarData.links || [],
+          syncId: sidebarData.id,
+          createdAt: sidebarData.createdAt, // This is what we're testing!
+        });
+      }
+
+      // Read and import posts from sync data
+      const postIndex = JSON.parse(
+        fs.readFileSync(path.join(syncOutputDir, 'sync', 'posts', 'index.json'), 'utf8')
+      );
+      for (const entry of postIndex.posts) {
+        const postData = JSON.parse(
+          fs.readFileSync(path.join(syncOutputDir, 'sync', 'posts', `${entry.id}.json`), 'utf8')
+        );
+
+        const categoryId = postData.categoryId ? importedIdMap[postData.categoryId] : null;
+        const tagIds = (postData.tagIds || []).map(id => importedIdMap[id]).filter(Boolean);
+
+        let embed = null;
+        if (postData.embed) {
+          embed = {
+            type: postData.embed.type.toLowerCase(),
+            position: postData.embed.position.toLowerCase(),
+            url: postData.embed.url,
+            title: postData.embed.title,
+            description: postData.embed.description,
+            imageUrl: postData.embed.imageUrl,
+            imageFilename: postData.embed.imageFilename,
+            images: postData.embed.images,
+          };
+        }
+
+        storage.createPost(importedBlogId, {
+          title: postData.title,
+          content: postData.content,
+          stub: postData.stub,
+          isDraft: false,
+          categoryId: categoryId,
+          tagIds: tagIds,
+          embed: embed,
+          syncId: postData.id,
+          createdAt: postData.createdAt,
+          updatedAt: postData.updatedAt,
+        });
+      }
+    });
+
+    it('should preserve createdAt for categories during import', () => {
+      // Read original category
+      const catIndex = JSON.parse(
+        fs.readFileSync(path.join(syncOutputDir, 'sync', 'categories', 'index.json'), 'utf8')
+      );
+      const originalCat = JSON.parse(
+        fs.readFileSync(path.join(syncOutputDir, 'sync', 'categories', `${catIndex.categories[0].id}.json`), 'utf8')
+      );
+
+      // Get imported category
+      const importedCat = storage.getCategoryBySyncId(importedBlogId, originalCat.id);
+
+      expect(importedCat).toBeDefined();
+      expect(importedCat.createdAt).toBe(originalCat.createdAt);
+    });
+
+    it('should preserve createdAt for tags during import', () => {
+      // Read original tag
+      const tagIndex = JSON.parse(
+        fs.readFileSync(path.join(syncOutputDir, 'sync', 'tags', 'index.json'), 'utf8')
+      );
+      const originalTag = JSON.parse(
+        fs.readFileSync(path.join(syncOutputDir, 'sync', 'tags', `${tagIndex.tags[0].id}.json`), 'utf8')
+      );
+
+      // Get imported tag
+      const importedTag = storage.getTagBySyncId(importedBlogId, originalTag.id);
+
+      expect(importedTag).toBeDefined();
+      expect(importedTag.createdAt).toBe(originalTag.createdAt);
+    });
+
+    it('should preserve createdAt for sidebar objects during import', () => {
+      // Read original sidebar
+      const sidebarIndex = JSON.parse(
+        fs.readFileSync(path.join(syncOutputDir, 'sync', 'sidebar', 'index.json'), 'utf8')
+      );
+      const originalSidebar = JSON.parse(
+        fs.readFileSync(path.join(syncOutputDir, 'sync', 'sidebar', `${sidebarIndex.sidebar[0].id}.json`), 'utf8')
+      );
+
+      // Get imported sidebar
+      const importedSidebar = storage.getSidebarObjectBySyncId(importedBlogId, originalSidebar.id);
+
+      expect(importedSidebar).toBeDefined();
+      expect(importedSidebar.createdAt).toBe(originalSidebar.createdAt);
+    });
+
+    it('should generate identical category JSON after import (hash parity)', async () => {
+      // Generate sync data for imported blog
+      const importedOutputDir = path.join(testDir, 'imported-output');
+      fs.mkdirSync(importedOutputDir, { recursive: true });
+
+      await generateSyncDirectory(storage, importedBlogId, importedOutputDir, null);
+
+      // Compare category hashes
+      const originalCatIndex = JSON.parse(
+        fs.readFileSync(path.join(syncOutputDir, 'sync', 'categories', 'index.json'), 'utf8')
+      );
+
+      for (const entry of originalCatIndex.categories) {
+        const originalContent = fs.readFileSync(
+          path.join(syncOutputDir, 'sync', 'categories', `${entry.id}.json`), 'utf8'
+        );
+        const importedContent = fs.readFileSync(
+          path.join(importedOutputDir, 'sync', 'categories', `${entry.id}.json`), 'utf8'
+        );
+
+        const originalHash = calculateHash(originalContent);
+        const importedHash = calculateHash(importedContent);
+
+        expect(importedHash).toBe(originalHash);
+      }
+    });
+
+    it('should generate identical tag JSON after import (hash parity)', async () => {
+      // Generate sync data for imported blog (use existing from previous test)
+      const importedOutputDir = path.join(testDir, 'imported-output');
+
+      // Compare tag hashes
+      const originalTagIndex = JSON.parse(
+        fs.readFileSync(path.join(syncOutputDir, 'sync', 'tags', 'index.json'), 'utf8')
+      );
+
+      for (const entry of originalTagIndex.tags) {
+        const originalContent = fs.readFileSync(
+          path.join(syncOutputDir, 'sync', 'tags', `${entry.id}.json`), 'utf8'
+        );
+        const importedContent = fs.readFileSync(
+          path.join(importedOutputDir, 'sync', 'tags', `${entry.id}.json`), 'utf8'
+        );
+
+        const originalHash = calculateHash(originalContent);
+        const importedHash = calculateHash(importedContent);
+
+        expect(importedHash).toBe(originalHash);
+      }
+    });
+
+    it('should generate identical sidebar JSON after import (hash parity)', async () => {
+      const importedOutputDir = path.join(testDir, 'imported-output');
+
+      // Compare sidebar hashes
+      const originalSidebarIndex = JSON.parse(
+        fs.readFileSync(path.join(syncOutputDir, 'sync', 'sidebar', 'index.json'), 'utf8')
+      );
+
+      for (const entry of originalSidebarIndex.sidebar) {
+        const originalContent = fs.readFileSync(
+          path.join(syncOutputDir, 'sync', 'sidebar', `${entry.id}.json`), 'utf8'
+        );
+        const importedContent = fs.readFileSync(
+          path.join(importedOutputDir, 'sync', 'sidebar', `${entry.id}.json`), 'utf8'
+        );
+
+        const originalHash = calculateHash(originalContent);
+        const importedHash = calculateHash(importedContent);
+
+        expect(importedHash).toBe(originalHash);
+      }
+    });
+
+    it('should generate identical post JSON after import (hash parity)', async () => {
+      const importedOutputDir = path.join(testDir, 'imported-output');
+
+      // Compare post hashes
+      const originalPostIndex = JSON.parse(
+        fs.readFileSync(path.join(syncOutputDir, 'sync', 'posts', 'index.json'), 'utf8')
+      );
+
+      for (const entry of originalPostIndex.posts) {
+        const originalContent = fs.readFileSync(
+          path.join(syncOutputDir, 'sync', 'posts', `${entry.id}.json`), 'utf8'
+        );
+        const importedContent = fs.readFileSync(
+          path.join(importedOutputDir, 'sync', 'posts', `${entry.id}.json`), 'utf8'
+        );
+
+        const originalHash = calculateHash(originalContent);
+        const importedHash = calculateHash(importedContent);
+
+        expect(importedHash).toBe(originalHash);
       }
     });
   });
