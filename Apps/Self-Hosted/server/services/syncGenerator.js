@@ -146,6 +146,8 @@ export async function generateSyncDirectory(storage, blogId, outputDir) {
       hash
     });
   }
+  // Sort by id for deterministic output
+  categoryIndex.categories.sort((a, b) => a.id.localeCompare(b.id));
   const categoryIndexJson = JSON.stringify(categoryIndex, null, 2);
   fs.writeFileSync(path.join(syncDir, 'categories', 'index.json'), categoryIndexJson);
   fileHashes['categories/index.json'] = calculateHash(categoryIndexJson);
@@ -171,6 +173,8 @@ export async function generateSyncDirectory(storage, blogId, outputDir) {
       hash
     });
   }
+  // Sort by id for deterministic output
+  tagIndex.tags.sort((a, b) => a.id.localeCompare(b.id));
   const tagIndexJson = JSON.stringify(tagIndex, null, 2);
   fs.writeFileSync(path.join(syncDir, 'tags', 'index.json'), tagIndexJson);
   fileHashes['tags/index.json'] = calculateHash(tagIndexJson);
@@ -202,6 +206,8 @@ export async function generateSyncDirectory(storage, blogId, outputDir) {
       modified: post.updatedAt || post.createdAt
     });
   }
+  // Sort by id for deterministic output
+  postIndex.posts.sort((a, b) => a.id.localeCompare(b.id));
   const postIndexJson = JSON.stringify(postIndex, null, 2);
   fs.writeFileSync(path.join(syncDir, 'posts', 'index.json'), postIndexJson);
   fileHashes['posts/index.json'] = calculateHash(postIndexJson);
@@ -216,7 +222,8 @@ export async function generateSyncDirectory(storage, blogId, outputDir) {
       title: sidebar.title,
       content: sidebar.content || null,
       order: sidebar.order,
-      links: sidebar.links ? sidebar.links.map(l => ({
+      // Sort links by order for deterministic output
+      links: sidebar.links ? [...sidebar.links].sort((a, b) => a.order - b.order).map(l => ({
         title: l.title,
         url: l.url,
         order: l.order
@@ -232,6 +239,8 @@ export async function generateSyncDirectory(storage, blogId, outputDir) {
       hash
     });
   }
+  // Sort by id for deterministic output
+  sidebarIndex.sidebar.sort((a, b) => a.id.localeCompare(b.id));
   const sidebarIndexJson = JSON.stringify(sidebarIndex, null, 2);
   fs.writeFileSync(path.join(syncDir, 'sidebar', 'index.json'), sidebarIndexJson);
   fileHashes['sidebar/index.json'] = calculateHash(sidebarIndexJson);
@@ -257,6 +266,8 @@ export async function generateSyncDirectory(storage, blogId, outputDir) {
       });
     }
   }
+  // Sort by filename for deterministic output
+  staticFilesIndex.files.sort((a, b) => a.filename.localeCompare(b.filename));
   const staticFilesIndexJson = JSON.stringify(staticFilesIndex, null, 2);
   fs.writeFileSync(path.join(syncDir, 'static-files', 'index.json'), staticFilesIndexJson);
   fileHashes['static-files/index.json'] = calculateHash(staticFilesIndexJson);
@@ -297,6 +308,8 @@ export async function generateSyncDirectory(storage, blogId, outputDir) {
       }
     }
   }
+  // Sort by filename for deterministic output
+  embedImagesIndex.images.sort((a, b) => a.filename.localeCompare(b.filename));
   const embedImagesIndexJson = JSON.stringify(embedImagesIndex, null, 2);
   fs.writeFileSync(path.join(syncDir, 'embed-images', 'index.json'), embedImagesIndexJson);
   fileHashes['embed-images/index.json'] = calculateHash(embedImagesIndexJson);
@@ -412,7 +425,8 @@ function createSyncPost(post, stableId, categoryIdMap, tagIdMap) {
         description: null,
         imageUrl: null,
         imageFilename: null,
-        images: (srcEmbed.images || []).map(img => ({
+        // Sort by order for deterministic output
+        images: [...(srcEmbed.images || [])].sort((a, b) => (a.order || 0) - (b.order || 0)).map(img => ({
           filename: img.filename,
           order: img.order || 0
         }))
@@ -426,8 +440,8 @@ function createSyncPost(post, stableId, categoryIdMap, tagIdMap) {
     syncCategoryId = categoryIdMap.get(post.categoryId) || post.categoryId;
   }
 
-  // Map tag IDs to stable sync IDs
-  const syncTagIds = (post.tagIds || []).map(tagId => tagIdMap.get(tagId) || tagId);
+  // Map tag IDs to stable sync IDs and sort for deterministic output
+  const syncTagIds = (post.tagIds || []).map(tagId => tagIdMap.get(tagId) || tagId).sort();
 
   return {
     id: stableId,

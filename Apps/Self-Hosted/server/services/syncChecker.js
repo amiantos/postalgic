@@ -18,6 +18,7 @@ export async function checkForChanges(storage, blogId, syncUrl) {
   // Get local sync state
   const syncConfig = storage.getSyncConfig(blogId);
   const localVersion = syncConfig.lastSyncedVersion || 0;
+  const localHashes = syncConfig.localFileHashes || {};
 
   // Fetch remote manifest
   const manifest = await fetchManifest(syncUrl);
@@ -37,25 +38,53 @@ export async function checkForChanges(storage, blogId, syncUrl) {
     };
   }
 
-  // Version differs - treat all remote files as potentially modified
-  // The incremental sync will use syncId to determine actual new vs update
+  // Compare individual file hashes to determine actual changes
+  const newFiles = [];
   const modifiedFiles = [];
+  const deletedFiles = [];
 
+  // Check each remote file against local hashes
   for (const [filePath, fileInfo] of Object.entries(remoteFiles)) {
-    modifiedFiles.push({
-      path: filePath,
-      hash: fileInfo.hash,
-      size: fileInfo.size
-    });
+    const localHash = localHashes[filePath];
+
+    if (!localHash) {
+      // File doesn't exist locally - it's new
+      newFiles.push({
+        path: filePath,
+        hash: fileInfo.hash,
+        size: fileInfo.size
+      });
+    } else if (localHash !== fileInfo.hash) {
+      // File exists but hash differs - it's modified
+      modifiedFiles.push({
+        path: filePath,
+        hash: fileInfo.hash,
+        oldHash: localHash,
+        size: fileInfo.size
+      });
+    }
+    // If hashes match, file is unchanged - don't include it
   }
 
+  // Check for deleted files (exist locally but not in remote)
+  for (const [filePath, localHash] of Object.entries(localHashes)) {
+    if (!remoteFiles[filePath]) {
+      deletedFiles.push({
+        path: filePath,
+        hash: localHash
+      });
+    }
+  }
+
+  const hasChanges = newFiles.length > 0 || modifiedFiles.length > 0 || deletedFiles.length > 0;
+
   return {
-    hasChanges: modifiedFiles.length > 0,
+    hasChanges,
     localVersion,
     remoteVersion,
-    newFiles: [],
+    newFiles,
     modifiedFiles,
-    deletedFiles: [],
+    deletedFiles,
     manifest
   };
 }

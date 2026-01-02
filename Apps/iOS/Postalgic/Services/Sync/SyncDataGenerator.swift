@@ -228,6 +228,40 @@ class SyncDataGenerator {
         return formatter
     }()
 
+    /// Calculate the latest modification date from all content entities.
+    /// Returns the most recent updatedAt/createdAt from posts, categories, tags.
+    private static func getLatestModificationDate(blog: Blog) -> Date {
+        var latest = Date(timeIntervalSince1970: 0)
+
+        // Check posts
+        for post in blog.posts where !post.isDraft {
+            if post.createdAt > latest {
+                latest = post.createdAt
+            }
+        }
+
+        // Check categories
+        for category in blog.categories {
+            if category.createdAt > latest {
+                latest = category.createdAt
+            }
+        }
+
+        // Check tags
+        for tag in blog.tags {
+            if tag.createdAt > latest {
+                latest = tag.createdAt
+            }
+        }
+
+        // If no content exists, return current date as fallback
+        if latest == Date(timeIntervalSince1970: 0) {
+            return Date()
+        }
+
+        return latest
+    }
+
     // MARK: - Main Generation Method
 
     /// Generates the sync directory for a blog
@@ -328,7 +362,8 @@ class SyncDataGenerator {
             ))
         }
 
-        let categoryIndex = SyncCategoryIndex(categories: categoryIndexEntries)
+        // Sort by id for deterministic output
+        let categoryIndex = SyncCategoryIndex(categories: categoryIndexEntries.sorted { $0.id < $1.id })
         let categoryIndexData = try encoder.encode(categoryIndex)
         let categoryIndexPath = syncDirectory.appendingPathComponent("categories/index.json")
         try categoryIndexData.write(to: categoryIndexPath)
@@ -359,7 +394,8 @@ class SyncDataGenerator {
             ))
         }
 
-        let tagIndex = SyncTagIndex(tags: tagIndexEntries)
+        // Sort by id for deterministic output
+        let tagIndex = SyncTagIndex(tags: tagIndexEntries.sorted { $0.id < $1.id })
         let tagIndexData = try encoder.encode(tagIndex)
         let tagIndexPath = syncDirectory.appendingPathComponent("tags/index.json")
         try tagIndexData.write(to: tagIndexPath)
@@ -394,7 +430,8 @@ class SyncDataGenerator {
             }
         }
 
-        let postIndex = SyncPostIndex(posts: postIndexEntries)
+        // Sort by id for deterministic output
+        let postIndex = SyncPostIndex(posts: postIndexEntries.sorted { $0.id < $1.id })
         let postIndexData = try encoder.encode(postIndex)
         let postIndexPath = syncDirectory.appendingPathComponent("posts/index.json")
         try postIndexData.write(to: postIndexPath)
@@ -434,7 +471,8 @@ class SyncDataGenerator {
             ))
         }
 
-        let sidebarIndex = SyncSidebarIndex(sidebar: sidebarIndexEntries)
+        // Sort by id for deterministic output
+        let sidebarIndex = SyncSidebarIndex(sidebar: sidebarIndexEntries.sorted { $0.id < $1.id })
         let sidebarIndexData = try encoder.encode(sidebarIndex)
         let sidebarIndexPath = syncDirectory.appendingPathComponent("sidebar/index.json")
         try sidebarIndexData.write(to: sidebarIndexPath)
@@ -461,7 +499,8 @@ class SyncDataGenerator {
             ))
         }
 
-        let staticFilesIndex = SyncStaticFilesIndex(files: staticFileEntries)
+        // Sort by filename for deterministic output
+        let staticFilesIndex = SyncStaticFilesIndex(files: staticFileEntries.sorted { $0.filename < $1.filename })
         let staticFilesIndexData = try encoder.encode(staticFilesIndex)
         let staticFilesIndexPath = syncDirectory.appendingPathComponent("static-files/index.json")
         try staticFilesIndexData.write(to: staticFilesIndexPath)
@@ -505,7 +544,11 @@ class SyncDataGenerator {
             }
         }
 
-        let embedImagesIndex = EmbedImagesIndex(images: embedImageHashes.map { EmbedImagesIndex.ImageEntry(filename: $0.key, hash: $0.value) })
+        // Sort by filename for deterministic output (dictionary iteration order is non-deterministic)
+        let sortedEmbedImages = embedImageHashes.keys.sorted().map { filename in
+            EmbedImagesIndex.ImageEntry(filename: filename, hash: embedImageHashes[filename]!)
+        }
+        let embedImagesIndex = EmbedImagesIndex(images: sortedEmbedImages)
         let embedImagesIndexData = try encoder.encode(embedImagesIndex)
         let embedImagesIndexPath = syncDirectory.appendingPathComponent("embed-images/index.json")
         try embedImagesIndexData.write(to: embedImagesIndexPath)
@@ -556,7 +599,7 @@ class SyncDataGenerator {
         let manifest = SyncManifest(
             version: "1.0",
             contentVersion: contentVersion,
-            lastModified: isoFormatter.string(from: Date()),
+            lastModified: isoFormatter.string(from: getLatestModificationDate(blog: blog)),
             appSource: "ios",
             appVersion: Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "unknown",
             blogName: blog.name,
@@ -588,9 +631,10 @@ class SyncDataGenerator {
         }
 
         // Get stable tag IDs (use the ID map to translate)
+        // Sort tag IDs for deterministic output
         let tagIds = post.tags.map { tag in
             tagIdMap[tag.persistentModelID] ?? getStableSyncId(for: tag)
-        }
+        }.sorted()
 
         // Build embed if exists
         var syncEmbed: SyncEmbed? = nil

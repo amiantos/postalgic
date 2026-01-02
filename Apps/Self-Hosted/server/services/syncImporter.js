@@ -95,8 +95,14 @@ export async function importBlog(storage, baseUrl, password, onProgress = () => 
   // Use the ID from the created blog
   const blogId = blog.id;
 
-  // Update sync version
-  storage.updateSyncVersion(blogId, manifest.contentVersion || manifest.syncVersion);
+  // Update sync version with file hashes from manifest
+  const fileHashes = {};
+  if (manifest.files) {
+    for (const [path, fileInfo] of Object.entries(manifest.files)) {
+      fileHashes[path] = fileInfo.hash;
+    }
+  }
+  storage.updateSyncVersion(blogId, manifest.contentVersion || manifest.syncVersion, fileHashes);
 
   // Maps for ID references
   const categoryMap = new Map();

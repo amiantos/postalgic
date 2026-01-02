@@ -368,8 +368,15 @@ export async function pullChanges(storage, blogId, syncUrl, password, onProgress
     appliedChanges++;
   }
 
-  // Step 9: Update sync state
-  storage.updateSyncVersion(blogId, manifest.contentVersion || manifest.syncVersion);
+  // Step 9: Update sync state with file hashes from manifest
+  // Extract just the hash values from manifest.files (which contains {hash, size, modified})
+  const fileHashes = {};
+  if (manifest.files) {
+    for (const [path, fileInfo] of Object.entries(manifest.files)) {
+      fileHashes[path] = fileInfo.hash;
+    }
+  }
+  storage.updateSyncVersion(blogId, manifest.contentVersion || manifest.syncVersion, fileHashes);
 
   onProgress({ step: 'Sync complete!', phase: 'complete', progress: 1 });
 

@@ -1019,14 +1019,26 @@ class Storage {
     if (!row) {
       return {
         lastSyncedVersion: 0,
-        lastSyncedAt: null
+        lastSyncedAt: null,
+        localFileHashes: {}
       };
+    }
+
+    // Parse local_file_hashes JSON
+    let localFileHashes = {};
+    if (row.local_file_hashes) {
+      try {
+        localFileHashes = JSON.parse(row.local_file_hashes);
+      } catch (e) {
+        console.error('[Storage] Failed to parse local_file_hashes:', e);
+      }
     }
 
     return {
       blogId: row.blog_id,
       lastSyncedVersion: row.last_synced_version || 0,
       lastSyncedAt: row.last_synced_at,
+      localFileHashes,
       createdAt: row.created_at
     };
   }
@@ -1048,19 +1060,20 @@ class Storage {
     );
   }
 
-  updateSyncVersion(blogId, version) {
+  updateSyncVersion(blogId, version, fileHashes = null) {
     const db = getDatabase();
 
     const stmt = db.prepare(`
       INSERT OR REPLACE INTO sync_config
         (blog_id, sync_enabled, sync_password, last_synced_version, last_synced_at, local_file_hashes, local_content_hashes, encryption_salt, created_at)
-      VALUES (?, 1, NULL, ?, ?, '{}', '{}', NULL, COALESCE((SELECT created_at FROM sync_config WHERE blog_id = ?), datetime('now')))
+      VALUES (?, 1, NULL, ?, ?, ?, '{}', NULL, COALESCE((SELECT created_at FROM sync_config WHERE blog_id = ?), datetime('now')))
     `);
 
     stmt.run(
       blogId,
       version,
       new Date().toISOString(),
+      fileHashes ? JSON.stringify(fileHashes) : '{}',
       blogId
     );
   }
