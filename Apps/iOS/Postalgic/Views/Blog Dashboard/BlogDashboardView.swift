@@ -229,9 +229,10 @@ struct BlogDashboardView: View {
     /// - Blog has a URL configured
     /// - This blog hasn't been checked this session yet
     private func checkForSyncChangesIfNeeded() {
+        let blogIdString = String(describing: blog.id)
         guard blog.syncEnabled,
               !blog.url.isEmpty,
-              !SyncSessionManager.shared.hasCheckedThisSession(blogId: blog.id.uuidString)
+              !SyncSessionManager.shared.hasCheckedThisSession(blogId: blogIdString)
         else { return }
 
         isCheckingSyncOnLoad = true
@@ -241,7 +242,7 @@ struct BlogDashboardView: View {
                 let result = try await SyncChecker.checkForChanges(blog: blog)
 
                 await MainActor.run {
-                    SyncSessionManager.shared.markAsChecked(blogId: blog.id.uuidString)
+                    SyncSessionManager.shared.markAsChecked(blogId: blogIdString)
                     isCheckingSyncOnLoad = false
 
                     if result.hasChanges {

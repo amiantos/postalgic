@@ -580,7 +580,7 @@ struct PublishBlogView: View {
                         modelContext: modelContext
                     ) { progress in
                         Task { @MainActor in
-                            statusMessage = "Syncing: \(progress.description)"
+                            statusMessage = "Syncing: \(progress.step)"
                         }
                     }
                 }
