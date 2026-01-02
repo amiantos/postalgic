@@ -15,10 +15,22 @@ A self-hosted web version of the Postalgic static blog generator. Create and man
 
 ## Quick Start
 
-### Using Docker (Recommended)
+### Using Pre-built Docker Image (Recommended)
 
 ```bash
-# Clone and navigate to the directory
+# Download the docker-compose file
+curl -O https://raw.githubusercontent.com/amiantos/postalgic/main/docker-compose.yml
+
+# Run it
+docker compose up -d
+
+# Access the app at http://localhost:8010
+```
+
+### Building Docker Image Locally
+
+```bash
+# Clone the repo and navigate to the directory
 cd Apps/Self-Hosted
 
 # Build and run with Docker Compose

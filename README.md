@@ -15,6 +15,23 @@ Build anywhere. Publish anywhere. Sync everywhere.
   - [x] Any Git Repository
 - [x] Sync across devices through your published site—no central server involved
 
+# Self-Hosted
+
+Run Postalgic on your own server with Docker:
+
+```bash
+curl -O https://raw.githubusercontent.com/amiantos/postalgic/main/docker-compose.yml
+docker compose up -d
+```
+
+Access the app at http://localhost:8010
+
+See [Apps/Self-Hosted](Apps/Self-Hosted/) for more options including development setup.
+
+# iOS
+
+The iOS app is available on the App Store (coming soon) or you can build it yourself from [Apps/iOS](Apps/iOS/).
+
 # Example Blogs
 - https://dev.postalgic.app
 - https://ihavebeenfloated.org

@@ -1,0 +1,15 @@
+# Postalgic Self-Hosted
+# Download this file and run: docker compose up -d
+# Access the app at http://localhost:8010
+
+services:
+  postalgic:
+    image: ghcr.io/amiantos/postalgic-sh:latest
+    ports:
+      - "8010:8010"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - NODE_ENV=production
+      - PORT=8010
+    restart: unless-stopped
