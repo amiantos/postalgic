@@ -371,7 +371,13 @@ struct BlogSettingsView: View {
 
                 // Generate the site without publishing
                 let generator = StaticSiteGenerator(blog: blog, modelContext: modelContext)
-                try await generator.generateSiteToDirectory(siteDirectory)
+                let fileHashes = try await generator.generateSiteToDirectory(siteDirectory)
+
+                // Write hashes to .postalgic/hashes.json for comparison
+                let postalgicDir = siteDirectory.appendingPathComponent(".postalgic")
+                try FileManager.default.createDirectory(at: postalgicDir, withIntermediateDirectories: true)
+                let hashesData = try JSONEncoder().encode(["fileHashes": fileHashes])
+                try hashesData.write(to: postalgicDir.appendingPathComponent("hashes.json"))
 
                 // Create a zip file
                 let zipURL = tempDirectory.appendingPathComponent("postalgic-debug-\(blog.id.uuidString.prefix(8)).zip")

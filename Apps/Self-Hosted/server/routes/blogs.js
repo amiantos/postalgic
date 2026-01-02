@@ -158,10 +158,18 @@ router.get('/:id/debug-export', async (req, res) => {
     }
 
     // Generate the full site (includes sync directory)
-    await generateSite(storage, req.params.id);
+    const result = await generateSite(storage, req.params.id);
 
     // Get the generated site directory
     const siteDir = storage.getGeneratedSiteDir(req.params.id);
+
+    // Write the hashes file to .postalgic/hashes.json for comparison
+    const postalgicDir = path.join(siteDir, '.postalgic');
+    fs.mkdirSync(postalgicDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(postalgicDir, 'hashes.json'),
+      JSON.stringify({ fileHashes: result.fileHashes }, null, 2)
+    );
 
     // Create temp directory for the zip
     const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'postalgic-debug-'));

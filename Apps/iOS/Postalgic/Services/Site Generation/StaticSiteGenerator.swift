@@ -321,8 +321,9 @@ class StaticSiteGenerator {
 
     /// Generates the site files to a directory without publishing
     /// - Parameter outputDirectory: The directory to write site files to
+    /// - Returns: Dictionary of file paths to their SHA256 hashes
     /// - Throws: SiteGeneratorError
-    func generateSiteToDirectory(_ outputDirectory: URL) async throws {
+    func generateSiteToDirectory(_ outputDirectory: URL) async throws -> [String: String] {
         self.siteDirectory = outputDirectory
 
         print("📝 Generating site in \(outputDirectory.path)")
@@ -374,6 +375,9 @@ class StaticSiteGenerator {
         } catch {
             print("⚠️ Failed to generate sync data: \(error)")
         }
+
+        // Calculate and return file hashes
+        return try calculateFileHashes(in: outputDirectory)
     }
 
     /// Generates a static site for the blog
