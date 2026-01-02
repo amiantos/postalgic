@@ -707,6 +707,12 @@ final class Post {
         formatter.locale = Locale(identifier: "en_US")
         formatter.dateStyle = .long
         formatter.timeStyle = .short
+        // Use blog's timezone for display
+        if let timezone = blog?.timezone, let tz = TimeZone(identifier: timezone) {
+            formatter.timeZone = tz
+        } else {
+            formatter.timeZone = TimeZone(identifier: "UTC")
+        }
         return formatter.string(from: createdAt)
     }
 
@@ -715,19 +721,38 @@ final class Post {
         formatter.locale = Locale(identifier: "en_US")
         formatter.dateStyle = .long
         formatter.timeStyle = .none
+        // Use blog's timezone for display
+        if let timezone = blog?.timezone, let tz = TimeZone(identifier: timezone) {
+            formatter.timeZone = tz
+        } else {
+            formatter.timeZone = TimeZone(identifier: "UTC")
+        }
         return formatter.string(from: createdAt)
     }
 
     /// Returns the date-based portion of the URL path (without the stub)
+    /// Uses the blog's timezone for consistent cross-platform output
     var dateUrlPath: String {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy/MM/dd"
+        // Use blog's timezone for URL path generation
+        if let timezone = blog?.timezone, let tz = TimeZone(identifier: timezone) {
+            formatter.timeZone = tz
+        } else {
+            formatter.timeZone = TimeZone(identifier: "UTC")
+        }
         return formatter.string(from: createdAt)
     }
-    
+
     var dateTimeUrlPath: String {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy/MM/dd/HHmmss"
+        // Use blog's timezone for URL path generation
+        if let timezone = blog?.timezone, let tz = TimeZone(identifier: timezone) {
+            formatter.timeZone = tz
+        } else {
+            formatter.timeZone = TimeZone(identifier: "UTC")
+        }
         return formatter.string(from: createdAt)
     }
     

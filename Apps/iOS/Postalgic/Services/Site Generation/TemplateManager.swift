@@ -53,8 +53,14 @@ class TemplateManager {
             <meta property="og:description" content="{{#blogTagline}}{{blogTagline}}{{/blogTagline}}{{^blogTagline}}Posts from {{blogName}}{{/blogTagline}}">
             <meta property="og:type" content="website">
             <meta property="og:url" content="{{blogUrl}}">
-
+            {{#hasSocialShareImage}}
+            <meta property="og:image" content="{{{blogUrl}}}/social-share.png">
+            <meta name="twitter:image" content="{{{blogUrl}}}/social-share.png">
+            <meta property="twitter:card" content="summary_large_image">
+            {{/hasSocialShareImage}}
+            {{^hasSocialShareImage}}
             <meta property="twitter:card" content="summary">
+            {{/hasSocialShareImage}}
             <meta property="twitter:title" content="{{pageTitle}}">
             <meta property="twitter:description" content="{{#blogTagline}}{{blogTagline}}{{/blogTagline}}{{^blogTagline}}Posts from {{blogName}}{{/blogTagline}}">
             {{/hasCustomMeta}}

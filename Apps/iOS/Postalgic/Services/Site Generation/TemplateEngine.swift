@@ -38,6 +38,9 @@ class TemplateEngine {
         let hasTags = !Set(publishedPosts.flatMap { $0.tags }).isEmpty
         let hasCategories = !Set(publishedPosts.compactMap { $0.category }).isEmpty
 
+        // Check if social share image exists
+        let hasSocialShareImage = blog.socialShareImage != nil
+
         var context: [String: Any] = [
             "blogName": blog.name,
             "blogUrl": blog.url,
@@ -50,7 +53,8 @@ class TemplateEngine {
             "mediumShade": blog.mediumShade ?? "#a0aec0",
             "darkShade": blog.darkShade ?? "#4a5568",
             "hasTags": hasTags,
-            "hasCategories": hasCategories
+            "hasCategories": hasCategories,
+            "hasSocialShareImage": hasSocialShareImage
         ]
 
         // Add optional values only if they exist
@@ -117,29 +121,26 @@ class TemplateEngine {
     /// - Returns: HTML meta tags for special static files
     private func generateStaticFilesHead() -> String {
         var headContent = "<meta name=\"apple-mobile-web-app-title\" content=\"\(blog.name)\"/>"
-        
-        // Add favicon if it exists - generate multiple sizes following WordPress pattern
-        if let favicon = blog.favicon {
-            if favicon.isImage {
-                // Generate multiple favicon link tags for different sizes
-                headContent += "<link rel=\"icon\" href=\"/favicon-32x32.png\" sizes=\"32x32\" type=\"image/png\">"
-                headContent += "\n<link rel=\"icon\" href=\"/favicon-192x192.png\" sizes=\"192x192\" type=\"image/png\">"
-                headContent += "\n<link rel=\"apple-touch-icon\" href=\"/apple-touch-icon.png\" sizes=\"180x180\">"
-            } else {
-                // For ICO files, use the original file
-                headContent += "<link rel=\"icon\" href=\"/\(favicon.filename)\" type=\"\(favicon.mimeType)\" sizes=\"any\">"
-            }
+
+        // Always add favicon links for cross-platform consistency
+        // These may point to default favicons if no custom one is set
+        if let favicon = blog.favicon, !favicon.isImage {
+            // For ICO files, use the original file
+            headContent += "<link rel=\"icon\" href=\"/\(favicon.filename)\" type=\"\(favicon.mimeType)\" sizes=\"any\">"
+        } else {
+            // Generate multiple favicon link tags for different sizes (matches self-hosted)
+            headContent += "<link rel=\"icon\" href=\"/favicon-32x32.png\" sizes=\"32x32\" type=\"image/png\">"
+            headContent += "\n<link rel=\"icon\" href=\"/favicon-192x192.png\" sizes=\"192x192\" type=\"image/png\">"
+            headContent += "\n<link rel=\"apple-touch-icon\" href=\"/apple-touch-icon.png\" sizes=\"180x180\">"
         }
-        
+
         // Add social share image meta tags if it exists
         if let socialShareImage = blog.socialShareImage {
-            if !headContent.isEmpty {
-                headContent += "\n"
-            }
+            headContent += "\n"
             headContent += "<meta property=\"og:image\" content=\"\(blog.url.hasSuffix("/") ? blog.url : blog.url + "/")\(socialShareImage.filename)\">"
             headContent += "\n<meta name=\"twitter:image\" content=\"\(blog.url.hasSuffix("/") ? blog.url : blog.url + "/")\(socialShareImage.filename)\">"
         }
-        
+
         return headContent
     }
     
@@ -220,6 +221,9 @@ class TemplateEngine {
         // Get the full URL for the post
         let postUrl = "\(blog.url)/\(post.urlPath)"
 
+        // Determine twitter card type based on social share image
+        let twitterCardType = blog.socialShareImage != nil ? "summary_large_image" : "summary"
+
         // Create comprehensive meta tags for SEO and social sharing
         let customHead = """
         <!-- Primary Meta Tags -->
@@ -232,7 +236,7 @@ class TemplateEngine {
         <meta property="og:description" content="\(escapedDescription)">
 
         <!-- Twitter -->
-        <meta property="twitter:card" content="summary_large_image">
+        <meta property="twitter:card" content="\(twitterCardType)">
         <meta property="twitter:url" content="\(postUrl)">
         <meta property="twitter:title" content="\(escapedTitle)">
         <meta property="twitter:description" content="\(escapedDescription)">
@@ -252,7 +256,11 @@ class TemplateEngine {
         context["years"] = TemplateDataConverter.createArchiveData(from: posts)
         
         let content = archivesTemplate.render(context, library: templateManager.getLibrary())
-        return try renderLayout(content: content, pageTitle: "Archives - \(blog.name)")
+        return try renderLayout(
+            content: content,
+            pageTitle: "Archives - \(blog.name)",
+            customHead: "<link rel=\"sitemap\" type=\"application/xml\" title=\"Sitemap\" href=\"/sitemap.xml\" />"
+        )
     }
     
     /// Renders a monthly archive page
@@ -302,7 +310,11 @@ class TemplateEngine {
         }
         
         let content = monthlyArchiveTemplate.render(context, library: templateManager.getLibrary())
-        return try renderLayout(content: content, pageTitle: "\(monthName) \(year) - Archives - \(blog.name)")
+        return try renderLayout(
+            content: content,
+            pageTitle: "\(monthName) \(year) - \(blog.name)",
+            customHead: "<link rel=\"sitemap\" type=\"application/xml\" title=\"Sitemap\" href=\"/sitemap.xml\" />"
+        )
     }
     
     /// Renders the tags index page
@@ -318,7 +330,11 @@ class TemplateEngine {
         }
         
         let content = tagsTemplate.render(context, library: templateManager.getLibrary())
-        return try renderLayout(content: content, pageTitle: "Tags - \(blog.name)")
+        return try renderLayout(
+            content: content,
+            pageTitle: "Tags - \(blog.name)",
+            customHead: "<link rel=\"sitemap\" type=\"application/xml\" title=\"Sitemap\" href=\"/sitemap.xml\" />"
+        )
     }
     
     /// Renders a single tag page
@@ -381,7 +397,11 @@ class TemplateEngine {
         }
         
         let content = categoriesTemplate.render(context, library: templateManager.getLibrary())
-        return try renderLayout(content: content, pageTitle: "Categories - \(blog.name)")
+        return try renderLayout(
+            content: content,
+            pageTitle: "Categories - \(blog.name)",
+            customHead: "<link rel=\"sitemap\" type=\"application/xml\" title=\"Sitemap\" href=\"/sitemap.xml\" />"
+        )
     }
     
     /// Renders a single category page
