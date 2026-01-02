@@ -2,6 +2,44 @@ import SwiftUI
 import UIKit
 import SwiftData
 
+/// Captures the initial state of a post for dirty tracking
+private struct PostSnapshot {
+    let title: String?
+    let content: String
+    let createdAt: Date
+    let categoryId: String?
+    let tagIds: Set<String>
+    let hasEmbed: Bool
+    let embedType: String?
+    let embedUrl: String?
+    let embedImageCount: Int
+
+    init(post: Post) {
+        self.title = post.title
+        self.content = post.content
+        self.createdAt = post.createdAt
+        self.categoryId = post.category?.syncId
+        self.tagIds = Set(post.tags.compactMap { $0.syncId })
+        self.hasEmbed = post.embed != nil
+        self.embedType = post.embed?.type
+        self.embedUrl = post.embed?.url
+        self.embedImageCount = post.embed?.images.count ?? 0
+    }
+
+    func hasChanged(from post: Post) -> Bool {
+        if title != post.title { return true }
+        if content != post.content { return true }
+        if createdAt != post.createdAt { return true }
+        if categoryId != post.category?.syncId { return true }
+        if tagIds != Set(post.tags.compactMap { $0.syncId }) { return true }
+        if hasEmbed != (post.embed != nil) { return true }
+        if embedType != post.embed?.type { return true }
+        if embedUrl != post.embed?.url { return true }
+        if embedImageCount != (post.embed?.images.count ?? 0) { return true }
+        return false
+    }
+}
+
 struct PostView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
@@ -24,10 +62,15 @@ struct PostView: View {
     @State private var showingDatePicker: Bool = false
     @State private var selectedDate: Date
 
+    // For dirty state tracking
+    @State private var initialSnapshot: PostSnapshot?
+    private let isNewPost: Bool
+
     init(blog: Blog) {
         self.blog = blog
         self.post = Post(content: "", isDraft: true)
         self._selectedDate = State(initialValue: Date())
+        self.isNewPost = true
     }
 
     init(post: Post) {
@@ -35,6 +78,7 @@ struct PostView: View {
         self.blog = blog
         self.post = post
         self._selectedDate = State(initialValue: post.createdAt)
+        self.isNewPost = false
     }
 
     // Computed properties for embed button label
@@ -151,7 +195,7 @@ struct PostView: View {
                         }
                     } else {
                         Button("Save & Close") {
-                            try? modelContext.save()
+                            savePost()
                             dismiss()
                         }
                     }
@@ -179,7 +223,7 @@ struct PostView: View {
                             if !post.content.isEmpty || (post.title != nil && !post.title!.isEmpty) {
                                 post.regenerateStub()
                             }
-                            try? modelContext.save()
+                            savePost()
                             dismiss()
                         }
                     }
@@ -193,7 +237,7 @@ struct PostView: View {
                         }
                         post.isDraft = false
                         post.regenerateStub()
-                        try? modelContext.save()
+                        savePost()
                         showingPublishView = true
                     }
                 }
@@ -237,7 +281,7 @@ struct PostView: View {
                     if let oldEmbed = post.embed {
                         modelContext.delete(oldEmbed)
                         post.embed = nil
-                        try? modelContext.save()
+                        savePost()
                     }
                 }
                 Button("Cancel", role: .cancel) {}
@@ -284,7 +328,7 @@ struct PostView: View {
                             Button("Save") {
                                 // Update the post's date
                                 post.createdAt = selectedDate
-                                try? modelContext.save()
+                                savePost()
                                 showingDatePicker = false
                             }
                         }
@@ -292,9 +336,26 @@ struct PostView: View {
                     .navigationTitle("Change Post Date")
                 }
             }
+            .onAppear {
+                // Capture initial state for dirty tracking (only for existing posts)
+                if !isNewPost && initialSnapshot == nil {
+                    initialSnapshot = PostSnapshot(post: post)
+                }
+            }
         }
     }
-    
+
+    /// Saves the post and updates `updatedAt` if the post has changed
+    private func savePost() {
+        // For existing posts, check if content has changed
+        if !isNewPost, let snapshot = initialSnapshot {
+            if snapshot.hasChanged(from: post) {
+                post.updatedAt = Date()
+            }
+        }
+        try? modelContext.save()
+    }
+
     func handleShowLinkPrompt(selectedText: String?, selectedRange: NSRange?) {
         if let text = selectedText, !text.isEmpty {
             // Text is selected

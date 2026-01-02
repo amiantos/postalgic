@@ -593,6 +593,7 @@ final class Post {
         }
     }
     var createdAt: Date
+    var updatedAt: Date?  // Tracks when the post was last modified
     var stub: String?
     var syncId: String?  // Remote sync ID for incremental sync matching
 

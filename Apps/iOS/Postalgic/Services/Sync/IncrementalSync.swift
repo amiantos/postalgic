@@ -495,6 +495,11 @@ class IncrementalSync {
             post.createdAt = createdAt
         }
 
+        // Parse updated date
+        if let updatedAt = parseDate(syncPost.updatedAt) {
+            post.updatedAt = updatedAt
+        }
+
         // Set category
         if let categoryId = syncPost.categoryId, let category = categoryMap[categoryId] {
             post.category = category

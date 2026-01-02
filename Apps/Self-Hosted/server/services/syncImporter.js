@@ -293,7 +293,8 @@ function createPost(storage, blogId, syncPost, categoryMap, tagMap, isDraft) {
     tagIds: tagIds,
     embed: embed,
     syncId: syncPost.id,  // Store remote ID for incremental sync matching
-    createdAt: syncPost.createdAt
+    createdAt: syncPost.createdAt,
+    updatedAt: syncPost.updatedAt
   });
 
   return post;

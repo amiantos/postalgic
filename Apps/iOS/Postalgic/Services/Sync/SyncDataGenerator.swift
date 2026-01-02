@@ -233,10 +233,11 @@ class SyncDataGenerator {
     private static func getLatestModificationDate(blog: Blog) -> Date {
         var latest = Date(timeIntervalSince1970: 0)
 
-        // Check posts
+        // Check posts (use updatedAt if available, otherwise createdAt)
         for post in blog.posts where !post.isDraft {
-            if post.createdAt > latest {
-                latest = post.createdAt
+            let postDate = post.updatedAt ?? post.createdAt
+            if postDate > latest {
+                latest = postDate
             }
         }
 
@@ -422,7 +423,7 @@ class SyncDataGenerator {
                     id: stableId,
                     stub: post.stub,
                     hash: hash,
-                    modified: isoFormatter.string(from: post.createdAt)
+                    modified: isoFormatter.string(from: post.updatedAt ?? post.createdAt)
                 ))
             } catch {
                 print("⚠️ Error generating sync data for post \(post.stub ?? stableId): \(error)")
@@ -672,7 +673,7 @@ class SyncDataGenerator {
             content: post.content,
             stub: post.stub,
             createdAt: isoFormatter.string(from: post.createdAt),
-            updatedAt: isoFormatter.string(from: post.createdAt), // TODO: Add updatedAt to Post model
+            updatedAt: isoFormatter.string(from: post.updatedAt ?? post.createdAt),
             categoryId: categoryId,
             tagIds: tagIds,
             embed: syncEmbed

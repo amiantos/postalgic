@@ -304,7 +304,7 @@ class Storage {
       embedData,
       postData.syncId || null,
       postData.createdAt || now,
-      now
+      postData.updatedAt || now
     );
 
     // Handle tags
@@ -365,7 +365,7 @@ class Storage {
       embedPosition,
       embedData,
       postData.createdAt !== undefined ? postData.createdAt : existing.createdAt,
-      now,
+      postData.updatedAt !== undefined ? postData.updatedAt : now,
       postId,
       blogId
     );

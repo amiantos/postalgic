@@ -443,7 +443,8 @@ function createOrUpdatePost(storage, blogId, syncPost, categoryMap, tagMap, isDr
       isDraft: isDraft,
       categoryId: categoryId,
       tagIds: tagIds,
-      embed: embed
+      embed: embed,
+      updatedAt: syncPost.updatedAt
     });
   } else {
     // Create new post
@@ -456,7 +457,8 @@ function createOrUpdatePost(storage, blogId, syncPost, categoryMap, tagMap, isDr
       tagIds: tagIds,
       embed: embed,
       syncId: syncPost.id,
-      createdAt: syncPost.createdAt
+      createdAt: syncPost.createdAt,
+      updatedAt: syncPost.updatedAt
     });
   }
 }
