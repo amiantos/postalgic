@@ -252,6 +252,8 @@ export const useBlogStore = defineStore('blog', () => {
     tags.value = [];
     sidebarObjects.value = [];
     staticFiles.value = [];
+    // Clear error state to prevent stale errors from affecting other views
+    error.value = null;
   }
 
   return {

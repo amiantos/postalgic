@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, onBeforeUnmount } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useBlogStore } from '@/stores/blog';
 import { marked } from 'marked';
@@ -39,6 +39,14 @@ watch([searchText, sortOption], () => {
 // Fetch posts when filter changes (immediate)
 watch(filter, () => {
   fetchPosts();
+});
+
+// Clean up timeout when component unmounts to prevent stale API calls
+onBeforeUnmount(() => {
+  if (searchTimeout) {
+    clearTimeout(searchTimeout);
+    searchTimeout = null;
+  }
 });
 
 const effectiveSearchText = computed(() => {

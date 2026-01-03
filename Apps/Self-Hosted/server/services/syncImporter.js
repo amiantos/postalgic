@@ -6,6 +6,9 @@
 import fs from 'fs';
 import path from 'path';
 
+// Timeout for outbound fetch requests (10 seconds)
+const FETCH_TIMEOUT_MS = 10000;
+
 /**
  * Fetches the manifest from a sync URL
  * @param {string} baseUrl - The base URL of the published site
@@ -14,20 +17,34 @@ import path from 'path';
 export async function fetchManifest(baseUrl) {
   const manifestUrl = `${normalizeUrl(baseUrl)}/sync/manifest.json`;
 
-  const response = await fetch(manifestUrl, {
-    headers: {
-      'Cache-Control': 'no-cache'
-    }
-  });
+  // Use AbortController to implement timeout
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
 
-  if (!response.ok) {
-    if (response.status === 404) {
-      throw new Error('Sync manifest not found. Make sure the site has sync enabled.');
+  try {
+    const response = await fetch(manifestUrl, {
+      headers: {
+        'Cache-Control': 'no-cache'
+      },
+      signal: controller.signal
+    });
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        throw new Error('Sync manifest not found. Make sure the site has sync enabled.');
+      }
+      throw new Error(`Failed to fetch manifest: HTTP ${response.status}`);
     }
-    throw new Error(`Failed to fetch manifest: HTTP ${response.status}`);
+
+    return await response.json();
+  } catch (error) {
+    if (error.name === 'AbortError') {
+      throw new Error('Sync check timed out. Remote server may be unreachable.');
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
   }
-
-  return await response.json();
 }
 
 /**
@@ -36,18 +53,31 @@ export async function fetchManifest(baseUrl) {
  * @returns {Promise<Buffer>} - The file data
  */
 async function downloadFile(url) {
-  const response = await fetch(url, {
-    headers: {
-      'Cache-Control': 'no-cache'
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+
+  try {
+    const response = await fetch(url, {
+      headers: {
+        'Cache-Control': 'no-cache'
+      },
+      signal: controller.signal
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to download ${url}: HTTP ${response.status}`);
     }
-  });
 
-  if (!response.ok) {
-    throw new Error(`Failed to download ${url}: HTTP ${response.status}`);
+    const arrayBuffer = await response.arrayBuffer();
+    return Buffer.from(arrayBuffer);
+  } catch (error) {
+    if (error.name === 'AbortError') {
+      throw new Error(`Download timed out: ${url}`);
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
   }
-
-  const arrayBuffer = await response.arrayBuffer();
-  return Buffer.from(arrayBuffer);
 }
 
 /**

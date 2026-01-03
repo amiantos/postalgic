@@ -9,22 +9,38 @@ import fs from 'fs';
 import path from 'path';
 import { checkForChanges, categorizeChanges, extractEntityId } from './syncChecker.js';
 
+// Timeout for outbound fetch requests (10 seconds)
+const FETCH_TIMEOUT_MS = 10000;
+
 /**
  * Download a file from the sync URL
  * @param {string} url - The full URL to download
  * @returns {Promise<Buffer>} - The file data
  */
 async function downloadFile(url) {
-  const response = await fetch(url, {
-    headers: { 'Cache-Control': 'no-cache' }
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
 
-  if (!response.ok) {
-    throw new Error(`Failed to download ${url}: HTTP ${response.status}`);
+  try {
+    const response = await fetch(url, {
+      headers: { 'Cache-Control': 'no-cache' },
+      signal: controller.signal
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to download ${url}: HTTP ${response.status}`);
+    }
+
+    const arrayBuffer = await response.arrayBuffer();
+    return Buffer.from(arrayBuffer);
+  } catch (error) {
+    if (error.name === 'AbortError') {
+      throw new Error(`Download timed out: ${url}`);
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
   }
-
-  const arrayBuffer = await response.arrayBuffer();
-  return Buffer.from(arrayBuffer);
 }
 
 /**

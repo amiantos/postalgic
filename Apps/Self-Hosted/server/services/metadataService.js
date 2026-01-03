@@ -1,6 +1,9 @@
 import ogs from 'open-graph-scraper';
 import { extractYouTubeId } from '../utils/helpers.js';
 
+// Timeout for outbound fetch requests (10 seconds)
+const FETCH_TIMEOUT_MS = 10000;
+
 /**
  * Fetches OpenGraph metadata for a given URL
  * @param {string} urlString - The URL to fetch metadata for
@@ -59,18 +62,26 @@ export async function fetchYouTubeTitle(urlString) {
     // Use oEmbed API to get video title (no API key required)
     const oembedUrl = `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`;
 
-    const response = await fetch(oembedUrl, {
-      headers: {
-        'user-agent': 'Mozilla/5.0 (compatible; Postalgic/1.0; +https://postalgic.app)'
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+
+    try {
+      const response = await fetch(oembedUrl, {
+        headers: {
+          'user-agent': 'Mozilla/5.0 (compatible; Postalgic/1.0; +https://postalgic.app)'
+        },
+        signal: controller.signal
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
       }
-    });
 
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
+      const data = await response.json();
+      return data.title || null;
+    } finally {
+      clearTimeout(timeoutId);
     }
-
-    const data = await response.json();
-    return data.title || null;
   } catch (error) {
     console.error('Error fetching YouTube title:', error.message);
 
@@ -90,12 +101,15 @@ export async function fetchYouTubeTitle(urlString) {
  * @returns {Promise<string|null>} - Base64 encoded image data with data URI prefix
  */
 async function fetchImageAsBase64(imageUrl) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+
   try {
     const response = await fetch(imageUrl, {
       headers: {
         'user-agent': 'Mozilla/5.0 (compatible; Postalgic/1.0; +https://postalgic.app)'
       },
-      timeout: 10000
+      signal: controller.signal
     });
 
     if (!response.ok) {
@@ -111,6 +125,8 @@ async function fetchImageAsBase64(imageUrl) {
   } catch (error) {
     console.error('Error fetching image:', error.message);
     return null;
+  } finally {
+    clearTimeout(timeoutId);
   }
 }
 
