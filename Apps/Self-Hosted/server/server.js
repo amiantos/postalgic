@@ -68,10 +68,7 @@ app.use('/api/sync', syncRoutes);
 
 // Serve uploaded files from blog-specific directories
 // Files are stored at data/uploads/{blogId}/ and served at /uploads/{blogId}/
-app.use('/uploads/:blogId', (req, res, next) => {
-  const blogUploadsPath = path.join(DATA_ROOT, 'uploads', req.params.blogId);
-  express.static(blogUploadsPath)(req, res, next);
-});
+app.use('/uploads', express.static(path.join(DATA_ROOT, 'uploads')));
 
 // Serve generated sites for preview
 app.use('/preview', express.static(path.join(DATA_ROOT, 'generated')));
@@ -80,10 +77,15 @@ app.use('/preview', express.static(path.join(DATA_ROOT, 'generated')));
 if (process.env.NODE_ENV === 'production') {
   const vueDistPath = path.resolve(__dirname, '../vue_client/dist');
   app.use(express.static(vueDistPath));
-  app.get('*', (req, res) => {
-    if (!req.path.startsWith('/api') && !req.path.startsWith('/uploads') && !req.path.startsWith('/preview')) {
-      res.sendFile(path.join(vueDistPath, 'index.html'));
+
+  // SPA fallback - serve index.html for client-side routing
+  // Exclude API routes, uploads, and preview which are handled above
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api') || req.path.startsWith('/uploads') || req.path.startsWith('/preview')) {
+      // These routes should have been handled already - return 404
+      return res.status(404).json({ error: 'Not found' });
     }
+    res.sendFile(path.join(vueDistPath, 'index.html'));
   });
 }
 
