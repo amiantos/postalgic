@@ -60,7 +60,7 @@ export async function generateSite(storage, blogId) {
   }
 
   // Get all data
-  const rawPosts = storage.getAllPosts(blogId, false); // Published only
+  const rawPosts = storage.getAllPosts(blogId, 'published'); // Published only
   const categories = storage.getAllCategories(blogId);
   const tags = storage.getAllTags(blogId);
   const sidebarObjects = storage.getAllSidebarObjects(blogId);

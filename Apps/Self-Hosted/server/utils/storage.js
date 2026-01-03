@@ -250,12 +250,15 @@ class Storage {
 
   // ============ Post Operations ============
 
-  getAllPosts(blogId, includeDrafts = false) {
+  getAllPosts(blogId, status = 'all') {
     const db = getDatabase();
     let query = 'SELECT * FROM posts WHERE blog_id = ?';
-    if (!includeDrafts) {
+    if (status === 'published') {
       query += ' AND is_draft = 0';
+    } else if (status === 'drafts') {
+      query += ' AND is_draft = 1';
     }
+    // status === 'all' returns both published and drafts
     query += ' ORDER BY created_at DESC, id DESC';
 
     const rows = db.prepare(query).all(blogId);
@@ -436,7 +439,7 @@ class Storage {
 
   searchPosts(blogId, searchTerm, options = {}) {
     const db = getDatabase();
-    const { includeDrafts = true, sort = 'date_desc' } = options;
+    const { status = 'all', sort = 'date_desc' } = options;
 
     // Build the search query using FTS5
     // Also search in category names and tag names
@@ -450,8 +453,10 @@ class Storage {
 
     const params = [blogId];
 
-    if (!includeDrafts) {
+    if (status === 'published') {
       query += ' AND p.is_draft = 0';
+    } else if (status === 'drafts') {
+      query += ' AND p.is_draft = 1';
     }
 
     if (searchTerm && searchTerm.trim()) {

@@ -53,25 +53,20 @@ const effectiveSearchText = computed(() => {
   return searchText.value.length >= MIN_SEARCH_LENGTH ? searchText.value : '';
 });
 
+// Map filter values to API status values
+function getStatusFromFilter(filterValue) {
+  if (filterValue === 'draft') return 'drafts';
+  return filterValue; // 'all' and 'published' map directly
+}
+
 async function fetchPosts() {
-  const includeDrafts = filter.value === 'all' || filter.value === 'draft';
   await blogStore.fetchPosts(blogId.value, {
-    includeDrafts,
+    status: getStatusFromFilter(filter.value),
     search: effectiveSearchText.value,
     sort: sortOption.value,
     limit: POSTS_PER_PAGE
   });
 }
-
-const filteredPosts = computed(() => {
-  // Filter drafts client-side since we fetch with includeDrafts=true for 'all' and 'draft'
-  if (filter.value === 'published') {
-    return blogStore.posts.filter(p => !p.isDraft);
-  } else if (filter.value === 'draft') {
-    return blogStore.posts.filter(p => p.isDraft);
-  }
-  return blogStore.posts;
-});
 
 const hasMorePosts = computed(() => blogStore.postsHasMore);
 
@@ -80,9 +75,8 @@ const remainingPostsCount = computed(() => {
 });
 
 async function loadMorePosts() {
-  const includeDrafts = filter.value === 'all' || filter.value === 'draft';
   await blogStore.loadMorePosts(blogId.value, {
-    includeDrafts,
+    status: getStatusFromFilter(filter.value),
     search: effectiveSearchText.value,
     sort: sortOption.value,
     limit: POSTS_PER_PAGE
@@ -253,7 +247,7 @@ function formatLocalDateTime(dateString) {
     </p>
 
     <!-- Empty State -->
-    <div v-if="filteredPosts.length === 0" class="text-center py-20">
+    <div v-if="blogStore.posts.length === 0" class="text-center py-20">
       <p class="text-gray-400 dark:text-gray-500 mb-4">
         {{ searchText ? 'No posts match your search.' : 'No posts yet.' }}
       </p>
@@ -276,7 +270,7 @@ function formatLocalDateTime(dateString) {
     <!-- Posts List - Editorial flow -->
     <div v-else class="divide-y divide-gray-200 dark:divide-white/10">
       <article
-        v-for="post in filteredPosts"
+        v-for="post in blogStore.posts"
         :key="post.id"
         class="py-16 first:pt-0 group cursor-pointer"
         @click="navigateToPost(post.id)"

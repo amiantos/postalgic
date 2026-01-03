@@ -100,7 +100,7 @@ export async function generateSyncDirectory(storage, blogId, outputDir) {
   }
 
   // Get all data (published posts only - drafts stay local to each device)
-  const publishedPosts = storage.getAllPosts(blogId, false);
+  const publishedPosts = storage.getAllPosts(blogId, 'published');
   const categories = storage.getAllCategories(blogId);
   const tags = storage.getAllTags(blogId);
   const sidebarObjects = storage.getAllSidebarObjects(blogId);

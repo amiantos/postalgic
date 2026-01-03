@@ -17,7 +17,7 @@ router.get('/', (req, res) => {
     const tags = storage.getAllTags(blogId);
 
     // Enrich with post counts
-    const posts = storage.getAllPosts(blogId, false);
+    const posts = storage.getAllPosts(blogId, 'published');
     const enrichedTags = tags.map(tag => ({
       ...tag,
       postCount: posts.filter(p => p.tagIds && p.tagIds.includes(tag.id)).length,
@@ -43,7 +43,7 @@ router.get('/:id', (req, res) => {
     }
 
     // Enrich with post count
-    const posts = storage.getAllPosts(blogId, false);
+    const posts = storage.getAllPosts(blogId, 'published');
     const enriched = {
       ...tag,
       postCount: posts.filter(p => p.tagIds && p.tagIds.includes(tag.id)).length,
@@ -134,7 +134,7 @@ router.put('/:id', (req, res) => {
     const tag = storage.updateTag(blogId, id, { name: lowercaseName, stub });
 
     // Enrich with post count
-    const posts = storage.getAllPosts(blogId, false);
+    const posts = storage.getAllPosts(blogId, 'published');
     res.json({
       ...tag,
       postCount: posts.filter(p => p.tagIds && p.tagIds.includes(tag.id)).length,
@@ -155,7 +155,7 @@ router.delete('/:id', (req, res) => {
     const { blogId, id } = req.params;
 
     // Remove tag from all posts
-    const posts = storage.getAllPosts(blogId, true);
+    const posts = storage.getAllPosts(blogId, 'all');
     for (const post of posts) {
       if (post.tagIds && post.tagIds.includes(id)) {
         const newTagIds = post.tagIds.filter(t => t !== id);

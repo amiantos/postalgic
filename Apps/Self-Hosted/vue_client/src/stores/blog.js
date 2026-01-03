@@ -83,8 +83,8 @@ export const useBlogStore = defineStore('blog', () => {
   async function fetchPosts(blogId, options = {}) {
     loading.value = true;
     try {
-      const { includeDrafts = true, search = '', sort = 'date_desc', page = 1, limit = 10 } = options;
-      const response = await postApi.list(blogId, { includeDrafts, search, sort, page, limit });
+      const { status = 'all', search = '', sort = 'date_desc', page = 1, limit = 10 } = options;
+      const response = await postApi.list(blogId, { status, search, sort, page, limit });
       posts.value = response.posts;
       postsTotal.value = response.total;
       postsPublishedCount.value = response.publishedCount;
@@ -103,9 +103,9 @@ export const useBlogStore = defineStore('blog', () => {
 
     loading.value = true;
     try {
-      const { includeDrafts = true, search = '', sort = 'date_desc', limit = 10 } = options;
+      const { status = 'all', search = '', sort = 'date_desc', limit = 10 } = options;
       const nextPage = postsPage.value + 1;
-      const response = await postApi.list(blogId, { includeDrafts, search, sort, page: nextPage, limit });
+      const response = await postApi.list(blogId, { status, search, sort, page: nextPage, limit });
       posts.value = [...posts.value, ...response.posts];
       postsTotal.value = response.total;
       postsHasMore.value = response.hasMore;

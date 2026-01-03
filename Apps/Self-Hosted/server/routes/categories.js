@@ -17,7 +17,7 @@ router.get('/', (req, res) => {
     const categories = storage.getAllCategories(blogId);
 
     // Enrich with post counts
-    const posts = storage.getAllPosts(blogId, false);
+    const posts = storage.getAllPosts(blogId, 'published');
     const enrichedCategories = categories.map(category => ({
       ...category,
       postCount: posts.filter(p => p.categoryId === category.id).length,
@@ -43,7 +43,7 @@ router.get('/:id', (req, res) => {
     }
 
     // Enrich with post count
-    const posts = storage.getAllPosts(blogId, false);
+    const posts = storage.getAllPosts(blogId, 'published');
     const enriched = {
       ...category,
       postCount: posts.filter(p => p.categoryId === category.id).length,
@@ -127,7 +127,7 @@ router.put('/:id', (req, res) => {
     const category = storage.updateCategory(blogId, id, updateData);
 
     // Enrich with post count
-    const posts = storage.getAllPosts(blogId, false);
+    const posts = storage.getAllPosts(blogId, 'published');
     res.json({
       ...category,
       postCount: posts.filter(p => p.categoryId === category.id).length,
@@ -148,7 +148,7 @@ router.delete('/:id', (req, res) => {
     const { blogId, id } = req.params;
 
     // Remove category from all posts
-    const posts = storage.getAllPosts(blogId, true);
+    const posts = storage.getAllPosts(blogId, 'all');
     for (const post of posts) {
       if (post.categoryId === id) {
         storage.updatePost(blogId, post.id, { categoryId: null });

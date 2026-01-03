@@ -131,7 +131,7 @@ router.get('/:id/stats', (req, res) => {
       return res.status(404).json({ error: 'Blog not found' });
     }
 
-    const posts = storage.getAllPosts(req.params.id, true);
+    const posts = storage.getAllPosts(req.params.id, 'all');
     const categories = storage.getAllCategories(req.params.id);
     const tags = storage.getAllTags(req.params.id);
 

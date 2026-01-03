@@ -21,7 +21,7 @@ function getStorage(req) {
 
 // GET /api/blogs/:blogId/posts - List posts with pagination
 // Query params:
-//   - includeDrafts: 'true' to include drafts
+//   - status: 'all' (default), 'published', or 'drafts'
 //   - search: search term for title, content, category, tags (min 2 chars)
 //   - sort: 'date_desc' (default), 'date_asc', 'title_asc', 'title_desc'
 //   - page: page number (default 1)
@@ -30,7 +30,7 @@ router.get('/', (req, res) => {
   try {
     const storage = getStorage(req);
     const { blogId } = req.params;
-    const includeDrafts = req.query.includeDrafts === 'true';
+    const status = req.query.status || 'all'; // 'all', 'published', or 'drafts'
     const search = req.query.search || '';
     const sort = req.query.sort || 'date_desc';
     const page = Math.max(1, parseInt(req.query.page) || 1);
@@ -40,9 +40,9 @@ router.get('/', (req, res) => {
 
     // Only search if term is at least 2 characters
     if (search.trim() && search.trim().length >= 2) {
-      posts = storage.searchPosts(blogId, search, { includeDrafts, sort });
+      posts = storage.searchPosts(blogId, search, { status, sort });
     } else {
-      posts = storage.getAllPosts(blogId, includeDrafts);
+      posts = storage.getAllPosts(blogId, status);
       posts = sortPosts(posts, sort);
     }
 
@@ -125,7 +125,7 @@ router.post('/', (req, res) => {
 
     // Generate stub from title or content
     const baseStub = generateStub(title || content);
-    const existingPosts = storage.getAllPosts(blogId, true);
+    const existingPosts = storage.getAllPosts(blogId, 'all');
     const existingStubs = existingPosts.map(p => p.stub);
     const stub = makeStubUnique(baseStub, existingStubs);
 
@@ -167,7 +167,7 @@ router.put('/:id', (req, res) => {
 
     if (title !== undefined || content !== undefined) {
       const baseStub = generateStub(newTitle || newContent);
-      const existingPosts = storage.getAllPosts(blogId, true);
+      const existingPosts = storage.getAllPosts(blogId, 'all');
       const existingStubs = existingPosts
         .filter(p => p.id !== id)
         .map(p => p.stub);
