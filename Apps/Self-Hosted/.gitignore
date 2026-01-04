@@ -6,6 +6,7 @@ vue_client/node_modules/
 vue_client/dist/
 
 # Data directory (user data)
+data
 data*/
 
 # Logs
