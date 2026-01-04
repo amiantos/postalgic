@@ -152,7 +152,9 @@ export async function generateSyncDirectory(storage, blogId, outputDir) {
     },
     // Use theme.identifier (not blog.themeIdentifier) to match the theme file path
     // blog.themeIdentifier may be a database row ID while theme.identifier is the actual identifier
-    themeIdentifier: theme?.identifier || blog.themeIdentifier || null
+    themeIdentifier: theme?.identifier || blog.themeIdentifier || null,
+    simpleAnalyticsEnabled: blog.simpleAnalyticsEnabled || false,
+    simpleAnalyticsDomain: blog.simpleAnalyticsDomain || null
   };
   const blogJson = stringifyWithSortedKeys(blogData);
   fs.writeFileSync(path.join(syncDir, 'blog.json'), blogJson);

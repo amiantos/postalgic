@@ -1,7 +1,11 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import { useBlogStore } from '@/stores/blog';
+import { blogApi } from '@/api';
+import { Chart, registerables } from 'chart.js';
+
+Chart.register(...registerables);
 
 const router = useRouter();
 const blogStore = useBlogStore();
@@ -9,9 +13,117 @@ const blogStore = useBlogStore();
 const showDeleteModal = ref(false);
 const blogToDelete = ref(null);
 
+// Analytics state
+const analyticsData = ref({});
+const analyticsLoading = ref({});
+const analyticsError = ref({});
+const chartInstances = ref({});
+
 onMounted(() => {
   blogStore.fetchBlogs();
 });
+
+// Fetch analytics for blogs that have it enabled
+async function fetchBlogAnalytics(blog) {
+  if (!blog.simpleAnalyticsEnabled) return;
+
+  analyticsLoading.value[blog.id] = true;
+  analyticsError.value[blog.id] = null;
+
+  try {
+    const data = await blogApi.analytics(blog.id);
+    analyticsData.value[blog.id] = data;
+  } catch (e) {
+    analyticsError.value[blog.id] = e.message;
+  } finally {
+    analyticsLoading.value[blog.id] = false;
+  }
+}
+
+// Watch analytics data and render charts when data arrives
+watch(analyticsData, async () => {
+  await nextTick();
+  // Small delay to ensure canvas elements are in DOM
+  setTimeout(() => {
+    for (const blogId of Object.keys(analyticsData.value)) {
+      if (analyticsData.value[blogId]?.histogram && !chartInstances.value[blogId]) {
+        renderChart(blogId);
+      }
+    }
+  }, 100);
+}, { deep: true });
+
+// Render chart for a blog
+function renderChart(blogId) {
+  const data = analyticsData.value[blogId];
+  if (!data?.histogram) return;
+
+  const canvas = document.getElementById(`chart-${blogId}`);
+  if (!canvas) return;
+
+  // Destroy existing chart if any
+  if (chartInstances.value[blogId]) {
+    chartInstances.value[blogId].destroy();
+  }
+
+  chartInstances.value[blogId] = new Chart(canvas, {
+    type: 'line',
+    data: {
+      labels: data.histogram.map(h => h.date),
+      datasets: [
+        {
+          label: 'Pageviews',
+          data: data.histogram.map(h => h.pageviews),
+          borderColor: 'rgb(59, 130, 246)',
+          backgroundColor: 'rgba(59, 130, 246, 0.1)',
+          fill: true,
+          tension: 0.3,
+          borderWidth: 2,
+          pointRadius: 0
+        },
+        {
+          label: 'Visitors',
+          data: data.histogram.map(h => h.visitors),
+          borderColor: 'rgb(16, 185, 129)',
+          backgroundColor: 'rgba(16, 185, 129, 0.1)',
+          fill: true,
+          tension: 0.3,
+          borderWidth: 2,
+          pointRadius: 0
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: {
+        intersect: false,
+        mode: 'index'
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          padding: 8,
+          cornerRadius: 8
+        }
+      },
+      scales: {
+        x: { display: false },
+        y: { display: false, beginAtZero: true }
+      }
+    }
+  });
+}
+
+// Watch for blogs to load and fetch analytics
+watch(() => blogStore.blogs, (blogs) => {
+  for (const blog of blogs) {
+    if (blog.simpleAnalyticsEnabled && !analyticsData.value[blog.id] && !analyticsLoading.value[blog.id]) {
+      fetchBlogAnalytics(blog);
+    }
+  }
+}, { immediate: true });
 
 function navigateToBlog(blogId) {
   router.push({ name: 'blog-posts', params: { blogId } });
@@ -110,30 +222,50 @@ async function deleteBlog() {
       </div>
 
       <!-- Blog List -->
-      <div v-else class="space-y-3">
+      <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div
           v-for="blog in blogStore.blogs"
           :key="blog.id"
-          class="surface-interactive p-6 cursor-pointer"
+          class="surface-interactive p-5 cursor-pointer"
           @click="navigateToBlog(blog.id)"
         >
-          <div class="flex items-start justify-between">
-            <div class="flex-1">
-              <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100">{{ blog.name }}</h2>
-              <p v-if="blog.tagline" class="text-gray-500 dark:text-gray-400 mt-1">{{ blog.tagline }}</p>
-              <p v-if="blog.url" class="text-primary-600 dark:text-primary-400 text-sm mt-2">{{ blog.url }}</p>
+          <div class="flex items-start gap-3">
+            <img
+              :src="`/api/blogs/${blog.id}/favicon`"
+              @error="$event.target.style.display = 'none'"
+              class="w-11 h-11 rounded flex-shrink-0"
+            />
+            <div class="min-w-0">
+              <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100 truncate">{{ blog.name }}</h2>
+              <p v-if="blog.tagline" class="text-gray-500 dark:text-gray-400 text-sm truncate">{{ blog.tagline }}</p>
             </div>
-            <button
-              @click.stop="confirmDelete(blog)"
-              class="p-2 text-gray-400 hover:text-red-500 transition-colors rounded-lg hover:bg-red-500/10"
-            >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
-            </button>
           </div>
-          <div class="flex items-center gap-4 mt-4 text-sm text-gray-500 dark:text-gray-400">
-            <span>Created {{ new Date(blog.createdAt).toLocaleDateString() }}</span>
+          <p v-if="blog.url" class="text-primary-600 dark:text-primary-400 text-xs mt-2 truncate">{{ blog.url }}</p>
+
+          <!-- Analytics Section -->
+          <div v-if="blog.simpleAnalyticsEnabled" class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <div v-if="analyticsLoading[blog.id]" class="text-sm text-gray-500 dark:text-gray-400">
+              Loading analytics...
+            </div>
+            <div v-else-if="analyticsError[blog.id]" class="text-sm text-red-500 dark:text-red-400">
+              {{ analyticsError[blog.id] }}
+            </div>
+            <div v-else-if="analyticsData[blog.id]">
+              <div class="flex items-center justify-end gap-3 text-sm text-gray-600 dark:text-gray-400 mb-2">
+                <span class="flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                  <strong class="text-gray-900 dark:text-gray-100">{{ analyticsData[blog.id].pageviews?.toLocaleString() || 0 }}</strong> views
+                </span>
+                <span class="flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                  <strong class="text-gray-900 dark:text-gray-100">{{ analyticsData[blog.id].visitors?.toLocaleString() || 0 }}</strong> visitors
+                </span>
+                <span class="text-xs text-gray-400">last 30 days</span>
+              </div>
+              <div class="h-16 w-full relative">
+                <canvas :id="'chart-' + blog.id" class="absolute inset-0 w-full h-full"></canvas>
+              </div>
+            </div>
           </div>
         </div>
       </div>

@@ -74,6 +74,10 @@ final class Blog {
     var lastSyncedAt: Date?
     var localSyncHashes: [String: String] = [:]  // For tracking local sync state
 
+    // Simple Analytics Configuration
+    var simpleAnalyticsEnabled: Bool = false
+    var simpleAnalyticsDomain: String?
+
     // Future Netlify Configuration
     // var netlifyToken: String?
     // var netlifySiteId: String?

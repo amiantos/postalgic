@@ -181,6 +181,14 @@ function runMigrations(database) {
     }
     console.log('[Database] Sidebar backfill complete');
   }
+
+  // Migration: Add Simple Analytics columns
+  const blogColumnsAnalytics = database.prepare(`PRAGMA table_info(blogs)`).all();
+  if (!blogColumnsAnalytics.some(col => col.name === 'simple_analytics_enabled')) {
+    console.log('[Database] Running migration: adding Simple Analytics columns to blogs table');
+    database.exec(`ALTER TABLE blogs ADD COLUMN simple_analytics_enabled INTEGER DEFAULT 0`);
+    database.exec(`ALTER TABLE blogs ADD COLUMN simple_analytics_domain TEXT`);
+  }
 }
 
 /**
@@ -236,6 +244,8 @@ function createSchema(database) {
       git_branch TEXT DEFAULT 'main',
       git_commit_message TEXT,
       timezone TEXT DEFAULT 'UTC',
+      simple_analytics_enabled INTEGER DEFAULT 0,
+      simple_analytics_domain TEXT,
       created_at TEXT NOT NULL,
       updated_at TEXT
     );

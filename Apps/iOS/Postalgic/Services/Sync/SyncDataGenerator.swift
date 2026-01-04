@@ -113,6 +113,8 @@ class SyncDataGenerator {
         let timezone: String
         let colors: ColorSettings
         let themeIdentifier: String?
+        let simpleAnalyticsEnabled: Bool
+        let simpleAnalyticsDomain: String?
 
         struct ColorSettings: Codable {
             let accent: String?
@@ -142,6 +144,8 @@ class SyncDataGenerator {
             try container.encode(authorUrl, forKey: .authorUrl)
             try container.encode(colors, forKey: .colors)
             try container.encode(name, forKey: .name)
+            try container.encode(simpleAnalyticsDomain, forKey: .simpleAnalyticsDomain)
+            try container.encode(simpleAnalyticsEnabled, forKey: .simpleAnalyticsEnabled)
             try container.encode(tagline, forKey: .tagline)
             try container.encode(themeIdentifier, forKey: .themeIdentifier)
             try container.encode(timezone, forKey: .timezone)
@@ -476,7 +480,9 @@ class SyncDataGenerator {
                 mediumShade: blog.mediumShade,
                 darkShade: blog.darkShade
             ),
-            themeIdentifier: blog.themeIdentifier
+            themeIdentifier: blog.themeIdentifier,
+            simpleAnalyticsEnabled: blog.simpleAnalyticsEnabled,
+            simpleAnalyticsDomain: blog.simpleAnalyticsDomain
         )
         let blogData = try encoder.encode(syncBlog)
         let blogPath = syncDirectory.appendingPathComponent("blog.json")

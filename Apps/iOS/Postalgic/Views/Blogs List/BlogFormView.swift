@@ -23,6 +23,8 @@ struct BlogFormView: View {
     @State private var authorUrl: String
     @State private var tagline: String
     @State private var timezone: String
+    @State private var simpleAnalyticsEnabled: Bool
+    @State private var simpleAnalyticsDomain: String
 
     // Available timezones (matching Self-Hosted options)
     private static let timezones: [(group: String, zones: [(id: String, label: String)])] = [
@@ -84,6 +86,8 @@ struct BlogFormView: View {
         _authorUrl = State(initialValue: "")
         _tagline = State(initialValue: "")
         _timezone = State(initialValue: "UTC")
+        _simpleAnalyticsEnabled = State(initialValue: false)
+        _simpleAnalyticsDomain = State(initialValue: "")
     }
 
     // Initialize for editing an existing blog
@@ -96,6 +100,8 @@ struct BlogFormView: View {
         _authorUrl = State(initialValue: blog.authorUrl ?? "")
         _tagline = State(initialValue: blog.tagline ?? "")
         _timezone = State(initialValue: blog.timezone)
+        _simpleAnalyticsEnabled = State(initialValue: blog.simpleAnalyticsEnabled)
+        _simpleAnalyticsDomain = State(initialValue: blog.simpleAnalyticsDomain ?? "")
     }
     
     var body: some View {
@@ -143,6 +149,24 @@ struct BlogFormView: View {
                 } footer: {
                     Text("Dates on your published blog will display in this timezone.")
                 }
+
+                Section {
+                    Toggle("Enable Simple Analytics", isOn: $simpleAnalyticsEnabled)
+                    if simpleAnalyticsEnabled {
+                        TextField("Domain Override (optional)", text: $simpleAnalyticsDomain)
+                            .autocapitalization(.none)
+                            .autocorrectionDisabled(true)
+                            .keyboardType(.URL)
+                    }
+                } header: {
+                    Text("Analytics")
+                } footer: {
+                    if simpleAnalyticsEnabled {
+                        Text("Your blog's domain will be used by default. Only set the domain override if you're using a custom domain in Simple Analytics.")
+                    } else {
+                        Text("Add privacy-friendly analytics to your blog with Simple Analytics. Requires a Simple Analytics account.")
+                    }
+                }
             }
             .navigationTitle(isEditing ? "Metadata" : "New Blog")
             .toolbar {
@@ -187,6 +211,8 @@ struct BlogFormView: View {
             blogToUpdate.authorUrl = authorUrl.isEmpty ? nil : authorUrl
             blogToUpdate.tagline = tagline.isEmpty ? nil : tagline
             blogToUpdate.timezone = timezone
+            blogToUpdate.simpleAnalyticsEnabled = simpleAnalyticsEnabled
+            blogToUpdate.simpleAnalyticsDomain = simpleAnalyticsDomain.isEmpty ? nil : simpleAnalyticsDomain
         }
     }
 }

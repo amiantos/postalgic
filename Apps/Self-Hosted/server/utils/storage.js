@@ -71,7 +71,8 @@ class Storage {
         aws_access_key_id, aws_secret_access_key,
         ftp_host, ftp_port, ftp_username, ftp_password, ftp_private_key, ftp_path,
         git_repository_url, git_username, git_token, git_branch, git_commit_message,
-        timezone, created_at, updated_at
+        timezone, simple_analytics_enabled, simple_analytics_domain,
+        created_at, updated_at
       ) VALUES (
         ?, ?, ?, ?, ?, ?, ?,
         ?, ?, ?, ?,
@@ -80,7 +81,8 @@ class Storage {
         ?, ?,
         ?, ?, ?, ?, ?, ?,
         ?, ?, ?, ?, ?,
-        ?, ?, ?
+        ?, ?, ?,
+        ?, ?
       )
     `);
 
@@ -117,6 +119,8 @@ class Storage {
       blogData.gitBranch || 'main',
       blogData.gitCommitMessage || null,
       blogData.timezone || 'UTC',
+      blogData.simpleAnalyticsEnabled ? 1 : 0,
+      blogData.simpleAnalyticsDomain || null,
       now,
       now
     );
@@ -147,7 +151,8 @@ class Storage {
         ftp_private_key = ?, ftp_path = ?,
         git_repository_url = ?, git_username = ?, git_token = ?,
         git_branch = ?, git_commit_message = ?,
-        timezone = ?, updated_at = ?
+        timezone = ?, simple_analytics_enabled = ?, simple_analytics_domain = ?,
+        updated_at = ?
       WHERE id = ?
     `);
 
@@ -183,6 +188,8 @@ class Storage {
       merged.gitBranch,
       merged.gitCommitMessage,
       merged.timezone || 'UTC',
+      merged.simpleAnalyticsEnabled ? 1 : 0,
+      merged.simpleAnalyticsDomain,
       now,
       blogId
     );
@@ -243,6 +250,8 @@ class Storage {
       gitBranch: row.git_branch,
       gitCommitMessage: row.git_commit_message,
       timezone: row.timezone || 'UTC',
+      simpleAnalyticsEnabled: !!row.simple_analytics_enabled,
+      simpleAnalyticsDomain: row.simple_analytics_domain,
       createdAt: row.created_at,
       updatedAt: row.updated_at
     };

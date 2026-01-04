@@ -147,6 +147,89 @@ router.get('/:id/stats', (req, res) => {
   }
 });
 
+// GET /api/blogs/:id/favicon - Get blog favicon
+router.get('/:id/favicon', (req, res) => {
+  try {
+    const storage = getStorage(req);
+    const { id } = req.params;
+
+    const files = storage.getAllStaticFiles(id);
+    const favicon = files.find(f => f.specialFileType === 'favicon');
+
+    if (!favicon) {
+      return res.status(404).json({ error: 'No favicon found' });
+    }
+
+    const buffer = storage.getStaticFileBuffer(id, favicon.id);
+    if (!buffer) {
+      return res.status(404).json({ error: 'Favicon data not found' });
+    }
+
+    res.setHeader('Content-Type', favicon.mimeType || 'image/png');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    res.send(buffer);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/blogs/:id/analytics - Get Simple Analytics data for a blog
+router.get('/:id/analytics', async (req, res) => {
+  try {
+    const storage = getStorage(req);
+    const blog = storage.getBlog(req.params.id);
+
+    if (!blog) {
+      return res.status(404).json({ error: 'Blog not found' });
+    }
+
+    if (!blog.simpleAnalyticsEnabled) {
+      return res.status(400).json({ error: 'Simple Analytics not enabled for this blog' });
+    }
+
+    // Determine domain to query
+    let domain = blog.simpleAnalyticsDomain;
+    if (!domain && blog.url) {
+      try {
+        const urlObj = new URL(blog.url);
+        domain = urlObj.hostname;
+      } catch (e) {
+        return res.status(400).json({ error: 'Invalid blog URL' });
+      }
+    }
+
+    if (!domain) {
+      return res.status(400).json({ error: 'No domain configured for analytics' });
+    }
+
+    // Get date range (last 30 days)
+    const end = new Date();
+    const start = new Date();
+    start.setDate(start.getDate() - 30);
+
+    const startStr = start.toISOString().split('T')[0];
+    const endStr = end.toISOString().split('T')[0];
+
+    const analyticsUrl = `https://simpleanalytics.com/${domain}.json?version=6&fields=histogram,pageviews,visitors&start=${startStr}&end=${endStr}`;
+
+    const response = await fetch(analyticsUrl);
+    if (!response.ok) {
+      if (response.status === 404) {
+        return res.status(404).json({ error: 'Domain not found. Ensure the domain is registered with Simple Analytics.' });
+      }
+      if (response.status === 400) {
+        return res.status(400).json({ error: 'Analytics data not available. Ensure the site is set to public in Simple Analytics.' });
+      }
+      throw new Error(`Simple Analytics returned ${response.status}`);
+    }
+
+    const data = await response.json();
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // GET /api/blogs/:id/debug-export - Export full site bundle for debugging
 router.get('/:id/debug-export', async (req, res) => {
   try {

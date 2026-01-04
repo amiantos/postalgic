@@ -207,6 +207,42 @@ async function downloadDebugExport() {
         </div>
       </section>
 
+      <!-- Simple Analytics -->
+      <section class="surface p-6">
+        <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Simple Analytics</h3>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
+          Enable Simple Analytics to track pageviews and visitors on your published blog.
+          <a href="https://simpleanalytics.com" target="_blank" class="text-primary-600 dark:text-primary-400 hover:underline">Learn more</a>
+        </p>
+        <div class="space-y-4">
+          <div class="flex items-center gap-3">
+            <input
+              id="simpleAnalyticsEnabled"
+              v-model="form.simpleAnalyticsEnabled"
+              type="checkbox"
+              class="w-5 h-5 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+            />
+            <label for="simpleAnalyticsEnabled" class="text-gray-700 dark:text-gray-300">
+              Enable Simple Analytics tracking
+            </label>
+          </div>
+          <div v-if="form.simpleAnalyticsEnabled">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Domain Override (optional)
+            </label>
+            <input
+              v-model="form.simpleAnalyticsDomain"
+              type="text"
+              class="w-full px-3.5 py-2.5 rounded-xl bg-black/5 dark:bg-white/5 text-gray-900 dark:text-gray-100 border-0 focus:ring-2 focus:ring-primary-500/50 focus:bg-white dark:focus:bg-white/10 transition-colors"
+              placeholder="example.com"
+            />
+            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              Leave empty to use the domain from your Blog URL. Use this if your site is registered under a different domain in Simple Analytics.
+            </p>
+          </div>
+        </div>
+      </section>
+
       <!-- Save Button -->
       <div class="flex justify-between">
         <button

@@ -119,7 +119,9 @@ export async function pullChanges(storage, blogId, syncUrl, password, onProgress
       textColor: syncBlog.colors?.text,
       lightShade: syncBlog.colors?.lightShade,
       mediumShade: syncBlog.colors?.mediumShade,
-      darkShade: syncBlog.colors?.darkShade
+      darkShade: syncBlog.colors?.darkShade,
+      simpleAnalyticsEnabled: syncBlog.simpleAnalyticsEnabled || false,
+      simpleAnalyticsDomain: syncBlog.simpleAnalyticsDomain || ''
     });
     appliedChanges++;
   }
