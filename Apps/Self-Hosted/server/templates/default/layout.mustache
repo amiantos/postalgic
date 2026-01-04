@@ -281,5 +281,8 @@
             });
         });
     </script>
+    {{#simpleAnalyticsEnabled}}
+    <script async {{#simpleAnalyticsDomain}}data-hostname="{{simpleAnalyticsDomain}}"{{/simpleAnalyticsDomain}} src="https://scripts.simpleanalyticscdn.com/latest.js"></script>
+    {{/simpleAnalyticsEnabled}}
 </body>
 </html>

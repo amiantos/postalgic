@@ -193,7 +193,9 @@ function buildBaseContext(blog, categories, tags, sidebarObjects, staticFiles, t
     hasTags: tags.length > 0,
     hasCategories: categories.length > 0,
     hasSocialShareImage,
-    sidebarContent
+    sidebarContent,
+    simpleAnalyticsEnabled: blog.simpleAnalyticsEnabled || false,
+    simpleAnalyticsDomain: blog.simpleAnalyticsDomain || null
   };
 }
 

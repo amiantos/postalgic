@@ -29,6 +29,7 @@ export const blogApi = {
   update: (id, data) => fetchApi(`/blogs/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   delete: (id) => fetchApi(`/blogs/${id}`, { method: 'DELETE' }),
   stats: (id) => fetchApi(`/blogs/${id}/stats`),
+  analytics: (id) => fetchApi(`/blogs/${id}/analytics`),
   debugExport: async (id) => {
     const response = await fetch(`${API_BASE}/blogs/${id}/debug-export`);
 
