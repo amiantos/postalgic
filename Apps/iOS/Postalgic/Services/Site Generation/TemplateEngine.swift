@@ -82,6 +82,12 @@ class TemplateEngine {
             context["blogAuthorUrl"] = authorUrl
         }
 
+        // Simple Analytics
+        context["simpleAnalyticsEnabled"] = blog.simpleAnalyticsEnabled
+        if let domain = blog.simpleAnalyticsDomain, !domain.isEmpty {
+            context["simpleAnalyticsDomain"] = domain
+        }
+
         return context
     }
     

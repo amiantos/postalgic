@@ -148,6 +148,8 @@ class SyncImporter {
         blog.darkShade = syncBlog.colors.darkShade
         blog.themeIdentifier = syncBlog.themeIdentifier
         blog.timezone = syncBlog.timezone
+        blog.simpleAnalyticsEnabled = syncBlog.simpleAnalyticsEnabled
+        blog.simpleAnalyticsDomain = syncBlog.simpleAnalyticsDomain
 
         // Enable sync and store sync info
         blog.syncEnabled = true
