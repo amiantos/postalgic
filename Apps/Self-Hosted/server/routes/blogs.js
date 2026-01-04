@@ -215,7 +215,10 @@ router.get('/:id/analytics', async (req, res) => {
     const response = await fetch(analyticsUrl);
     if (!response.ok) {
       if (response.status === 404) {
-        return res.status(404).json({ error: 'Analytics data not found. Ensure the site is public on Simple Analytics.' });
+        return res.status(404).json({ error: 'Domain not found. Ensure the domain is registered with Simple Analytics.' });
+      }
+      if (response.status === 400) {
+        return res.status(400).json({ error: 'Analytics data not available. Ensure the site is set to public in Simple Analytics.' });
       }
       throw new Error(`Simple Analytics returned ${response.status}`);
     }
