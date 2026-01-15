@@ -18,7 +18,6 @@ const generating = ref(false);
 const downloading = ref(false);
 const publishing = ref(false);
 const error = ref(null);
-const successMessage = ref(null);
 const previewUrl = ref(null);
 
 // Terminal log state
@@ -33,7 +32,6 @@ watch(() => props.show, (newVal) => {
   if (newVal) {
     // Reset state when modal opens
     error.value = null;
-    successMessage.value = null;
     previewUrl.value = null;
     logMessages.value = [];
     addLog('Ready to publish...', 'info');
@@ -147,7 +145,6 @@ async function downloadSite() {
     // Mark as published
     await publishApi.markPublished(props.blogId);
     addLog('ZIP downloaded successfully', 'success');
-    successMessage.value = 'Site ZIP downloaded. Upload the extracted files to your web hosting.';
   } catch (e) {
     addLog(`Download failed: ${e.message}`, 'error');
     error.value = e.message;
@@ -156,10 +153,63 @@ async function downloadSite() {
   }
 }
 
+/**
+ * Helper to publish via SSE stream
+ * @param {string} endpoint - The SSE endpoint path (e.g., 'aws/stream')
+ * @param {Object} params - Query parameters
+ * @returns {Promise} - Resolves with result data or rejects with error
+ */
+function publishWithSSE(endpoint, params = {}) {
+  return new Promise((resolve, reject) => {
+    const queryString = new URLSearchParams(params).toString();
+    const url = `/api/blogs/${props.blogId}/publish/${endpoint}${queryString ? '?' + queryString : ''}`;
+
+    const eventSource = new EventSource(url);
+
+    eventSource.addEventListener('progress', (e) => {
+      const data = JSON.parse(e.data);
+      addLog(data.message, 'info');
+    });
+
+    eventSource.addEventListener('file', (e) => {
+      const data = JSON.parse(e.data);
+      addLog(`[${data.current}/${data.total}] ${data.filename}`, 'info');
+    });
+
+    eventSource.addEventListener('complete', (e) => {
+      const data = JSON.parse(e.data);
+      eventSource.close();
+      resolve(data);
+    });
+
+    eventSource.addEventListener('error', (e) => {
+      // Check if this is an SSE error event with data
+      if (e.data) {
+        const data = JSON.parse(e.data);
+        eventSource.close();
+        reject(new Error(data.message));
+      } else {
+        // Connection error
+        eventSource.close();
+        reject(new Error('Connection to server lost'));
+      }
+    });
+
+    // Handle connection errors
+    eventSource.onerror = () => {
+      if (eventSource.readyState === EventSource.CLOSED) {
+        // Normal close, already handled by 'complete' or 'error' event
+        return;
+      }
+      eventSource.close();
+      reject(new Error('Failed to connect to publish stream'));
+    };
+  });
+}
+
 async function publishToAWS(forceUploadAll = false, skipSync = false) {
   publishing.value = true;
   error.value = null;
-  successMessage.value = null;
 
   try {
     // Perform pre-publish sync first (unless skipped)
@@ -171,20 +221,11 @@ async function publishToAWS(forceUploadAll = false, skipSync = false) {
       }
     }
 
-    addLog('Generating site for AWS...', 'info');
     addLog(forceUploadAll ? 'Full publish: uploading all files' : 'Smart publish: uploading changed files only', 'info');
 
-    const result = await publishApi.publishToAWS(props.blogId, { forceUploadAll });
+    await publishWithSSE('aws/stream', { forceUploadAll });
 
-    addLog(`Uploaded: ${result.uploaded || 0} files`, 'success');
-    if (result.deleted > 0) {
-      addLog(`Deleted: ${result.deleted} old files`, 'success');
-    }
-    if (result.message?.includes('CloudFront')) {
-      addLog('CloudFront cache invalidation created', 'success');
-    }
     addLog('Publish complete!', 'success');
-    successMessage.value = result.message;
   } catch (e) {
     addLog(`Publish failed: ${e.message}`, 'error');
     error.value = e.message;
@@ -196,7 +237,6 @@ async function publishToAWS(forceUploadAll = false, skipSync = false) {
 async function publishToSFTP(forceUploadAll = false, skipSync = false) {
   publishing.value = true;
   error.value = null;
-  successMessage.value = null;
 
   try {
     // Perform pre-publish sync first (unless skipped)
@@ -208,17 +248,11 @@ async function publishToSFTP(forceUploadAll = false, skipSync = false) {
       }
     }
 
-    addLog('Generating site for SFTP...', 'info');
     addLog(forceUploadAll ? 'Full publish: uploading all files' : 'Smart publish: uploading changed files only', 'info');
 
-    const result = await publishApi.publishToSFTP(props.blogId, { forceUploadAll });
+    await publishWithSSE('sftp/stream', { forceUploadAll });
 
-    addLog(`Uploaded: ${result.uploaded || 0} files`, 'success');
-    if (result.deleted > 0) {
-      addLog(`Deleted: ${result.deleted} old files`, 'success');
-    }
     addLog('Publish complete!', 'success');
-    successMessage.value = result.message;
   } catch (e) {
     addLog(`Publish failed: ${e.message}`, 'error');
     error.value = e.message;
@@ -230,7 +264,6 @@ async function publishToSFTP(forceUploadAll = false, skipSync = false) {
 async function publishToGit(skipSync = false) {
   publishing.value = true;
   error.value = null;
-  successMessage.value = null;
 
   try {
     // Perform pre-publish sync first (unless skipped)
@@ -242,14 +275,9 @@ async function publishToGit(skipSync = false) {
       }
     }
 
-    addLog('Generating site for Git...', 'info');
-    addLog('Committing and pushing to repository...', 'info');
+    await publishWithSSE('git/stream');
 
-    const result = await publishApi.publishToGit(props.blogId);
-
-    addLog('Changes pushed to repository', 'success');
     addLog('Publish complete!', 'success');
-    successMessage.value = result.message;
   } catch (e) {
     addLog(`Publish failed: ${e.message}`, 'error');
     error.value = e.message;
@@ -340,11 +368,6 @@ const hasPublishedPosts = computed(() => blogStore.publishedPosts.length > 0);
           <!-- Error Message -->
           <div v-if="error" class="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-800 dark:text-red-400 text-sm">
             {{ error }}
-          </div>
-
-          <!-- Success Message -->
-          <div v-if="successMessage" class="p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg text-green-800 dark:text-green-400 text-sm">
-            {{ successMessage }}
           </div>
 
           <!-- Preview Button -->
