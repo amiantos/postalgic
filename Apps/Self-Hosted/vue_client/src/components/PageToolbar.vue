@@ -9,8 +9,6 @@ defineProps({
   subtitle: { type: String, default: '' }
 });
 
-const emit = defineEmits(['deploy']);
-
 const route = useRoute();
 const blogStore = useBlogStore();
 const slots = useSlots();
@@ -42,15 +40,6 @@ const hasControls = computed(() => !!slots.controls);
           <!-- Sync Badge - shows when remote changes are available -->
           <SyncBadge />
 
-          <button
-            @click="emit('deploy')"
-            class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
-            title="Deploy"
-          >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-            </svg>
-          </button>
           <router-link
             :to="{ name: 'blog-settings', params: { blogId } }"
             class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"

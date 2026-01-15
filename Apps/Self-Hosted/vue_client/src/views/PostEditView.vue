@@ -88,6 +88,7 @@ function captureInitialState() {
 const showTagDropdown = ref(false);
 const showEmbedEditor = ref(false);
 const showPublishModal = ref(false);
+const wasPublished = ref(false); // Track if post was originally published
 
 // Tags matching search query (case-insensitive)
 const filteredTags = computed(() => {
@@ -129,6 +130,7 @@ onMounted(async () => {
       embed: post.embed || null,
       createdAt: toLocalDateTimeString(new Date(post.createdAt))
     };
+    wasPublished.value = !post.isDraft; // Track if post was originally published
     // Auto-resize after content is loaded
     setTimeout(autoResize, 0);
   }
@@ -160,6 +162,11 @@ onBeforeRouteLeave((to, from) => {
   }
 });
 
+async function saveDraft() {
+  form.value.isDraft = true;
+  await savePost();
+}
+
 async function savePost() {
   if (!form.value.content.trim()) {
     error.value = 'Post content is required';
@@ -168,6 +175,9 @@ async function savePost() {
 
   saving.value = true;
   error.value = null;
+
+  // Check if we're unpublishing (changing from published to draft)
+  const isUnpublishing = wasPublished.value && form.value.isDraft;
 
   try {
     const data = {
@@ -182,7 +192,13 @@ async function savePost() {
     }
     // Mark as saved so navigation guard doesn't trigger
     hasSaved.value = true;
-    router.push({ name: 'blog-posts', params: { blogId: blogId.value } });
+
+    // If unpublishing, show the publish modal to update the site
+    if (isUnpublishing) {
+      showPublishModal.value = true;
+    } else {
+      router.push({ name: 'blog-posts', params: { blogId: blogId.value } });
+    }
   } catch (e) {
     error.value = e.message;
   } finally {
@@ -196,28 +212,36 @@ async function publishPost() {
     return;
   }
 
-  form.value.isDraft = false;
-  saving.value = true;
-  error.value = null;
+  // Check if we actually need to save (post is new, is a draft, or has changes)
+  const needsSave = isNew.value || form.value.isDraft || isDirty.value;
 
-  try {
-    const data = {
-      ...form.value,
-      createdAt: new Date(form.value.createdAt).toISOString()
-    };
+  if (needsSave) {
+    form.value.isDraft = false;
+    saving.value = true;
+    error.value = null;
 
-    if (isNew.value) {
-      await blogStore.createPost(blogId.value, data);
-    } else {
-      await blogStore.updatePost(blogId.value, postId.value, data);
+    try {
+      const data = {
+        ...form.value,
+        createdAt: new Date(form.value.createdAt).toISOString()
+      };
+
+      if (isNew.value) {
+        await blogStore.createPost(blogId.value, data);
+      } else {
+        await blogStore.updatePost(blogId.value, postId.value, data);
+      }
+      hasSaved.value = true;
+    } catch (e) {
+      error.value = e.message;
+      saving.value = false;
+      return;
+    } finally {
+      saving.value = false;
     }
-    hasSaved.value = true;
-    showPublishModal.value = true;
-  } catch (e) {
-    error.value = e.message;
-  } finally {
-    saving.value = false;
   }
+
+  showPublishModal.value = true;
 }
 
 function handlePublishModalClose() {
@@ -315,7 +339,7 @@ function removeEmbed() {
         <div class="flex items-center gap-2">
           <!-- Action buttons (mobile only) -->
           <button
-            @click="savePost"
+            @click="saveDraft"
             :disabled="saving"
             class="lg:hidden px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
           >
@@ -379,7 +403,7 @@ function removeEmbed() {
         <!-- Action Buttons -->
         <div class="flex gap-2 mb-4">
           <button
-            @click="savePost"
+            @click="saveDraft"
             :disabled="saving"
             class="flex-1 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50 text-sm font-medium"
           >
@@ -832,6 +856,7 @@ function removeEmbed() {
       v-if="showPublishModal"
       :blog-id="blogId"
       :show="showPublishModal"
+      :auto-publish="true"
       @close="handlePublishModalClose"
     />
   </div>

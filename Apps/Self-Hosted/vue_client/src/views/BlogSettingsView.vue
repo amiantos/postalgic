@@ -5,7 +5,6 @@ import { useBlogStore } from '@/stores/blog';
 import { blogApi } from '@/api';
 import PageToolbar from '@/components/PageToolbar.vue';
 import SettingsTabs from '@/components/SettingsTabs.vue';
-import PublishModal from '@/components/PublishModal.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -16,7 +15,6 @@ const blogId = computed(() => route.params.blogId);
 const form = ref({});
 const saving = ref(false);
 const error = ref(null);
-const showPublishModal = ref(false);
 const success = ref(false);
 const exporting = ref(false);
 
@@ -75,7 +73,7 @@ async function downloadDebugExport() {
 
 <template>
   <div>
-    <PageToolbar title="Basic Settings" @deploy="showPublishModal = true">
+    <PageToolbar title="Basic Settings">
       <template #tabs>
         <SettingsTabs />
       </template>
@@ -279,14 +277,6 @@ async function downloadDebugExport() {
         {{ exporting ? 'Exporting...' : 'Download Debug Export' }}
       </button>
     </section>
-
-    <!-- Publish Modal -->
-    <PublishModal
-      v-if="showPublishModal"
-      :blog-id="blogId"
-      :show="showPublishModal"
-      @close="showPublishModal = false"
-    />
     </div>
   </div>
 </template>

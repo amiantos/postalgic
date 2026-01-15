@@ -6,7 +6,6 @@ import { useSyncStore } from '@/stores/sync';
 import { syncApi } from '@/api';
 import PageToolbar from '@/components/PageToolbar.vue';
 import SettingsTabs from '@/components/SettingsTabs.vue';
-import PublishModal from '@/components/PublishModal.vue';
 
 const route = useRoute();
 const blogStore = useBlogStore();
@@ -18,7 +17,6 @@ const form = ref({});
 const saving = ref(false);
 const error = ref(null);
 const success = ref(false);
-const showPublishModal = ref(false);
 
 // Sync settings state
 const syncConfig = ref(null);
@@ -135,7 +133,7 @@ async function saveSettings() {
 
 <template>
   <div>
-    <PageToolbar title="Publish Settings" @deploy="showPublishModal = true">
+    <PageToolbar title="Publish Settings">
       <template #tabs>
         <SettingsTabs />
       </template>
@@ -590,14 +588,6 @@ async function saveSettings() {
         </button>
       </div>
     </form>
-
-    <!-- Publish Modal -->
-    <PublishModal
-      v-if="showPublishModal"
-      :blog-id="blogId"
-      :show="showPublishModal"
-      @close="showPublishModal = false"
-    />
     </div>
   </div>
 </template>

@@ -167,7 +167,6 @@ function formatLocalDateTime(dateString) {
     <PageToolbar
       title="Posts"
       :subtitle="`${postCounts.published} published${postCounts.drafts > 0 ? `, ${postCounts.drafts} drafts` : ''}`"
-      @deploy="showPublishModal = true"
     >
       <template #actions>
         <button

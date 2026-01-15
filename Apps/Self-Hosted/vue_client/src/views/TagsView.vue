@@ -4,7 +4,6 @@ import { useRoute } from 'vue-router';
 import { useBlogStore } from '@/stores/blog';
 import PageToolbar from '@/components/PageToolbar.vue';
 import SettingsTabs from '@/components/SettingsTabs.vue';
-import PublishModal from '@/components/PublishModal.vue';
 
 const route = useRoute();
 const blogStore = useBlogStore();
@@ -12,7 +11,6 @@ const blogStore = useBlogStore();
 const blogId = computed(() => route.params.blogId);
 
 const showModal = ref(false);
-const showPublishModal = ref(false);
 const editingTag = ref(null);
 const form = ref({ name: '' });
 const saving = ref(false);
@@ -67,7 +65,6 @@ async function deleteTag(tag) {
     <PageToolbar
       title="Tags"
       :subtitle="`${blogStore.tags.length} tags`"
-      @deploy="showPublishModal = true"
     >
       <template #actions>
         <button
@@ -174,13 +171,5 @@ async function deleteTag(tag) {
         </div>
       </div>
     </div>
-
-    <!-- Publish Modal -->
-    <PublishModal
-      v-if="showPublishModal"
-      :blog-id="blogId"
-      :show="showPublishModal"
-      @close="showPublishModal = false"
-    />
   </div>
 </template>
