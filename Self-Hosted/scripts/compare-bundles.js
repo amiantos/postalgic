@@ -14,9 +14,9 @@
  *   node scripts/compare-bundles.js data/debugs/postalgic-debug-ios.zip data/debugs/postalgic-debug-self-hosted.zip
  *
  *   # From project root
- *   node Apps/Self-Hosted/scripts/compare-bundles.js \
- *     Apps/Self-Hosted/data/debugs/postalgic-debug-ios.zip \
- *     Apps/Self-Hosted/data/debugs/postalgic-debug-self-hosted.zip
+ *   node Self-Hosted/scripts/compare-bundles.js \
+ *     Self-Hosted/data/debugs/postalgic-debug-ios.zip \
+ *     Self-Hosted/data/debugs/postalgic-debug-self-hosted.zip
  *
  * DEBUG EXPORTS:
  *   - iOS: Use Debug menu > "Export Debug Bundle" (saves to Files app)

@@ -26,11 +26,11 @@ docker compose up -d
 
 Access the app at http://localhost:8010
 
-See [Apps/Self-Hosted](Apps/Self-Hosted/) for more options including development setup.
+See [Self-Hosted](Self-Hosted/) for more options including development setup.
 
 # iOS
 
-The iOS app is available on the [App Store](https://apps.apple.com/us/app/postalgic-pocket-blogger/id6446164693) or you can build it yourself from [Apps/iOS](Apps/iOS/).
+The iOS app is available on the [App Store](https://apps.apple.com/us/app/postalgic-pocket-blogger/id6446164693) or you can build it yourself from [iOS](iOS/).
 
 # Example Blogs
 - https://dev.postalgic.app

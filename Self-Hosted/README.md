@@ -31,7 +31,7 @@ docker compose up -d
 
 ```bash
 # Clone the repo and navigate to the directory
-cd Apps/Self-Hosted
+cd Self-Hosted
 
 # Build and run with Docker Compose
 docker compose up -d
@@ -68,7 +68,7 @@ NODE_ENV=production npm start
 ## Project Structure
 
 ```
-Apps/Self-Hosted/
+Self-Hosted/
 ├── server/                 # Express backend
 │   ├── routes/            # API routes
 │   ├── services/          # Business logic (site generation, etc.)
