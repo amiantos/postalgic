@@ -547,8 +547,16 @@ router.get('/git/stream', async (req, res) => {
       return;
     }
 
-    if (!blog.gitRepositoryUrl || !blog.gitUsername || !blog.gitToken) {
-      sendSSE(res, 'error', { message: 'Git configuration incomplete' });
+    // Validate Git configuration - need repo URL and either HTTPS creds or SSH key
+    const isSSHUrl = blog.gitRepositoryUrl && (blog.gitRepositoryUrl.startsWith('git@') || blog.gitRepositoryUrl.startsWith('ssh://'));
+    const hasHTTPSAuth = blog.gitUsername && blog.gitToken;
+    const hasSSHAuth = blog.gitPrivateKey;
+
+    if (!blog.gitRepositoryUrl || (isSSHUrl ? !hasSSHAuth : !hasHTTPSAuth)) {
+      const errorMsg = isSSHUrl
+        ? 'Git configuration incomplete. SSH URLs require a private key.'
+        : 'Git configuration incomplete. HTTPS URLs require username and token.';
+      sendSSE(res, 'error', { message: errorMsg });
       res.end();
       return;
     }
@@ -559,6 +567,7 @@ router.get('/git/stream', async (req, res) => {
       repositoryUrl: blog.gitRepositoryUrl,
       username: blog.gitUsername,
       token: blog.gitToken,
+      privateKey: blog.gitPrivateKey,
       branch: blog.gitBranch || 'main',
       commitMessage: blog.gitCommitMessage || 'Update blog',
       authorName: blog.authorName || 'Postalgic',
@@ -610,10 +619,16 @@ router.post('/git', async (req, res) => {
       return res.status(404).json({ error: 'Blog not found' });
     }
 
-    if (!blog.gitRepositoryUrl || !blog.gitUsername || !blog.gitToken) {
-      return res.status(400).json({
-        error: 'Git configuration incomplete. Please set repository URL, username, and personal access token in settings.'
-      });
+    // Validate Git configuration - need repo URL and either HTTPS creds or SSH key
+    const isSSHUrl = blog.gitRepositoryUrl && (blog.gitRepositoryUrl.startsWith('git@') || blog.gitRepositoryUrl.startsWith('ssh://'));
+    const hasHTTPSAuth = blog.gitUsername && blog.gitToken;
+    const hasSSHAuth = blog.gitPrivateKey;
+
+    if (!blog.gitRepositoryUrl || (isSSHUrl ? !hasSSHAuth : !hasHTTPSAuth)) {
+      const errorMsg = isSSHUrl
+        ? 'Git configuration incomplete. SSH URLs require a private key.'
+        : 'Git configuration incomplete. HTTPS URLs require username and token.';
+      return res.status(400).json({ error: errorMsg });
     }
 
     // Create publisher
@@ -621,6 +636,7 @@ router.post('/git', async (req, res) => {
       repositoryUrl: blog.gitRepositoryUrl,
       username: blog.gitUsername,
       token: blog.gitToken,
+      privateKey: blog.gitPrivateKey,
       branch: blog.gitBranch || 'main',
       commitMessage: blog.gitCommitMessage || 'Update blog',
       authorName: blog.authorName || 'Postalgic',

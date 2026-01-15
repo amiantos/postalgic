@@ -70,7 +70,7 @@ class Storage {
         aws_region, aws_s3_bucket, aws_cloudfront_dist_id,
         aws_access_key_id, aws_secret_access_key,
         ftp_host, ftp_port, ftp_username, ftp_password, ftp_private_key, ftp_path,
-        git_repository_url, git_username, git_token, git_branch, git_commit_message,
+        git_repository_url, git_username, git_token, git_branch, git_commit_message, git_private_key,
         timezone, simple_analytics_enabled, simple_analytics_domain,
         created_at, updated_at
       ) VALUES (
@@ -80,7 +80,7 @@ class Storage {
         ?, ?, ?,
         ?, ?,
         ?, ?, ?, ?, ?, ?,
-        ?, ?, ?, ?, ?,
+        ?, ?, ?, ?, ?, ?,
         ?, ?, ?,
         ?, ?
       )
@@ -118,6 +118,7 @@ class Storage {
       blogData.gitToken || null,
       blogData.gitBranch || 'main',
       blogData.gitCommitMessage || null,
+      blogData.gitPrivateKey || null,
       blogData.timezone || 'UTC',
       blogData.simpleAnalyticsEnabled ? 1 : 0,
       blogData.simpleAnalyticsDomain || null,
@@ -150,7 +151,7 @@ class Storage {
         ftp_host = ?, ftp_port = ?, ftp_username = ?, ftp_password = ?,
         ftp_private_key = ?, ftp_path = ?,
         git_repository_url = ?, git_username = ?, git_token = ?,
-        git_branch = ?, git_commit_message = ?,
+        git_branch = ?, git_commit_message = ?, git_private_key = ?,
         timezone = ?, simple_analytics_enabled = ?, simple_analytics_domain = ?,
         updated_at = ?
       WHERE id = ?
@@ -187,6 +188,7 @@ class Storage {
       merged.gitToken,
       merged.gitBranch,
       merged.gitCommitMessage,
+      merged.gitPrivateKey,
       merged.timezone || 'UTC',
       merged.simpleAnalyticsEnabled ? 1 : 0,
       merged.simpleAnalyticsDomain,
@@ -249,6 +251,7 @@ class Storage {
       gitToken: row.git_token,
       gitBranch: row.git_branch,
       gitCommitMessage: row.git_commit_message,
+      gitPrivateKey: row.git_private_key,
       timezone: row.timezone || 'UTC',
       simpleAnalyticsEnabled: !!row.simple_analytics_enabled,
       simpleAnalyticsDomain: row.simple_analytics_domain,

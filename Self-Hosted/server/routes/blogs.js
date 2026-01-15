@@ -86,7 +86,8 @@ router.post('/', (req, res) => {
       gitUsername: rest.gitUsername || '',
       gitToken: rest.gitToken || '',
       gitBranch: rest.gitBranch || 'main',
-      gitCommitMessage: rest.gitCommitMessage || 'Update blog'
+      gitCommitMessage: rest.gitCommitMessage || 'Update blog',
+      gitPrivateKey: rest.gitPrivateKey || ''
     };
 
     const blog = storage.createBlog(blogData);

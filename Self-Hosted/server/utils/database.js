@@ -189,6 +189,13 @@ function runMigrations(database) {
     database.exec(`ALTER TABLE blogs ADD COLUMN simple_analytics_enabled INTEGER DEFAULT 0`);
     database.exec(`ALTER TABLE blogs ADD COLUMN simple_analytics_domain TEXT`);
   }
+
+  // Migration: Add git_private_key column for SSH key authentication
+  const blogColumnsGit = database.prepare(`PRAGMA table_info(blogs)`).all();
+  if (!blogColumnsGit.some(col => col.name === 'git_private_key')) {
+    console.log('[Database] Running migration: adding git_private_key column to blogs table');
+    database.exec(`ALTER TABLE blogs ADD COLUMN git_private_key TEXT`);
+  }
 }
 
 /**
@@ -243,6 +250,7 @@ function createSchema(database) {
       git_token TEXT,
       git_branch TEXT DEFAULT 'main',
       git_commit_message TEXT,
+      git_private_key TEXT,
       timezone TEXT DEFAULT 'UTC',
       simple_analytics_enabled INTEGER DEFAULT 0,
       simple_analytics_domain TEXT,

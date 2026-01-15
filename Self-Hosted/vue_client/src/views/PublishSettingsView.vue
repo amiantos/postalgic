@@ -285,8 +285,11 @@ async function saveSettings() {
                   v-model="form.gitRepositoryUrl"
                   type="text"
                   class="w-full px-3.5 py-2.5 rounded-xl bg-white/80 dark:bg-white/10 text-gray-900 dark:text-gray-100 border-0 focus:ring-2 focus:ring-primary-500/50 transition-colors"
-                  placeholder="https://github.com/username/repo.git"
+                  placeholder="https://github.com/user/repo.git or git@github.com:user/repo.git"
                 />
+                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  Use HTTPS URL with username/token, or SSH URL with private key
+                </p>
               </div>
               <div class="grid grid-cols-2 gap-4">
                 <div>
@@ -295,6 +298,7 @@ async function saveSettings() {
                     v-model="form.gitUsername"
                     type="text"
                     class="w-full px-3.5 py-2.5 rounded-xl bg-white/80 dark:bg-white/10 text-gray-900 dark:text-gray-100 border-0 focus:ring-2 focus:ring-primary-500/50 transition-colors"
+                    placeholder="For HTTPS URLs"
                   />
                 </div>
                 <div>
@@ -303,8 +307,21 @@ async function saveSettings() {
                     v-model="form.gitToken"
                     type="password"
                     class="w-full px-3.5 py-2.5 rounded-xl bg-white/80 dark:bg-white/10 text-gray-900 dark:text-gray-100 border-0 focus:ring-2 focus:ring-primary-500/50 transition-colors"
+                    placeholder="For HTTPS URLs"
                   />
                 </div>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Private Key (for SSH URLs)</label>
+                <textarea
+                  v-model="form.gitPrivateKey"
+                  rows="3"
+                  class="w-full px-3.5 py-2.5 rounded-xl bg-white/80 dark:bg-white/10 text-gray-900 dark:text-gray-100 border-0 focus:ring-2 focus:ring-primary-500/50 font-mono text-xs transition-colors"
+                  placeholder="-----BEGIN OPENSSH PRIVATE KEY-----..."
+                ></textarea>
+                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  Required for SSH URLs (git@github.com:...). Leave blank for HTTPS URLs.
+                </p>
               </div>
               <div class="grid grid-cols-2 gap-4">
                 <div>
