@@ -75,11 +75,6 @@ const routes = [
         path: 'publish-settings',
         name: 'publish-settings',
         component: () => import('./views/PublishSettingsView.vue')
-      },
-      {
-        path: 'publish',
-        name: 'publish',
-        component: () => import('./views/PublishView.vue')
       }
     ]
   }

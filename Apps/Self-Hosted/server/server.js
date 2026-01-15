@@ -70,6 +70,24 @@ app.use('/api/sync', syncRoutes);
 // Files are stored at data/uploads/{blogId}/ and served at /uploads/{blogId}/
 app.use('/uploads', express.static(path.join(DATA_ROOT, 'uploads')));
 
+// Preview asset redirect middleware
+// When viewing a preview at /preview/{blogId}/, the HTML uses absolute paths like /css/style.css
+// This middleware redirects those requests to the correct preview path based on Referer header
+app.use((req, res, next) => {
+  const referer = req.get('Referer') || '';
+
+  // Check if request comes from a preview page and is requesting a root-level asset
+  const previewMatch = referer.match(/\/preview\/([^/]+)/);
+  if (previewMatch && !req.path.startsWith('/preview') && !req.path.startsWith('/api') && !req.path.startsWith('/uploads')) {
+    const blogId = previewMatch[1];
+    // Redirect to the preview path
+    const previewPath = `/preview/${blogId}${req.path}`;
+    return res.redirect(previewPath);
+  }
+
+  next();
+});
+
 // Serve generated sites for preview
 app.use('/preview', express.static(path.join(DATA_ROOT, 'generated')));
 

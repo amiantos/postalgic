@@ -4,12 +4,14 @@ import { useRoute, useRouter } from 'vue-router';
 import { useBlogStore } from '@/stores/blog';
 import { marked } from 'marked';
 import PageToolbar from '@/components/PageToolbar.vue';
+import PublishModal from '@/components/PublishModal.vue';
 
 const route = useRoute();
 const router = useRouter();
 const blogStore = useBlogStore();
 
 const showDeleteModal = ref(false);
+const showPublishModal = ref(false);
 const postToDelete = ref(null);
 const filter = ref('all'); // 'all', 'published', 'draft'
 const searchText = ref('');
@@ -165,8 +167,19 @@ function formatLocalDateTime(dateString) {
     <PageToolbar
       title="Posts"
       :subtitle="`${postCounts.published} published${postCounts.drafts > 0 ? `, ${postCounts.drafts} drafts` : ''}`"
+      @deploy="showPublishModal = true"
     >
       <template #actions>
+        <button
+          @click="showPublishModal = true"
+          class="glass px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1"
+          title="Deploy Site"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+          </svg>
+          Deploy
+        </button>
         <router-link
           :to="{ name: 'post-create', params: { blogId } }"
           class="glass px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1"
@@ -455,6 +468,14 @@ function formatLocalDateTime(dateString) {
         </div>
       </div>
     </div>
+
+    <!-- Publish Modal -->
+    <PublishModal
+      v-if="showPublishModal"
+      :blog-id="blogId"
+      :show="showPublishModal"
+      @close="showPublishModal = false"
+    />
     </div>
   </div>
 </template>

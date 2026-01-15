@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router';
 import { useBlogStore } from '@/stores/blog';
 import PageToolbar from '@/components/PageToolbar.vue';
 import SettingsTabs from '@/components/SettingsTabs.vue';
+import PublishModal from '@/components/PublishModal.vue';
 
 const route = useRoute();
 const blogStore = useBlogStore();
@@ -11,6 +12,7 @@ const blogStore = useBlogStore();
 const blogId = computed(() => route.params.blogId);
 
 const showModal = ref(false);
+const showPublishModal = ref(false);
 const editingCategory = ref(null);
 const form = ref({ name: '', description: '' });
 const saving = ref(false);
@@ -65,6 +67,7 @@ async function deleteCategory(category) {
     <PageToolbar
       title="Categories"
       :subtitle="`${blogStore.categories.length} categories`"
+      @deploy="showPublishModal = true"
     >
       <template #actions>
         <button
@@ -186,5 +189,13 @@ async function deleteCategory(category) {
         </div>
       </div>
     </div>
+
+    <!-- Publish Modal -->
+    <PublishModal
+      v-if="showPublishModal"
+      :blog-id="blogId"
+      :show="showPublishModal"
+      @close="showPublishModal = false"
+    />
   </div>
 </template>

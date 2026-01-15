@@ -5,6 +5,7 @@ import { useBlogStore } from '@/stores/blog';
 import { themeApi } from '@/api';
 import PageToolbar from '@/components/PageToolbar.vue';
 import SettingsTabs from '@/components/SettingsTabs.vue';
+import PublishModal from '@/components/PublishModal.vue';
 
 const route = useRoute();
 const blogStore = useBlogStore();
@@ -14,6 +15,7 @@ const blogId = computed(() => route.params.blogId);
 const themes = ref([]);
 const loading = ref(false);
 const error = ref(null);
+const showPublishModal = ref(false);
 const duplicating = ref(false);
 const themeToDelete = ref(null);
 const selectedThemeId = ref(null);
@@ -303,7 +305,7 @@ const templateNames = computed(() => {
 
 <template>
   <div>
-    <PageToolbar title="Themes">
+    <PageToolbar title="Themes" @deploy="showPublishModal = true">
       <template #actions>
         <button
           @click="duplicateTheme('default')"
@@ -637,5 +639,13 @@ const templateNames = computed(() => {
         </div>
       </div>
     </div>
+
+    <!-- Publish Modal -->
+    <PublishModal
+      v-if="showPublishModal"
+      :blog-id="blogId"
+      :show="showPublishModal"
+      @close="showPublishModal = false"
+    />
   </div>
 </template>

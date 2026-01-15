@@ -4,11 +4,13 @@ import { useRoute } from 'vue-router';
 import { useBlogStore } from '@/stores/blog';
 import PageToolbar from '@/components/PageToolbar.vue';
 import SettingsTabs from '@/components/SettingsTabs.vue';
+import PublishModal from '@/components/PublishModal.vue';
 
 const route = useRoute();
 const blogStore = useBlogStore();
 
 const blogId = computed(() => route.params.blogId);
+const showPublishModal = ref(false);
 const fileInput = ref(null);
 const faviconInput = ref(null);
 const socialShareInput = ref(null);
@@ -122,6 +124,7 @@ function formatFileSize(bytes) {
     <PageToolbar
       title="Files"
       :subtitle="`${blogStore.staticFiles.length} files`"
+      @deploy="showPublishModal = true"
     >
       <template #actions>
         <button
@@ -286,6 +289,14 @@ function formatFileSize(bytes) {
         </div>
       </div>
     </div>
+
+    <!-- Publish Modal -->
+    <PublishModal
+      v-if="showPublishModal"
+      :blog-id="blogId"
+      :show="showPublishModal"
+      @close="showPublishModal = false"
+    />
     </div>
   </div>
 </template>

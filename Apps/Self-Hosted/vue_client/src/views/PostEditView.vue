@@ -3,6 +3,7 @@ import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
 import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router';
 import { useBlogStore } from '@/stores/blog';
 import EmbedEditor from '@/components/EmbedEditor.vue';
+import PublishModal from '@/components/PublishModal.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -86,6 +87,7 @@ function captureInitialState() {
 }
 const showTagDropdown = ref(false);
 const showEmbedEditor = ref(false);
+const showPublishModal = ref(false);
 
 // Tags matching search query (case-insensitive)
 const filteredTags = computed(() => {
@@ -189,8 +191,38 @@ async function savePost() {
 }
 
 async function publishPost() {
+  if (!form.value.content.trim()) {
+    error.value = 'Post content is required';
+    return;
+  }
+
   form.value.isDraft = false;
-  await savePost();
+  saving.value = true;
+  error.value = null;
+
+  try {
+    const data = {
+      ...form.value,
+      createdAt: new Date(form.value.createdAt).toISOString()
+    };
+
+    if (isNew.value) {
+      await blogStore.createPost(blogId.value, data);
+    } else {
+      await blogStore.updatePost(blogId.value, postId.value, data);
+    }
+    hasSaved.value = true;
+    showPublishModal.value = true;
+  } catch (e) {
+    error.value = e.message;
+  } finally {
+    saving.value = false;
+  }
+}
+
+function handlePublishModalClose() {
+  showPublishModal.value = false;
+  router.push({ name: 'blog-posts', params: { blogId: blogId.value } });
 }
 
 async function createTag() {
@@ -794,5 +826,13 @@ function removeEmbed() {
         </div>
       </div>
     </div>
+
+    <!-- Publish Modal -->
+    <PublishModal
+      v-if="showPublishModal"
+      :blog-id="blogId"
+      :show="showPublishModal"
+      @close="handlePublishModalClose"
+    />
   </div>
 </template>
