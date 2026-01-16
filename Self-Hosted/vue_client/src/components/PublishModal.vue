@@ -84,10 +84,10 @@ function addLog(text, type = 'info') {
 
 function getLogClass(type) {
   switch (type) {
-    case 'error': return 'text-red-500';
-    case 'success': return 'text-green-500';
-    case 'warning': return 'text-yellow-500';
-    default: return 'text-retro-gray-medium';
+    case 'error': return 'text-red-600 dark:text-red-500';
+    case 'success': return 'text-green-600 dark:text-green-500';
+    case 'warning': return 'text-yellow-600 dark:text-yellow-500';
+    default: return 'text-retro-gray-dark dark:text-retro-gray-medium';
   }
 }
 
@@ -361,7 +361,7 @@ const isWorking = computed(() => generating.value || downloading.value || publis
   <Teleport to="body">
     <div
       v-if="show"
-      class="fixed inset-0 bg-black flex items-center justify-center z-50 p-6 overflow-hidden"
+      class="fixed inset-0 bg-white dark:bg-black flex items-center justify-center z-50 p-6 overflow-hidden"
       @click.self="!isWorking && emit('close')"
     >
       <!-- Tiled DEPLOY background -->
@@ -369,7 +369,7 @@ const isWorking = computed(() => generating.value || downloading.value || publis
         <div class="absolute inset-0 flex flex-col justify-center -rotate-12 scale-150 origin-center">
           <div v-for="row in 12" :key="row" class="flex whitespace-nowrap">
             <span
-              class="font-retro-serif font-bold text-[6rem] md:text-[8rem] leading-none tracking-tighter text-[#1a1a1a]"
+              class="font-retro-serif font-bold text-[6rem] md:text-[8rem] leading-none tracking-tighter text-retro-gray-lightest dark:text-[#1a1a1a]"
               :class="row % 2 === 0 ? '' : 'ml-32'"
             >
               DEPLOY DEPLOY DEPLOY DEPLOY DEPLOY DEPLOY DEPLOY DEPLOY DEPLOY DEPLOY
@@ -382,8 +382,8 @@ const isWorking = computed(() => generating.value || downloading.value || publis
         <!-- Header -->
         <div class="flex items-end justify-between mb-6">
           <div>
-            <h2 class="font-retro-serif text-5xl md:text-6xl font-bold text-white leading-none">
-              Deploy
+            <h2 class="font-retro-serif text-5xl md:text-6xl font-bold text-retro-gray-darker dark:text-white leading-none lowercase">
+              deploy
             </h2>
             <p class="font-retro-mono text-retro-sm text-retro-gray-medium mt-2">
               via {{ getPublisherLabel(publisherType) }}
@@ -392,7 +392,7 @@ const isWorking = computed(() => generating.value || downloading.value || publis
           <button
             @click="emit('close')"
             :disabled="isWorking"
-            class="font-retro-mono text-retro-sm text-retro-gray-light hover:text-white uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed"
+            class="font-retro-mono text-retro-sm text-retro-gray-dark dark:text-retro-gray-light hover:text-retro-gray-darker dark:hover:text-white uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <span class="relative -top-px">&times;</span> Close
           </button>
@@ -401,7 +401,7 @@ const isWorking = computed(() => generating.value || downloading.value || publis
         <!-- Blog URL Warning -->
         <div v-if="!blogStore.currentBlog?.url" class="mb-4 p-3 border-2 border-yellow-500 bg-yellow-500/10">
           <p class="font-retro-mono text-retro-sm text-yellow-500 uppercase">Warning: Blog URL not set</p>
-          <p class="font-retro-sans text-retro-sm text-retro-gray-light mt-1">
+          <p class="font-retro-sans text-retro-sm text-retro-gray-dark dark:text-retro-gray-light mt-1">
             Set your blog URL in Settings for correct links.
           </p>
         </div>
@@ -409,17 +409,17 @@ const isWorking = computed(() => generating.value || downloading.value || publis
         <!-- Terminal Log -->
         <div
           ref="logContainer"
-          class="bg-black border-2 border-retro-gray-darker p-4 h-48 overflow-y-auto font-retro-mono text-retro-sm mb-4"
+          class="bg-retro-gray-lightest dark:bg-black border-2 border-retro-gray-light dark:border-retro-gray-darker p-4 h-48 overflow-y-auto font-retro-mono text-retro-sm mb-4"
         >
           <div
             v-for="(msg, index) in logMessages"
             :key="index"
             :class="getLogClass(msg.type)"
           >
-            <span class="text-retro-gray-dark">{{ msg.time }}</span> {{ msg.text }}
+            <span class="text-retro-gray-medium dark:text-retro-gray-dark">{{ msg.time }}</span> {{ msg.text }}
           </div>
-          <div v-if="isWorking" class="text-retro-gray-medium animate-pulse">
-            <span class="text-retro-gray-dark">{{ new Date().toLocaleTimeString('en-US', { hour12: false }) }}</span> Working...
+          <div v-if="isWorking" class="text-retro-gray-dark dark:text-retro-gray-medium animate-pulse">
+            <span class="text-retro-gray-medium dark:text-retro-gray-dark">{{ new Date().toLocaleTimeString('en-US', { hour12: false }) }}</span> Working...
           </div>
         </div>
 
@@ -432,7 +432,7 @@ const isWorking = computed(() => generating.value || downloading.value || publis
         <button
           v-if="previewUrl"
           @click="openPreview"
-          class="w-full mb-4 px-4 py-3 border-2 border-retro-gray-dark text-retro-gray-light font-retro-mono text-retro-sm uppercase tracking-wider hover:border-retro-gray-light hover:text-white transition-colors"
+          class="w-full mb-4 px-4 py-3 border-2 border-retro-gray-light dark:border-retro-gray-dark text-retro-gray-dark dark:text-retro-gray-light font-retro-mono text-retro-sm uppercase tracking-wider hover:border-retro-gray-dark dark:hover:border-retro-gray-light hover:text-retro-gray-darker dark:hover:text-white transition-colors"
         >
           Open Preview <span class="relative -top-px">&gt;</span>
         </button>
@@ -455,7 +455,7 @@ const isWorking = computed(() => generating.value || downloading.value || publis
               v-if="!previewUrl && publisherType !== 'manual'"
               @click="generateSite"
               :disabled="isWorking"
-              class="w-full px-4 py-3 border-2 border-retro-gray-dark text-retro-gray-light font-retro-mono text-retro-sm uppercase tracking-wider hover:border-retro-gray-light hover:text-white transition-colors disabled:opacity-50"
+              class="w-full px-4 py-3 border-2 border-retro-gray-light dark:border-retro-gray-dark text-retro-gray-dark dark:text-retro-gray-light font-retro-mono text-retro-sm uppercase tracking-wider hover:border-retro-gray-dark dark:hover:border-retro-gray-light hover:text-retro-gray-darker dark:hover:text-white transition-colors disabled:opacity-50"
             >
               {{ generating ? 'Generating...' : 'Generate Preview' }}
             </button>
@@ -478,13 +478,13 @@ const isWorking = computed(() => generating.value || downloading.value || publis
             <template v-if="publisherType === 'aws'">
               <!-- Full publish confirmation -->
               <div v-if="showFullPublishConfirm && fullPublishType === 'aws'" class="space-y-3">
-                <p class="font-retro-sans text-retro-sm text-retro-gray-light">
+                <p class="font-retro-sans text-retro-sm text-retro-gray-dark dark:text-retro-gray-light">
                   Full publish will re-upload all files. This may take a long time for large sites.
                 </p>
                 <div class="flex gap-3">
                   <button
                     @click="cancelFullPublish"
-                    class="flex-1 px-4 py-3 border-2 border-retro-gray-dark text-retro-gray-light font-retro-mono text-retro-sm uppercase tracking-wider hover:border-retro-gray-light hover:text-white transition-colors"
+                    class="flex-1 px-4 py-3 border-2 border-retro-gray-light dark:border-retro-gray-dark text-retro-gray-dark dark:text-retro-gray-light font-retro-mono text-retro-sm uppercase tracking-wider hover:border-retro-gray-dark dark:hover:border-retro-gray-light hover:text-retro-gray-darker dark:hover:text-white transition-colors"
                   >
                     Cancel
                   </button>
@@ -520,13 +520,13 @@ const isWorking = computed(() => generating.value || downloading.value || publis
             <template v-if="publisherType === 'sftp'">
               <!-- Full publish confirmation -->
               <div v-if="showFullPublishConfirm && fullPublishType === 'sftp'" class="space-y-3">
-                <p class="font-retro-sans text-retro-sm text-retro-gray-light">
+                <p class="font-retro-sans text-retro-sm text-retro-gray-dark dark:text-retro-gray-light">
                   Full publish will re-upload all files. This may take a long time for large sites.
                 </p>
                 <div class="flex gap-3">
                   <button
                     @click="cancelFullPublish"
-                    class="flex-1 px-4 py-3 border-2 border-retro-gray-dark text-retro-gray-light font-retro-mono text-retro-sm uppercase tracking-wider hover:border-retro-gray-light hover:text-white transition-colors"
+                    class="flex-1 px-4 py-3 border-2 border-retro-gray-light dark:border-retro-gray-dark text-retro-gray-dark dark:text-retro-gray-light font-retro-mono text-retro-sm uppercase tracking-wider hover:border-retro-gray-dark dark:hover:border-retro-gray-light hover:text-retro-gray-darker dark:hover:text-white transition-colors"
                   >
                     Cancel
                   </button>
