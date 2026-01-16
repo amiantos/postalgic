@@ -162,7 +162,7 @@ function formatFileSize(bytes) {
       <div class="absolute bottom-0 left-6 right-0 border-b border-retro-gray-light dark:border-retro-gray-darker lg:left-0 lg:-right-[100vw]"></div>
       <!-- Giant background text -->
       <span class="absolute inset-0 flex items-center justify-start font-retro-serif font-bold text-[10rem] md:text-[14rem] leading-none tracking-tighter text-retro-gray-lightest dark:text-[#1a1a1a] select-none pointer-events-none whitespace-nowrap uppercase" aria-hidden="true">
-        SETTINGS
+        FILES
       </span>
       <!-- Foreground content -->
       <div class="absolute bottom-4 left-6 lg:left-0">
