@@ -335,15 +335,11 @@ async function deletePost() {
     <div class="p-6 lg:pr-80 pb-16">
       <!-- Header -->
       <div class="flex items-center justify-between mb-6">
-        <div class="flex items-center gap-4">
+        <div class="flex items-center gap-2">
           <router-link
             :to="{ name: 'blog-posts', params: { blogId } }"
-            class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
-          >
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-            </svg>
-          </router-link>
+            class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 font-medium"
+          >&lt;</router-link>
           <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100">
             {{ isNew ? 'New Post' : 'Edit Post' }}
           </h2>
