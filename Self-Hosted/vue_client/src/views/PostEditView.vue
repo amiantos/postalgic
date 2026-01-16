@@ -340,7 +340,7 @@ async function deletePost() {
         :to="{ name: 'blog-posts', params: { blogId } }"
         class="font-retro-mono text-retro-sm text-retro-gray-dark dark:text-retro-gray-medium hover:text-retro-orange uppercase tracking-wider"
       >
-        <span class="relative -top-px">&lt;</span> All Posts
+        <span class="relative -top-px">&lt;</span> {{ blogStore.currentBlog?.name || 'Posts' }}
       </router-link>
 
       <div class="flex items-center gap-4">
