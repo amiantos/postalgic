@@ -58,10 +58,11 @@ async function deleteBlog() {
 
 <template>
   <div class="min-h-screen bg-white dark:bg-black overflow-x-hidden">
+    <!-- Max-width content wrapper for desktop -->
+    <div class="lg:max-w-[700px] lg:mx-auto">
 
     <!-- Navigation bar -->
-    <nav class="flex items-center justify-between px-6 py-4">
-      <span class="font-retro-mono text-retro-sm invisible">placeholder</span>
+    <nav class="flex items-center justify-start px-6 py-4 lg:px-0">
       <div class="flex items-center gap-4">
         <span class="relative group font-retro-mono text-retro-sm text-retro-gray-dark dark:text-retro-gray-medium hover:text-retro-orange uppercase tracking-wider cursor-pointer">
           <span class="relative -top-px">+</span> New Blog
@@ -83,16 +84,16 @@ async function deleteBlog() {
     </nav>
 
     <!-- Hero section with giant YOUR BLOGS -->
-    <header class="relative h-52 md:h-60 overflow-hidden">
-      <!-- Divider with left padding -->
-      <div class="absolute bottom-0 left-6 right-0 border-b border-retro-gray-light dark:border-retro-gray-darker"></div>
+    <header class="relative h-52 md:h-60">
+      <!-- Divider that extends to the right -->
+      <div class="absolute bottom-0 left-6 right-0 border-b border-retro-gray-light dark:border-retro-gray-darker lg:left-0 lg:-right-[100vw]"></div>
       <!-- Giant background text - uppercase, vertically centered for equal spacing -->
       <span class="absolute inset-0 flex items-center justify-start font-retro-serif font-bold text-[10rem] md:text-[14rem] leading-none tracking-tighter text-retro-gray-lightest dark:text-[#1a1a1a] select-none pointer-events-none whitespace-nowrap" aria-hidden="true">
         YOUR BLOGS
       </span>
       <!-- Foreground content - positioned lower -->
-      <div class="absolute bottom-4 left-6">
-        <h1 class="font-retro-serif font-bold text-6xl md:text-7xl leading-none tracking-tight text-retro-gray-darker dark:text-retro-cream lowercase">
+      <div class="absolute bottom-4 left-6 lg:left-0">
+        <h1 class="font-retro-serif font-bold text-6xl md:text-7xl leading-none tracking-tight text-retro-gray-darker dark:text-retro-cream lowercase whitespace-nowrap">
           your blogs
         </h1>
         <!-- Spacer to match blog metadata height -->
@@ -104,17 +105,17 @@ async function deleteBlog() {
     <main>
 
       <!-- Loading -->
-      <div v-if="blogStore.loading" class="py-24">
+      <div v-if="blogStore.loading" class="py-24 px-6 lg:px-0">
         <p class="font-retro-mono text-retro-sm text-retro-gray-medium uppercase tracking-widest">Loading...</p>
       </div>
 
       <!-- Error -->
-      <div v-else-if="blogStore.error" class="py-24">
+      <div v-else-if="blogStore.error" class="py-24 px-6 lg:px-0">
         <p class="font-retro-mono text-retro-sm text-red-600">{{ blogStore.error }}</p>
       </div>
 
       <!-- Empty state -->
-      <div v-else-if="blogStore.blogs.length === 0" class="py-24">
+      <div v-else-if="blogStore.blogs.length === 0" class="py-24 px-6 lg:px-0">
         <p class="font-retro-serif text-4xl md:text-6xl font-bold text-retro-gray-darker dark:text-retro-gray-light leading-tight">
           No blogs yet.
         </p>
@@ -128,20 +129,20 @@ async function deleteBlog() {
         <article
           v-for="blog in blogStore.blogs"
           :key="blog.id"
-          class="group cursor-pointer relative h-52 md:h-60 overflow-hidden"
+          class="group cursor-pointer relative h-52 md:h-60"
           @click="navigateToBlog(blog.id)"
         >
-          <!-- Divider with left padding -->
-          <div class="absolute bottom-0 left-6 right-0 border-b border-retro-gray-light dark:border-retro-gray-darker"></div>
+          <!-- Divider that extends to the right -->
+          <div class="absolute bottom-0 left-6 right-0 border-b border-retro-gray-light dark:border-retro-gray-darker lg:left-0 lg:-right-[100vw]"></div>
           <!-- Giant background text - uppercase -->
           <span class="absolute inset-0 flex items-center font-retro-serif font-bold text-[8rem] md:text-[12rem] leading-none tracking-tighter text-retro-gray-lightest dark:text-[#1a1a1a] select-none pointer-events-none whitespace-nowrap uppercase" aria-hidden="true">
             {{ blog.name }}
           </span>
 
           <!-- Foreground content - positioned lower -->
-          <div class="absolute bottom-4 left-6">
+          <div class="absolute bottom-4 left-6 lg:left-0">
             <!-- Lowercase blog name -->
-            <h2 class="font-retro-serif font-bold text-4xl md:text-5xl leading-none tracking-tight text-retro-gray-darker dark:text-retro-cream group-hover:text-retro-orange transition-colors lowercase">
+            <h2 class="font-retro-serif font-bold text-4xl md:text-5xl leading-none tracking-tight text-retro-gray-darker dark:text-retro-cream group-hover:text-retro-orange transition-colors lowercase whitespace-nowrap">
               {{ blog.name }}
             </h2>
 
@@ -155,7 +156,7 @@ async function deleteBlog() {
               </p>
 
               <!-- Analytics inline if available -->
-              <span v-if="blog.simpleAnalyticsEnabled && analyticsData[blog.id]" class="font-retro-mono text-retro-xs text-retro-gray-medium">
+              <span v-if="blog.simpleAnalyticsEnabled && analyticsData[blog.id]" class="font-retro-mono text-retro-xs text-retro-orange">
                 {{ analyticsData[blog.id].pageviews?.toLocaleString() || 0 }} views
               </span>
             </div>
@@ -164,6 +165,8 @@ async function deleteBlog() {
       </div>
 
     </main>
+
+    </div><!-- End max-width wrapper -->
 
     <!-- Delete Modal -->
     <div v-if="showDeleteModal" class="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-6">

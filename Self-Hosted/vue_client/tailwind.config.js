@@ -29,9 +29,9 @@ export default {
           'blue-dark': '#003366',
           'blue-link': '#0000FF',
           'blue-visited': '#660099',
-          // Orange accent
-          'orange': '#FF6600',
-          'orange-dark': '#CC5200',
+          // Orange accent (matches default blog template)
+          'orange': '#FFA100',
+          'orange-dark': '#CC8000',
           // Green
           'green': '#009900',
           'green-lime': '#99CC00',
