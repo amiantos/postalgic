@@ -155,21 +155,15 @@ function getBackgroundTitle(title) {
 
 <template>
   <div class="min-h-screen bg-white dark:bg-black overflow-x-hidden">
-    <!-- Right margin lip - covers overflow on desktop (light mode) -->
+    <!-- Right edge fade - covers overflow on desktop (light mode) -->
     <div
-      class="hidden lg:block dark:lg:hidden fixed right-0 top-0 h-full z-10 bg-white"
-      :style="{
-        width: 'calc((100vw - 700px) / 2 - 32px)',
-        boxShadow: '-12px 0 24px rgba(255,255,255,0.9)'
-      }"
+      class="hidden lg:block dark:lg:hidden fixed right-0 top-0 h-full z-10 w-24"
+      style="background: linear-gradient(to right, transparent, white);"
     ></div>
-    <!-- Right margin lip - covers overflow on desktop (dark mode) -->
+    <!-- Right edge fade - covers overflow on desktop (dark mode) -->
     <div
-      class="hidden dark:lg:block fixed right-0 top-0 h-full z-10 bg-black"
-      :style="{
-        width: 'calc((100vw - 700px) / 2 - 32px)',
-        boxShadow: '-12px 0 24px rgba(0,0,0,0.8)'
-      }"
+      class="hidden dark:lg:block fixed right-0 top-0 h-full z-10 w-24"
+      style="background: linear-gradient(to right, transparent, black);"
     ></div>
 
     <!-- Max-width content wrapper for desktop -->
@@ -177,27 +171,27 @@ function getBackgroundTitle(title) {
 
     <!-- Navigation bar -->
     <nav class="flex items-center justify-between px-6 py-4 lg:px-0">
-      <router-link to="/" class="font-retro-mono text-retro-sm text-retro-gray-dark dark:text-retro-gray-medium hover:text-retro-orange uppercase tracking-wider">
+      <router-link to="/" class="px-3 py-1.5 border-2 border-retro-gray-light dark:border-retro-gray-darker bg-white dark:bg-black font-retro-mono text-retro-sm text-retro-gray-dark dark:text-retro-gray-medium hover:border-retro-orange hover:text-retro-orange uppercase tracking-wider">
         <span class="relative -top-px">&lt;</span> All Blogs
       </router-link>
 
-      <div class="flex items-center gap-4">
+      <div class="flex items-center gap-2">
         <SyncBadge />
         <router-link
           :to="{ name: 'post-create', params: { blogId } }"
-          class="font-retro-mono text-retro-sm text-retro-gray-dark dark:text-retro-gray-medium hover:text-retro-orange uppercase tracking-wider"
+          class="px-3 py-1.5 border-2 border-retro-gray-light dark:border-retro-gray-darker bg-white dark:bg-black font-retro-mono text-retro-sm text-retro-gray-dark dark:text-retro-gray-medium hover:border-retro-orange hover:text-retro-orange uppercase tracking-wider"
         >
           <span class="relative -top-px">+</span> New Post
         </router-link>
         <button
           @click="showPublishModal = true"
-          class="font-retro-mono text-retro-sm text-retro-gray-dark dark:text-retro-gray-medium hover:text-retro-orange uppercase tracking-wider"
+          class="px-3 py-1.5 border-2 border-retro-gray-light dark:border-retro-gray-darker bg-white dark:bg-black font-retro-mono text-retro-sm text-retro-gray-dark dark:text-retro-gray-medium hover:border-retro-orange hover:text-retro-orange uppercase tracking-wider"
         >
           Deploy
         </button>
         <router-link
           :to="{ name: 'blog-settings', params: { blogId } }"
-          class="font-retro-mono text-retro-sm text-retro-gray-dark dark:text-retro-gray-medium hover:text-retro-orange uppercase tracking-wider"
+          class="px-3 py-1.5 border-2 border-retro-gray-light dark:border-retro-gray-darker bg-white dark:bg-black font-retro-mono text-retro-sm text-retro-gray-dark dark:text-retro-gray-medium hover:border-retro-orange hover:text-retro-orange uppercase tracking-wider"
         >
           Settings
         </router-link>

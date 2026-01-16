@@ -58,21 +58,15 @@ async function deleteBlog() {
 
 <template>
   <div class="min-h-screen bg-white dark:bg-black overflow-x-hidden">
-    <!-- Right margin lip - covers overflow on desktop (light mode) -->
+    <!-- Right edge fade - covers overflow on desktop (light mode) -->
     <div
-      class="hidden lg:block dark:lg:hidden fixed right-0 top-0 h-full z-10 bg-white"
-      :style="{
-        width: 'calc((100vw - 700px) / 2 - 32px)',
-        boxShadow: '-12px 0 24px rgba(255,255,255,0.9)'
-      }"
+      class="hidden lg:block dark:lg:hidden fixed right-0 top-0 h-full z-10 w-24"
+      style="background: linear-gradient(to right, transparent, white);"
     ></div>
-    <!-- Right margin lip - covers overflow on desktop (dark mode) -->
+    <!-- Right edge fade - covers overflow on desktop (dark mode) -->
     <div
-      class="hidden dark:lg:block fixed right-0 top-0 h-full z-10 bg-black"
-      :style="{
-        width: 'calc((100vw - 700px) / 2 - 32px)',
-        boxShadow: '-12px 0 24px rgba(0,0,0,0.8)'
-      }"
+      class="hidden dark:lg:block fixed right-0 top-0 h-full z-10 w-24"
+      style="background: linear-gradient(to right, transparent, black);"
     ></div>
 
     <!-- Max-width content wrapper for desktop -->
@@ -80,8 +74,8 @@ async function deleteBlog() {
 
     <!-- Navigation bar -->
     <nav class="flex items-center justify-start px-6 py-4 lg:px-0">
-      <div class="flex items-center gap-4">
-        <span class="relative group font-retro-mono text-retro-sm text-retro-gray-dark dark:text-retro-gray-medium hover:text-retro-orange uppercase tracking-wider cursor-pointer">
+      <div class="flex items-center gap-2">
+        <span class="relative group px-3 py-1.5 border-2 border-retro-gray-light dark:border-retro-gray-darker bg-white dark:bg-black font-retro-mono text-retro-sm text-retro-gray-dark dark:text-retro-gray-medium hover:border-retro-orange hover:text-retro-orange uppercase tracking-wider cursor-pointer">
           <span class="relative -top-px">+</span> New Blog
           <span class="absolute right-0 top-full hidden group-hover:block z-20 pt-1">
             <span class="block bg-white dark:bg-black border-2 border-retro-gray-light dark:border-retro-gray-darker min-w-[160px]">
