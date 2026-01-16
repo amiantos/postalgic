@@ -201,11 +201,11 @@ function getBackgroundTitle(title) {
     </nav>
 
     <!-- Hero section with giant blog name -->
-    <header class="relative h-64 md:h-72 overflow-hidden">
+    <header class="relative h-52 md:h-60 overflow-hidden">
       <!-- Divider with left padding -->
       <div class="absolute bottom-0 left-6 right-0 border-b border-retro-gray-light dark:border-retro-gray-darker"></div>
-      <!-- Giant background text - uppercase -->
-      <span class="absolute inset-0 flex items-center font-retro-serif font-bold text-[10rem] md:text-[14rem] leading-none tracking-tighter text-retro-gray-lightest dark:text-[#1a1a1a] select-none pointer-events-none whitespace-nowrap uppercase" aria-hidden="true">
+      <!-- Giant background text - uppercase, vertically centered for equal spacing -->
+      <span class="absolute inset-0 flex items-center justify-start font-retro-serif font-bold text-[10rem] md:text-[14rem] leading-none tracking-tighter text-retro-gray-lightest dark:text-[#1a1a1a] select-none pointer-events-none whitespace-nowrap uppercase" aria-hidden="true">
         {{ blogStore.currentBlog?.name }}
       </span>
       <!-- Foreground content - positioned lower -->
@@ -308,11 +308,11 @@ function getBackgroundTitle(title) {
         <article
           v-for="post in blogStore.posts"
           :key="post.id"
-          class="group cursor-pointer relative overflow-hidden border-b border-retro-gray-light dark:border-retro-gray-darker ml-6"
+          class="group cursor-pointer relative overflow-hidden border-b border-retro-gray-light dark:border-retro-gray-darker ml-6 pt-6 pb-6"
           @click="navigateToPost(post.id)"
         >
           <!-- Giant background text - post title uppercase -->
-          <span class="absolute top-0 left-0 right-0 h-24 md:h-32 flex items-center font-retro-serif font-bold text-[6rem] md:text-[8rem] leading-none tracking-tighter text-retro-gray-lightest dark:text-[#1a1a1a] select-none pointer-events-none whitespace-nowrap uppercase overflow-hidden" aria-hidden="true">
+          <span class="absolute top-6 left-0 right-0 h-24 md:h-32 flex items-center font-retro-serif font-bold text-[6rem] md:text-[8rem] leading-none tracking-tighter text-retro-gray-lightest dark:text-[#1a1a1a] select-none pointer-events-none whitespace-nowrap uppercase overflow-hidden" aria-hidden="true">
             {{ post.title || post.content?.replace(/[#*_`>\[\]]/g, '').substring(0, 200) || 'UNTITLED' }}
           </span>
 
@@ -352,12 +352,108 @@ function getBackgroundTitle(title) {
               </button>
             </div>
 
+            <!-- Embed (above position) -->
+            <div v-if="post.embed && post.embed.position === 'above'" class="mt-4 pr-6">
+              <!-- YouTube -->
+              <div v-if="post.embed.type === 'youtube' && getYouTubeVideoId(post.embed)" class="aspect-video max-h-96 border-2 border-retro-gray-light dark:border-retro-gray-darker">
+                <iframe
+                  :src="`https://www.youtube.com/embed/${getYouTubeVideoId(post.embed)}`"
+                  class="w-full h-full"
+                  frameborder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowfullscreen
+                ></iframe>
+              </div>
+
+              <!-- Link -->
+              <a
+                v-else-if="post.embed.type === 'link'"
+                :href="post.embed.url"
+                @click.stop
+                target="_blank"
+                rel="noopener noreferrer"
+                class="flex gap-4 max-w-xl border-2 border-retro-gray-light dark:border-retro-gray-darker p-3 hover:border-retro-orange transition-colors"
+              >
+                <img
+                  v-if="getLinkEmbedImageSrc(post.embed)"
+                  :src="getLinkEmbedImageSrc(post.embed)"
+                  class="w-20 h-20 object-cover shrink-0"
+                  alt=""
+                />
+                <div class="flex-1 min-w-0">
+                  <p v-if="post.embed.title" class="font-retro-sans text-retro-sm font-medium text-retro-gray-darker dark:text-retro-cream line-clamp-2">{{ post.embed.title }}</p>
+                  <p v-if="post.embed.description" class="font-retro-sans text-retro-xs text-retro-gray-dark dark:text-retro-gray-medium line-clamp-2 mt-1">{{ post.embed.description }}</p>
+                  <p class="font-retro-mono text-retro-xs text-retro-gray-medium mt-2 truncate">{{ post.embed.url }}</p>
+                </div>
+              </a>
+
+              <!-- Image -->
+              <div v-else-if="post.embed.type === 'image' && post.embed.images?.length > 0">
+                <img
+                  :src="getEmbedImageUrl(post.embed.images[0]?.filename)"
+                  class="max-w-full max-h-96 object-contain border-2 border-retro-gray-light dark:border-retro-gray-darker"
+                  alt=""
+                />
+                <p v-if="post.embed.images.length > 1" class="font-retro-mono text-retro-xs text-retro-gray-medium mt-2">
+                  +{{ post.embed.images.length - 1 }} more
+                </p>
+              </div>
+            </div>
+
             <!-- Content -->
             <div
               v-if="post.content"
               class="mt-4 pr-6 prose prose-sm dark:prose-invert prose-gray max-w-none font-retro-sans text-retro-sm"
               v-html="renderMarkdown(post.content)"
             ></div>
+
+            <!-- Embed (below position) -->
+            <div v-if="post.embed && post.embed.position === 'below'" class="mt-4 pr-6">
+              <!-- YouTube -->
+              <div v-if="post.embed.type === 'youtube' && getYouTubeVideoId(post.embed)" class="aspect-video max-h-96 border-2 border-retro-gray-light dark:border-retro-gray-darker">
+                <iframe
+                  :src="`https://www.youtube.com/embed/${getYouTubeVideoId(post.embed)}`"
+                  class="w-full h-full"
+                  frameborder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowfullscreen
+                ></iframe>
+              </div>
+
+              <!-- Link -->
+              <a
+                v-else-if="post.embed.type === 'link'"
+                :href="post.embed.url"
+                @click.stop
+                target="_blank"
+                rel="noopener noreferrer"
+                class="flex gap-4 max-w-xl border-2 border-retro-gray-light dark:border-retro-gray-darker p-3 hover:border-retro-orange transition-colors"
+              >
+                <img
+                  v-if="getLinkEmbedImageSrc(post.embed)"
+                  :src="getLinkEmbedImageSrc(post.embed)"
+                  class="w-20 h-20 object-cover shrink-0"
+                  alt=""
+                />
+                <div class="flex-1 min-w-0">
+                  <p v-if="post.embed.title" class="font-retro-sans text-retro-sm font-medium text-retro-gray-darker dark:text-retro-cream line-clamp-2">{{ post.embed.title }}</p>
+                  <p v-if="post.embed.description" class="font-retro-sans text-retro-xs text-retro-gray-dark dark:text-retro-gray-medium line-clamp-2 mt-1">{{ post.embed.description }}</p>
+                  <p class="font-retro-mono text-retro-xs text-retro-gray-medium mt-2 truncate">{{ post.embed.url }}</p>
+                </div>
+              </a>
+
+              <!-- Image -->
+              <div v-else-if="post.embed.type === 'image' && post.embed.images?.length > 0">
+                <img
+                  :src="getEmbedImageUrl(post.embed.images[0]?.filename)"
+                  class="max-w-full max-h-96 object-contain border-2 border-retro-gray-light dark:border-retro-gray-darker"
+                  alt=""
+                />
+                <p v-if="post.embed.images.length > 1" class="font-retro-mono text-retro-xs text-retro-gray-medium mt-2">
+                  +{{ post.embed.images.length - 1 }} more
+                </p>
+              </div>
+            </div>
           </div>
         </article>
       </div>
