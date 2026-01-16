@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, watch, nextTick } from 'vue';
+import { ref, computed, onMounted, watch, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import { useBlogStore } from '@/stores/blog';
 import { blogApi } from '@/api';
@@ -18,6 +18,14 @@ const analyticsData = ref({});
 const analyticsLoading = ref({});
 const analyticsError = ref({});
 const chartInstances = ref({});
+
+// Computed properties to separate blogs with and without analytics
+const blogsWithStats = computed(() =>
+  blogStore.blogs.filter(blog => blog.simpleAnalyticsEnabled)
+);
+const blogsWithoutStats = computed(() =>
+  blogStore.blogs.filter(blog => !blog.simpleAnalyticsEnabled)
+);
 
 onMounted(() => {
   blogStore.fetchBlogs();
@@ -149,10 +157,7 @@ async function deleteBlog() {
     <header class="bg-white/80 dark:bg-white/5 backdrop-blur-lg border-b border-black/5 dark:border-white/10">
       <div class="max-w-4xl mx-auto px-4 py-6">
         <div class="flex items-center justify-between">
-          <div>
-            <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Postalgic</h1>
-            <p class="text-gray-500 dark:text-gray-400 text-sm">Self-hosted static blog generator</p>
-          </div>
+          <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Postalgic</h1>
           <div class="flex gap-2">
             <div class="relative group">
               <button
@@ -222,49 +227,78 @@ async function deleteBlog() {
       </div>
 
       <!-- Blog List -->
-      <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div
-          v-for="blog in blogStore.blogs"
-          :key="blog.id"
-          class="surface-interactive p-5 cursor-pointer"
-          @click="navigateToBlog(blog.id)"
-        >
-          <div class="flex items-start gap-3">
-            <img
-              :src="`/api/blogs/${blog.id}/favicon`"
-              @error="$event.target.style.display = 'none'"
-              class="w-11 h-11 rounded flex-shrink-0"
-            />
-            <div class="min-w-0">
-              <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100 truncate">{{ blog.name }}</h2>
-              <p v-if="blog.tagline" class="text-gray-500 dark:text-gray-400 text-sm truncate">{{ blog.tagline }}</p>
+      <div v-else class="space-y-8">
+        <!-- Blogs with Stats -->
+        <div v-if="blogsWithStats.length > 0" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div
+            v-for="blog in blogsWithStats"
+            :key="blog.id"
+            class="surface-interactive p-5 cursor-pointer"
+            @click="navigateToBlog(blog.id)"
+          >
+            <div class="flex items-start gap-3">
+              <img
+                :src="`/api/blogs/${blog.id}/favicon`"
+                @error="$event.target.style.display = 'none'"
+                class="w-11 h-11 rounded flex-shrink-0"
+              />
+              <div class="min-w-0">
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100 truncate">{{ blog.name }}</h2>
+                <p v-if="blog.tagline" class="text-gray-500 dark:text-gray-400 text-sm truncate">{{ blog.tagline }}</p>
+              </div>
+            </div>
+            <p v-if="blog.url" class="text-primary-600 dark:text-primary-400 text-xs mt-2 truncate">{{ blog.url }}</p>
+
+            <!-- Analytics Section - Fixed height to prevent jumping -->
+            <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 h-[116px]">
+              <div v-if="analyticsLoading[blog.id]" class="flex items-center justify-center h-full text-sm text-gray-500 dark:text-gray-400">
+                <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-primary-600 mr-2"></div>
+                Loading analytics...
+              </div>
+              <div v-else-if="analyticsError[blog.id]" class="text-sm text-red-500 dark:text-red-400">
+                {{ analyticsError[blog.id] }}
+              </div>
+              <div v-else-if="analyticsData[blog.id]">
+                <div class="flex items-center justify-start gap-3 text-sm text-gray-600 dark:text-gray-400 mb-2">
+                  <span class="flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                    <strong class="text-gray-900 dark:text-gray-100">{{ analyticsData[blog.id].pageviews?.toLocaleString() || 0 }}</strong> views
+                  </span>
+                  <span class="flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    <strong class="text-gray-900 dark:text-gray-100">{{ analyticsData[blog.id].visitors?.toLocaleString() || 0 }}</strong> visitors
+                  </span>
+                </div>
+                <div class="h-16 w-full relative">
+                  <canvas :id="'chart-' + blog.id" class="absolute inset-0 w-full h-full"></canvas>
+                </div>
+              </div>
             </div>
           </div>
-          <p v-if="blog.url" class="text-primary-600 dark:text-primary-400 text-xs mt-2 truncate">{{ blog.url }}</p>
+        </div>
 
-          <!-- Analytics Section -->
-          <div v-if="blog.simpleAnalyticsEnabled" class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-            <div v-if="analyticsLoading[blog.id]" class="text-sm text-gray-500 dark:text-gray-400">
-              Loading analytics...
-            </div>
-            <div v-else-if="analyticsError[blog.id]" class="text-sm text-red-500 dark:text-red-400">
-              {{ analyticsError[blog.id] }}
-            </div>
-            <div v-else-if="analyticsData[blog.id]">
-              <div class="flex items-center justify-end gap-3 text-sm text-gray-600 dark:text-gray-400 mb-2">
-                <span class="flex items-center gap-1.5">
-                  <span class="w-2 h-2 rounded-full bg-blue-500"></span>
-                  <strong class="text-gray-900 dark:text-gray-100">{{ analyticsData[blog.id].pageviews?.toLocaleString() || 0 }}</strong> views
-                </span>
-                <span class="flex items-center gap-1.5">
-                  <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                  <strong class="text-gray-900 dark:text-gray-100">{{ analyticsData[blog.id].visitors?.toLocaleString() || 0 }}</strong> visitors
-                </span>
-                <span class="text-xs text-gray-400">last 30 days</span>
+        <!-- Blogs without Stats -->
+        <div v-if="blogsWithoutStats.length > 0">
+          <h3 v-if="blogsWithStats.length > 0" class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-3">Other Blogs</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div
+              v-for="blog in blogsWithoutStats"
+              :key="blog.id"
+              class="surface-interactive p-5 cursor-pointer"
+              @click="navigateToBlog(blog.id)"
+            >
+              <div class="flex items-start gap-3">
+                <img
+                  :src="`/api/blogs/${blog.id}/favicon`"
+                  @error="$event.target.style.display = 'none'"
+                  class="w-11 h-11 rounded flex-shrink-0"
+                />
+                <div class="min-w-0">
+                  <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100 truncate">{{ blog.name }}</h2>
+                  <p v-if="blog.tagline" class="text-gray-500 dark:text-gray-400 text-sm truncate">{{ blog.tagline }}</p>
+                </div>
               </div>
-              <div class="h-16 w-full relative">
-                <canvas :id="'chart-' + blog.id" class="absolute inset-0 w-full h-full"></canvas>
-              </div>
+              <p v-if="blog.url" class="text-primary-600 dark:text-primary-400 text-xs mt-2 truncate">{{ blog.url }}</p>
             </div>
           </div>
         </div>
