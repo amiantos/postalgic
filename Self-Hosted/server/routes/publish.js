@@ -52,15 +52,16 @@ router.post('/generate', async (req, res) => {
       return res.status(404).json({ error: 'Blog not found' });
     }
 
-    // Generate the site
-    const result = await generateSite(storage, blogId);
+    // Generate the site with preview basePath
+    const basePath = `/preview/${blogId}`;
+    const result = await generateSite(storage, blogId, { basePath });
 
     res.json({
       success: true,
       message: 'Site generated successfully',
       outputDir: result.outputDir,
       fileCount: result.fileCount,
-      previewUrl: `/preview/${blogId}/`
+      previewUrl: `${basePath}/`
     });
   } catch (error) {
     console.error('Site generation error:', error);

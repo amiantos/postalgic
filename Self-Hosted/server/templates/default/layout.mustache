@@ -23,8 +23,8 @@
     <meta property="twitter:description" content="{{#blogTagline}}{{blogTagline}}{{/blogTagline}}{{^blogTagline}}Posts from {{blogName}}{{/blogTagline}}">
     {{/hasCustomMeta}}
 
-    <link rel="stylesheet" href="/css/style.css">
-    <link rel="alternate" type="application/rss+xml" title="{{blogName}} RSS Feed" href="/rss.xml">
+    <link rel="stylesheet" href="{{basePath}}/css/style.css">
+    <link rel="alternate" type="application/rss+xml" title="{{blogName}} RSS Feed" href="{{basePath}}/rss.xml">
     {{{customHead}}}
     <script>
     // Gallery functionality for image embeds
@@ -220,7 +220,7 @@
                     <span></span>
                 </div>
             </div>
-            <h1><a href="/">{{blogName}}</a></h1>
+            <h1><a href="{{basePath}}/">{{blogName}}</a></h1>
             {{#blogTagline}}<p class="tagline">{{blogTagline}}</p>{{/blogTagline}}
             <div class="header-separator"></div>
         </header>
@@ -231,10 +231,10 @@
                 <div class="mobile-nav">
                     <nav class="sidebar-nav">
                         <ul>
-                            <li><a href="/">Home</a></li>
-                            <li><a href="/archives/">Archives</a></li>
-                            {{#hasCategories}}<li><a href="/categories/">Categories</a></li>{{/hasCategories}}
-                            {{#hasTags}}<li><a href="/tags/">Tags</a></li>{{/hasTags}}
+                            <li><a href="{{basePath}}/">Home</a></li>
+                            <li><a href="{{basePath}}/archives/">Archives</a></li>
+                            {{#hasCategories}}<li><a href="{{basePath}}/categories/">Categories</a></li>{{/hasCategories}}
+                            {{#hasTags}}<li><a href="{{basePath}}/tags/">Tags</a></li>{{/hasTags}}
                         </ul>
                     </nav>
                 </div>

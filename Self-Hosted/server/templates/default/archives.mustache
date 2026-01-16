@@ -4,13 +4,13 @@
     <div class="archive-year">{{year}}</div>
     {{#months}}
         <div class="archive-month">
-            <a href="/{{year}}/{{monthPadded}}/">{{monthName}}</a>
+            <a href="{{basePath}}/{{year}}/{{monthPadded}}/">{{monthName}}</a>
         </div>
         <ul class="archive-posts">
             {{#posts}}
                 <li>
                     <span class="archive-date">{{dayPadded}} {{monthAbbr}}</span>
-                    <a href="/{{{urlPath}}}/">{{displayTitle}}</a>
+                    <a href="{{basePath}}/{{{urlPath}}}/">{{displayTitle}}</a>
                 </li>
             {{/posts}}
         </ul>

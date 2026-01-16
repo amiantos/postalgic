@@ -51,9 +51,12 @@ const INDEX_POST_COUNT = 10;
  * Generate a static site for a blog
  * @param {Storage} storage - Storage instance
  * @param {string} blogId - Blog ID
+ * @param {Object} options - Generation options
+ * @param {string} options.basePath - Base path prefix for assets (e.g., '/preview/blogId' for preview mode)
  * @returns {Promise<Object>} - Generation result with outputDir and fileHashes
  */
-export async function generateSite(storage, blogId) {
+export async function generateSite(storage, blogId, options = {}) {
+  const { basePath = '' } = options;
   const blog = storage.getBlog(blogId);
   if (!blog) {
     throw new Error('Blog not found');
@@ -90,7 +93,7 @@ export async function generateSite(storage, blogId) {
   const fileHashes = {};
 
   // Build base context
-  const baseContext = buildBaseContext(blog, categories, tags, sidebarObjects, staticFiles, templates);
+  const baseContext = buildBaseContext(blog, categories, tags, sidebarObjects, staticFiles, templates, basePath);
 
   // Generate CSS
   await generateCSS(outputDir, templates, blog, fileHashes);
@@ -139,7 +142,7 @@ export async function generateSite(storage, blogId) {
 /**
  * Build the base context shared across all pages
  */
-function buildBaseContext(blog, categories, tags, sidebarObjects, staticFiles, templates) {
+function buildBaseContext(blog, categories, tags, sidebarObjects, staticFiles, templates, basePath = '') {
   const currentYear = new Date().getFullYear();
   const buildDate = new Date().toISOString();
 
@@ -184,6 +187,7 @@ function buildBaseContext(blog, categories, tags, sidebarObjects, staticFiles, t
     timezone: blog.timezone || 'UTC',
     currentYear,
     buildDate,
+    basePath,
     accentColor: blog.accentColor || '#FFA100',
     backgroundColor: blog.backgroundColor || '#efefef',
     textColor: blog.textColor || '#2d3748',
@@ -212,7 +216,7 @@ function buildPostContext(post, baseContext, inList = false) {
   // Insert embed HTML (with newlines matching iOS)
   // Use syncId for stable identifiers across sync (falls back to id for local posts)
   if (post.embed) {
-    const embedHtml = generateEmbedHtml(post.embed, post.syncId || post.id);
+    const embedHtml = generateEmbedHtml(post.embed, post.syncId || post.id, baseContext.basePath);
     if (post.embed.position === 'above') {
       contentHtml = embedHtml + '\n' + contentHtml;
     } else {
@@ -256,7 +260,7 @@ function buildPostContext(post, baseContext, inList = false) {
 /**
  * Generate embed HTML
  */
-function generateEmbedHtml(embed, postId) {
+function generateEmbedHtml(embed, postId, basePath = '') {
   if (!embed) return '';
 
   if (embed.type === 'youtube') {
@@ -273,7 +277,7 @@ function generateEmbedHtml(embed, postId) {
     // Use stored imageFilename if available, otherwise fall back to imageUrl
     let imageSrc = null;
     if (embed.imageFilename) {
-      imageSrc = `/images/embeds/${embed.imageFilename}`;
+      imageSrc = `${basePath}/images/embeds/${embed.imageFilename}`;
     } else if (embed.imageUrl && !embed.imageUrl.startsWith('file://')) {
       imageSrc = embed.imageUrl;
     }
@@ -296,16 +300,16 @@ function generateEmbedHtml(embed, postId) {
     if (embed.images.length === 1) {
       const img = embed.images[0];
       return `<div class="embed image-embed single-image">
-    <a href="/images/embeds/${img.filename}" class="lightbox-trigger" data-lightbox="embed-${embedId}" data-title="">
-        <img src="/images/embeds/${img.filename}" class="embed-image" alt="">
+    <a href="${basePath}/images/embeds/${img.filename}" class="lightbox-trigger" data-lightbox="embed-${embedId}" data-title="">
+        <img src="${basePath}/images/embeds/${img.filename}" class="embed-image" alt="">
     </a>
 </div>`;
     }
 
     const slides = embed.images.map((img, index) => `
         <div class="gallery-slide">
-            <a href="/images/embeds/${img.filename}" class="lightbox-trigger" data-lightbox="embed-${embedId}" data-title="">
-                <img src="/images/embeds/${img.filename}" alt="">
+            <a href="${basePath}/images/embeds/${img.filename}" class="lightbox-trigger" data-lightbox="embed-${embedId}" data-title="">
+                <img src="${basePath}/images/embeds/${img.filename}" alt="">
             </a>
         </div>`).join('');
 
@@ -334,17 +338,18 @@ function generateEmbedHtml(embed, postId) {
  */
 function generateCommonHeadMeta(baseContext) {
   const blogUrl = baseContext.blogUrl;
+  const basePath = baseContext.basePath || '';
   let meta = `<meta name="apple-mobile-web-app-title" content="${baseContext.blogName}"/>`;
-  meta += `<link rel="icon" href="/favicon-32x32.png" sizes="32x32" type="image/png">\n`;
-  meta += `<link rel="icon" href="/favicon-192x192.png" sizes="192x192" type="image/png">\n`;
-  meta += `<link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180">\n`;
+  meta += `<link rel="icon" href="${basePath}/favicon-32x32.png" sizes="32x32" type="image/png">\n`;
+  meta += `<link rel="icon" href="${basePath}/favicon-192x192.png" sizes="192x192" type="image/png">\n`;
+  meta += `<link rel="apple-touch-icon" href="${basePath}/apple-touch-icon.png" sizes="180x180">\n`;
 
   if (baseContext.hasSocialShareImage) {
     meta += `<meta property="og:image" content="${blogUrl}/social-share.png">\n`;
     meta += `<meta name="twitter:image" content="${blogUrl}/social-share.png">\n`;
   }
 
-  meta += `<link rel="sitemap" type="application/xml" title="Sitemap" href="/sitemap.xml" />`;
+  meta += `<link rel="sitemap" type="application/xml" title="Sitemap" href="${basePath}/sitemap.xml" />`;
   return meta;
 }
 
@@ -353,6 +358,7 @@ function generateCommonHeadMeta(baseContext) {
  */
 function generatePostMeta(post, baseContext) {
   const blogUrl = baseContext.blogUrl;
+  const basePath = baseContext.basePath || '';
   const timezone = baseContext.timezone || 'UTC';
   const postUrl = `${blogUrl}/${formatDatePath(post.createdAt, timezone)}/${post.stub}`;
   const pageTitle = `${post.title || getExcerpt(post.content, 50)} - ${baseContext.blogName}`;
@@ -365,9 +371,9 @@ function generatePostMeta(post, baseContext) {
     : plainContent;
 
   let meta = `<meta name="apple-mobile-web-app-title" content="${baseContext.blogName}"/>`;
-  meta += `<link rel="icon" href="/favicon-32x32.png" sizes="32x32" type="image/png">\n`;
-  meta += `<link rel="icon" href="/favicon-192x192.png" sizes="192x192" type="image/png">\n`;
-  meta += `<link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180">\n`;
+  meta += `<link rel="icon" href="${basePath}/favicon-32x32.png" sizes="32x32" type="image/png">\n`;
+  meta += `<link rel="icon" href="${basePath}/favicon-192x192.png" sizes="192x192" type="image/png">\n`;
+  meta += `<link rel="apple-touch-icon" href="${basePath}/apple-touch-icon.png" sizes="180x180">\n`;
 
   if (baseContext.hasSocialShareImage) {
     meta += `<meta property="og:image" content="${blogUrl}/social-share.png">\n`;
