@@ -159,7 +159,7 @@ function getBackgroundTitle(title) {
     <!-- Navigation bar -->
     <nav class="flex items-center justify-between px-6 py-4">
       <router-link to="/" class="font-retro-mono text-retro-sm text-retro-gray-dark dark:text-retro-gray-medium hover:text-retro-orange uppercase tracking-wider">
-        &lt; All Blogs
+        <span class="relative -top-px">&lt;</span> All Blogs
       </router-link>
 
       <div class="flex items-center gap-4">
