@@ -164,9 +164,13 @@ async function deleteBlog() {
 
     <!-- Hero section with giant POSTALGIC -->
     <header class="relative h-48 md:h-64 overflow-hidden">
-      <!-- Giant background text -->
-      <h1 class="absolute inset-0 flex items-center font-retro-serif font-bold text-[12rem] md:text-[18rem] leading-none tracking-tighter text-retro-gray-light dark:text-retro-gray-darker select-none pointer-events-none whitespace-nowrap">
+      <!-- Giant background text - uppercase -->
+      <span class="absolute inset-0 flex items-center font-retro-serif font-bold text-[12rem] md:text-[18rem] leading-none tracking-tighter text-retro-gray-light dark:text-retro-gray-darker select-none pointer-events-none whitespace-nowrap" aria-hidden="true">
         POSTALGIC
+      </span>
+      <!-- Foreground text - lowercase, readable, positioned lower -->
+      <h1 class="absolute bottom-4 left-6 font-retro-serif font-bold text-5xl md:text-7xl leading-none tracking-tight text-retro-gray-darker dark:text-retro-cream">
+        postalgic
       </h1>
 
       <!-- Overlay controls -->
