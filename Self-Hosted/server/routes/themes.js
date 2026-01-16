@@ -18,9 +18,9 @@ const BUILT_IN_THEMES = [
     isDefault: true
   },
   {
-    id: 'darkmode',
-    name: 'Dark Mode',
-    identifier: 'darkmode',
+    id: 'brutalist',
+    name: 'Brutalist',
+    identifier: 'brutalist',
     isCustomized: false,
     isDefault: true
   }

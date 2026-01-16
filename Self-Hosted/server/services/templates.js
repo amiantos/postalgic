@@ -56,11 +56,11 @@ export function getDefaultTemplates() {
 }
 
 /**
- * Get the dark mode templates by loading them from template files.
+ * Get the brutalist templates by loading them from template files.
  * @returns {Object} Object containing all template strings
  */
-export function getDarkModeTemplates() {
-  return loadThemeTemplates('darkmode');
+export function getBrutalistTemplates() {
+  return loadThemeTemplates('brutalist');
 }
 
 /**
@@ -72,8 +72,8 @@ export function getBuiltInTemplates(identifier) {
   switch (identifier) {
     case 'default':
       return getDefaultTemplates();
-    case 'darkmode':
-      return getDarkModeTemplates();
+    case 'brutalist':
+      return getBrutalistTemplates();
     default:
       return null;
   }
