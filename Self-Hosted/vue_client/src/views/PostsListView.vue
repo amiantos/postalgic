@@ -209,7 +209,6 @@ function getBackgroundTitle(title) {
 
     <!-- Controls bar -->
     <div class="relative px-6 py-4 lg:px-0">
-      <div class="absolute bottom-0 left-6 right-6 border-b border-retro-gray-light dark:border-retro-gray-darker lg:left-0 lg:right-0"></div>
       <div class="flex flex-col sm:flex-row sm:items-center gap-3">
         <!-- Search -->
         <div class="flex-1 flex items-center border-2 border-retro-gray-light dark:border-retro-gray-darker bg-white dark:bg-black">
@@ -295,9 +294,11 @@ function getBackgroundTitle(title) {
         <article
           v-for="post in blogStore.posts"
           :key="post.id"
-          class="group cursor-pointer relative border-b border-retro-gray-light dark:border-retro-gray-darker ml-6 lg:ml-0 pt-6 pb-6"
+          class="group cursor-pointer relative ml-6 lg:ml-0 pt-6 pb-6"
           @click="navigateToPost(post.id)"
         >
+          <!-- Divider that extends to the right -->
+          <div class="absolute bottom-0 left-0 right-0 border-b border-retro-gray-light dark:border-retro-gray-darker lg:-right-[100vw]"></div>
           <!-- Giant background text - post title uppercase -->
           <span class="absolute top-6 left-0 h-24 md:h-32 flex items-center font-retro-serif font-bold text-[6rem] md:text-[8rem] leading-none tracking-tighter text-retro-gray-lightest dark:text-[#1a1a1a] select-none pointer-events-none whitespace-nowrap uppercase" aria-hidden="true">
             {{ post.title || post.content?.replace(/[#*_`>\[\]]/g, '').substring(0, 200) || 'UNTITLED' }}
