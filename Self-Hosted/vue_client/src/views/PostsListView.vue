@@ -155,6 +155,23 @@ function getBackgroundTitle(title) {
 
 <template>
   <div class="min-h-screen bg-white dark:bg-black overflow-x-hidden">
+    <!-- Right margin lip - covers overflow on desktop (light mode) -->
+    <div
+      class="hidden lg:block dark:lg:hidden fixed right-0 top-0 h-full z-10 bg-white"
+      :style="{
+        width: 'calc((100vw - 700px) / 2 - 32px)',
+        boxShadow: '-12px 0 24px rgba(255,255,255,0.9)'
+      }"
+    ></div>
+    <!-- Right margin lip - covers overflow on desktop (dark mode) -->
+    <div
+      class="hidden dark:lg:block fixed right-0 top-0 h-full z-10 bg-black"
+      :style="{
+        width: 'calc((100vw - 700px) / 2 - 32px)',
+        boxShadow: '-12px 0 24px rgba(0,0,0,0.8)'
+      }"
+    ></div>
+
     <!-- Max-width content wrapper for desktop -->
     <div class="lg:max-w-[700px] lg:mx-auto">
 
