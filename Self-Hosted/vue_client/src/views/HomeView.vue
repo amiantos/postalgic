@@ -1,11 +1,8 @@
 <script setup>
-import { ref, computed, onMounted, watch, nextTick } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useBlogStore } from '@/stores/blog';
 import { blogApi } from '@/api';
-import { Chart, registerables } from 'chart.js';
-
-Chart.register(...registerables);
 
 const router = useRouter();
 const blogStore = useBlogStore();
@@ -15,17 +12,6 @@ const blogToDelete = ref(null);
 
 // Analytics state
 const analyticsData = ref({});
-const analyticsLoading = ref({});
-const analyticsError = ref({});
-const chartInstances = ref({});
-
-// Computed properties to separate blogs with and without analytics
-const blogsWithStats = computed(() =>
-  blogStore.blogs.filter(blog => blog.simpleAnalyticsEnabled)
-);
-const blogsWithoutStats = computed(() =>
-  blogStore.blogs.filter(blog => !blog.simpleAnalyticsEnabled)
-);
 
 onMounted(() => {
   blogStore.fetchBlogs();
@@ -35,107 +21,18 @@ onMounted(() => {
 async function fetchBlogAnalytics(blog) {
   if (!blog.simpleAnalyticsEnabled) return;
 
-  analyticsLoading.value[blog.id] = true;
-  analyticsError.value[blog.id] = null;
-
   try {
     const data = await blogApi.analytics(blog.id);
     analyticsData.value[blog.id] = data;
   } catch (e) {
-    analyticsError.value[blog.id] = e.message;
-  } finally {
-    analyticsLoading.value[blog.id] = false;
+    // Silently fail - just won't show analytics
   }
-}
-
-// Watch analytics data and render charts when data arrives
-watch(analyticsData, async () => {
-  await nextTick();
-  // Small delay to ensure canvas elements are in DOM
-  setTimeout(() => {
-    for (const blogId of Object.keys(analyticsData.value)) {
-      if (analyticsData.value[blogId]?.histogram && !chartInstances.value[blogId]) {
-        renderChart(blogId);
-      }
-    }
-  }, 100);
-}, { deep: true });
-
-// Render chart for a blog
-function renderChart(blogId) {
-  const data = analyticsData.value[blogId];
-  if (!data?.histogram) return;
-
-  const canvas = document.getElementById(`chart-${blogId}`);
-  if (!canvas) return;
-
-  // Destroy existing chart if any
-  if (chartInstances.value[blogId]) {
-    chartInstances.value[blogId].destroy();
-  }
-
-  chartInstances.value[blogId] = new Chart(canvas, {
-    type: 'line',
-    data: {
-      labels: data.histogram.map(h => h.date),
-      datasets: [
-        {
-          label: 'Pageviews',
-          data: data.histogram.map(h => h.pageviews),
-          borderColor: '#0066CC',
-          backgroundColor: 'rgba(0, 102, 204, 0.15)',
-          fill: true,
-          tension: 0, // Straight lines - retro feel
-          borderWidth: 1,
-          pointRadius: 2,
-          pointBackgroundColor: '#0066CC'
-        },
-        {
-          label: 'Visitors',
-          data: data.histogram.map(h => h.visitors),
-          borderColor: '#009900',
-          backgroundColor: 'rgba(0, 153, 0, 0.15)',
-          fill: true,
-          tension: 0,
-          borderWidth: 1,
-          pointRadius: 2,
-          pointBackgroundColor: '#009900'
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      interaction: {
-        intersect: false,
-        mode: 'index'
-      },
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          backgroundColor: '#333333',
-          titleColor: '#FFFFFF',
-          bodyColor: '#CCCCCC',
-          borderColor: '#666666',
-          borderWidth: 1,
-          cornerRadius: 0, // Square corners - retro
-          padding: 6,
-          titleFont: { family: 'Verdana', size: 10 },
-          bodyFont: { family: 'Verdana', size: 10 }
-        }
-      },
-      scales: {
-        x: { display: false },
-        y: { display: false, beginAtZero: true }
-      }
-    }
-  });
 }
 
 // Watch for blogs to load and fetch analytics
 watch(() => blogStore.blogs, (blogs) => {
   for (const blog of blogs) {
-    if (blog.simpleAnalyticsEnabled && !analyticsData.value[blog.id] && !analyticsLoading.value[blog.id]) {
+    if (blog.simpleAnalyticsEnabled && !analyticsData.value[blog.id]) {
       fetchBlogAnalytics(blog);
     }
   }
@@ -163,15 +60,21 @@ async function deleteBlog() {
   <div class="min-h-screen bg-white dark:bg-black overflow-x-hidden">
 
     <!-- Hero section with giant POSTALGIC -->
-    <header class="relative h-48 md:h-64 overflow-hidden">
+    <header class="relative h-52 md:h-60 overflow-hidden">
+      <!-- Divider with left padding -->
+      <div class="absolute bottom-0 left-6 right-0 border-b border-retro-gray-light dark:border-retro-gray-darker"></div>
       <!-- Giant background text - uppercase -->
-      <span class="absolute inset-0 flex items-center font-retro-serif font-bold text-[12rem] md:text-[18rem] leading-none tracking-tighter text-retro-gray-light dark:text-retro-gray-darker select-none pointer-events-none whitespace-nowrap" aria-hidden="true">
+      <span class="absolute inset-0 flex items-center font-retro-serif font-bold text-[8rem] md:text-[12rem] leading-none tracking-tighter text-retro-gray-light dark:text-retro-gray-darker select-none pointer-events-none whitespace-nowrap" aria-hidden="true">
         POSTALGIC
       </span>
-      <!-- Foreground text - lowercase, readable, positioned lower -->
-      <h1 class="absolute bottom-4 left-6 font-retro-serif font-bold text-5xl md:text-7xl leading-none tracking-tight text-retro-gray-darker dark:text-retro-cream">
-        postalgic
-      </h1>
+      <!-- Foreground content - positioned lower -->
+      <div class="absolute bottom-4 left-6">
+        <h1 class="font-retro-serif font-bold text-4xl md:text-5xl leading-none tracking-tight text-retro-gray-darker dark:text-retro-cream">
+          postalgic
+        </h1>
+        <!-- Spacer to match blog metadata height -->
+        <div class="mt-2 text-retro-sm">&nbsp;</div>
+      </div>
 
       <!-- Overlay controls -->
       <div class="relative z-10 h-full flex items-start justify-end pt-6 px-6">
@@ -195,7 +98,7 @@ async function deleteBlog() {
     </header>
 
     <!-- Content -->
-    <main class="px-6">
+    <main>
 
       <!-- Loading -->
       <div v-if="blogStore.loading" class="py-24">
@@ -222,32 +125,37 @@ async function deleteBlog() {
         <article
           v-for="blog in blogStore.blogs"
           :key="blog.id"
-          class="group cursor-pointer py-6 border-b border-retro-gray-light dark:border-retro-gray-darker"
+          class="group cursor-pointer relative h-52 md:h-60 overflow-hidden"
           @click="navigateToBlog(blog.id)"
         >
-          <!-- Giant blog name -->
-          <h2 class="font-retro-serif font-bold text-6xl md:text-8xl lg:text-9xl leading-[0.85] tracking-tight text-retro-gray-darker dark:text-retro-cream group-hover:text-retro-orange transition-colors whitespace-nowrap">
+          <!-- Divider with left padding -->
+          <div class="absolute bottom-0 left-6 right-0 border-b border-retro-gray-light dark:border-retro-gray-darker"></div>
+          <!-- Giant background text - uppercase -->
+          <span class="absolute inset-0 flex items-center font-retro-serif font-bold text-[8rem] md:text-[12rem] leading-none tracking-tighter text-retro-gray-light dark:text-retro-gray-darker select-none pointer-events-none whitespace-nowrap uppercase" aria-hidden="true">
             {{ blog.name }}
-          </h2>
+          </span>
 
-          <!-- Small details underneath -->
-          <div class="mt-3 flex flex-wrap items-center gap-x-6 gap-y-1">
-            <p v-if="blog.tagline" class="font-retro-sans text-retro-sm text-retro-gray-dark dark:text-retro-gray-medium">
-              {{ blog.tagline }}
-            </p>
-            <p v-if="blog.url" class="font-retro-mono text-retro-xs text-retro-gray-medium dark:text-retro-gray-dark">
-              {{ blog.url }}
-            </p>
+          <!-- Foreground content - positioned lower -->
+          <div class="absolute bottom-4 left-6">
+            <!-- Lowercase blog name -->
+            <h2 class="font-retro-serif font-bold text-4xl md:text-5xl leading-none tracking-tight text-retro-gray-darker dark:text-retro-cream group-hover:text-retro-orange transition-colors lowercase">
+              {{ blog.name }}
+            </h2>
 
-            <!-- Analytics inline if available -->
-            <template v-if="blog.simpleAnalyticsEnabled && analyticsData[blog.id]">
-              <span class="font-retro-mono text-retro-xs text-retro-gray-medium">
+            <!-- Small details underneath -->
+            <div class="mt-2 flex flex-wrap items-center gap-x-6 gap-y-1">
+              <p v-if="blog.tagline" class="font-retro-sans text-retro-sm text-retro-gray-dark dark:text-retro-gray-medium">
+                {{ blog.tagline }}
+              </p>
+              <p v-if="blog.url" class="font-retro-mono text-retro-xs text-retro-gray-medium dark:text-retro-gray-dark">
+                {{ blog.url }}
+              </p>
+
+              <!-- Analytics inline if available -->
+              <span v-if="blog.simpleAnalyticsEnabled && analyticsData[blog.id]" class="font-retro-mono text-retro-xs text-retro-gray-medium">
                 {{ analyticsData[blog.id].pageviews?.toLocaleString() || 0 }} views
               </span>
-              <span class="font-retro-mono text-retro-xs text-retro-gray-medium">
-                {{ analyticsData[blog.id].visitors?.toLocaleString() || 0 }} visitors
-              </span>
-            </template>
+            </div>
           </div>
         </article>
       </div>

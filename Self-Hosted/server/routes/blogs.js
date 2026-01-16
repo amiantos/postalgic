@@ -211,7 +211,7 @@ router.get('/:id/analytics', async (req, res) => {
     const startStr = start.toISOString().split('T')[0];
     const endStr = end.toISOString().split('T')[0];
 
-    const analyticsUrl = `https://simpleanalytics.com/${domain}.json?version=6&fields=histogram,pageviews,visitors&start=${startStr}&end=${endStr}`;
+    const analyticsUrl = `https://simpleanalytics.com/${domain}.json?version=6&fields=pageviews&start=${startStr}&end=${endStr}`;
 
     const response = await fetch(analyticsUrl);
     if (!response.ok) {
