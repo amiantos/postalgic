@@ -155,9 +155,11 @@ function getBackgroundTitle(title) {
 
 <template>
   <div class="min-h-screen bg-white dark:bg-black overflow-x-hidden">
+    <!-- Max-width content wrapper for desktop -->
+    <div class="lg:max-w-[700px] lg:mx-auto">
 
     <!-- Navigation bar -->
-    <nav class="flex items-center justify-between px-6 py-4">
+    <nav class="flex items-center justify-between px-6 py-4 lg:px-0">
       <router-link to="/" class="font-retro-mono text-retro-sm text-retro-gray-dark dark:text-retro-gray-medium hover:text-retro-orange uppercase tracking-wider">
         <span class="relative -top-px">&lt;</span> All Blogs
       </router-link>
@@ -186,15 +188,15 @@ function getBackgroundTitle(title) {
     </nav>
 
     <!-- Hero section with giant blog name -->
-    <header class="relative h-52 md:h-60 overflow-hidden">
+    <header class="relative h-52 md:h-60">
       <!-- Divider with left padding -->
-      <div class="absolute bottom-0 left-6 right-0 border-b border-retro-gray-light dark:border-retro-gray-darker"></div>
+      <div class="absolute bottom-0 left-6 right-0 border-b border-retro-gray-light dark:border-retro-gray-darker lg:left-0 lg:-right-[100vw]"></div>
       <!-- Giant background text - uppercase, vertically centered for equal spacing -->
       <span class="absolute inset-0 flex items-center justify-start font-retro-serif font-bold text-[10rem] md:text-[14rem] leading-none tracking-tighter text-retro-gray-lightest dark:text-[#1a1a1a] select-none pointer-events-none whitespace-nowrap uppercase" aria-hidden="true">
         {{ blogStore.currentBlog?.name }}
       </span>
       <!-- Foreground content - positioned lower -->
-      <div class="absolute bottom-4 left-6">
+      <div class="absolute bottom-4 left-6 lg:left-0">
         <h1 class="font-retro-serif font-bold text-6xl md:text-7xl leading-none tracking-tight text-retro-gray-darker dark:text-retro-cream lowercase">
           {{ blogStore.currentBlog?.name }}
         </h1>
@@ -206,8 +208,8 @@ function getBackgroundTitle(title) {
     </header>
 
     <!-- Controls bar -->
-    <div class="relative px-6 py-4">
-      <div class="absolute bottom-0 left-6 right-6 border-b border-retro-gray-light dark:border-retro-gray-darker"></div>
+    <div class="relative px-6 py-4 lg:px-0">
+      <div class="absolute bottom-0 left-6 right-6 border-b border-retro-gray-light dark:border-retro-gray-darker lg:left-0 lg:right-0"></div>
       <div class="flex flex-col sm:flex-row sm:items-center gap-3">
         <!-- Search -->
         <div class="flex-1 flex items-center border-2 border-retro-gray-light dark:border-retro-gray-darker bg-white dark:bg-black">
@@ -268,7 +270,7 @@ function getBackgroundTitle(title) {
     <!-- Content -->
     <main>
       <!-- Empty State -->
-      <div v-if="blogStore.posts.length === 0" class="py-24 px-6">
+      <div v-if="blogStore.posts.length === 0" class="py-24 px-6 lg:px-0">
         <p class="font-retro-serif text-4xl md:text-6xl font-bold text-retro-gray-darker dark:text-retro-gray-light leading-tight">
           {{ searchText ? 'No posts match your search.' : 'No posts yet.' }}
         </p>
@@ -293,23 +295,23 @@ function getBackgroundTitle(title) {
         <article
           v-for="post in blogStore.posts"
           :key="post.id"
-          class="group cursor-pointer relative overflow-hidden border-b border-retro-gray-light dark:border-retro-gray-darker ml-6 pt-6 pb-6"
+          class="group cursor-pointer relative border-b border-retro-gray-light dark:border-retro-gray-darker ml-6 lg:ml-0 pt-6 pb-6"
           @click="navigateToPost(post.id)"
         >
           <!-- Giant background text - post title uppercase -->
-          <span class="absolute top-6 left-0 right-0 h-24 md:h-32 flex items-center font-retro-serif font-bold text-[6rem] md:text-[8rem] leading-none tracking-tighter text-retro-gray-lightest dark:text-[#1a1a1a] select-none pointer-events-none whitespace-nowrap uppercase overflow-hidden" aria-hidden="true">
+          <span class="absolute top-6 left-0 h-24 md:h-32 flex items-center font-retro-serif font-bold text-[6rem] md:text-[8rem] leading-none tracking-tighter text-retro-gray-lightest dark:text-[#1a1a1a] select-none pointer-events-none whitespace-nowrap uppercase" aria-hidden="true">
             {{ post.title || post.content?.replace(/[#*_`>\[\]]/g, '').substring(0, 200) || 'UNTITLED' }}
           </span>
 
           <!-- Foreground content - flows naturally with padding -->
           <div class="relative pt-16 md:pt-20 pb-4">
             <!-- Post title -->
-            <h2 class="font-retro-serif font-bold text-3xl md:text-4xl leading-none tracking-tight text-retro-gray-darker dark:text-retro-cream group-hover:text-retro-orange transition-colors lowercase whitespace-nowrap overflow-hidden">
+            <h2 class="font-retro-serif font-bold text-3xl md:text-4xl leading-none tracking-tight text-retro-gray-darker dark:text-retro-cream group-hover:text-retro-orange transition-colors lowercase whitespace-nowrap">
               {{ post.title || post.content?.replace(/[#*_`>\[\]]/g, '').substring(0, 200) || 'untitled' }}
             </h2>
 
             <!-- Meta line -->
-            <div class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 pr-6">
+            <div class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 pr-6 lg:pr-0">
               <time class="font-retro-mono text-retro-xs text-retro-gray-medium">{{ formatLocalDateTime(post.createdAt) }}</time>
               <span
                 v-if="post.isDraft"
@@ -331,7 +333,7 @@ function getBackgroundTitle(title) {
             </div>
 
             <!-- Embed (above position) -->
-            <div v-if="post.embed && post.embed.position === 'above'" class="mt-4 pr-6">
+            <div v-if="post.embed && post.embed.position === 'above'" class="mt-4 pr-6 lg:pr-0">
               <!-- YouTube -->
               <div v-if="post.embed.type === 'youtube' && getYouTubeVideoId(post.embed)" class="aspect-video max-h-96 border-2 border-retro-gray-light dark:border-retro-gray-darker">
                 <iframe
@@ -381,12 +383,12 @@ function getBackgroundTitle(title) {
             <!-- Content -->
             <div
               v-if="post.content"
-              class="mt-4 pr-6 prose prose-sm dark:prose-invert prose-gray max-w-3xl font-retro-sans text-retro-sm"
+              class="mt-4 pr-6 lg:pr-0 prose prose-sm dark:prose-invert prose-gray max-w-3xl font-retro-sans text-retro-sm"
               v-html="renderMarkdown(post.content)"
             ></div>
 
             <!-- Embed (below position) -->
-            <div v-if="post.embed && post.embed.position === 'below'" class="mt-4 pr-6">
+            <div v-if="post.embed && post.embed.position === 'below'" class="mt-4 pr-6 lg:pr-0">
               <!-- YouTube -->
               <div v-if="post.embed.type === 'youtube' && getYouTubeVideoId(post.embed)" class="aspect-video max-h-96 border-2 border-retro-gray-light dark:border-retro-gray-darker">
                 <iframe
@@ -437,7 +439,7 @@ function getBackgroundTitle(title) {
       </div>
 
       <!-- Load More -->
-      <div v-if="hasMorePosts" class="py-8 px-6">
+      <div v-if="hasMorePosts" class="py-8 px-6 lg:px-0">
         <button
           @click="loadMorePosts"
           :disabled="blogStore.loading"
@@ -448,6 +450,8 @@ function getBackgroundTitle(title) {
         </button>
       </div>
     </main>
+
+    </div><!-- End max-width wrapper -->
 
     <!-- Publish Modal -->
     <PublishModal
