@@ -1,6 +1,6 @@
 import express from 'express';
 import Storage from '../utils/storage.js';
-import { getDefaultTemplates, getDarkModeTemplates, getBuiltInTemplates } from '../services/templates.js';
+import { getDefaultTemplates, getBuiltInTemplates } from '../services/templates.js';
 
 const router = express.Router();
 
