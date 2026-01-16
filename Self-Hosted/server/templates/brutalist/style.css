@@ -25,6 +25,7 @@
    2. Base Styles
    ========================================== */
 html {
+    overflow-x: hidden;
     overflow-y: scroll;
     height: 100%;
     word-wrap: break-word;
@@ -863,6 +864,7 @@ article.post h2 a:hover {
 footer {
     padding: 16px 0;
     margin-top: auto;
+    margin-left: 212px; /* sidebar width (180px) + gap (32px) */
     border-top: 1px solid var(--light-shade);
 }
 
@@ -931,6 +933,10 @@ footer a:hover {
     }
 
     .main-nav {
+        margin-left: 0;
+    }
+
+    footer {
         margin-left: 0;
     }
 
