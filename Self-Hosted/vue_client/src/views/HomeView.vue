@@ -59,29 +59,14 @@ async function deleteBlog() {
 <template>
   <div class="min-h-screen bg-white dark:bg-black overflow-x-hidden">
 
-    <!-- Hero section with giant YOUR BLOGS -->
-    <header class="relative h-64 md:h-72 overflow-hidden">
-      <!-- Divider with left padding -->
-      <div class="absolute bottom-0 left-6 right-0 border-b border-retro-gray-light dark:border-retro-gray-darker"></div>
-      <!-- Giant background text - uppercase -->
-      <span class="absolute inset-0 flex items-center font-retro-serif font-bold text-[10rem] md:text-[14rem] leading-none tracking-tighter text-retro-gray-lightest dark:text-[#1a1a1a] select-none pointer-events-none whitespace-nowrap" aria-hidden="true">
-        YOUR BLOGS
-      </span>
-      <!-- Foreground content - positioned lower -->
-      <div class="absolute bottom-4 left-6">
-        <h1 class="font-retro-serif font-bold text-6xl md:text-7xl leading-none tracking-tight text-retro-gray-darker dark:text-retro-cream">
-          your blogs
-        </h1>
-        <!-- Spacer to match blog metadata height -->
-        <div class="mt-2 text-retro-sm">&nbsp;</div>
-      </div>
-
-      <!-- Overlay controls -->
-      <div class="relative z-10 h-full flex items-start justify-end pt-6 px-6">
-        <div class="relative group">
-          <span class="font-retro-mono text-retro-sm text-retro-gray-darker dark:text-retro-gray-light hover:text-retro-orange uppercase tracking-wider cursor-pointer">+ New Blog</span>
-          <div class="absolute right-0 top-full hidden group-hover:block z-20 pt-1">
-            <div class="bg-white dark:bg-retro-dark-surface border border-retro-gray-dark dark:border-retro-dark-border min-w-[160px]">
+    <!-- Navigation bar -->
+    <nav class="flex items-center justify-between px-6 py-4">
+      <span class="font-retro-mono text-retro-sm invisible">placeholder</span>
+      <div class="flex items-center gap-4">
+        <span class="relative group font-retro-mono text-retro-sm text-retro-gray-dark dark:text-retro-gray-medium hover:text-retro-orange uppercase tracking-wider cursor-pointer">
+          <span class="relative -top-px">+</span> New Blog
+          <span class="absolute right-0 top-full hidden group-hover:block z-20 pt-1">
+            <span class="block bg-white dark:bg-black border-2 border-retro-gray-light dark:border-retro-gray-darker min-w-[160px]">
               <router-link to="/blogs/new" class="block px-3 py-2 font-retro-mono text-retro-sm text-retro-gray-darker dark:text-retro-gray-light hover:bg-retro-orange hover:text-white">
                 New Blog
               </router-link>
@@ -91,9 +76,27 @@ async function deleteBlog() {
               <router-link to="/blogs/import-from-url" class="block px-3 py-2 font-retro-mono text-retro-sm text-retro-gray-darker dark:text-retro-gray-light hover:bg-retro-orange hover:text-white">
                 Import from URL
               </router-link>
-            </div>
-          </div>
-        </div>
+            </span>
+          </span>
+        </span>
+      </div>
+    </nav>
+
+    <!-- Hero section with giant YOUR BLOGS -->
+    <header class="relative h-52 md:h-60 overflow-hidden">
+      <!-- Divider with left padding -->
+      <div class="absolute bottom-0 left-6 right-0 border-b border-retro-gray-light dark:border-retro-gray-darker"></div>
+      <!-- Giant background text - uppercase, vertically centered for equal spacing -->
+      <span class="absolute inset-0 flex items-center justify-start font-retro-serif font-bold text-[10rem] md:text-[14rem] leading-none tracking-tighter text-retro-gray-lightest dark:text-[#1a1a1a] select-none pointer-events-none whitespace-nowrap" aria-hidden="true">
+        YOUR BLOGS
+      </span>
+      <!-- Foreground content - positioned lower -->
+      <div class="absolute bottom-4 left-6">
+        <h1 class="font-retro-serif font-bold text-6xl md:text-7xl leading-none tracking-tight text-retro-gray-darker dark:text-retro-cream lowercase">
+          your blogs
+        </h1>
+        <!-- Spacer to match blog metadata height -->
+        <div class="mt-2 font-retro-mono text-retro-sm text-retro-gray-medium">&nbsp;</div>
       </div>
     </header>
 
