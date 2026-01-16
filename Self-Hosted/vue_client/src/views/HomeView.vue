@@ -59,18 +59,18 @@ async function deleteBlog() {
 <template>
   <div class="min-h-screen bg-white dark:bg-black overflow-x-hidden">
 
-    <!-- Hero section with giant POSTALGIC -->
-    <header class="relative h-52 md:h-60 overflow-hidden">
+    <!-- Hero section with giant YOUR BLOGS -->
+    <header class="relative h-64 md:h-72 overflow-hidden">
       <!-- Divider with left padding -->
       <div class="absolute bottom-0 left-6 right-0 border-b border-retro-gray-light dark:border-retro-gray-darker"></div>
       <!-- Giant background text - uppercase -->
-      <span class="absolute inset-0 flex items-center font-retro-serif font-bold text-[8rem] md:text-[12rem] leading-none tracking-tighter text-retro-gray-light dark:text-retro-gray-darker select-none pointer-events-none whitespace-nowrap" aria-hidden="true">
-        POSTALGIC
+      <span class="absolute inset-0 flex items-center font-retro-serif font-bold text-[10rem] md:text-[14rem] leading-none tracking-tighter text-retro-gray-light dark:text-retro-gray-darker select-none pointer-events-none whitespace-nowrap" aria-hidden="true">
+        YOUR BLOGS
       </span>
       <!-- Foreground content - positioned lower -->
       <div class="absolute bottom-4 left-6">
-        <h1 class="font-retro-serif font-bold text-4xl md:text-5xl leading-none tracking-tight text-retro-gray-darker dark:text-retro-cream">
-          postalgic
+        <h1 class="font-retro-serif font-bold text-6xl md:text-7xl leading-none tracking-tight text-retro-gray-darker dark:text-retro-cream">
+          your blogs
         </h1>
         <!-- Spacer to match blog metadata height -->
         <div class="mt-2 text-retro-sm">&nbsp;</div>
