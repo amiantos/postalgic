@@ -130,7 +130,7 @@ function formatFileSize(bytes) {
 <template>
   <div class="min-h-screen bg-white dark:bg-black overflow-x-hidden">
     <!-- Max-width content wrapper for desktop -->
-    <div class="lg:max-w-[700px] lg:mx-auto">
+    <div class="lg:max-w-[700px] lg:ml-8">
 
     <!-- Navigation bar -->
     <nav class="flex items-center justify-between px-6 py-4 lg:px-0">
