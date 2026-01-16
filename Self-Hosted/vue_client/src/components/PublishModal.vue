@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, nextTick, watch } from 'vue';
+import { ref, computed, nextTick, watch } from 'vue';
 import { useBlogStore } from '@/stores/blog';
 import { publishApi, syncApi } from '@/api';
 
@@ -30,6 +30,10 @@ const logContainer = ref(null);
 // Pre-publish sync state
 const prePublishSyncing = ref(false);
 
+// Full publish confirmation
+const showFullPublishConfirm = ref(false);
+const fullPublishType = ref(null); // 'aws' or 'sftp'
+
 // Reset state when modal opens
 watch(() => props.show, (newVal) => {
   if (newVal) {
@@ -38,6 +42,8 @@ watch(() => props.show, (newVal) => {
     previewUrl.value = null;
     logMessages.value = [];
     publishComplete.value = false;
+    showFullPublishConfirm.value = false;
+    fullPublishType.value = null;
 
     // Auto-publish if requested
     if (props.autoPublish && hasPublishedPosts.value) {
@@ -58,7 +64,7 @@ function triggerAutoPublish() {
       publishToSFTP(false);
       break;
     case 'git':
-      publishToGit(false);
+      publishToGit();
       break;
     case 'manual':
       downloadSite();
@@ -78,10 +84,10 @@ function addLog(text, type = 'info') {
 
 function getLogClass(type) {
   switch (type) {
-    case 'error': return 'text-red-400';
-    case 'success': return 'text-green-400';
-    case 'warning': return 'text-yellow-400';
-    default: return 'text-gray-300';
+    case 'error': return 'text-red-500';
+    case 'success': return 'text-green-500';
+    case 'warning': return 'text-yellow-500';
+    default: return 'text-retro-gray-medium';
   }
 }
 
@@ -236,18 +242,16 @@ function publishWithSSE(endpoint, params = {}) {
   });
 }
 
-async function publishToAWS(forceUploadAll = false, skipSync = false) {
+async function publishToAWS(forceUploadAll = false) {
   publishing.value = true;
   error.value = null;
 
   try {
-    // Perform pre-publish sync first (unless skipped)
-    if (!skipSync) {
-      const syncOk = await performPrePublishSync();
-      if (!syncOk) {
-        publishing.value = false;
-        return;
-      }
+    // Perform pre-publish sync first
+    const syncOk = await performPrePublishSync();
+    if (!syncOk) {
+      publishing.value = false;
+      return;
     }
 
     addLog(forceUploadAll ? 'Full publish: uploading all files' : 'Smart publish: uploading changed files only', 'info');
@@ -264,18 +268,16 @@ async function publishToAWS(forceUploadAll = false, skipSync = false) {
   }
 }
 
-async function publishToSFTP(forceUploadAll = false, skipSync = false) {
+async function publishToSFTP(forceUploadAll = false) {
   publishing.value = true;
   error.value = null;
 
   try {
-    // Perform pre-publish sync first (unless skipped)
-    if (!skipSync) {
-      const syncOk = await performPrePublishSync();
-      if (!syncOk) {
-        publishing.value = false;
-        return;
-      }
+    // Perform pre-publish sync first
+    const syncOk = await performPrePublishSync();
+    if (!syncOk) {
+      publishing.value = false;
+      return;
     }
 
     addLog(forceUploadAll ? 'Full publish: uploading all files' : 'Smart publish: uploading changed files only', 'info');
@@ -292,18 +294,16 @@ async function publishToSFTP(forceUploadAll = false, skipSync = false) {
   }
 }
 
-async function publishToGit(skipSync = false) {
+async function publishToGit() {
   publishing.value = true;
   error.value = null;
 
   try {
-    // Perform pre-publish sync first (unless skipped)
-    if (!skipSync) {
-      const syncOk = await performPrePublishSync();
-      if (!syncOk) {
-        publishing.value = false;
-        return;
-      }
+    // Perform pre-publish sync first
+    const syncOk = await performPrePublishSync();
+    if (!syncOk) {
+      publishing.value = false;
+      return;
     }
 
     await publishWithSSE('git/stream');
@@ -324,6 +324,26 @@ function openPreview() {
   }
 }
 
+function confirmFullPublish(type) {
+  fullPublishType.value = type;
+  showFullPublishConfirm.value = true;
+}
+
+function cancelFullPublish() {
+  showFullPublishConfirm.value = false;
+  fullPublishType.value = null;
+}
+
+function executeFullPublish() {
+  showFullPublishConfirm.value = false;
+  if (fullPublishType.value === 'aws') {
+    publishToAWS(true);
+  } else if (fullPublishType.value === 'sftp') {
+    publishToSFTP(true);
+  }
+  fullPublishType.value = null;
+}
+
 function getPublisherLabel(type) {
   const labels = {
     manual: 'Manual (ZIP)',
@@ -341,195 +361,215 @@ const isWorking = computed(() => generating.value || downloading.value || publis
   <Teleport to="body">
     <div
       v-if="show"
-      class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50"
+      class="fixed inset-0 bg-black flex items-center justify-center z-50 p-6 overflow-hidden"
       @click.self="!isWorking && emit('close')"
     >
-      <div class="bg-white dark:bg-gray-900 rounded-2xl max-w-lg w-full mx-4 shadow-2xl max-h-[90vh] flex flex-col">
+      <!-- Tiled DEPLOY background -->
+      <div class="absolute inset-0 overflow-hidden select-none pointer-events-none" aria-hidden="true">
+        <div class="absolute inset-0 flex flex-col justify-center -rotate-12 scale-150 origin-center">
+          <div v-for="row in 12" :key="row" class="flex whitespace-nowrap">
+            <span
+              class="font-retro-serif font-bold text-[6rem] md:text-[8rem] leading-none tracking-tighter text-[#1a1a1a]"
+              :class="row % 2 === 0 ? '' : 'ml-32'"
+            >
+              DEPLOY DEPLOY DEPLOY DEPLOY DEPLOY DEPLOY DEPLOY DEPLOY DEPLOY DEPLOY
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="relative max-w-lg w-full">
         <!-- Header -->
-        <div class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+        <div class="flex items-end justify-between mb-6">
           <div>
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Deploy Site</h2>
-            <p class="text-sm text-gray-500 dark:text-gray-400">via {{ getPublisherLabel(publisherType) }}</p>
+            <h2 class="font-retro-serif text-5xl md:text-6xl font-bold text-white leading-none">
+              Deploy
+            </h2>
+            <p class="font-retro-mono text-retro-sm text-retro-gray-medium mt-2">
+              via {{ getPublisherLabel(publisherType) }}
+            </p>
           </div>
           <button
             @click="emit('close')"
             :disabled="isWorking"
-            class="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+            class="font-retro-mono text-retro-sm text-retro-gray-light hover:text-white uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <span class="relative -top-px">&times;</span> Close
           </button>
         </div>
 
-        <!-- Content -->
-        <div class="flex-1 overflow-y-auto p-4 space-y-4">
-          <!-- Blog URL Warning -->
-          <div v-if="!blogStore.currentBlog?.url" class="p-3 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-700 rounded-lg">
-            <div class="flex items-start gap-2">
-              <svg class="w-5 h-5 text-yellow-600 dark:text-yellow-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
-              <div>
-                <p class="text-yellow-800 dark:text-yellow-300 font-medium text-sm">Blog URL not set</p>
-                <p class="text-yellow-700 dark:text-yellow-400 text-xs mt-0.5">
-                  Set your blog URL in Settings for correct links.
-                </p>
-              </div>
-            </div>
-          </div>
+        <!-- Blog URL Warning -->
+        <div v-if="!blogStore.currentBlog?.url" class="mb-4 p-3 border-2 border-yellow-500 bg-yellow-500/10">
+          <p class="font-retro-mono text-retro-sm text-yellow-500 uppercase">Warning: Blog URL not set</p>
+          <p class="font-retro-sans text-retro-sm text-retro-gray-light mt-1">
+            Set your blog URL in Settings for correct links.
+          </p>
+        </div>
 
-          <!-- Terminal Log -->
+        <!-- Terminal Log -->
+        <div
+          ref="logContainer"
+          class="bg-black border-2 border-retro-gray-darker p-4 h-48 overflow-y-auto font-retro-mono text-retro-sm mb-4"
+        >
           <div
-            ref="logContainer"
-            class="bg-gray-900 dark:bg-black rounded-lg p-3 h-48 overflow-y-auto font-mono text-sm"
+            v-for="(msg, index) in logMessages"
+            :key="index"
+            :class="getLogClass(msg.type)"
           >
-            <div
-              v-for="(msg, index) in logMessages"
-              :key="index"
-              :class="getLogClass(msg.type)"
-            >
-              <span class="text-gray-500">{{ msg.time }}</span> {{ msg.text }}
-            </div>
-            <div v-if="isWorking" class="text-gray-400 animate-pulse">
-              <span class="text-gray-500">{{ new Date().toLocaleTimeString('en-US', { hour12: false }) }}</span> Working...
-            </div>
+            <span class="text-retro-gray-dark">{{ msg.time }}</span> {{ msg.text }}
           </div>
-
-          <!-- Error Message -->
-          <div v-if="error" class="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-800 dark:text-red-400 text-sm">
-            {{ error }}
-          </div>
-
-          <!-- Preview Button -->
-          <div v-if="previewUrl" class="flex gap-2">
-            <button
-              @click="openPreview"
-              class="flex-1 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors text-sm font-medium flex items-center justify-center gap-2"
-            >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-              </svg>
-              Open Preview
-            </button>
+          <div v-if="isWorking" class="text-retro-gray-medium animate-pulse">
+            <span class="text-retro-gray-dark">{{ new Date().toLocaleTimeString('en-US', { hour12: false }) }}</span> Working...
           </div>
         </div>
 
-        <!-- Footer Actions -->
-        <div class="p-4 border-t border-gray-200 dark:border-gray-700 space-y-3">
+        <!-- Error Message -->
+        <div v-if="error" class="mb-4 p-3 border-2 border-red-500 bg-red-500/10">
+          <p class="font-retro-mono text-retro-sm text-red-500">{{ error }}</p>
+        </div>
+
+        <!-- Preview Button -->
+        <button
+          v-if="previewUrl"
+          @click="openPreview"
+          class="w-full mb-4 px-4 py-3 border-2 border-retro-gray-dark text-retro-gray-light font-retro-mono text-retro-sm uppercase tracking-wider hover:border-retro-gray-light hover:text-white transition-colors"
+        >
+          Open Preview <span class="relative -top-px">&gt;</span>
+        </button>
+
+        <!-- Actions -->
+        <div class="space-y-3">
           <!-- Close button after publish complete -->
-          <div v-if="publishComplete">
-            <button
-              @click="emit('close')"
-              class="w-full px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium"
-            >
-              Close
-            </button>
-          </div>
+          <button
+            v-if="publishComplete"
+            @click="emit('close')"
+            class="w-full px-4 py-3 bg-retro-orange text-white font-retro-mono text-retro-sm uppercase tracking-wider hover:bg-retro-orange-dark transition-colors"
+          >
+            Done
+          </button>
 
           <!-- Publish actions (hidden after complete) -->
           <template v-else>
             <!-- Generate Button (if no preview yet) -->
-            <div v-if="!previewUrl && publisherType !== 'manual'" class="flex gap-2">
-              <button
-                @click="generateSite"
-                :disabled="isWorking"
-                class="flex-1 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50 text-sm font-medium"
-              >
-                {{ generating ? 'Generating...' : 'Generate Preview' }}
-              </button>
-            </div>
+            <button
+              v-if="!previewUrl && publisherType !== 'manual'"
+              @click="generateSite"
+              :disabled="isWorking"
+              class="w-full px-4 py-3 border-2 border-retro-gray-dark text-retro-gray-light font-retro-mono text-retro-sm uppercase tracking-wider hover:border-retro-gray-light hover:text-white transition-colors disabled:opacity-50"
+            >
+              {{ generating ? 'Generating...' : 'Generate Preview' }}
+            </button>
 
             <!-- Manual Download -->
-            <div v-if="publisherType === 'manual'" class="flex flex-col gap-2">
+            <template v-if="publisherType === 'manual'">
               <button
                 @click="downloadSite"
                 :disabled="isWorking || !hasPublishedPosts"
-                class="w-full px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 text-sm font-medium"
+                class="w-full px-4 py-3 bg-retro-orange text-white font-retro-mono text-retro-sm uppercase tracking-wider hover:bg-retro-orange-dark transition-colors disabled:opacity-50"
               >
                 {{ downloading ? 'Downloading...' : 'Download ZIP' }}
               </button>
-              <p v-if="!hasPublishedPosts" class="text-xs text-gray-500 dark:text-gray-400 text-center">
+              <p v-if="!hasPublishedPosts" class="font-retro-mono text-retro-xs text-retro-gray-medium text-center">
                 No published posts to deploy
               </p>
-            </div>
+            </template>
 
             <!-- AWS Publish -->
-            <div v-if="publisherType === 'aws'" class="space-y-2">
-              <div class="flex gap-2">
+            <template v-if="publisherType === 'aws'">
+              <!-- Full publish confirmation -->
+              <div v-if="showFullPublishConfirm && fullPublishType === 'aws'" class="space-y-3">
+                <p class="font-retro-sans text-retro-sm text-retro-gray-light">
+                  Full publish will re-upload all files. This may take a long time for large sites.
+                </p>
+                <div class="flex gap-3">
+                  <button
+                    @click="cancelFullPublish"
+                    class="flex-1 px-4 py-3 border-2 border-retro-gray-dark text-retro-gray-light font-retro-mono text-retro-sm uppercase tracking-wider hover:border-retro-gray-light hover:text-white transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    @click="executeFullPublish"
+                    class="flex-1 px-4 py-3 bg-retro-orange text-white font-retro-mono text-retro-sm uppercase tracking-wider hover:bg-retro-orange-dark transition-colors"
+                  >
+                    Continue
+                  </button>
+                </div>
+              </div>
+              <!-- Normal publish buttons -->
+              <div v-else class="flex gap-3">
                 <button
                   @click="publishToAWS(false)"
                   :disabled="isWorking || !hasPublishedPosts"
-                  class="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50 text-sm font-medium"
+                  class="flex-1 px-4 py-3 bg-retro-orange text-white font-retro-mono text-retro-sm uppercase tracking-wider hover:bg-retro-orange-dark transition-colors disabled:opacity-50"
                 >
                   {{ publishing ? 'Publishing...' : 'Publish' }}
                 </button>
                 <button
-                  @click="publishToAWS(true)"
+                  @click="confirmFullPublish('aws')"
                   :disabled="isWorking || !hasPublishedPosts"
-                  class="px-4 py-2 bg-orange-800 text-white rounded-lg hover:bg-orange-900 transition-colors disabled:opacity-50 text-sm font-medium"
+                  class="px-4 py-3 border-2 border-retro-orange text-retro-orange font-retro-mono text-retro-sm uppercase tracking-wider hover:bg-retro-orange hover:text-white transition-colors disabled:opacity-50"
                   title="Re-upload all files"
                 >
                   Full
                 </button>
               </div>
-              <button
-                @click="publishToAWS(true, true)"
-                :disabled="isWorking || !hasPublishedPosts"
-                class="w-full text-xs text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 underline disabled:opacity-50"
-              >
-                Force Publish (Skip Sync)
-              </button>
-            </div>
+            </template>
 
             <!-- SFTP Publish -->
-            <div v-if="publisherType === 'sftp'" class="space-y-2">
-              <div class="flex gap-2">
+            <template v-if="publisherType === 'sftp'">
+              <!-- Full publish confirmation -->
+              <div v-if="showFullPublishConfirm && fullPublishType === 'sftp'" class="space-y-3">
+                <p class="font-retro-sans text-retro-sm text-retro-gray-light">
+                  Full publish will re-upload all files. This may take a long time for large sites.
+                </p>
+                <div class="flex gap-3">
+                  <button
+                    @click="cancelFullPublish"
+                    class="flex-1 px-4 py-3 border-2 border-retro-gray-dark text-retro-gray-light font-retro-mono text-retro-sm uppercase tracking-wider hover:border-retro-gray-light hover:text-white transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    @click="executeFullPublish"
+                    class="flex-1 px-4 py-3 bg-retro-orange text-white font-retro-mono text-retro-sm uppercase tracking-wider hover:bg-retro-orange-dark transition-colors"
+                  >
+                    Continue
+                  </button>
+                </div>
+              </div>
+              <!-- Normal publish buttons -->
+              <div v-else class="flex gap-3">
                 <button
                   @click="publishToSFTP(false)"
                   :disabled="isWorking || !hasPublishedPosts"
-                  class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 text-sm font-medium"
+                  class="flex-1 px-4 py-3 bg-retro-orange text-white font-retro-mono text-retro-sm uppercase tracking-wider hover:bg-retro-orange-dark transition-colors disabled:opacity-50"
                 >
                   {{ publishing ? 'Publishing...' : 'Publish' }}
                 </button>
                 <button
-                  @click="publishToSFTP(true)"
+                  @click="confirmFullPublish('sftp')"
                   :disabled="isWorking || !hasPublishedPosts"
-                  class="px-4 py-2 bg-blue-800 text-white rounded-lg hover:bg-blue-900 transition-colors disabled:opacity-50 text-sm font-medium"
+                  class="px-4 py-3 border-2 border-retro-orange text-retro-orange font-retro-mono text-retro-sm uppercase tracking-wider hover:bg-retro-orange hover:text-white transition-colors disabled:opacity-50"
                   title="Re-upload all files"
                 >
                   Full
                 </button>
               </div>
-              <button
-                @click="publishToSFTP(true, true)"
-                :disabled="isWorking || !hasPublishedPosts"
-                class="w-full text-xs text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 underline disabled:opacity-50"
-              >
-                Force Publish (Skip Sync)
-              </button>
-            </div>
+            </template>
 
             <!-- Git Publish -->
-            <div v-if="publisherType === 'git'" class="space-y-2">
+            <template v-if="publisherType === 'git'">
               <button
                 @click="publishToGit()"
                 :disabled="isWorking || !hasPublishedPosts"
-                class="w-full px-4 py-2 bg-gray-800 dark:bg-gray-600 text-white rounded-lg hover:bg-gray-900 dark:hover:bg-gray-500 transition-colors disabled:opacity-50 text-sm font-medium"
+                class="w-full px-4 py-3 bg-retro-orange text-white font-retro-mono text-retro-sm uppercase tracking-wider hover:bg-retro-orange-dark transition-colors disabled:opacity-50"
               >
                 {{ publishing ? 'Publishing...' : 'Push to Git' }}
               </button>
-              <button
-                @click="publishToGit(true)"
-                :disabled="isWorking || !hasPublishedPosts"
-                class="w-full text-xs text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 underline disabled:opacity-50"
-              >
-                Force Publish (Skip Sync)
-              </button>
-            </div>
+            </template>
 
-            <p v-if="!hasPublishedPosts && publisherType !== 'manual'" class="text-xs text-gray-500 dark:text-gray-400 text-center">
+            <p v-if="!hasPublishedPosts && publisherType !== 'manual'" class="font-retro-mono text-retro-xs text-retro-gray-medium text-center">
               No published posts to deploy
             </p>
           </template>
