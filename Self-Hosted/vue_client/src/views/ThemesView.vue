@@ -408,9 +408,10 @@ const templateNames = computed(() => {
                     class="w-2 h-2 bg-retro-orange"
                   ></div>
                 </div>
-                <div>
-                  <p class="font-retro-sans text-retro-base text-retro-gray-darker dark:text-retro-cream">{{ theme.name }}</p>
-                  <p class="font-retro-mono text-retro-xs text-retro-gray-medium">{{ theme.isDefault ? 'Built-in' : 'Custom' }}</p>
+                <div class="text-left">
+                  <p class="m-0 font-retro-sans text-retro-base text-retro-gray-darker dark:text-retro-cream">{{ theme.name }}</p>
+                  <p v-if="theme.isDefault" class="m-0 font-retro-mono text-retro-xs text-retro-gray-medium">Built-in</p>
+                  <p v-else class="m-0 font-retro-mono text-retro-xs text-retro-gray-medium">Custom</p>
                 </div>
               </button>
             </div>
