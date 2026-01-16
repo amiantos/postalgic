@@ -1,0 +1,16 @@
+<div class="page-header">
+    <span class="page-giant-text" aria-hidden="true">Categories</span>
+    <div class="page-foreground">
+        <h1>categories</h1>
+    </div>
+    <div class="page-divider"></div>
+</div>
+<div class="category-list">
+    {{#categories}}
+    <div class="category-item">
+        <a href="{{basePath}}/categories/{{urlPath}}/">{{name}}</a>
+        <div class="category-count">{{postCount}} posts</div>
+        {{#hasDescription}}<div class="category-description">{{description}}</div>{{/hasDescription}}
+    </div>
+    {{/categories}}
+</div>

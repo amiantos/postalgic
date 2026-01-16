@@ -1,0 +1,31 @@
+<div class="page-header">
+    <span class="page-giant-text" aria-hidden="true">{{categoryName}}</span>
+    <div class="page-foreground">
+        <h1>{{categoryName}}</h1>
+        <div class="page-meta">{{totalPosts}} {{postCountText}}{{#hasPagination}} &middot; page {{currentPage}} of {{totalPages}}{{/hasPagination}}</div>
+        {{#hasDescription}}<div class="category-description">{{description}}</div>{{/hasDescription}}
+    </div>
+    <div class="page-divider"></div>
+</div>
+
+{{#posts}}
+{{> post}}
+{{/posts}}
+
+{{#hasPagination}}
+<nav class="pagination-navigation">
+    {{#hasPreviousPage}}
+    <div class="nav-previous">
+        <a href="{{basePath}}{{{previousPageUrl}}}">&larr; Previous</a>
+    </div>
+    {{/hasPreviousPage}}
+    {{^hasPreviousPage}}
+    <div class="nav-previous"></div>
+    {{/hasPreviousPage}}
+    {{#hasNextPage}}
+    <div class="nav-next">
+        <a href="{{basePath}}{{{nextPageUrl}}}">Next &rarr;</a>
+    </div>
+    {{/hasNextPage}}
+</nav>
+{{/hasPagination}}

@@ -1,0 +1,15 @@
+<div class="page-header">
+    <span class="page-giant-text" aria-hidden="true">Tags</span>
+    <div class="page-foreground">
+        <h1>tags</h1>
+    </div>
+    <div class="page-divider"></div>
+</div>
+<div class="tag-list">
+    {{#tags}}
+    <div class="tag-item">
+        <a href="{{basePath}}/tags/{{urlPath}}/">{{name}}</a>
+        <div class="tag-count">{{postCount}} posts</div>
+    </div>
+    {{/tags}}
+</div>

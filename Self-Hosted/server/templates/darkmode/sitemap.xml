@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    <url>
+        <loc>{{{blogUrl}}}/</loc>
+        <lastmod>{{buildDate}}</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>1.0</priority>
+    </url>
+    <url>
+        <loc>{{{blogUrl}}}/archives/</loc>
+        <lastmod>{{buildDate}}</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
+        <loc>{{{blogUrl}}}/tags/</loc>
+        <lastmod>{{buildDate}}</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
+        <loc>{{{blogUrl}}}/categories/</loc>
+        <lastmod>{{buildDate}}</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.7</priority>
+    </url>
+
+    {{#posts}}
+    <url>
+        <loc>{{{blogUrl}}}/{{{urlPath}}}/</loc>
+        <lastmod>{{lastmod}}</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.6</priority>
+    </url>
+    {{/posts}}
+
+    {{#tags}}
+    <url>
+        <loc>{{{blogUrl}}}/tags/{{{urlPath}}}/</loc>
+        <lastmod>{{lastmod}}</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.5</priority>
+    </url>
+    {{/tags}}
+
+    {{#categories}}
+    <url>
+        <loc>{{{blogUrl}}}/categories/{{{urlPath}}}/</loc>
+        <lastmod>{{lastmod}}</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.5</priority>
+    </url>
+    {{/categories}}
+
+    {{#monthlyArchives}}
+    <url>
+        <loc>{{{blogUrl}}}{{{url}}}</loc>
+        <lastmod>{{lastmod}}</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.6</priority>
+    </url>
+    {{/monthlyArchives}}
+</urlset>

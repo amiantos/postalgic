@@ -1,0 +1,24 @@
+<div class="page-header">
+    <span class="page-giant-text" aria-hidden="true">Archives</span>
+    <div class="page-foreground">
+        <h1>archives</h1>
+    </div>
+    <div class="page-divider"></div>
+</div>
+
+{{#years}}
+<div class="archive-year">{{year}}</div>
+{{#months}}
+<div class="archive-month">
+    <a href="{{basePath}}/{{year}}/{{monthPadded}}/">{{monthName}}</a>
+</div>
+<ul class="archive-posts">
+    {{#posts}}
+    <li>
+        <span class="archive-date">{{dayPadded}} {{monthAbbr}}</span>
+        <a href="{{basePath}}/{{{urlPath}}}/">{{displayTitle}}</a>
+    </li>
+    {{/posts}}
+</ul>
+{{/months}}
+{{/years}}

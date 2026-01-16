@@ -25,7 +25,7 @@ import fs from 'fs';
 import path from 'path';
 import Mustache from 'mustache';
 import { renderMarkdown } from '../utils/markdown.js';
-import { getDefaultTemplates } from './templates.js';
+import { getDefaultTemplates, getBuiltInTemplates } from './templates.js';
 import { generateFavicons } from './imageProcessor.js';
 import { generateSyncDirectory } from './syncGenerator.js';
 import {
@@ -82,9 +82,16 @@ export async function generateSite(storage, blogId, options = {}) {
   // Get theme templates
   let templates = getDefaultTemplates();
   if (blog.themeIdentifier && blog.themeIdentifier !== 'default') {
-    const theme = storage.getTheme(blog.themeIdentifier);
-    if (theme && theme.templates) {
-      templates = { ...templates, ...theme.templates };
+    // Check if it's a built-in theme first
+    const builtInTemplates = getBuiltInTemplates(blog.themeIdentifier);
+    if (builtInTemplates) {
+      templates = builtInTemplates;
+    } else {
+      // Fall back to custom theme from storage
+      const theme = storage.getTheme(blog.themeIdentifier);
+      if (theme && theme.templates) {
+        templates = { ...templates, ...theme.templates };
+      }
     }
   }
 

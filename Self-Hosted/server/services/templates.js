@@ -1,6 +1,6 @@
 /**
- * Default Mustache templates for the static site generator.
- * Templates are loaded from the templates/default directory.
+ * Mustache templates for the static site generator.
+ * Templates are loaded from the templates directory.
  */
 
 import fs from 'fs';
@@ -10,16 +10,40 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const TEMPLATES_DIR = path.join(__dirname, '../templates/default');
+const TEMPLATES_BASE_DIR = path.join(__dirname, '../templates');
 
 /**
  * Load a template file from disk
+ * @param {string} themeDir - The theme directory name
  * @param {string} filename - The template filename
  * @returns {string} The template content
  */
-function loadTemplate(filename) {
-  const filepath = path.join(TEMPLATES_DIR, filename);
+function loadTemplate(themeDir, filename) {
+  const filepath = path.join(TEMPLATES_BASE_DIR, themeDir, filename);
   return fs.readFileSync(filepath, 'utf-8');
+}
+
+/**
+ * Load all templates for a given theme directory
+ * @param {string} themeDir - The theme directory name
+ * @returns {Object} Object containing all template strings
+ */
+function loadThemeTemplates(themeDir) {
+  return {
+    layout: loadTemplate(themeDir, 'layout.mustache'),
+    post: loadTemplate(themeDir, 'post.mustache'),
+    index: loadTemplate(themeDir, 'index.mustache'),
+    archives: loadTemplate(themeDir, 'archives.mustache'),
+    'monthly-archive': loadTemplate(themeDir, 'monthly-archive.mustache'),
+    tags: loadTemplate(themeDir, 'tags.mustache'),
+    tag: loadTemplate(themeDir, 'tag.mustache'),
+    categories: loadTemplate(themeDir, 'categories.mustache'),
+    category: loadTemplate(themeDir, 'category.mustache'),
+    css: loadTemplate(themeDir, 'style.css'),
+    rss: loadTemplate(themeDir, 'rss.xml'),
+    robots: loadTemplate(themeDir, 'robots.txt'),
+    sitemap: loadTemplate(themeDir, 'sitemap.xml')
+  };
 }
 
 /**
@@ -28,19 +52,29 @@ function loadTemplate(filename) {
  * @returns {Object} Object containing all template strings
  */
 export function getDefaultTemplates() {
-  return {
-    layout: loadTemplate('layout.mustache'),
-    post: loadTemplate('post.mustache'),
-    index: loadTemplate('index.mustache'),
-    archives: loadTemplate('archives.mustache'),
-    'monthly-archive': loadTemplate('monthly-archive.mustache'),
-    tags: loadTemplate('tags.mustache'),
-    tag: loadTemplate('tag.mustache'),
-    categories: loadTemplate('categories.mustache'),
-    category: loadTemplate('category.mustache'),
-    css: loadTemplate('style.css'),
-    rss: loadTemplate('rss.xml'),
-    robots: loadTemplate('robots.txt'),
-    sitemap: loadTemplate('sitemap.xml')
-  };
+  return loadThemeTemplates('default');
+}
+
+/**
+ * Get the dark mode templates by loading them from template files.
+ * @returns {Object} Object containing all template strings
+ */
+export function getDarkModeTemplates() {
+  return loadThemeTemplates('darkmode');
+}
+
+/**
+ * Get templates for a built-in theme by identifier
+ * @param {string} identifier - The theme identifier
+ * @returns {Object|null} Object containing all template strings, or null if not found
+ */
+export function getBuiltInTemplates(identifier) {
+  switch (identifier) {
+    case 'default':
+      return getDefaultTemplates();
+    case 'darkmode':
+      return getDarkModeTemplates();
+    default:
+      return null;
+  }
 }

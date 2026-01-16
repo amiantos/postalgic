@@ -1,6 +1,6 @@
 import express from 'express';
 import Storage from '../utils/storage.js';
-import { getDefaultTemplates } from '../services/templates.js';
+import { getDefaultTemplates, getDarkModeTemplates, getBuiltInTemplates } from '../services/templates.js';
 
 const router = express.Router();
 
@@ -8,21 +8,33 @@ function getStorage(req) {
   return new Storage(req.app.locals.dataRoot);
 }
 
-// GET /api/themes - List all themes (including default)
+// Built-in themes configuration
+const BUILT_IN_THEMES = [
+  {
+    id: 'default',
+    name: 'Default',
+    identifier: 'default',
+    isCustomized: false,
+    isDefault: true
+  },
+  {
+    id: 'darkmode',
+    name: 'Dark Mode',
+    identifier: 'darkmode',
+    isCustomized: false,
+    isDefault: true
+  }
+];
+
+// GET /api/themes - List all themes (including built-in)
 router.get('/', (req, res) => {
   try {
     const storage = getStorage(req);
     const customThemes = storage.getAllThemes();
 
-    // Include default theme
+    // Include built-in themes
     const themes = [
-      {
-        id: 'default',
-        name: 'Default',
-        identifier: 'default',
-        isCustomized: false,
-        isDefault: true
-      },
+      ...BUILT_IN_THEMES,
       ...customThemes.map(t => ({ ...t, isDefault: false }))
     ];
 
@@ -38,14 +50,13 @@ router.get('/:id', (req, res) => {
     const storage = getStorage(req);
     const { id } = req.params;
 
-    if (id === 'default') {
+    // Check if it's a built-in theme
+    const builtInTheme = BUILT_IN_THEMES.find(t => t.id === id || t.identifier === id);
+    if (builtInTheme) {
+      const templates = getBuiltInTemplates(builtInTheme.identifier);
       return res.json({
-        id: 'default',
-        name: 'Default',
-        identifier: 'default',
-        isCustomized: false,
-        isDefault: true,
-        templates: getDefaultTemplates()
+        ...builtInTheme,
+        templates
       });
     }
 
@@ -95,8 +106,10 @@ router.put('/:id', (req, res) => {
     const storage = getStorage(req);
     const { id } = req.params;
 
-    if (id === 'default') {
-      return res.status(400).json({ error: 'Cannot modify default theme' });
+    // Check if it's a built-in theme
+    const builtInTheme = BUILT_IN_THEMES.find(t => t.id === id || t.identifier === id);
+    if (builtInTheme) {
+      return res.status(400).json({ error: 'Cannot modify built-in theme' });
     }
 
     const existingTheme = storage.getTheme(id);
@@ -131,8 +144,10 @@ router.delete('/:id', (req, res) => {
     const storage = getStorage(req);
     const { id } = req.params;
 
-    if (id === 'default') {
-      return res.status(400).json({ error: 'Cannot delete default theme' });
+    // Check if it's a built-in theme
+    const builtInTheme = BUILT_IN_THEMES.find(t => t.id === id || t.identifier === id);
+    if (builtInTheme) {
+      return res.status(400).json({ error: 'Cannot delete built-in theme' });
     }
 
     storage.deleteTheme(id);
@@ -150,19 +165,24 @@ router.post('/:id/duplicate', (req, res) => {
     const { name } = req.body;
 
     let sourceTemplates;
+    let sourceName;
 
-    if (id === 'default') {
-      sourceTemplates = getDefaultTemplates();
+    // Check if it's a built-in theme
+    const builtInTheme = BUILT_IN_THEMES.find(t => t.id === id || t.identifier === id);
+    if (builtInTheme) {
+      sourceTemplates = getBuiltInTemplates(builtInTheme.identifier);
+      sourceName = builtInTheme.name;
     } else {
       const sourceTheme = storage.getTheme(id);
       if (!sourceTheme) {
         return res.status(404).json({ error: 'Theme not found' });
       }
       sourceTemplates = sourceTheme.templates;
+      sourceName = sourceTheme.name;
     }
 
     const themeData = {
-      name: name || `Copy of ${id === 'default' ? 'Default' : storage.getTheme(id)?.name}`,
+      name: name || `Copy of ${sourceName}`,
       identifier: `custom-${Date.now()}`,
       isCustomized: true,
       templates: { ...sourceTemplates }
@@ -183,8 +203,10 @@ router.get('/:id/template/:templateName', (req, res) => {
 
     let templates;
 
-    if (id === 'default') {
-      templates = getDefaultTemplates();
+    // Check if it's a built-in theme
+    const builtInTheme = BUILT_IN_THEMES.find(t => t.id === id || t.identifier === id);
+    if (builtInTheme) {
+      templates = getBuiltInTemplates(builtInTheme.identifier);
     } else {
       const theme = storage.getTheme(id);
       if (!theme) {

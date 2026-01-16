@@ -1,0 +1,997 @@
+/*
+ * Dark Mode Theme - Retro CMS Style
+ * Matches the Postalgic CMS interface with giant background text effect
+ */
+
+/* ==========================================
+   1. CSS Variables & Reset
+   ========================================== */
+:root {
+    --accent-color: {{accentColor}};
+    --background-color: {{backgroundColor}};
+    --text-color: {{textColor}};
+    --light-shade: {{lightShade}};
+    --medium-shade: {{mediumShade}};
+    --dark-shade: {{darkShade}};
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+/* ==========================================
+   2. Base Styles
+   ========================================== */
+html {
+    overflow-y: scroll;
+    height: 100%;
+    word-wrap: break-word;
+}
+
+body {
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    font-size: 11px;
+    line-height: 1.6;
+    color: var(--text-color);
+    background-color: var(--background-color);
+}
+
+a {
+    color: var(--accent-color);
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* ==========================================
+   3. Layout & Container
+   ========================================== */
+.container {
+    max-width: 700px;
+    margin: 0;
+    margin-left: 32px;
+    padding: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.content-wrapper {
+    display: flex;
+    flex: 1;
+    gap: 32px;
+}
+
+/* ==========================================
+   4. Hero Header with Giant Text
+   ========================================== */
+.hero-header {
+    position: relative;
+    height: 260px;
+    overflow: visible;
+    margin-left: 212px; /* sidebar width (180px) + gap (32px) */
+}
+
+.hero-header .giant-text {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    font-family: Georgia, 'Times New Roman', Times, serif;
+    font-weight: bold;
+    font-size: 14rem;
+    line-height: 1;
+    letter-spacing: -0.04em;
+    color: var(--light-shade);
+    text-transform: uppercase;
+    white-space: nowrap;
+    user-select: none;
+    pointer-events: none;
+    overflow: visible;
+}
+
+.hero-header .hero-content {
+    position: absolute;
+    bottom: 16px;
+    left: 0;
+}
+
+.hero-header h1 {
+    font-family: Georgia, 'Times New Roman', Times, serif;
+    font-size: 4.5rem;
+    font-weight: bold;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    text-transform: lowercase;
+    white-space: nowrap;
+}
+
+.hero-header h1 a {
+    color: var(--text-color);
+    text-decoration: none;
+}
+
+.hero-header h1 a:hover {
+    color: var(--accent-color);
+}
+
+.hero-header .tagline {
+    font-family: Monaco, 'Courier New', monospace;
+    font-size: 11px;
+    color: var(--medium-shade);
+    margin-top: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.hero-header .hero-divider {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: -100vw;
+    height: 1px;
+    background-color: var(--light-shade);
+}
+
+/* ==========================================
+   5. Navigation
+   ========================================== */
+.main-nav {
+    display: flex;
+    gap: 16px;
+    padding: 16px 0;
+    margin-left: 212px; /* sidebar width (180px) + gap (32px) */
+}
+
+.main-nav a {
+    font-family: Monaco, 'Courier New', monospace;
+    font-size: 11px;
+    color: var(--dark-shade);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    text-decoration: none;
+}
+
+.main-nav a:hover {
+    color: var(--accent-color);
+    text-decoration: none;
+}
+
+/* ==========================================
+   6. Main Content
+   ========================================== */
+main {
+    flex: 1;
+    min-width: 0;
+    padding-top: 0;
+}
+
+/* ==========================================
+   7. Sidebar (Left Side)
+   ========================================== */
+.sidebar {
+    width: 180px;
+    flex-shrink: 0;
+    padding-top: 24px;
+    order: -1; /* Put sidebar first (left) */
+}
+
+.sidebar h2 {
+    font-family: Monaco, 'Courier New', monospace;
+    font-size: 11px;
+    font-weight: normal;
+    color: var(--dark-shade);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 8px;
+}
+
+.sidebar-text,
+.sidebar-links {
+    margin-bottom: 24px;
+}
+
+.sidebar-text-content {
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    font-size: 11px;
+    line-height: 1.6;
+    color: var(--dark-shade);
+}
+
+.sidebar-text-content p {
+    margin-bottom: 8px;
+}
+
+.sidebar-links ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.sidebar-links li {
+    margin-bottom: 4px;
+}
+
+.sidebar-links a {
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    font-size: 11px;
+    color: var(--accent-color);
+}
+
+/* ==========================================
+   8. Post Article with Giant Text
+   ========================================== */
+article.post {
+    position: relative;
+    padding: 24px 0;
+}
+
+article.post .post-divider {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: -100vw;
+    height: 1px;
+    background-color: var(--light-shade);
+}
+
+article.post .post-giant-text {
+    position: absolute;
+    top: 24px;
+    left: 0;
+    height: 8rem;
+    display: flex;
+    align-items: center;
+    font-family: Georgia, 'Times New Roman', Times, serif;
+    font-weight: bold;
+    font-size: 8rem;
+    line-height: 1;
+    letter-spacing: -0.04em;
+    color: var(--light-shade);
+    text-transform: uppercase;
+    white-space: nowrap;
+    user-select: none;
+    pointer-events: none;
+    overflow: visible;
+}
+
+article.post .post-foreground {
+    position: relative;
+    padding-top: 5rem;
+}
+
+article.post h2 {
+    font-family: Georgia, 'Times New Roman', Times, serif;
+    font-size: 2.5rem;
+    font-weight: bold;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    text-transform: lowercase;
+    margin-bottom: 8px;
+    white-space: nowrap;
+}
+
+article.post h2 a {
+    color: var(--text-color);
+    text-decoration: none;
+}
+
+article.post h2 a:hover {
+    color: var(--accent-color);
+}
+
+.post-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.post-date {
+    font-family: Monaco, 'Courier New', monospace;
+    font-size: 10px;
+    color: var(--medium-shade);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.post-date a {
+    color: var(--medium-shade);
+}
+
+.post-date a:hover {
+    color: var(--accent-color);
+}
+
+.post-category a {
+    font-family: Monaco, 'Courier New', monospace;
+    font-size: 10px;
+    color: var(--dark-shade);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.post-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.post-tags .tag {
+    font-family: Monaco, 'Courier New', monospace;
+    font-size: 10px;
+    color: var(--accent-color);
+}
+
+.post-tags .tag:hover {
+    color: var(--medium-shade);
+}
+
+/* ==========================================
+   9. Post Content
+   ========================================== */
+.post-content {
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    font-size: 12px;
+    line-height: 1.8;
+    color: var(--text-color);
+}
+
+.post-content p {
+    margin-bottom: 16px;
+}
+
+.post-content a {
+    text-decoration: underline;
+}
+
+.post-content h1,
+.post-content h2,
+.post-content h3,
+.post-content h4,
+.post-content h5,
+.post-content h6 {
+    font-family: Georgia, 'Times New Roman', Times, serif;
+    margin-top: 24px;
+    margin-bottom: 12px;
+    color: var(--text-color);
+}
+
+.post-content hr {
+    border: none;
+    border-top: 1px solid var(--light-shade);
+    margin: 24px 0;
+}
+
+.post-content blockquote {
+    border-left: 2px solid var(--accent-color);
+    padding-left: 16px;
+    margin: 16px 0;
+    color: var(--dark-shade);
+    font-style: italic;
+}
+
+.post-content code {
+    font-family: Monaco, 'Courier New', monospace;
+    font-size: 11px;
+    background-color: var(--light-shade);
+    padding: 2px 4px;
+}
+
+.post-content pre {
+    font-family: Monaco, 'Courier New', monospace;
+    font-size: 11px;
+    background-color: var(--light-shade);
+    padding: 12px;
+    overflow-x: auto;
+    margin: 16px 0;
+}
+
+.post-content pre code {
+    background: none;
+    padding: 0;
+}
+
+.post-content img {
+    max-width: 100%;
+    height: auto;
+}
+
+.post-content ul,
+.post-content ol {
+    margin: 16px 0;
+    padding-left: 24px;
+}
+
+.post-content li {
+    margin-bottom: 8px;
+}
+
+/* ==========================================
+   10. Tags & Categories Pages
+   ========================================== */
+.page-header {
+    position: relative;
+    padding: 24px 0;
+    margin-bottom: 0;
+}
+
+.page-header .page-giant-text {
+    position: absolute;
+    top: 24px;
+    left: 0;
+    height: 8rem;
+    display: flex;
+    align-items: center;
+    font-family: Georgia, 'Times New Roman', Times, serif;
+    font-weight: bold;
+    font-size: 8rem;
+    line-height: 1;
+    letter-spacing: -0.04em;
+    color: var(--light-shade);
+    text-transform: uppercase;
+    white-space: nowrap;
+    user-select: none;
+    pointer-events: none;
+}
+
+.page-header .page-foreground {
+    position: relative;
+    padding-top: 5rem;
+}
+
+.page-header h1 {
+    font-family: Georgia, 'Times New Roman', Times, serif;
+    font-size: 2.5rem;
+    font-weight: bold;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    text-transform: lowercase;
+    white-space: nowrap;
+}
+
+.page-header .page-meta {
+    font-family: Monaco, 'Courier New', monospace;
+    font-size: 10px;
+    color: var(--medium-shade);
+    margin-top: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.page-header .page-divider {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: -100vw;
+    height: 1px;
+    background-color: var(--light-shade);
+}
+
+.tag-list,
+.category-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+    padding: 24px 0;
+}
+
+.tag-item,
+.category-item {
+    padding: 12px;
+    border: 2px solid var(--light-shade);
+}
+
+.tag-item:hover,
+.category-item:hover {
+    border-color: var(--accent-color);
+}
+
+.tag-item a,
+.category-item a {
+    font-family: Georgia, 'Times New Roman', Times, serif;
+    font-size: 16px;
+    font-weight: bold;
+    color: var(--text-color);
+    text-decoration: none;
+}
+
+.tag-item a:hover,
+.category-item a:hover {
+    color: var(--accent-color);
+}
+
+.tag-count,
+.category-count {
+    font-family: Monaco, 'Courier New', monospace;
+    font-size: 10px;
+    color: var(--medium-shade);
+    margin-top: 4px;
+}
+
+.category-description {
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    font-size: 11px;
+    color: var(--dark-shade);
+    margin-top: 8px;
+}
+
+/* ==========================================
+   11. Archives
+   ========================================== */
+.archive-year {
+    font-family: Georgia, 'Times New Roman', Times, serif;
+    font-size: 24px;
+    font-weight: bold;
+    margin: 24px 0 12px;
+    color: var(--text-color);
+}
+
+.archive-month {
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    font-size: 14px;
+    font-weight: normal;
+    margin: 16px 0 8px;
+    color: var(--dark-shade);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.archive-month a {
+    color: inherit;
+    text-decoration: none;
+}
+
+.archive-month a:hover {
+    color: var(--accent-color);
+}
+
+.archive-posts {
+    list-style: none;
+    padding: 0;
+}
+
+.archive-posts li {
+    margin-bottom: 4px;
+}
+
+.archive-date {
+    font-family: Monaco, 'Courier New', monospace;
+    font-size: 10px;
+    color: var(--medium-shade);
+    display: inline-block;
+    width: 60px;
+}
+
+.archive-posts a {
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    font-size: 12px;
+    color: var(--accent-color);
+}
+
+/* Monthly archive navigation */
+.month-navigation,
+.pagination-navigation {
+    display: flex;
+    justify-content: space-between;
+    padding: 24px 0;
+    border-top: 1px solid var(--light-shade);
+    margin-top: 24px;
+}
+
+.month-navigation a,
+.pagination-navigation a {
+    font-family: Monaco, 'Courier New', monospace;
+    font-size: 11px;
+    color: var(--accent-color);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.nav-previous,
+.nav-next {
+    flex: 1;
+}
+
+.nav-next {
+    text-align: right;
+}
+
+/* ==========================================
+   12. Embeds
+   ========================================== */
+.embed {
+    margin: 16px 0;
+}
+
+.youtube-embed {
+    position: relative;
+    padding-bottom: 56.25%;
+    height: 0;
+    overflow: hidden;
+    border: 2px solid var(--light-shade);
+}
+
+.youtube-embed iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+}
+
+.link-embed {
+    display: block;
+    border: 2px solid var(--light-shade);
+    text-decoration: none;
+}
+
+.link-embed:hover {
+    border-color: var(--accent-color);
+    text-decoration: none;
+}
+
+.link-embed a {
+    display: grid;
+    grid-template-areas:
+        "image title"
+        "image description"
+        "image url";
+    grid-template-columns: 120px 1fr;
+    grid-template-rows: auto 1fr auto;
+    color: var(--text-color);
+    text-decoration: none;
+}
+
+.link-image {
+    grid-area: image;
+    height: 100%;
+}
+
+.link-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.link-title {
+    grid-area: title;
+    font-family: Georgia, 'Times New Roman', Times, serif;
+    font-weight: bold;
+    font-size: 14px;
+    padding: 12px 12px 4px;
+}
+
+.link-description {
+    grid-area: description;
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    font-size: 11px;
+    padding: 0 12px;
+    color: var(--dark-shade);
+}
+
+.link-url {
+    grid-area: url;
+    font-family: Monaco, 'Courier New', monospace;
+    font-size: 10px;
+    color: var(--medium-shade);
+    padding: 4px 12px 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Image embeds */
+.image-embed img.embed-image {
+    max-width: 100%;
+    height: auto;
+    border: 2px solid var(--light-shade);
+    cursor: pointer;
+}
+
+.image-embed img.embed-image:hover {
+    border-color: var(--accent-color);
+}
+
+.gallery-container {
+    position: relative;
+    width: 100%;
+    padding-bottom: 75%;
+    overflow: hidden;
+    border: 2px solid var(--light-shade);
+}
+
+.gallery-slide {
+    display: none;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+}
+
+.gallery-slide a {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.gallery-slide img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border: none;
+}
+
+.gallery-nav {
+    display: flex;
+    justify-content: space-between;
+    position: absolute;
+    top: 50%;
+    width: 100%;
+    transform: translateY(-50%);
+    z-index: 1;
+}
+
+.gallery-prev,
+.gallery-next {
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    border: none;
+    width: 36px;
+    height: 36px;
+    font-size: 16px;
+    cursor: pointer;
+    margin: 0 8px;
+}
+
+.gallery-prev:hover,
+.gallery-next:hover {
+    background: var(--accent-color);
+}
+
+.gallery-dots {
+    display: flex;
+    justify-content: center;
+    margin-top: 8px;
+}
+
+.gallery-dot {
+    width: 8px;
+    height: 8px;
+    margin: 0 4px;
+    background-color: var(--light-shade);
+    cursor: pointer;
+}
+
+.gallery-dot.active {
+    background-color: var(--accent-color);
+}
+
+/* ==========================================
+   13. Lightbox
+   ========================================== */
+#lightbox {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.95);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+#lightbox.active {
+    display: flex;
+}
+
+.lightbox-content {
+    position: relative;
+    max-width: 90%;
+    max-height: 90%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.lightbox-image-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#lightbox-image {
+    max-width: 100%;
+    max-height: 80vh;
+    object-fit: contain;
+}
+
+.lightbox-close {
+    position: absolute;
+    top: -40px;
+    right: 0;
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    font-family: Monaco, 'Courier New', monospace;
+}
+
+.lightbox-nav {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    margin-top: 16px;
+}
+
+.lightbox-prev,
+.lightbox-next {
+    background: transparent;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    font-size: 20px;
+    padding: 8px 16px;
+    cursor: pointer;
+}
+
+.lightbox-prev:hover,
+.lightbox-next:hover {
+    border-color: var(--accent-color);
+    color: var(--accent-color);
+}
+
+/* ==========================================
+   14. Footer
+   ========================================== */
+footer {
+    padding: 16px 0;
+    margin-top: auto;
+    border-top: 1px solid var(--light-shade);
+}
+
+footer p {
+    font-family: Monaco, 'Courier New', monospace;
+    font-size: 10px;
+    color: var(--medium-shade);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+footer a {
+    color: var(--medium-shade);
+}
+
+footer a:hover {
+    color: var(--accent-color);
+}
+
+/* ==========================================
+   15. More Posts Link
+   ========================================== */
+.more-posts {
+    padding: 24px 0;
+}
+
+.more-posts a {
+    font-family: Monaco, 'Courier New', monospace;
+    font-size: 11px;
+    color: var(--accent-color);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* ==========================================
+   16. Responsive
+   ========================================== */
+@media (max-width: 768px) {
+    .container {
+        margin-left: 16px;
+        margin-right: 16px;
+    }
+
+    .content-wrapper {
+        flex-direction: column;
+    }
+
+    .sidebar {
+        width: 100%;
+        padding-top: 24px;
+        border-top: 1px solid var(--light-shade);
+        order: 0; /* Reset order on mobile - sidebar goes below content */
+    }
+
+    .hero-header {
+        height: 180px;
+        margin-left: 0;
+    }
+
+    .hero-header .giant-text {
+        font-size: 8rem;
+    }
+
+    .hero-header h1 {
+        font-size: 3rem;
+    }
+
+    .main-nav {
+        margin-left: 0;
+    }
+
+    article.post .post-giant-text {
+        font-size: 5rem;
+        height: 5rem;
+    }
+
+    article.post .post-foreground {
+        padding-top: 3rem;
+    }
+
+    article.post h2 {
+        font-size: 1.75rem;
+    }
+
+    .page-header .page-giant-text {
+        font-size: 5rem;
+        height: 5rem;
+    }
+
+    .page-header .page-foreground {
+        padding-top: 3rem;
+    }
+
+    .page-header h1 {
+        font-size: 1.75rem;
+    }
+
+    .main-nav {
+        flex-wrap: wrap;
+        gap: 8px 16px;
+    }
+
+    .link-embed a {
+        grid-template-areas:
+            "image"
+            "title"
+            "description"
+            "url";
+        grid-template-columns: 1fr;
+    }
+
+    .link-image {
+        height: 160px;
+    }
+
+    .tag-list,
+    .category-list {
+        grid-template-columns: 1fr;
+    }
+
+    .month-navigation,
+    .pagination-navigation {
+        flex-direction: column;
+        gap: 8px;
+        text-align: center;
+    }
+
+    .nav-previous,
+    .nav-next {
+        text-align: center;
+    }
+}

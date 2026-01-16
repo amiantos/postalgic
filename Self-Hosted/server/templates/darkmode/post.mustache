@@ -1,0 +1,32 @@
+<article class="post">
+    <!-- Giant background text - post title uppercase -->
+    <span class="post-giant-text" aria-hidden="true">{{displayTitle}}</span>
+
+    <!-- Foreground content -->
+    <div class="post-foreground">
+        {{#inList}}
+        <h2><a href="{{basePath}}/{{{urlPath}}}/">{{displayTitle}}</a></h2>
+        {{/inList}}
+        {{^inList}}
+        <h2>{{displayTitle}}</h2>
+        {{/inList}}
+
+        <div class="post-meta">
+            <span class="post-date">{{formattedDate}}</span>
+            {{#hasCategory}}
+            <span class="post-category"><a href="{{basePath}}/categories/{{{categoryUrlPath}}}/">{{categoryName}}</a></span>
+            {{/hasCategory}}
+            {{#hasTags}}
+            <span class="post-tags">
+                {{#tags}}<a href="{{basePath}}/tags/{{{urlPath}}}/" class="tag">#{{name}}</a>{{/tags}}
+            </span>
+            {{/hasTags}}
+        </div>
+
+        <div class="post-content">
+            {{{contentHtml}}}
+        </div>
+    </div>
+
+    <div class="post-divider"></div>
+</article>

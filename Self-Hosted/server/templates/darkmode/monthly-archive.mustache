@@ -1,0 +1,41 @@
+<div class="page-header">
+    <span class="page-giant-text" aria-hidden="true">{{monthName}}</span>
+    <div class="page-foreground">
+        <h1>{{monthName}} {{year}}</h1>
+        <div class="page-meta">{{postCount}} {{postCountText}}</div>
+    </div>
+    <div class="page-divider"></div>
+</div>
+
+{{#posts}}
+{{> post}}
+{{/posts}}
+
+{{#hasPreviousMonth}}{{#hasNextMonth}}
+<nav class="month-navigation">
+    <div class="nav-previous">
+        <a href="{{basePath}}{{{previousMonthUrl}}}">&larr; {{previousMonthName}} {{previousYear}}</a>
+    </div>
+    <div class="nav-next">
+        <a href="{{basePath}}{{{nextMonthUrl}}}">{{nextMonthName}} {{nextYear}} &rarr;</a>
+    </div>
+</nav>
+{{/hasNextMonth}}{{/hasPreviousMonth}}
+
+{{#hasPreviousMonth}}{{^hasNextMonth}}
+<nav class="month-navigation">
+    <div class="nav-previous">
+        <a href="{{basePath}}{{{previousMonthUrl}}}">&larr; {{previousMonthName}} {{previousYear}}</a>
+    </div>
+    <div class="nav-next"></div>
+</nav>
+{{/hasNextMonth}}{{/hasPreviousMonth}}
+
+{{^hasPreviousMonth}}{{#hasNextMonth}}
+<nav class="month-navigation">
+    <div class="nav-previous"></div>
+    <div class="nav-next">
+        <a href="{{basePath}}{{{nextMonthUrl}}}">{{nextMonthName}} {{nextYear}} &rarr;</a>
+    </div>
+</nav>
+{{/hasNextMonth}}{{/hasPreviousMonth}}
