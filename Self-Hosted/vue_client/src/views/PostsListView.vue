@@ -180,6 +180,18 @@ function getBackgroundTitle(title) {
       <div class="flex items-center gap-4">
         <SyncBadge />
         <router-link
+          :to="{ name: 'post-create', params: { blogId } }"
+          class="font-retro-mono text-retro-sm text-retro-gray-dark dark:text-retro-gray-medium hover:text-retro-orange uppercase tracking-wider"
+        >
+          + New Post
+        </router-link>
+        <button
+          @click="showPublishModal = true"
+          class="font-retro-mono text-retro-sm text-retro-gray-dark dark:text-retro-gray-medium hover:text-retro-orange uppercase tracking-wider"
+        >
+          Deploy
+        </button>
+        <router-link
           :to="{ name: 'blog-settings', params: { blogId } }"
           class="font-retro-mono text-retro-sm text-retro-gray-dark dark:text-retro-gray-medium hover:text-retro-orange uppercase tracking-wider"
         >
@@ -204,24 +216,6 @@ function getBackgroundTitle(title) {
         <!-- Stats line -->
         <div class="mt-2 font-retro-mono text-retro-sm text-retro-gray-medium">
           {{ postCounts.published }} published<span v-if="postCounts.drafts > 0">, {{ postCounts.drafts }} drafts</span>
-        </div>
-      </div>
-
-      <!-- Overlay controls -->
-      <div class="relative z-10 h-full flex items-start justify-end pt-6 px-6">
-        <div class="flex items-center gap-4">
-          <button
-            @click="showPublishModal = true"
-            class="font-retro-mono text-retro-sm text-retro-gray-darker dark:text-retro-gray-light hover:text-retro-orange uppercase tracking-wider"
-          >
-            Deploy
-          </button>
-          <router-link
-            :to="{ name: 'post-create', params: { blogId } }"
-            class="font-retro-mono text-retro-sm text-retro-gray-darker dark:text-retro-gray-light hover:text-retro-orange uppercase tracking-wider"
-          >
-            + New Post
-          </router-link>
         </div>
       </div>
     </header>
