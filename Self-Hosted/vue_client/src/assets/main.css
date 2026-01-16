@@ -199,3 +199,312 @@ input[type="color"]::-webkit-color-swatch {
     background: rgba(0, 0, 0, 0.2);
   }
 }
+
+/* ===========================================
+   RETRO 1999-2000 DESIGN SYSTEM
+   Zine/Magazine aesthetic - K10K, Glassdog era
+   =========================================== */
+
+@layer components {
+  /* Main container - bordered magazine page */
+  .retro-container {
+    max-width: 800px;
+    margin: 0 auto;
+    background: #FFFFFF;
+    border: 2px solid #333333;
+  }
+
+  /* Header bar with gradient */
+  .retro-header {
+    background: linear-gradient(to bottom, #0066CC 0%, #004499 100%);
+    border-bottom: 2px solid #003366;
+    padding: 8px 12px;
+    color: #FFFFFF;
+  }
+
+  .retro-header-title {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    text-shadow: 1px 1px 0 #003366;
+  }
+
+  /* Toolbar/Status bar */
+  .retro-toolbar {
+    background: #CCCCCC;
+    border-bottom: 1px solid #999999;
+    border-top: 1px solid #FFFFFF;
+    padding: 4px 8px;
+    font-size: 11px;
+    font-family: Verdana, Geneva, sans-serif;
+  }
+
+  /* Beveled button - classic 3D effect */
+  .retro-button {
+    background: #DDDDDD;
+    border: 1px solid;
+    border-color: #FFFFFF #666666 #666666 #FFFFFF;
+    padding: 4px 12px;
+    font-size: 11px;
+    font-family: Verdana, sans-serif;
+    cursor: pointer;
+    text-decoration: none;
+    color: #333333;
+    display: inline-block;
+  }
+
+  .retro-button:hover {
+    background: #EEEEEE;
+  }
+
+  .retro-button:active {
+    border-color: #666666 #FFFFFF #FFFFFF #666666;
+    background: #CCCCCC;
+  }
+
+  /* Primary action button */
+  .retro-button-primary {
+    background: #0066CC;
+    color: #FFFFFF;
+    border-color: #3399FF #003366 #003366 #3399FF;
+  }
+
+  .retro-button-primary:hover {
+    background: #0077DD;
+    color: #FFFFFF;
+  }
+
+  /* Danger button */
+  .retro-button-danger {
+    background: #CC3300;
+    color: #FFFFFF;
+    border-color: #FF6633 #990000 #990000 #FF6633;
+  }
+
+  .retro-button-danger:hover {
+    background: #DD4411;
+  }
+
+  /* Panel with header */
+  .retro-panel {
+    background: #FFFFFF;
+    border: 1px solid #333333;
+  }
+
+  .retro-panel-header {
+    background: linear-gradient(to bottom, #666666 0%, #444444 100%);
+    color: #FFFFFF;
+    font-size: 11px;
+    font-weight: bold;
+    padding: 3px 8px;
+    border-bottom: 1px solid #333333;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-family: Verdana, sans-serif;
+  }
+
+  .retro-panel-body {
+    padding: 8px;
+  }
+
+  /* Interactive card for blog items */
+  .retro-card {
+    background: #FFFFFF;
+    border: 1px solid #999999;
+  }
+
+  .retro-card:hover {
+    border-color: #0066CC;
+    background: #F8F8FF;
+  }
+
+  /* Section label badges */
+  .retro-label {
+    display: inline-block;
+    background: #FF6600;
+    color: #FFFFFF;
+    font-size: 9px;
+    font-weight: bold;
+    padding: 2px 6px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-family: Verdana, sans-serif;
+  }
+
+  .retro-label-blue {
+    background: #0066CC;
+  }
+
+  .retro-label-muted {
+    background: #999999;
+  }
+
+  /* Dividers */
+  .retro-divider {
+    height: 2px;
+    background: linear-gradient(to right,
+      transparent 0%,
+      #999999 10%,
+      #999999 90%,
+      transparent 100%
+    );
+    margin: 12px 0;
+  }
+
+  .retro-divider-solid {
+    height: 0;
+    border-top: 1px solid #CCCCCC;
+    border-bottom: 1px solid #FFFFFF;
+  }
+
+  /* Monospace stats text */
+  .retro-stat {
+    font-family: Monaco, 'Courier New', monospace;
+    font-size: 10px;
+    color: #666666;
+  }
+
+  /* Status indicator squares */
+  .retro-status {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background: #009900;
+    border: 1px solid #006600;
+  }
+
+  .retro-status-blue {
+    background: #0066CC;
+    border-color: #003366;
+  }
+
+  /* Inset input field */
+  .retro-input {
+    background: #FFFFFF;
+    border: 2px solid;
+    border-color: #666666 #FFFFFF #FFFFFF #666666;
+    padding: 4px 8px;
+    font-size: 12px;
+    font-family: Verdana, sans-serif;
+  }
+
+  .retro-input:focus {
+    border-color: #0066CC #99CCFF #99CCFF #0066CC;
+    outline: none;
+  }
+
+  /* Dropdown menu */
+  .retro-dropdown {
+    background: #FFFFFF;
+    border: 1px solid #333333;
+    box-shadow: 2px 2px 0 rgba(0,0,0,0.3);
+  }
+
+  .retro-dropdown-item {
+    padding: 4px 12px;
+    font-size: 11px;
+    font-family: Verdana, sans-serif;
+    border-bottom: 1px solid #CCCCCC;
+  }
+
+  .retro-dropdown-item:last-child {
+    border-bottom: none;
+  }
+
+  .retro-dropdown-item:hover {
+    background: #0066CC;
+    color: #FFFFFF;
+  }
+}
+
+/* Dark mode retro variants */
+@media (prefers-color-scheme: dark) {
+  .retro-container {
+    background: #252540;
+    border-color: #3D3D60;
+  }
+
+  .retro-header {
+    background: linear-gradient(to bottom, #3D3D60 0%, #252540 100%);
+    border-color: #4D4D70;
+  }
+
+  .retro-header-title {
+    text-shadow: 1px 1px 0 #1A1A2E;
+  }
+
+  .retro-toolbar {
+    background: #1A1A2E;
+    border-top-color: #3D3D60;
+    border-bottom-color: #0D0D1A;
+    color: #CCCCCC;
+  }
+
+  .retro-button {
+    background: #3D3D60;
+    border-color: #5D5D80 #1A1A2E #1A1A2E #5D5D80;
+    color: #CCCCCC;
+  }
+
+  .retro-button:hover {
+    background: #4D4D70;
+  }
+
+  .retro-button-primary {
+    background: #0066CC;
+    color: #FFFFFF;
+    border-color: #3399FF #003366 #003366 #3399FF;
+  }
+
+  .retro-panel {
+    background: #252540;
+    border-color: #3D3D60;
+  }
+
+  .retro-panel-header {
+    background: linear-gradient(to bottom, #3D3D60 0%, #2D2D50 100%);
+    border-color: #4D4D70;
+  }
+
+  .retro-card {
+    background: #252540;
+    border-color: #3D3D60;
+  }
+
+  .retro-card:hover {
+    border-color: #6699CC;
+    background: #2D2D50;
+  }
+
+  .retro-divider-solid {
+    border-top-color: #3D3D60;
+    border-bottom-color: #4D4D70;
+  }
+
+  .retro-stat {
+    color: #999999;
+  }
+
+  .retro-input {
+    background: #1A1A2E;
+    border-color: #0D0D1A #4D4D70 #4D4D70 #0D0D1A;
+    color: #CCCCCC;
+  }
+
+  .retro-dropdown {
+    background: #252540;
+    border-color: #3D3D60;
+    box-shadow: 2px 2px 0 rgba(0,0,0,0.5);
+  }
+
+  .retro-dropdown-item {
+    border-color: #3D3D60;
+    color: #CCCCCC;
+  }
+
+  .retro-dropdown-item:hover {
+    background: #0066CC;
+    color: #FFFFFF;
+  }
+}

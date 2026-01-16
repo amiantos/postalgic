@@ -3,13 +3,22 @@ import { ref, computed, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useBlogStore } from '@/stores/blog';
 import { themeApi } from '@/api';
-import PageToolbar from '@/components/PageToolbar.vue';
-import SettingsTabs from '@/components/SettingsTabs.vue';
 
 const route = useRoute();
 const blogStore = useBlogStore();
 
 const blogId = computed(() => route.params.blogId);
+const currentRouteName = computed(() => route.name);
+
+const settingsTabs = [
+  { name: 'Basic', route: 'blog-settings' },
+  { name: 'Categories', route: 'categories' },
+  { name: 'Tags', route: 'tags' },
+  { name: 'Sidebar', route: 'sidebar' },
+  { name: 'Files', route: 'files' },
+  { name: 'Themes', route: 'themes' },
+  { name: 'Publishing', route: 'publish-settings' }
+];
 
 const themes = ref([]);
 const loading = ref(false);
@@ -302,261 +311,297 @@ const templateNames = computed(() => {
 </script>
 
 <template>
-  <div>
-    <PageToolbar title="Themes">
-      <template #actions>
-        <button
-          @click="duplicateTheme('default')"
-          :disabled="duplicating"
-          class="glass px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1 disabled:opacity-50"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-          </svg>
-          {{ duplicating ? 'Creating...' : 'New Theme' }}
-        </button>
-      </template>
-      <template #tabs>
-        <SettingsTabs />
-      </template>
-    </PageToolbar>
+  <div class="min-h-screen bg-white dark:bg-black overflow-x-hidden">
+    <!-- Max-width content wrapper for desktop -->
+    <div class="lg:max-w-[700px] lg:mx-auto">
 
-    <div class="px-6 pb-6">
-    <!-- Error -->
-    <div v-if="error" class="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-800 dark:text-red-400">
-      {{ error }}
-    </div>
+    <!-- Navigation bar -->
+    <nav class="flex items-center justify-between px-6 py-4 lg:px-0">
+      <router-link
+        :to="{ name: 'blog-posts', params: { blogId } }"
+        class="font-retro-mono text-retro-sm text-retro-gray-dark dark:text-retro-gray-medium hover:text-retro-orange uppercase tracking-wider"
+      >
+        <span class="relative -top-px">&lt;</span> {{ blogStore.currentBlog?.name || 'Posts' }}
+      </router-link>
+      <button
+        @click="duplicateTheme('default')"
+        :disabled="duplicating"
+        class="font-retro-mono text-retro-sm text-retro-gray-dark dark:text-retro-gray-medium hover:text-retro-orange uppercase tracking-wider disabled:opacity-50"
+      >
+        {{ duplicating ? 'Creating...' : '+ New Theme' }}
+      </button>
+    </nav>
 
-    <!-- Loading -->
-    <div v-if="loading" class="text-center py-12 text-gray-500 dark:text-gray-400">
-      Loading themes...
-    </div>
+    <!-- Hero section -->
+    <header class="relative h-52 md:h-60">
+      <!-- Divider that extends to the right -->
+      <div class="absolute bottom-0 left-6 right-0 border-b border-retro-gray-light dark:border-retro-gray-darker lg:left-0 lg:-right-[100vw]"></div>
+      <!-- Giant background text -->
+      <span class="absolute inset-0 flex items-center justify-start font-retro-serif font-bold text-[10rem] md:text-[14rem] leading-none tracking-tighter text-retro-gray-lightest dark:text-[#1a1a1a] select-none pointer-events-none whitespace-nowrap uppercase" aria-hidden="true">
+        THEMES
+      </span>
+      <!-- Foreground content -->
+      <div class="absolute bottom-4 left-6 lg:left-0">
+        <h1 class="font-retro-serif font-bold text-6xl md:text-7xl leading-none tracking-tight text-retro-gray-darker dark:text-retro-cream lowercase whitespace-nowrap">
+          themes
+        </h1>
+        <!-- Spacer -->
+        <div class="mt-2 font-retro-mono text-retro-sm text-retro-gray-medium">&nbsp;</div>
+      </div>
+    </header>
 
-    <!-- Theme List -->
-    <div v-else class="space-y-3">
-      <div
-        v-for="theme in themes"
-        :key="theme.id"
+    <!-- Settings tabs -->
+    <nav class="flex flex-wrap gap-x-4 gap-y-2 px-6 lg:px-0 py-4 border-b border-retro-gray-light dark:border-retro-gray-darker">
+      <router-link
+        v-for="tab in settingsTabs"
+        :key="tab.route"
+        :to="{ name: tab.route, params: { blogId } }"
         :class="[
-          'bg-white dark:bg-gray-800 rounded-lg border p-4 transition-colors',
-          selectedThemeId === theme.id ? 'border-primary-500 ring-1 ring-primary-500' : 'border-gray-200 dark:border-gray-700'
+          'font-retro-mono text-retro-sm uppercase tracking-wider',
+          currentRouteName === tab.route
+            ? 'text-retro-orange'
+            : 'text-retro-gray-dark dark:text-retro-gray-medium hover:text-retro-orange'
         ]"
       >
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-3">
-            <button
-              @click="selectTheme(theme.id)"
-              class="flex items-center gap-3"
-            >
-              <div
-                :class="[
-                  'w-5 h-5 rounded-full border-2 flex items-center justify-center',
-                  selectedThemeId === theme.id ? 'border-primary-600' : 'border-gray-300 dark:border-gray-600'
-                ]"
+        {{ tab.name }}
+      </router-link>
+    </nav>
+
+    <!-- Content -->
+    <main class="px-6 lg:px-0 py-6">
+      <!-- Error -->
+      <div v-if="error" class="mb-6 p-4 border-2 border-red-500 font-retro-mono text-retro-sm text-red-600 dark:text-red-400">
+        {{ error }}
+      </div>
+
+      <!-- Loading -->
+      <div v-if="loading" class="py-12">
+        <p class="font-retro-mono text-retro-sm text-retro-gray-medium uppercase tracking-widest">Loading themes...</p>
+      </div>
+
+      <!-- Theme List -->
+      <div v-else class="space-y-3">
+        <div
+          v-for="theme in themes"
+          :key="theme.id"
+          :class="[
+            'border-2 p-4',
+            selectedThemeId === theme.id
+              ? 'border-retro-orange'
+              : 'border-retro-gray-light dark:border-retro-gray-darker'
+          ]"
+        >
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <button
+                @click="selectTheme(theme.id)"
+                class="flex items-center gap-3"
               >
                 <div
-                  v-if="selectedThemeId === theme.id"
-                  class="w-3 h-3 rounded-full bg-primary-600"
-                ></div>
-              </div>
-              <div>
-                <p class="font-medium text-gray-900 dark:text-gray-100">{{ theme.name }}</p>
-                <p class="text-sm text-gray-500 dark:text-gray-400">
-                  {{ theme.isDefault ? 'Built-in' : 'Custom' }}
-                </p>
-              </div>
-            </button>
-          </div>
+                  :class="[
+                    'w-4 h-4 border-2 flex items-center justify-center',
+                    selectedThemeId === theme.id ? 'border-retro-orange' : 'border-retro-gray-medium'
+                  ]"
+                >
+                  <div
+                    v-if="selectedThemeId === theme.id"
+                    class="w-2 h-2 bg-retro-orange"
+                  ></div>
+                </div>
+                <div>
+                  <p class="font-retro-sans text-retro-base text-retro-gray-darker dark:text-retro-cream">{{ theme.name }}</p>
+                  <p class="font-retro-mono text-retro-xs text-retro-gray-medium">
+                    {{ theme.isDefault ? 'Built-in' : 'Custom' }}
+                  </p>
+                </div>
+              </button>
+            </div>
 
-          <div class="flex items-center gap-2">
-            <!-- Edit Button (custom themes only) -->
-            <button
-              v-if="!theme.isDefault"
-              @click="openThemeEditor(theme.id)"
-              class="px-3 py-1.5 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-sm flex items-center gap-1"
-            >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-              </svg>
-              Edit
-            </button>
+            <div class="flex items-center gap-4">
+              <!-- Edit Button (custom themes only) -->
+              <button
+                v-if="!theme.isDefault"
+                @click="openThemeEditor(theme.id)"
+                class="font-retro-mono text-retro-xs text-retro-gray-dark dark:text-retro-gray-medium hover:text-retro-orange uppercase tracking-wider"
+              >
+                Edit
+              </button>
 
-            <!-- Duplicate Button -->
-            <button
-              @click="duplicateTheme(theme.id)"
-              :disabled="duplicating"
-              class="px-3 py-1.5 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-sm flex items-center gap-1"
-            >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-              </svg>
-              Duplicate
-            </button>
+              <!-- Duplicate Button -->
+              <button
+                @click="duplicateTheme(theme.id)"
+                :disabled="duplicating"
+                class="font-retro-mono text-retro-xs text-retro-gray-dark dark:text-retro-gray-medium hover:text-retro-orange uppercase tracking-wider"
+              >
+                Duplicate
+              </button>
 
-            <!-- Delete Button (custom themes only) -->
-            <button
-              v-if="!theme.isDefault"
-              @click="themeToDelete = theme"
-              class="px-3 py-1.5 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-sm"
-            >
-              Delete
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <p class="mt-4 text-sm text-gray-500 dark:text-gray-400">
-      Custom themes can be used across all your blogs.
-    </p>
-
-    <!-- Theme Colors -->
-    <section class="surface p-6 mt-8">
-      <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Theme Colors</h3>
-
-      <div v-if="colorSuccess" class="mb-4 p-4 bg-green-500/10 rounded-xl text-green-600 dark:text-green-400">
-        Colors saved successfully!
-      </div>
-
-      <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 max-w-lg">
-        <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Accent Color</label>
-          <div class="flex items-center gap-2">
-            <input
-              v-model="colorForm.accentColor"
-              type="color"
-              class="w-10 h-10 shrink-0"
-            />
-            <input
-              v-model="colorForm.accentColor"
-              type="text"
-              class="min-w-0 flex-1 px-3 py-2 rounded-lg bg-black/5 dark:bg-white/5 text-gray-900 dark:text-gray-100 text-sm border-0 focus:ring-2 focus:ring-primary-500/50 transition-colors"
-            />
-          </div>
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Background</label>
-          <div class="flex items-center gap-2">
-            <input
-              v-model="colorForm.backgroundColor"
-              type="color"
-              class="w-10 h-10 shrink-0"
-            />
-            <input
-              v-model="colorForm.backgroundColor"
-              type="text"
-              class="min-w-0 flex-1 px-3 py-2 rounded-lg bg-black/5 dark:bg-white/5 text-gray-900 dark:text-gray-100 text-sm border-0 focus:ring-2 focus:ring-primary-500/50 transition-colors"
-            />
-          </div>
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Text Color</label>
-          <div class="flex items-center gap-2">
-            <input
-              v-model="colorForm.textColor"
-              type="color"
-              class="w-10 h-10 shrink-0"
-            />
-            <input
-              v-model="colorForm.textColor"
-              type="text"
-              class="min-w-0 flex-1 px-3 py-2 rounded-lg bg-black/5 dark:bg-white/5 text-gray-900 dark:text-gray-100 text-sm border-0 focus:ring-2 focus:ring-primary-500/50 transition-colors"
-            />
-          </div>
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Light Shade</label>
-          <div class="flex items-center gap-2">
-            <input
-              v-model="colorForm.lightShade"
-              type="color"
-              class="w-10 h-10 shrink-0"
-            />
-            <input
-              v-model="colorForm.lightShade"
-              type="text"
-              class="min-w-0 flex-1 px-3 py-2 rounded-lg bg-black/5 dark:bg-white/5 text-gray-900 dark:text-gray-100 text-sm border-0 focus:ring-2 focus:ring-primary-500/50 transition-colors"
-            />
-          </div>
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Medium Shade</label>
-          <div class="flex items-center gap-2">
-            <input
-              v-model="colorForm.mediumShade"
-              type="color"
-              class="w-10 h-10 shrink-0"
-            />
-            <input
-              v-model="colorForm.mediumShade"
-              type="text"
-              class="min-w-0 flex-1 px-3 py-2 rounded-lg bg-black/5 dark:bg-white/5 text-gray-900 dark:text-gray-100 text-sm border-0 focus:ring-2 focus:ring-primary-500/50 transition-colors"
-            />
-          </div>
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Dark Shade</label>
-          <div class="flex items-center gap-2">
-            <input
-              v-model="colorForm.darkShade"
-              type="color"
-              class="w-10 h-10 shrink-0"
-            />
-            <input
-              v-model="colorForm.darkShade"
-              type="text"
-              class="min-w-0 flex-1 px-3 py-2 rounded-lg bg-black/5 dark:bg-white/5 text-gray-900 dark:text-gray-100 text-sm border-0 focus:ring-2 focus:ring-primary-500/50 transition-colors"
-            />
+              <!-- Delete Button (custom themes only) -->
+              <button
+                v-if="!theme.isDefault"
+                @click="themeToDelete = theme"
+                class="font-retro-mono text-retro-xs text-red-500 hover:text-red-400 uppercase tracking-wider"
+              >
+                Delete
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- Color Preview -->
-      <div class="mt-6">
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Preview</label>
-        <div class="rounded-xl overflow-hidden bg-black/5 dark:bg-white/5">
-          <iframe
-            :srcdoc="colorPreviewHtml"
-            class="w-full border-0"
-            style="height: 340px;"
-          ></iframe>
-        </div>
-      </div>
+      <p class="mt-4 font-retro-sans text-retro-sm text-retro-gray-dark dark:text-retro-gray-medium">
+        Custom themes can be used across all your blogs.
+      </p>
 
-      <!-- Save Button -->
-      <div class="mt-6 flex justify-end">
-        <button
-          @click="saveColors"
-          :disabled="savingColors"
-          class="px-6 py-2.5 bg-primary-500 text-white rounded-xl font-medium hover:bg-primary-600 transition-colors shadow-sm disabled:opacity-50"
-        >
-          {{ savingColors ? 'Saving...' : 'Save Colors' }}
-        </button>
-      </div>
-    </section>
-    </div>
+      <!-- Theme Colors -->
+      <section class="border-t border-retro-gray-light dark:border-retro-gray-darker pt-8 mt-8">
+        <h3 class="font-retro-mono text-retro-sm text-retro-gray-darker dark:text-retro-cream uppercase tracking-wider mb-4">Theme Colors</h3>
+
+        <div v-if="colorSuccess" class="mb-4 p-4 border-2 border-green-500 font-retro-mono text-retro-sm text-green-600 dark:text-green-400">
+          Colors saved successfully!
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+          <div>
+            <label class="block font-retro-mono text-retro-xs text-retro-gray-medium uppercase tracking-wider mb-2">Accent Color</label>
+            <div class="flex items-center gap-2">
+              <input
+                v-model="colorForm.accentColor"
+                type="color"
+                class="w-10 h-10 shrink-0 border-2 border-retro-gray-light dark:border-retro-gray-darker"
+              />
+              <input
+                v-model="colorForm.accentColor"
+                type="text"
+                class="min-w-0 flex-1 px-2 py-1 border-2 border-retro-gray-light dark:border-retro-gray-darker bg-white dark:bg-black font-retro-mono text-retro-xs text-retro-gray-darker dark:text-retro-cream focus:outline-none focus:border-retro-orange"
+              />
+            </div>
+          </div>
+          <div>
+            <label class="block font-retro-mono text-retro-xs text-retro-gray-medium uppercase tracking-wider mb-2">Background</label>
+            <div class="flex items-center gap-2">
+              <input
+                v-model="colorForm.backgroundColor"
+                type="color"
+                class="w-10 h-10 shrink-0 border-2 border-retro-gray-light dark:border-retro-gray-darker"
+              />
+              <input
+                v-model="colorForm.backgroundColor"
+                type="text"
+                class="min-w-0 flex-1 px-2 py-1 border-2 border-retro-gray-light dark:border-retro-gray-darker bg-white dark:bg-black font-retro-mono text-retro-xs text-retro-gray-darker dark:text-retro-cream focus:outline-none focus:border-retro-orange"
+              />
+            </div>
+          </div>
+          <div>
+            <label class="block font-retro-mono text-retro-xs text-retro-gray-medium uppercase tracking-wider mb-2">Text Color</label>
+            <div class="flex items-center gap-2">
+              <input
+                v-model="colorForm.textColor"
+                type="color"
+                class="w-10 h-10 shrink-0 border-2 border-retro-gray-light dark:border-retro-gray-darker"
+              />
+              <input
+                v-model="colorForm.textColor"
+                type="text"
+                class="min-w-0 flex-1 px-2 py-1 border-2 border-retro-gray-light dark:border-retro-gray-darker bg-white dark:bg-black font-retro-mono text-retro-xs text-retro-gray-darker dark:text-retro-cream focus:outline-none focus:border-retro-orange"
+              />
+            </div>
+          </div>
+          <div>
+            <label class="block font-retro-mono text-retro-xs text-retro-gray-medium uppercase tracking-wider mb-2">Light Shade</label>
+            <div class="flex items-center gap-2">
+              <input
+                v-model="colorForm.lightShade"
+                type="color"
+                class="w-10 h-10 shrink-0 border-2 border-retro-gray-light dark:border-retro-gray-darker"
+              />
+              <input
+                v-model="colorForm.lightShade"
+                type="text"
+                class="min-w-0 flex-1 px-2 py-1 border-2 border-retro-gray-light dark:border-retro-gray-darker bg-white dark:bg-black font-retro-mono text-retro-xs text-retro-gray-darker dark:text-retro-cream focus:outline-none focus:border-retro-orange"
+              />
+            </div>
+          </div>
+          <div>
+            <label class="block font-retro-mono text-retro-xs text-retro-gray-medium uppercase tracking-wider mb-2">Medium Shade</label>
+            <div class="flex items-center gap-2">
+              <input
+                v-model="colorForm.mediumShade"
+                type="color"
+                class="w-10 h-10 shrink-0 border-2 border-retro-gray-light dark:border-retro-gray-darker"
+              />
+              <input
+                v-model="colorForm.mediumShade"
+                type="text"
+                class="min-w-0 flex-1 px-2 py-1 border-2 border-retro-gray-light dark:border-retro-gray-darker bg-white dark:bg-black font-retro-mono text-retro-xs text-retro-gray-darker dark:text-retro-cream focus:outline-none focus:border-retro-orange"
+              />
+            </div>
+          </div>
+          <div>
+            <label class="block font-retro-mono text-retro-xs text-retro-gray-medium uppercase tracking-wider mb-2">Dark Shade</label>
+            <div class="flex items-center gap-2">
+              <input
+                v-model="colorForm.darkShade"
+                type="color"
+                class="w-10 h-10 shrink-0 border-2 border-retro-gray-light dark:border-retro-gray-darker"
+              />
+              <input
+                v-model="colorForm.darkShade"
+                type="text"
+                class="min-w-0 flex-1 px-2 py-1 border-2 border-retro-gray-light dark:border-retro-gray-darker bg-white dark:bg-black font-retro-mono text-retro-xs text-retro-gray-darker dark:text-retro-cream focus:outline-none focus:border-retro-orange"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- Color Preview -->
+        <div class="mt-6">
+          <label class="block font-retro-mono text-retro-xs text-retro-gray-medium uppercase tracking-wider mb-2">Preview</label>
+          <div class="border-2 border-retro-gray-light dark:border-retro-gray-darker overflow-hidden">
+            <iframe
+              :srcdoc="colorPreviewHtml"
+              class="w-full border-0"
+              style="height: 340px;"
+            ></iframe>
+          </div>
+        </div>
+
+        <!-- Save Button -->
+        <div class="mt-6 flex justify-end">
+          <button
+            @click="saveColors"
+            :disabled="savingColors"
+            class="px-4 py-2 border-2 border-retro-orange bg-retro-orange font-retro-mono text-retro-sm text-white hover:bg-retro-orange-dark hover:border-retro-orange-dark uppercase tracking-wider disabled:opacity-50"
+          >
+            {{ savingColors ? 'Saving...' : 'Save Colors' }}
+          </button>
+        </div>
+      </section>
+    </main>
+
+    </div><!-- End max-width wrapper -->
 
     <!-- Delete Confirmation Modal -->
     <div
       v-if="themeToDelete"
-      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      class="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-6"
       @click.self="themeToDelete = null"
     >
-      <div class="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
-        <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">Delete Theme</h3>
-        <p class="text-gray-600 dark:text-gray-400 mb-4">
+      <div class="max-w-md w-full bg-white dark:bg-black border-2 border-retro-gray-light dark:border-retro-gray-darker p-6">
+        <h3 class="font-retro-serif text-2xl font-bold text-retro-gray-darker dark:text-retro-cream mb-4">Delete Theme</h3>
+        <p class="font-retro-sans text-retro-base text-retro-gray-dark dark:text-retro-gray-medium mb-6">
           Are you sure you want to delete "{{ themeToDelete.name }}"? This action cannot be undone.
         </p>
-        <div class="flex justify-end gap-2">
+        <div class="flex justify-end gap-6">
           <button
             @click="themeToDelete = null"
-            class="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+            class="font-retro-mono text-retro-sm text-retro-gray-dark dark:text-retro-gray-medium hover:text-retro-orange uppercase tracking-wider"
           >
             Cancel
           </button>
           <button
             @click="confirmDeleteTheme"
-            class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+            class="font-retro-mono text-retro-sm text-red-500 hover:text-red-400 uppercase tracking-wider"
           >
             Delete
           </button>
@@ -567,40 +612,38 @@ const templateNames = computed(() => {
     <!-- Theme Editor Modal -->
     <div
       v-if="editingTheme"
-      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      class="fixed inset-0 bg-black/90 flex items-center justify-center z-50"
     >
-      <div class="bg-white dark:bg-gray-800 rounded-lg max-w-6xl w-full mx-4 h-[90vh] flex flex-col">
+      <div class="bg-white dark:bg-black border-2 border-retro-gray-light dark:border-retro-gray-darker max-w-6xl w-full mx-4 h-[90vh] flex flex-col">
         <!-- Header -->
-        <div class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-          <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">
+        <div class="flex items-center justify-between p-4 border-b border-retro-gray-light dark:border-retro-gray-darker">
+          <h3 class="font-retro-serif text-xl font-bold text-retro-gray-darker dark:text-retro-cream">
             Edit Theme: {{ editingTheme.name }}
           </h3>
           <button
             @click="closeEditor"
-            class="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+            class="font-retro-mono text-retro-sm text-retro-gray-dark dark:text-retro-gray-medium hover:text-retro-orange uppercase"
           >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            Close
           </button>
         </div>
 
         <!-- Content -->
         <div class="flex-1 flex overflow-hidden">
           <!-- Template List -->
-          <div class="w-64 border-r border-gray-200 dark:border-gray-700 overflow-y-auto">
+          <div class="w-64 border-r border-retro-gray-light dark:border-retro-gray-darker overflow-y-auto">
             <div class="p-4">
-              <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Templates</h4>
+              <h4 class="font-retro-mono text-retro-xs text-retro-gray-medium uppercase tracking-wider mb-3">Templates</h4>
               <div class="space-y-1">
                 <button
                   v-for="name in templateNames"
                   :key="name"
                   @click="selectTemplate(name)"
                   :class="[
-                    'w-full text-left px-3 py-2 text-sm rounded-lg transition-colors',
+                    'w-full text-left px-3 py-2 font-retro-mono text-retro-sm',
                     editingTemplateName === name
-                      ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
-                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                      ? 'bg-retro-orange text-white'
+                      : 'text-retro-gray-darker dark:text-retro-gray-medium hover:text-retro-orange'
                   ]"
                 >
                   {{ name }}
@@ -612,12 +655,12 @@ const templateNames = computed(() => {
           <!-- Editor -->
           <div class="flex-1 flex flex-col">
             <div v-if="editingTemplateName" class="flex-1 flex flex-col">
-              <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-                <h4 class="font-medium text-gray-900 dark:text-gray-100">{{ editingTemplateName }}</h4>
+              <div class="p-4 border-b border-retro-gray-light dark:border-retro-gray-darker flex items-center justify-between">
+                <h4 class="font-retro-mono text-retro-sm text-retro-gray-darker dark:text-retro-cream uppercase">{{ editingTemplateName }}</h4>
                 <button
                   @click="saveTemplate"
                   :disabled="savingTemplate"
-                  class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50"
+                  class="px-4 py-2 border-2 border-retro-orange bg-retro-orange font-retro-mono text-retro-sm text-white hover:bg-retro-orange-dark hover:border-retro-orange-dark uppercase tracking-wider disabled:opacity-50"
                 >
                   {{ savingTemplate ? 'Saving...' : 'Save Template' }}
                 </button>
@@ -625,13 +668,13 @@ const templateNames = computed(() => {
               <div class="flex-1 p-4">
                 <textarea
                   v-model="editingTemplateContent"
-                  class="w-full h-full font-mono text-sm border border-gray-300 dark:border-gray-600 rounded-lg p-3 resize-none bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  class="w-full h-full font-retro-mono text-retro-sm border-2 border-retro-gray-light dark:border-retro-gray-darker p-3 resize-none bg-white dark:bg-black text-retro-gray-darker dark:text-retro-cream focus:outline-none focus:border-retro-orange"
                   spellcheck="false"
                 ></textarea>
               </div>
             </div>
-            <div v-else class="flex-1 flex items-center justify-center text-gray-500 dark:text-gray-400">
-              Select a template to edit
+            <div v-else class="flex-1 flex items-center justify-center">
+              <p class="font-retro-mono text-retro-sm text-retro-gray-medium">Select a template to edit</p>
             </div>
           </div>
         </div>

@@ -2,13 +2,23 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { useBlogStore } from '@/stores/blog';
-import PageToolbar from '@/components/PageToolbar.vue';
-import SettingsTabs from '@/components/SettingsTabs.vue';
 
 const route = useRoute();
 const blogStore = useBlogStore();
 
 const blogId = computed(() => route.params.blogId);
+const currentRouteName = computed(() => route.name);
+
+const settingsTabs = [
+  { name: 'Basic', route: 'blog-settings' },
+  { name: 'Categories', route: 'categories' },
+  { name: 'Tags', route: 'tags' },
+  { name: 'Sidebar', route: 'sidebar' },
+  { name: 'Files', route: 'files' },
+  { name: 'Themes', route: 'themes' },
+  { name: 'Publishing', route: 'publish-settings' }
+];
+
 const fileInput = ref(null);
 const faviconInput = ref(null);
 const socialShareInput = ref(null);
@@ -118,27 +128,26 @@ function formatFileSize(bytes) {
 </script>
 
 <template>
-  <div>
-    <PageToolbar
-      title="Files"
-      :subtitle="`${blogStore.staticFiles.length} files`"
-    >
-      <template #actions>
-        <button
-          @click="triggerFileUpload"
-          :disabled="uploading"
-          class="glass px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1 disabled:opacity-50"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-          </svg>
-          {{ uploading ? 'Uploading...' : 'Upload Files' }}
-        </button>
-      </template>
-      <template #tabs>
-        <SettingsTabs />
-      </template>
-    </PageToolbar>
+  <div class="min-h-screen bg-white dark:bg-black overflow-x-hidden">
+    <!-- Max-width content wrapper for desktop -->
+    <div class="lg:max-w-[700px] lg:mx-auto">
+
+    <!-- Navigation bar -->
+    <nav class="flex items-center justify-between px-6 py-4 lg:px-0">
+      <router-link
+        :to="{ name: 'blog-posts', params: { blogId } }"
+        class="font-retro-mono text-retro-sm text-retro-gray-dark dark:text-retro-gray-medium hover:text-retro-orange uppercase tracking-wider"
+      >
+        <span class="relative -top-px">&lt;</span> {{ blogStore.currentBlog?.name || 'Posts' }}
+      </router-link>
+      <button
+        @click="triggerFileUpload"
+        :disabled="uploading"
+        class="font-retro-mono text-retro-sm text-retro-gray-dark dark:text-retro-gray-medium hover:text-retro-orange uppercase tracking-wider disabled:opacity-50"
+      >
+        {{ uploading ? 'Uploading...' : '+ Upload Files' }}
+      </button>
+    </nav>
     <input
       ref="fileInput"
       type="file"
@@ -147,145 +156,174 @@ function formatFileSize(bytes) {
       @change="handleFileUpload"
     />
 
-    <div class="px-6 pb-6">
-    <!-- Error -->
-    <div v-if="error" class="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-800 dark:text-red-400">
-      {{ error }}
-    </div>
-
-    <!-- Favicon Section -->
-    <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 mb-6">
-      <h3 class="font-medium text-gray-900 dark:text-gray-100 mb-4">Favicon</h3>
-      <div class="flex items-center gap-4">
-        <div class="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center overflow-hidden">
-          <img
-            v-if="favicon"
-            :src="favicon.url"
-            alt="Favicon"
-            class="w-full h-full object-contain"
-          />
-          <svg v-else class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-          </svg>
-        </div>
-        <div>
-          <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">
-            {{ favicon ? 'Current favicon' : 'No favicon set' }}
-          </p>
-          <button
-            @click="triggerFaviconUpload"
-            :disabled="uploading"
-            class="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300"
-          >
-            {{ favicon ? 'Change favicon' : 'Upload favicon' }}
-          </button>
-          <input
-            ref="faviconInput"
-            type="file"
-            accept="image/*"
-            class="hidden"
-            @change="handleFaviconUpload"
-          />
+    <!-- Hero section -->
+    <header class="relative h-52 md:h-60">
+      <!-- Divider that extends to the right -->
+      <div class="absolute bottom-0 left-6 right-0 border-b border-retro-gray-light dark:border-retro-gray-darker lg:left-0 lg:-right-[100vw]"></div>
+      <!-- Giant background text -->
+      <span class="absolute inset-0 flex items-center justify-start font-retro-serif font-bold text-[10rem] md:text-[14rem] leading-none tracking-tighter text-retro-gray-lightest dark:text-[#1a1a1a] select-none pointer-events-none whitespace-nowrap uppercase" aria-hidden="true">
+        FILES
+      </span>
+      <!-- Foreground content -->
+      <div class="absolute bottom-4 left-6 lg:left-0">
+        <h1 class="font-retro-serif font-bold text-6xl md:text-7xl leading-none tracking-tight text-retro-gray-darker dark:text-retro-cream lowercase whitespace-nowrap">
+          files
+        </h1>
+        <!-- Stats line -->
+        <div class="mt-2 font-retro-mono text-retro-sm text-retro-gray-medium">
+          {{ blogStore.staticFiles.length }} files
         </div>
       </div>
-    </div>
+    </header>
 
-    <!-- Social Share Image Section -->
-    <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 mb-6">
-      <h3 class="font-medium text-gray-900 dark:text-gray-100 mb-2">Social Share Image</h3>
-      <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">This image appears when your blog is shared on social media (Open Graph image).</p>
-      <div class="flex items-start gap-4">
-        <div class="w-32 h-20 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
-          <img
-            v-if="socialShareImage"
-            :src="socialShareImage.url"
-            alt="Social Share Image"
-            class="w-full h-full object-cover"
-          />
-          <svg v-else class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-          </svg>
-        </div>
-        <div>
-          <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">
-            {{ socialShareImage ? 'Current social share image' : 'No social share image set' }}
-          </p>
-          <p class="text-xs text-gray-400 mb-2">Recommended size: 1200 x 630 pixels</p>
-          <button
-            @click="triggerSocialShareUpload"
-            :disabled="uploading"
-            class="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300"
-          >
-            {{ socialShareImage ? 'Change image' : 'Upload image' }}
-          </button>
-          <input
-            ref="socialShareInput"
-            type="file"
-            accept="image/*"
-            class="hidden"
-            @change="handleSocialShareUpload"
-          />
-        </div>
-      </div>
-    </div>
+    <!-- Settings tabs -->
+    <nav class="flex flex-wrap gap-x-4 gap-y-2 px-6 lg:px-0 py-4 border-b border-retro-gray-light dark:border-retro-gray-darker">
+      <router-link
+        v-for="tab in settingsTabs"
+        :key="tab.route"
+        :to="{ name: tab.route, params: { blogId } }"
+        :class="[
+          'font-retro-mono text-retro-sm uppercase tracking-wider',
+          currentRouteName === tab.route
+            ? 'text-retro-orange'
+            : 'text-retro-gray-dark dark:text-retro-gray-medium hover:text-retro-orange'
+        ]"
+      >
+        {{ tab.name }}
+      </router-link>
+    </nav>
 
-    <!-- Files List -->
-    <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-      <div v-if="regularFiles.length === 0" class="p-8 text-center">
-        <div class="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
-          <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-          </svg>
-        </div>
-        <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No files yet</h3>
-        <p class="text-gray-500 dark:text-gray-400">Upload files to use in your blog.</p>
+    <!-- Content -->
+    <main class="px-6 lg:px-0 py-6">
+      <!-- Error -->
+      <div v-if="error" class="mb-6 p-4 border-2 border-red-500 font-retro-mono text-retro-sm text-red-600 dark:text-red-400">
+        {{ error }}
       </div>
 
-      <div v-else class="divide-y divide-gray-200 dark:divide-gray-700">
-        <div
-          v-for="file in regularFiles"
-          :key="file.id"
-          class="p-4 flex items-center justify-between"
-        >
-          <div class="flex items-center gap-4">
-            <div class="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center overflow-hidden">
-              <img
-                v-if="file.isImage"
-                :src="file.url"
-                :alt="file.filename"
-                class="w-full h-full object-cover"
-              />
-              <svg v-else class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-            </div>
-            <div>
-              <p class="font-medium text-gray-900 dark:text-gray-100">{{ file.filename }}</p>
-              <p class="text-sm text-gray-500 dark:text-gray-400">{{ formatFileSize(file.size) }}</p>
-            </div>
+      <!-- Favicon Section -->
+      <section class="border-2 border-retro-gray-light dark:border-retro-gray-darker p-4 mb-6">
+        <h3 class="font-retro-mono text-retro-sm text-retro-gray-darker dark:text-retro-cream uppercase tracking-wider mb-4">Favicon</h3>
+        <div class="flex items-center gap-4">
+          <div class="w-16 h-16 border-2 border-retro-gray-light dark:border-retro-gray-darker flex items-center justify-center overflow-hidden bg-retro-gray-lightest dark:bg-retro-gray-darker">
+            <img
+              v-if="favicon"
+              :src="favicon.url"
+              alt="Favicon"
+              class="w-full h-full object-contain"
+            />
+            <span v-else class="font-retro-mono text-retro-xs text-retro-gray-medium">None</span>
           </div>
-          <div class="flex items-center gap-2">
-            <a
-              :href="file.url"
-              target="_blank"
-              class="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-            >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-              </svg>
-            </a>
+          <div>
+            <p class="font-retro-sans text-retro-sm text-retro-gray-dark dark:text-retro-gray-medium mb-2">
+              {{ favicon ? 'Current favicon' : 'No favicon set' }}
+            </p>
             <button
-              @click="deleteFile(file.id)"
-              class="p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400"
+              @click="triggerFaviconUpload"
+              :disabled="uploading"
+              class="font-retro-mono text-retro-sm text-retro-orange hover:text-retro-orange-dark"
             >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
+              {{ favicon ? 'Change favicon' : 'Upload favicon' }}
             </button>
+            <input
+              ref="faviconInput"
+              type="file"
+              accept="image/*"
+              class="hidden"
+              @change="handleFaviconUpload"
+            />
           </div>
         </div>
-      </div>
-    </div>
-    </div>
+      </section>
+
+      <!-- Social Share Image Section -->
+      <section class="border-2 border-retro-gray-light dark:border-retro-gray-darker p-4 mb-6">
+        <h3 class="font-retro-mono text-retro-sm text-retro-gray-darker dark:text-retro-cream uppercase tracking-wider mb-2">Social Share Image</h3>
+        <p class="font-retro-sans text-retro-sm text-retro-gray-dark dark:text-retro-gray-medium mb-4">This image appears when your blog is shared on social media (Open Graph image).</p>
+        <div class="flex items-start gap-4">
+          <div class="w-32 h-20 border-2 border-retro-gray-light dark:border-retro-gray-darker flex items-center justify-center overflow-hidden flex-shrink-0 bg-retro-gray-lightest dark:bg-retro-gray-darker">
+            <img
+              v-if="socialShareImage"
+              :src="socialShareImage.url"
+              alt="Social Share Image"
+              class="w-full h-full object-cover"
+            />
+            <span v-else class="font-retro-mono text-retro-xs text-retro-gray-medium">None</span>
+          </div>
+          <div>
+            <p class="font-retro-sans text-retro-sm text-retro-gray-dark dark:text-retro-gray-medium mb-1">
+              {{ socialShareImage ? 'Current social share image' : 'No social share image set' }}
+            </p>
+            <p class="font-retro-mono text-retro-xs text-retro-gray-medium mb-2">Recommended: 1200 x 630 pixels</p>
+            <button
+              @click="triggerSocialShareUpload"
+              :disabled="uploading"
+              class="font-retro-mono text-retro-sm text-retro-orange hover:text-retro-orange-dark"
+            >
+              {{ socialShareImage ? 'Change image' : 'Upload image' }}
+            </button>
+            <input
+              ref="socialShareInput"
+              type="file"
+              accept="image/*"
+              class="hidden"
+              @change="handleSocialShareUpload"
+            />
+          </div>
+        </div>
+      </section>
+
+      <!-- Files List -->
+      <section class="border-2 border-retro-gray-light dark:border-retro-gray-darker">
+        <div v-if="regularFiles.length === 0" class="p-8 text-center">
+          <p class="font-retro-serif text-2xl font-bold text-retro-gray-darker dark:text-retro-gray-light">
+            No files yet.
+          </p>
+          <p class="font-retro-sans text-retro-sm text-retro-gray-dark dark:text-retro-gray-medium mt-2">
+            Upload files to use in your blog.
+          </p>
+        </div>
+
+        <div v-else>
+          <div
+            v-for="file in regularFiles"
+            :key="file.id"
+            class="p-4 flex items-center justify-between border-b border-retro-gray-light dark:border-retro-gray-darker last:border-b-0"
+          >
+            <div class="flex items-center gap-4">
+              <div class="w-12 h-12 border-2 border-retro-gray-light dark:border-retro-gray-darker flex items-center justify-center overflow-hidden bg-retro-gray-lightest dark:bg-retro-gray-darker">
+                <img
+                  v-if="file.isImage"
+                  :src="file.url"
+                  :alt="file.filename"
+                  class="w-full h-full object-cover"
+                />
+                <span v-else class="font-retro-mono text-retro-xs text-retro-gray-medium">FILE</span>
+              </div>
+              <div>
+                <p class="font-retro-mono text-retro-sm text-retro-gray-darker dark:text-retro-cream">{{ file.filename }}</p>
+                <p class="font-retro-mono text-retro-xs text-retro-gray-medium">{{ formatFileSize(file.size) }}</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-4">
+              <a
+                :href="file.url"
+                target="_blank"
+                class="font-retro-mono text-retro-xs text-retro-gray-dark dark:text-retro-gray-medium hover:text-retro-orange uppercase tracking-wider"
+              >
+                View
+              </a>
+              <button
+                @click="deleteFile(file.id)"
+                class="font-retro-mono text-retro-xs text-red-500 hover:text-red-400 uppercase tracking-wider"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    </div><!-- End max-width wrapper -->
   </div>
 </template>

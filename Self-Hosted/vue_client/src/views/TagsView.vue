@@ -2,13 +2,22 @@
 import { ref, computed } from 'vue';
 import { useRoute } from 'vue-router';
 import { useBlogStore } from '@/stores/blog';
-import PageToolbar from '@/components/PageToolbar.vue';
-import SettingsTabs from '@/components/SettingsTabs.vue';
 
 const route = useRoute();
 const blogStore = useBlogStore();
 
 const blogId = computed(() => route.params.blogId);
+const currentRouteName = computed(() => route.name);
+
+const settingsTabs = [
+  { name: 'Basic', route: 'blog-settings' },
+  { name: 'Categories', route: 'categories' },
+  { name: 'Tags', route: 'tags' },
+  { name: 'Sidebar', route: 'sidebar' },
+  { name: 'Files', route: 'files' },
+  { name: 'Themes', route: 'themes' },
+  { name: 'Publishing', route: 'publish-settings' }
+];
 
 const showModal = ref(false);
 const editingTag = ref(null);
@@ -61,110 +70,141 @@ async function deleteTag(tag) {
 </script>
 
 <template>
-  <div>
-    <PageToolbar
-      title="Tags"
-      :subtitle="`${blogStore.tags.length} tags`"
-    >
-      <template #actions>
-        <button
-          @click="openCreateModal"
-          class="glass px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-          </svg>
-          New Tag
-        </button>
-      </template>
-      <template #tabs>
-        <SettingsTabs />
-      </template>
-    </PageToolbar>
+  <div class="min-h-screen bg-white dark:bg-black overflow-x-hidden">
+    <!-- Max-width content wrapper for desktop -->
+    <div class="lg:max-w-[700px] lg:mx-auto">
 
-    <div class="px-6 pb-6">
-    <!-- Empty State -->
-    <div v-if="blogStore.tags.length === 0" class="text-center py-12 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-      <div class="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
-        <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z" />
-        </svg>
-      </div>
-      <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No tags yet</h3>
-      <p class="text-gray-500 dark:text-gray-400 mb-6">Create tags to organize your posts.</p>
+    <!-- Navigation bar -->
+    <nav class="flex items-center justify-between px-6 py-4 lg:px-0">
+      <router-link
+        :to="{ name: 'blog-posts', params: { blogId } }"
+        class="font-retro-mono text-retro-sm text-retro-gray-dark dark:text-retro-gray-medium hover:text-retro-orange uppercase tracking-wider"
+      >
+        <span class="relative -top-px">&lt;</span> {{ blogStore.currentBlog?.name || 'Posts' }}
+      </router-link>
       <button
         @click="openCreateModal"
-        class="inline-flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+        class="font-retro-mono text-retro-sm text-retro-gray-dark dark:text-retro-gray-medium hover:text-retro-orange uppercase tracking-wider"
       >
-        Create Tag
+        <span class="relative -top-px">+</span> New Tag
       </button>
-    </div>
+    </nav>
 
-    <!-- Tags List -->
-    <div v-else class="flex flex-wrap gap-3">
-      <div
-        v-for="tag in blogStore.tags"
-        :key="tag.id"
-        class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 px-4 py-2 flex items-center gap-3"
-      >
-        <span class="font-medium text-gray-900 dark:text-gray-100">#{{ tag.name }}</span>
-        <span class="text-sm text-gray-400">({{ tag.postCount || 0 }})</span>
-        <div class="flex items-center gap-1 ml-2">
-          <button
-            @click="openEditModal(tag)"
-            class="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-            </svg>
-          </button>
-          <button
-            @click="deleteTag(tag)"
-            class="p-1 text-gray-400 hover:text-red-600 dark:hover:text-red-400"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+    <!-- Hero section -->
+    <header class="relative h-52 md:h-60">
+      <!-- Divider that extends to the right -->
+      <div class="absolute bottom-0 left-6 right-0 border-b border-retro-gray-light dark:border-retro-gray-darker lg:left-0 lg:-right-[100vw]"></div>
+      <!-- Giant background text -->
+      <span class="absolute inset-0 flex items-center justify-start font-retro-serif font-bold text-[10rem] md:text-[14rem] leading-none tracking-tighter text-retro-gray-lightest dark:text-[#1a1a1a] select-none pointer-events-none whitespace-nowrap uppercase" aria-hidden="true">
+        TAGS
+      </span>
+      <!-- Foreground content -->
+      <div class="absolute bottom-4 left-6 lg:left-0">
+        <h1 class="font-retro-serif font-bold text-6xl md:text-7xl leading-none tracking-tight text-retro-gray-darker dark:text-retro-cream lowercase whitespace-nowrap">
+          tags
+        </h1>
+        <!-- Stats line -->
+        <div class="mt-2 font-retro-mono text-retro-sm text-retro-gray-medium">
+          {{ blogStore.tags.length }} tags
         </div>
       </div>
-    </div>
-    </div>
+    </header>
+
+    <!-- Settings tabs -->
+    <nav class="flex flex-wrap gap-x-4 gap-y-2 px-6 lg:px-0 py-4 border-b border-retro-gray-light dark:border-retro-gray-darker">
+      <router-link
+        v-for="tab in settingsTabs"
+        :key="tab.route"
+        :to="{ name: tab.route, params: { blogId } }"
+        :class="[
+          'font-retro-mono text-retro-sm uppercase tracking-wider',
+          currentRouteName === tab.route
+            ? 'text-retro-orange'
+            : 'text-retro-gray-dark dark:text-retro-gray-medium hover:text-retro-orange'
+        ]"
+      >
+        {{ tab.name }}
+      </router-link>
+    </nav>
+
+    <!-- Content -->
+    <main class="px-6 lg:px-0 py-6">
+      <!-- Empty State -->
+      <div v-if="blogStore.tags.length === 0" class="py-12">
+        <p class="font-retro-serif text-4xl md:text-5xl font-bold text-retro-gray-darker dark:text-retro-gray-light leading-tight">
+          No tags yet.
+        </p>
+        <button
+          @click="openCreateModal"
+          class="inline-block mt-6 font-retro-mono text-retro-sm text-retro-orange hover:text-retro-orange-dark uppercase tracking-wider"
+        >
+          Create your first tag &rarr;
+        </button>
+      </div>
+
+      <!-- Tags List -->
+      <div v-else class="flex flex-wrap gap-3">
+        <div
+          v-for="tag in blogStore.tags"
+          :key="tag.id"
+          class="border-2 border-retro-gray-light dark:border-retro-gray-darker px-4 py-2 flex items-center gap-3"
+        >
+          <span class="font-retro-mono text-retro-sm text-retro-gray-darker dark:text-retro-cream">#{{ tag.name }}</span>
+          <span class="font-retro-mono text-retro-xs text-retro-gray-medium">({{ tag.postCount || 0 }})</span>
+          <div class="flex items-center gap-2 ml-2">
+            <button
+              @click="openEditModal(tag)"
+              class="font-retro-mono text-retro-xs text-retro-gray-dark dark:text-retro-gray-medium hover:text-retro-orange uppercase"
+            >
+              Edit
+            </button>
+            <button
+              @click="deleteTag(tag)"
+              class="font-retro-mono text-retro-xs text-red-500 hover:text-red-400 uppercase"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    </div><!-- End max-width wrapper -->
 
     <!-- Modal -->
-    <div v-if="showModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div class="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+    <div v-if="showModal" class="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-6">
+      <div class="max-w-md w-full bg-white dark:bg-black border-2 border-retro-gray-light dark:border-retro-gray-darker p-6">
+        <h3 class="font-retro-serif text-2xl font-bold text-retro-gray-darker dark:text-retro-cream mb-6">
           {{ editingTag ? 'Edit Tag' : 'New Tag' }}
         </h3>
 
-        <div v-if="error" class="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-800 dark:text-red-400 text-sm">
+        <div v-if="error" class="mb-4 p-3 border-2 border-red-500 font-retro-mono text-retro-sm text-red-600 dark:text-red-400">
           {{ error }}
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Name</label>
+          <label class="block font-retro-mono text-retro-xs text-retro-gray-medium uppercase tracking-wider mb-2">Name</label>
           <input
             v-model="form.name"
             type="text"
-            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+            class="w-full px-3 py-2 border-2 border-retro-gray-light dark:border-retro-gray-darker bg-white dark:bg-black font-retro-sans text-retro-base text-retro-gray-darker dark:text-retro-cream focus:outline-none focus:border-retro-orange"
             placeholder="Tag name"
             @keyup.enter="saveTag"
           />
-          <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Tags are automatically lowercased</p>
+          <p class="mt-2 font-retro-mono text-retro-xs text-retro-gray-medium">Tags are automatically lowercased</p>
         </div>
 
-        <div class="flex justify-end gap-3 mt-6">
+        <div class="flex justify-end gap-6 mt-6">
           <button
             @click="showModal = false"
-            class="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            class="font-retro-mono text-retro-sm text-retro-gray-dark dark:text-retro-gray-medium hover:text-retro-orange uppercase tracking-wider"
           >
             Cancel
           </button>
           <button
             @click="saveTag"
             :disabled="saving"
-            class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50"
+            class="px-4 py-2 border-2 border-retro-orange bg-retro-orange font-retro-mono text-retro-sm text-white hover:bg-retro-orange-dark hover:border-retro-orange-dark uppercase tracking-wider disabled:opacity-50"
           >
             {{ saving ? 'Saving...' : 'Save' }}
           </button>

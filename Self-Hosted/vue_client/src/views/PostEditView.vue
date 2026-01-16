@@ -88,6 +88,7 @@ function captureInitialState() {
 const showTagDropdown = ref(false);
 const showEmbedEditor = ref(false);
 const showPublishModal = ref(false);
+const showDeleteModal = ref(false);
 const wasPublished = ref(false); // Track if post was originally published
 
 // Tags matching search query (case-insensitive)
@@ -315,179 +316,202 @@ function handleUseTitle(title) {
 function removeEmbed() {
   form.value.embed = null;
 }
+
+async function deletePost() {
+  try {
+    await blogStore.deletePost(blogId.value, postId.value);
+    hasSaved.value = true; // Prevent unsaved changes warning
+    router.push({ name: 'blog-posts', params: { blogId: blogId.value } });
+  } catch (e) {
+    error.value = e.message;
+    showDeleteModal.value = false;
+  }
+}
 </script>
 
 <template>
-  <div>
-    <!-- Main Content Area -->
-    <div class="p-6 lg:pr-80 pb-16">
-      <!-- Header -->
-      <div class="flex items-center justify-between mb-6">
-        <div class="flex items-center gap-4">
-          <router-link
-            :to="{ name: 'blog-posts', params: { blogId } }"
-            class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
-          >
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-            </svg>
-          </router-link>
-          <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100">
-            {{ isNew ? 'New Post' : 'Edit Post' }}
-          </h2>
-        </div>
-        <div class="flex items-center gap-2">
-          <!-- Action buttons (mobile only) -->
-          <button
-            @click="saveDraft"
-            :disabled="saving"
-            class="lg:hidden px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
-          >
-            {{ saving ? 'Saving...' : 'Save Draft' }}
-          </button>
-          <button
-            @click="publishPost"
-            :disabled="saving"
-            class="lg:hidden px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50"
-          >
-            Publish
-          </button>
-          <!-- Settings toggle (mobile only) -->
-          <button
-            @click="mobileSidebarOpen = true"
-            class="lg:hidden p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
-          >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
-            </svg>
-          </button>
-        </div>
-      </div>
+  <div class="min-h-screen bg-white dark:bg-black overflow-x-hidden">
+    <!-- Max-width content wrapper for desktop -->
+    <div class="lg:max-w-[700px] lg:mx-auto">
 
-      <!-- Error -->
-      <div v-if="error" class="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-800 dark:text-red-400">
-        {{ error }}
-      </div>
+    <!-- Navigation bar -->
+    <nav class="flex items-center justify-between px-6 py-4 lg:px-0">
+      <router-link
+        :to="{ name: 'blog-posts', params: { blogId } }"
+        class="font-retro-mono text-retro-sm text-retro-gray-dark dark:text-retro-gray-medium hover:text-retro-orange uppercase tracking-wider"
+      >
+        <span class="relative -top-px">&lt;</span> {{ blogStore.currentBlog?.name || 'Posts' }}
+      </router-link>
 
-      <!-- Editor Area -->
-      <div>
-        <!-- Borderless Title -->
-        <div class="pb-2">
-          <input
-            v-model="form.title"
-            type="text"
-            class="w-full text-3xl font-bold bg-transparent border-none outline-none text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-600"
-            placeholder="Post title..."
-          />
-        </div>
-
-        <!-- Borderless Content -->
-        <div>
-          <textarea
-            ref="contentTextarea"
-            v-model="form.content"
-            @input="autoResize"
-            class="w-full min-h-[400px] text-base leading-relaxed bg-transparent border-none outline-none resize-none text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500"
-            placeholder="Write your post content in Markdown..."
-          ></textarea>
-        </div>
+      <div class="flex items-center gap-4">
+        <!-- Action buttons (mobile only) -->
+        <button
+          @click="saveDraft"
+          :disabled="saving"
+          class="lg:hidden font-retro-mono text-retro-sm text-retro-gray-dark dark:text-retro-gray-medium hover:text-retro-orange uppercase tracking-wider disabled:opacity-50"
+        >
+          {{ saving ? 'Saving...' : 'Save Draft' }}
+        </button>
+        <button
+          @click="publishPost"
+          :disabled="saving"
+          class="lg:hidden font-retro-mono text-retro-sm text-retro-orange hover:text-retro-orange-dark uppercase tracking-wider disabled:opacity-50"
+        >
+          Publish
+        </button>
+        <!-- Settings toggle (mobile only) -->
+        <button
+          @click="mobileSidebarOpen = true"
+          class="lg:hidden font-retro-mono text-retro-sm text-retro-gray-dark dark:text-retro-gray-medium hover:text-retro-orange uppercase tracking-wider"
+        >
+          Settings
+        </button>
       </div>
+    </nav>
+
+    <!-- Hero section with giant title -->
+    <header class="relative h-40 md:h-48">
+      <!-- Divider that extends to the right -->
+      <div class="absolute bottom-0 left-6 right-0 border-b border-retro-gray-light dark:border-retro-gray-darker lg:left-0 lg:-right-[100vw]"></div>
+      <!-- Giant background text -->
+      <span class="absolute inset-0 flex items-center justify-start font-retro-serif font-bold text-[6rem] md:text-[8rem] leading-none tracking-tighter text-retro-gray-lightest dark:text-[#1a1a1a] select-none pointer-events-none whitespace-nowrap uppercase" aria-hidden="true">
+        {{ isNew ? 'NEW POST' : 'EDIT POST' }}
+      </span>
+      <!-- Foreground content -->
+      <div class="absolute bottom-8 left-6 lg:left-0">
+        <h1 class="font-retro-serif font-bold text-4xl md:text-5xl leading-none tracking-tight text-retro-gray-darker dark:text-retro-cream lowercase whitespace-nowrap">
+          {{ isNew ? 'new post' : 'edit post' }}
+        </h1>
+      </div>
+    </header>
+
+    <!-- Error -->
+    <div v-if="error" class="mx-6 lg:mx-0 mt-6 p-4 border-2 border-red-500 bg-red-50 dark:bg-red-900/20 font-retro-mono text-retro-sm text-red-600 dark:text-red-400">
+      {{ error }}
     </div>
 
+    <!-- Editor Area -->
+    <main class="px-6 lg:px-0 py-6">
+      <!-- Title -->
+      <div class="pb-4">
+        <input
+          v-model="form.title"
+          type="text"
+          class="w-full font-retro-serif text-3xl md:text-4xl font-bold bg-transparent border-none outline-none text-retro-gray-darker dark:text-retro-cream placeholder:text-retro-gray-medium"
+          placeholder="Post title..."
+        />
+      </div>
+
+      <!-- Content -->
+      <div>
+        <textarea
+          ref="contentTextarea"
+          v-model="form.content"
+          @input="autoResize"
+          class="w-full min-h-[400px] font-retro-sans text-retro-base leading-relaxed bg-transparent border-none outline-none resize-none text-retro-gray-darker dark:text-retro-cream placeholder:text-retro-gray-medium"
+          placeholder="Write your post content in Markdown..."
+        ></textarea>
+      </div>
+    </main>
+
+    </div><!-- End max-width wrapper -->
+
     <!-- Desktop Sidebar (always visible on lg+) -->
-    <aside class="hidden lg:flex lg:flex-col w-72 liquid-glass fixed top-4 right-4 h-[calc(100vh-2rem)] overflow-y-auto overflow-x-hidden z-30">
+    <aside class="hidden lg:flex lg:flex-col w-64 bg-white dark:bg-black border-l-2 border-retro-gray-light dark:border-retro-gray-darker fixed top-0 right-0 h-screen overflow-y-auto overflow-x-hidden z-30">
       <div class="p-4">
         <!-- Header -->
-        <h3 class="font-semibold text-gray-900 dark:text-gray-100 mb-4">Post Settings</h3>
+        <h3 class="font-retro-mono text-retro-sm text-retro-gray-darker dark:text-retro-cream uppercase tracking-wider mb-4">Settings</h3>
 
         <!-- Action Buttons -->
-        <div class="flex gap-2 mb-4">
+        <div class="flex flex-col gap-2 mb-4">
           <button
             @click="saveDraft"
             :disabled="saving"
-            class="flex-1 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50 text-sm font-medium"
+            class="w-full px-3 py-2 border-2 border-retro-gray-light dark:border-retro-gray-darker font-retro-mono text-retro-sm text-retro-gray-darker dark:text-retro-cream hover:border-retro-orange hover:text-retro-orange uppercase tracking-wider disabled:opacity-50"
           >
             {{ saving ? 'Saving...' : 'Save Draft' }}
           </button>
           <button
             @click="publishPost"
             :disabled="saving"
-            class="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 text-sm font-medium"
+            class="w-full px-3 py-2 border-2 border-retro-orange bg-retro-orange font-retro-mono text-retro-sm text-white hover:bg-retro-orange-dark hover:border-retro-orange-dark uppercase tracking-wider disabled:opacity-50"
           >
             Publish
           </button>
         </div>
 
-        <div class="border-t border-gray-100 dark:border-gray-700 mb-4"></div>
+        <div class="border-t border-retro-gray-light dark:border-retro-gray-darker mb-4"></div>
 
         <!-- Settings Content -->
         <div class="space-y-4">
           <!-- Status -->
           <div>
-            <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Status</h3>
+            <h3 class="font-retro-mono text-retro-xs text-retro-gray-medium uppercase tracking-wider mb-2">Status</h3>
             <label class="flex items-center gap-2">
               <input
                 type="checkbox"
                 v-model="form.isDraft"
-                class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500"
+                class="border-retro-gray-light dark:border-retro-gray-darker"
               />
-              <span class="text-sm text-gray-700 dark:text-gray-300">Save as draft</span>
+              <span class="font-retro-sans text-retro-sm text-retro-gray-darker dark:text-retro-cream">Save as draft</span>
             </label>
           </div>
 
-          <div class="border-t border-gray-100 dark:border-gray-700"></div>
+          <div class="border-t border-retro-gray-light dark:border-retro-gray-darker"></div>
 
           <!-- Date -->
           <div>
-            <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Publish Date</h3>
+            <h3 class="font-retro-mono text-retro-xs text-retro-gray-medium uppercase tracking-wider mb-2">Publish Date</h3>
             <input
               v-model="form.createdAt"
               type="datetime-local"
-              class="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm"
+              class="w-full px-2 py-1 border-2 border-retro-gray-light dark:border-retro-gray-darker bg-white dark:bg-black font-retro-mono text-retro-sm text-retro-gray-darker dark:text-retro-cream focus:outline-none focus:border-retro-orange"
             />
           </div>
 
-          <div class="border-t border-gray-100 dark:border-gray-700"></div>
-
           <!-- Category -->
-          <div>
-            <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Category</h3>
-            <select
-              v-model="form.categoryId"
-              class="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm"
-            >
-              <option :value="null">No category</option>
-              <option v-for="category in blogStore.categories" :key="category.id" :value="category.id">
-                {{ category.name }}
-              </option>
-            </select>
-          </div>
+          <template v-if="blogStore.categories.length > 0">
+            <div class="border-t border-retro-gray-light dark:border-retro-gray-darker"></div>
 
-          <div class="border-t border-gray-100 dark:border-gray-700"></div>
+            <div>
+              <h3 class="font-retro-mono text-retro-xs text-retro-gray-medium uppercase tracking-wider mb-2">Category</h3>
+              <select
+                v-model="form.categoryId"
+                class="w-full px-2 py-1 border-2 border-retro-gray-light dark:border-retro-gray-darker bg-white dark:bg-black font-retro-mono text-retro-sm text-retro-gray-darker dark:text-retro-cream focus:outline-none focus:border-retro-orange"
+              >
+                <option :value="null">No category</option>
+                <option v-for="category in blogStore.categories" :key="category.id" :value="category.id">
+                  {{ category.name }}
+                </option>
+              </select>
+            </div>
+          </template>
+
+          <div class="border-t border-retro-gray-light dark:border-retro-gray-darker"></div>
 
           <!-- Tags -->
           <div>
-            <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Tags</h3>
+            <h3 class="font-retro-mono text-retro-xs text-retro-gray-medium uppercase tracking-wider mb-2">Tags</h3>
 
             <div v-if="form.tagIds.length > 0" class="flex flex-wrap gap-1.5 mb-3">
               <span
                 v-for="tagId in form.tagIds"
                 :key="tagId"
-                class="px-2 py-1 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 text-xs rounded-full flex items-center gap-1"
+                class="px-2 py-0.5 border border-retro-orange text-retro-orange font-retro-mono text-retro-xs flex items-center gap-1"
               >
                 {{ blogStore.tags.find(t => t.id === tagId)?.name }}
-                <button @click="toggleTag(tagId)" class="hover:text-primary-900 dark:hover:text-primary-100">×</button>
+                <button @click="toggleTag(tagId)" class="hover:text-retro-orange-dark">×</button>
               </span>
             </div>
 
             <div v-if="suggestedTags.length > 0" class="mb-3">
-              <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Suggested</p>
+              <p class="font-retro-mono text-retro-xs text-retro-gray-medium mb-1">Suggested</p>
               <div class="flex flex-wrap gap-1">
                 <button
                   v-for="tag in suggestedTags"
                   :key="tag.id"
                   @click="toggleTag(tag.id)"
-                  class="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 text-xs rounded-full hover:bg-gray-200 dark:hover:bg-gray-600"
+                  class="px-2 py-0.5 border border-retro-gray-light dark:border-retro-gray-darker font-retro-mono text-retro-xs text-retro-gray-dark dark:text-retro-gray-medium hover:border-retro-orange hover:text-retro-orange"
                 >
                   + {{ tag.name }}
                 </button>
@@ -499,27 +523,27 @@ function removeEmbed() {
                 v-model="tagSearchQuery"
                 type="text"
                 placeholder="Search or add tags..."
-                class="w-full px-3 py-1.5 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm"
+                class="w-full px-2 py-1 border-2 border-retro-gray-light dark:border-retro-gray-darker bg-white dark:bg-black font-retro-mono text-retro-sm text-retro-gray-darker dark:text-retro-cream placeholder:text-retro-gray-medium focus:outline-none focus:border-retro-orange"
                 @focus="showTagDropdown = true"
                 @blur="hideTagDropdown"
                 @keyup.enter="exactTagMatch ? null : createTag()"
               />
               <div
                 v-if="showTagDropdown && (filteredTags.length > 0 || (!exactTagMatch && tagSearchQuery.trim()))"
-                class="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-48 overflow-y-auto"
+                class="absolute z-50 w-full mt-1 bg-white dark:bg-black border-2 border-retro-gray-light dark:border-retro-gray-darker max-h-48 overflow-y-auto"
               >
                 <button
                   v-for="tag in filteredTags"
                   :key="tag.id"
                   @mousedown.prevent="selectTag(tag.id)"
-                  class="w-full px-3 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  class="w-full px-2 py-1 text-left font-retro-mono text-retro-sm text-retro-gray-darker dark:text-retro-cream hover:bg-retro-orange hover:text-white"
                 >
                   {{ tag.name }}
                 </button>
                 <button
                   v-if="!exactTagMatch && tagSearchQuery.trim()"
                   @mousedown.prevent="createTag"
-                  class="w-full px-3 py-2 text-left text-sm text-primary-600 dark:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-700 border-t border-gray-200 dark:border-gray-700"
+                  class="w-full px-2 py-1 text-left font-retro-mono text-retro-sm text-retro-orange hover:bg-retro-orange hover:text-white border-t border-retro-gray-light dark:border-retro-gray-darker"
                 >
                   Create "{{ tagSearchQuery.trim() }}"
                 </button>
@@ -527,11 +551,11 @@ function removeEmbed() {
             </div>
           </div>
 
-          <div class="border-t border-gray-100 dark:border-gray-700"></div>
+          <div class="border-t border-retro-gray-light dark:border-retro-gray-darker"></div>
 
           <!-- Embed -->
           <div>
-            <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Embed</h3>
+            <h3 class="font-retro-mono text-retro-xs text-retro-gray-medium uppercase tracking-wider mb-2">Embed</h3>
 
             <EmbedEditor
               v-if="showEmbedEditor"
@@ -546,70 +570,65 @@ function removeEmbed() {
               <button
                 v-if="!form.embed"
                 @click="showEmbedEditor = true"
-                class="w-full px-3 py-2 border-2 border-dashed border-gray-200 dark:border-gray-600 rounded-lg text-gray-500 dark:text-gray-400 hover:border-primary-500 hover:text-primary-600 dark:hover:text-primary-400 transition-colors text-sm flex items-center justify-center gap-2"
+                class="w-full px-3 py-2 border-2 border-dashed border-retro-gray-light dark:border-retro-gray-darker font-retro-mono text-retro-sm text-retro-gray-medium hover:border-retro-orange hover:text-retro-orange flex items-center justify-center gap-2"
               >
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-                </svg>
-                Add Embed
+                <span class="relative -top-px">+</span> Add Embed
               </button>
 
               <div v-else>
-                <div v-if="form.embed.type === 'youtube'" class="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                  <div class="flex items-center gap-2 text-sm">
-                    <svg class="w-5 h-5 text-red-500 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
-                    </svg>
-                    <span class="font-medium truncate text-gray-900 dark:text-gray-100">{{ form.embed.title || 'YouTube Video' }}</span>
+                <div v-if="form.embed.type === 'youtube'" class="p-2 border-2 border-retro-gray-light dark:border-retro-gray-darker">
+                  <div class="flex items-center gap-2">
+                    <span class="font-retro-mono text-retro-xs text-red-500">YT</span>
+                    <span class="font-retro-sans text-retro-sm truncate text-retro-gray-darker dark:text-retro-cream">{{ form.embed.title || 'YouTube Video' }}</span>
                   </div>
-                  <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ form.embed.position === 'above' ? 'Above' : 'Below' }} content</p>
+                  <p class="font-retro-mono text-retro-xs text-retro-gray-medium mt-1">{{ form.embed.position === 'above' ? 'Above' : 'Below' }} content</p>
                 </div>
 
-                <div v-else-if="form.embed.type === 'link'" class="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                <div v-else-if="form.embed.type === 'link'" class="p-2 border-2 border-retro-gray-light dark:border-retro-gray-darker">
                   <div class="flex gap-2">
                     <img
                       v-if="form.embed.imageData || form.embed.imageFilename || (form.embed.imageUrl && !form.embed.imageUrl.startsWith('file://'))"
                       :src="form.embed.imageData || (form.embed.imageFilename ? `/uploads/${blogId}/${form.embed.imageFilename}` : form.embed.imageUrl)"
-                      class="w-10 h-10 object-cover rounded flex-shrink-0"
+                      class="w-10 h-10 object-cover flex-shrink-0"
                       alt=""
                     />
                     <div class="flex-1 min-w-0">
-                      <p class="text-sm font-medium truncate text-gray-900 dark:text-gray-100">{{ form.embed.title || 'Link' }}</p>
-                      <p v-if="form.embed.description" class="text-xs text-gray-500 dark:text-gray-400 truncate">{{ form.embed.description }}</p>
+                      <p class="font-retro-sans text-retro-sm truncate text-retro-gray-darker dark:text-retro-cream">{{ form.embed.title || 'Link' }}</p>
+                      <p v-if="form.embed.description" class="font-retro-mono text-retro-xs text-retro-gray-medium truncate">{{ form.embed.description }}</p>
                     </div>
                   </div>
-                  <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">{{ form.embed.position === 'above' ? 'Above' : 'Below' }} content</p>
+                  <p class="font-retro-mono text-retro-xs text-retro-gray-medium mt-2">{{ form.embed.position === 'above' ? 'Above' : 'Below' }} content</p>
                 </div>
 
-                <div v-else-if="form.embed.type === 'image'" class="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                <div v-else-if="form.embed.type === 'image'" class="p-2 border-2 border-retro-gray-light dark:border-retro-gray-darker">
                   <div class="flex gap-1 mb-2">
                     <img
                       v-for="(img, index) in form.embed.images?.slice(0, 4)"
                       :key="index"
                       :src="img.data || `/uploads/${blogId}/${img.filename}`"
-                      class="w-10 h-10 object-cover rounded"
+                      class="w-10 h-10 object-cover"
                       alt=""
                     />
                     <div
                       v-if="form.embed.images?.length > 4"
-                      class="w-10 h-10 bg-gray-200 dark:bg-gray-600 rounded flex items-center justify-center text-xs text-gray-600 dark:text-gray-400"
+                      class="w-10 h-10 border border-retro-gray-light dark:border-retro-gray-darker flex items-center justify-center font-retro-mono text-retro-xs text-retro-gray-medium"
                     >
                       +{{ form.embed.images.length - 4 }}
                     </div>
                   </div>
-                  <p class="text-xs text-gray-500 dark:text-gray-400">{{ form.embed.images?.length || 0 }} image(s) - {{ form.embed.position === 'above' ? 'Above' : 'Below' }} content</p>
+                  <p class="font-retro-mono text-retro-xs text-retro-gray-medium">{{ form.embed.images?.length || 0 }} image(s) - {{ form.embed.position === 'above' ? 'Above' : 'Below' }} content</p>
                 </div>
 
                 <div class="flex gap-2 mt-2">
                   <button
                     @click="showEmbedEditor = true"
-                    class="flex-1 px-3 py-1.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 text-sm"
+                    class="flex-1 px-2 py-1 border-2 border-retro-gray-light dark:border-retro-gray-darker font-retro-mono text-retro-xs text-retro-gray-darker dark:text-retro-cream hover:border-retro-orange hover:text-retro-orange uppercase"
                   >
                     Edit
                   </button>
                   <button
                     @click="removeEmbed"
-                    class="px-3 py-1.5 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-sm"
+                    class="px-2 py-1 border-2 border-red-500 font-retro-mono text-retro-xs text-red-500 hover:bg-red-500 hover:text-white uppercase"
                   >
                     Remove
                   </button>
@@ -617,6 +636,19 @@ function removeEmbed() {
               </div>
             </div>
           </div>
+
+          <!-- Delete Post (only for existing posts) -->
+          <template v-if="!isNew">
+            <div class="border-t border-retro-gray-light dark:border-retro-gray-darker"></div>
+            <div>
+              <button
+                @click="showDeleteModal = true"
+                class="w-full px-3 py-2 border-2 border-red-500 font-retro-mono text-retro-sm text-red-500 hover:bg-red-500 hover:text-white uppercase tracking-wider"
+              >
+                Delete Post
+              </button>
+            </div>
+          </template>
         </div>
       </div>
     </aside>
@@ -628,24 +660,22 @@ function removeEmbed() {
       @click="mobileSidebarOpen = false"
     >
       <!-- Backdrop -->
-      <div class="absolute inset-0 bg-black/50"></div>
+      <div class="absolute inset-0 bg-black/80"></div>
 
       <!-- Panel -->
       <div
-        class="absolute right-0 top-0 bottom-0 w-80 bg-white dark:bg-gray-800 shadow-xl overflow-y-auto"
+        class="absolute right-0 top-0 bottom-0 w-80 bg-white dark:bg-black border-l-2 border-retro-gray-light dark:border-retro-gray-darker overflow-y-auto"
         @click.stop
       >
         <div class="p-4">
           <!-- Header -->
           <div class="flex items-center justify-between mb-4">
-            <h3 class="font-semibold text-gray-900 dark:text-gray-100">Post Settings</h3>
+            <h3 class="font-retro-mono text-retro-sm text-retro-gray-darker dark:text-retro-cream uppercase tracking-wider">Settings</h3>
             <button
               @click="mobileSidebarOpen = false"
-              class="p-1 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+              class="font-retro-mono text-retro-sm text-retro-gray-dark dark:text-retro-gray-medium hover:text-retro-orange"
             >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              <span class="relative -top-px">×</span>
             </button>
           </div>
 
@@ -653,70 +683,72 @@ function removeEmbed() {
           <div class="space-y-4">
             <!-- Status -->
             <div>
-              <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Status</h3>
+              <h3 class="font-retro-mono text-retro-xs text-retro-gray-medium uppercase tracking-wider mb-2">Status</h3>
               <label class="flex items-center gap-2">
                 <input
                   type="checkbox"
                   v-model="form.isDraft"
-                  class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500"
+                  class="border-retro-gray-light dark:border-retro-gray-darker"
                 />
-                <span class="text-sm text-gray-700 dark:text-gray-300">Save as draft</span>
+                <span class="font-retro-sans text-retro-sm text-retro-gray-darker dark:text-retro-cream">Save as draft</span>
               </label>
             </div>
 
-            <div class="border-t border-gray-100 dark:border-gray-700"></div>
+            <div class="border-t border-retro-gray-light dark:border-retro-gray-darker"></div>
 
             <!-- Date -->
             <div>
-              <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Publish Date</h3>
+              <h3 class="font-retro-mono text-retro-xs text-retro-gray-medium uppercase tracking-wider mb-2">Publish Date</h3>
               <input
                 v-model="form.createdAt"
                 type="datetime-local"
-                class="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm"
+                class="w-full px-2 py-1 border-2 border-retro-gray-light dark:border-retro-gray-darker bg-white dark:bg-black font-retro-mono text-retro-sm text-retro-gray-darker dark:text-retro-cream focus:outline-none focus:border-retro-orange"
               />
             </div>
 
-            <div class="border-t border-gray-100 dark:border-gray-700"></div>
-
             <!-- Category -->
-            <div>
-              <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Category</h3>
-              <select
-                v-model="form.categoryId"
-                class="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm"
-              >
-                <option :value="null">No category</option>
-                <option v-for="category in blogStore.categories" :key="category.id" :value="category.id">
-                  {{ category.name }}
-                </option>
-              </select>
-            </div>
+            <template v-if="blogStore.categories.length > 0">
+              <div class="border-t border-retro-gray-light dark:border-retro-gray-darker"></div>
 
-            <div class="border-t border-gray-100 dark:border-gray-700"></div>
+              <div>
+                <h3 class="font-retro-mono text-retro-xs text-retro-gray-medium uppercase tracking-wider mb-2">Category</h3>
+                <select
+                  v-model="form.categoryId"
+                  class="w-full px-2 py-1 border-2 border-retro-gray-light dark:border-retro-gray-darker bg-white dark:bg-black font-retro-mono text-retro-sm text-retro-gray-darker dark:text-retro-cream focus:outline-none focus:border-retro-orange"
+                >
+                  <option :value="null">No category</option>
+                  <option v-for="category in blogStore.categories" :key="category.id" :value="category.id">
+                    {{ category.name }}
+                  </option>
+                </select>
+              </div>
+            </template>
+
+            <div class="border-t border-retro-gray-light dark:border-retro-gray-darker"></div>
 
             <!-- Tags -->
             <div>
-              <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Tags</h3>
+              <h3 class="font-retro-mono text-retro-xs text-retro-gray-medium uppercase tracking-wider mb-2">Tags</h3>
 
               <div v-if="form.tagIds.length > 0" class="flex flex-wrap gap-1.5 mb-3">
                 <span
                   v-for="tagId in form.tagIds"
                   :key="tagId"
-                  class="px-2 py-1 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 text-xs rounded-full flex items-center gap-1"
+                  class="px-2 py-0.5 border border-retro-orange text-retro-orange font-retro-mono text-retro-xs flex items-center gap-1"
                 >
                   {{ blogStore.tags.find(t => t.id === tagId)?.name }}
-                  <button @click="toggleTag(tagId)" class="hover:text-primary-900 dark:hover:text-primary-100">×</button>
+                  <button @click="toggleTag(tagId)" class="hover:text-retro-orange-dark">×</button>
                 </span>
               </div>
 
               <div v-if="suggestedTags.length > 0" class="mb-3">
-                <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Suggested</p>
+                <p class="font-retro-mono text-retro-xs text-retro-gray-medium mb-1">Suggested</p>
                 <div class="flex flex-wrap gap-1">
                   <button
                     v-for="tag in suggestedTags"
                     :key="tag.id"
                     @click="toggleTag(tag.id)"
-                    class="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 text-xs rounded-full hover:bg-gray-200 dark:hover:bg-gray-600"
+                    class="px-2 py-0.5 border border-retro-gray-light dark:border-retro-gray-darker font-retro-mono text-retro-xs text-retro-gray-dark dark:text-retro-gray-medium hover:border-retro-orange hover:text-retro-orange"
                   >
                     + {{ tag.name }}
                   </button>
@@ -728,27 +760,27 @@ function removeEmbed() {
                   v-model="tagSearchQuery"
                   type="text"
                   placeholder="Search or add tags..."
-                  class="w-full px-3 py-1.5 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm"
+                  class="w-full px-2 py-1 border-2 border-retro-gray-light dark:border-retro-gray-darker bg-white dark:bg-black font-retro-mono text-retro-sm text-retro-gray-darker dark:text-retro-cream placeholder:text-retro-gray-medium focus:outline-none focus:border-retro-orange"
                   @focus="showTagDropdown = true"
                   @blur="hideTagDropdown"
                   @keyup.enter="exactTagMatch ? null : createTag()"
                 />
                 <div
                   v-if="showTagDropdown && (filteredTags.length > 0 || (!exactTagMatch && tagSearchQuery.trim()))"
-                  class="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-48 overflow-y-auto"
+                  class="absolute z-50 w-full mt-1 bg-white dark:bg-black border-2 border-retro-gray-light dark:border-retro-gray-darker max-h-48 overflow-y-auto"
                 >
                   <button
                     v-for="tag in filteredTags"
                     :key="tag.id"
                     @mousedown.prevent="selectTag(tag.id)"
-                    class="w-full px-3 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    class="w-full px-2 py-1 text-left font-retro-mono text-retro-sm text-retro-gray-darker dark:text-retro-cream hover:bg-retro-orange hover:text-white"
                   >
                     {{ tag.name }}
                   </button>
                   <button
                     v-if="!exactTagMatch && tagSearchQuery.trim()"
                     @mousedown.prevent="createTag"
-                    class="w-full px-3 py-2 text-left text-sm text-primary-600 dark:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-700 border-t border-gray-200 dark:border-gray-700"
+                    class="w-full px-2 py-1 text-left font-retro-mono text-retro-sm text-retro-orange hover:bg-retro-orange hover:text-white border-t border-retro-gray-light dark:border-retro-gray-darker"
                   >
                     Create "{{ tagSearchQuery.trim() }}"
                   </button>
@@ -756,11 +788,11 @@ function removeEmbed() {
               </div>
             </div>
 
-            <div class="border-t border-gray-100 dark:border-gray-700"></div>
+            <div class="border-t border-retro-gray-light dark:border-retro-gray-darker"></div>
 
             <!-- Embed -->
             <div>
-              <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Embed</h3>
+              <h3 class="font-retro-mono text-retro-xs text-retro-gray-medium uppercase tracking-wider mb-2">Embed</h3>
 
               <EmbedEditor
                 v-if="showEmbedEditor"
@@ -775,70 +807,65 @@ function removeEmbed() {
                 <button
                   v-if="!form.embed"
                   @click="showEmbedEditor = true"
-                  class="w-full px-3 py-2 border-2 border-dashed border-gray-200 dark:border-gray-600 rounded-lg text-gray-500 dark:text-gray-400 hover:border-primary-500 hover:text-primary-600 dark:hover:text-primary-400 transition-colors text-sm flex items-center justify-center gap-2"
+                  class="w-full px-3 py-2 border-2 border-dashed border-retro-gray-light dark:border-retro-gray-darker font-retro-mono text-retro-sm text-retro-gray-medium hover:border-retro-orange hover:text-retro-orange flex items-center justify-center gap-2"
                 >
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-                  </svg>
-                  Add Embed
+                  <span class="relative -top-px">+</span> Add Embed
                 </button>
 
                 <div v-else>
-                  <div v-if="form.embed.type === 'youtube'" class="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                    <div class="flex items-center gap-2 text-sm">
-                      <svg class="w-5 h-5 text-red-500 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
-                      </svg>
-                      <span class="font-medium truncate text-gray-900 dark:text-gray-100">{{ form.embed.title || 'YouTube Video' }}</span>
+                  <div v-if="form.embed.type === 'youtube'" class="p-2 border-2 border-retro-gray-light dark:border-retro-gray-darker">
+                    <div class="flex items-center gap-2">
+                      <span class="font-retro-mono text-retro-xs text-red-500">YT</span>
+                      <span class="font-retro-sans text-retro-sm truncate text-retro-gray-darker dark:text-retro-cream">{{ form.embed.title || 'YouTube Video' }}</span>
                     </div>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ form.embed.position === 'above' ? 'Above' : 'Below' }} content</p>
+                    <p class="font-retro-mono text-retro-xs text-retro-gray-medium mt-1">{{ form.embed.position === 'above' ? 'Above' : 'Below' }} content</p>
                   </div>
 
-                  <div v-else-if="form.embed.type === 'link'" class="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                  <div v-else-if="form.embed.type === 'link'" class="p-2 border-2 border-retro-gray-light dark:border-retro-gray-darker">
                     <div class="flex gap-2">
                       <img
                         v-if="form.embed.imageData || form.embed.imageFilename || (form.embed.imageUrl && !form.embed.imageUrl.startsWith('file://'))"
                         :src="form.embed.imageData || (form.embed.imageFilename ? `/uploads/${blogId}/${form.embed.imageFilename}` : form.embed.imageUrl)"
-                        class="w-10 h-10 object-cover rounded flex-shrink-0"
+                        class="w-10 h-10 object-cover flex-shrink-0"
                         alt=""
                       />
                       <div class="flex-1 min-w-0">
-                        <p class="text-sm font-medium truncate text-gray-900 dark:text-gray-100">{{ form.embed.title || 'Link' }}</p>
-                        <p v-if="form.embed.description" class="text-xs text-gray-500 dark:text-gray-400 truncate">{{ form.embed.description }}</p>
+                        <p class="font-retro-sans text-retro-sm truncate text-retro-gray-darker dark:text-retro-cream">{{ form.embed.title || 'Link' }}</p>
+                        <p v-if="form.embed.description" class="font-retro-mono text-retro-xs text-retro-gray-medium truncate">{{ form.embed.description }}</p>
                       </div>
                     </div>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">{{ form.embed.position === 'above' ? 'Above' : 'Below' }} content</p>
+                    <p class="font-retro-mono text-retro-xs text-retro-gray-medium mt-2">{{ form.embed.position === 'above' ? 'Above' : 'Below' }} content</p>
                   </div>
 
-                  <div v-else-if="form.embed.type === 'image'" class="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                  <div v-else-if="form.embed.type === 'image'" class="p-2 border-2 border-retro-gray-light dark:border-retro-gray-darker">
                     <div class="flex gap-1 mb-2">
                       <img
                         v-for="(img, index) in form.embed.images?.slice(0, 4)"
                         :key="index"
                         :src="img.data || `/uploads/${blogId}/${img.filename}`"
-                        class="w-10 h-10 object-cover rounded"
+                        class="w-10 h-10 object-cover"
                         alt=""
                       />
                       <div
                         v-if="form.embed.images?.length > 4"
-                        class="w-10 h-10 bg-gray-200 dark:bg-gray-600 rounded flex items-center justify-center text-xs text-gray-600 dark:text-gray-400"
+                        class="w-10 h-10 border border-retro-gray-light dark:border-retro-gray-darker flex items-center justify-center font-retro-mono text-retro-xs text-retro-gray-medium"
                       >
                         +{{ form.embed.images.length - 4 }}
                       </div>
                     </div>
-                    <p class="text-xs text-gray-500 dark:text-gray-400">{{ form.embed.images?.length || 0 }} image(s) - {{ form.embed.position === 'above' ? 'Above' : 'Below' }} content</p>
+                    <p class="font-retro-mono text-retro-xs text-retro-gray-medium">{{ form.embed.images?.length || 0 }} image(s) - {{ form.embed.position === 'above' ? 'Above' : 'Below' }} content</p>
                   </div>
 
                   <div class="flex gap-2 mt-2">
                     <button
                       @click="showEmbedEditor = true"
-                      class="flex-1 px-3 py-1.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 text-sm"
+                      class="flex-1 px-2 py-1 border-2 border-retro-gray-light dark:border-retro-gray-darker font-retro-mono text-retro-xs text-retro-gray-darker dark:text-retro-cream hover:border-retro-orange hover:text-retro-orange uppercase"
                     >
                       Edit
                     </button>
                     <button
                       @click="removeEmbed"
-                      class="px-3 py-1.5 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-sm"
+                      class="px-2 py-1 border-2 border-red-500 font-retro-mono text-retro-xs text-red-500 hover:bg-red-500 hover:text-white uppercase"
                     >
                       Remove
                     </button>
@@ -847,6 +874,45 @@ function removeEmbed() {
               </div>
             </div>
           </div>
+
+          <!-- Delete Post (only for existing posts) -->
+          <template v-if="!isNew">
+            <div class="border-t border-retro-gray-light dark:border-retro-gray-darker mt-4"></div>
+            <div class="mt-4">
+              <button
+                @click="showDeleteModal = true"
+                class="w-full px-3 py-2 border-2 border-red-500 font-retro-mono text-retro-sm text-red-500 hover:bg-red-500 hover:text-white uppercase tracking-wider"
+              >
+                Delete Post
+              </button>
+            </div>
+          </template>
+        </div>
+      </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div v-if="showDeleteModal" class="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-6">
+      <div class="max-w-lg w-full">
+        <p class="font-retro-serif text-3xl md:text-4xl font-bold text-white mb-6">
+          Delete "{{ form.title || 'Untitled post' }}"?
+        </p>
+        <p class="font-retro-sans text-retro-base text-retro-gray-medium mb-8">
+          This cannot be undone.
+        </p>
+        <div class="flex gap-6">
+          <button
+            @click="showDeleteModal = false"
+            class="font-retro-mono text-retro-sm text-retro-gray-light hover:text-white uppercase tracking-wider"
+          >
+            Cancel
+          </button>
+          <button
+            @click="deletePost"
+            class="font-retro-mono text-retro-sm text-red-500 hover:text-red-400 uppercase tracking-wider"
+          >
+            Delete
+          </button>
         </div>
       </div>
     </div>

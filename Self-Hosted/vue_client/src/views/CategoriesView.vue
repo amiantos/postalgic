@@ -2,13 +2,22 @@
 import { ref, computed } from 'vue';
 import { useRoute } from 'vue-router';
 import { useBlogStore } from '@/stores/blog';
-import PageToolbar from '@/components/PageToolbar.vue';
-import SettingsTabs from '@/components/SettingsTabs.vue';
 
 const route = useRoute();
 const blogStore = useBlogStore();
 
 const blogId = computed(() => route.params.blogId);
+const currentRouteName = computed(() => route.name);
+
+const settingsTabs = [
+  { name: 'Basic', route: 'blog-settings' },
+  { name: 'Categories', route: 'categories' },
+  { name: 'Tags', route: 'tags' },
+  { name: 'Sidebar', route: 'sidebar' },
+  { name: 'Files', route: 'files' },
+  { name: 'Themes', route: 'themes' },
+  { name: 'Publishing', route: 'publish-settings' }
+];
 
 const showModal = ref(false);
 const editingCategory = ref(null);
@@ -61,125 +70,156 @@ async function deleteCategory(category) {
 </script>
 
 <template>
-  <div>
-    <PageToolbar
-      title="Categories"
-      :subtitle="`${blogStore.categories.length} categories`"
-    >
-      <template #actions>
-        <button
-          @click="openCreateModal"
-          class="glass px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-          </svg>
-          New Category
-        </button>
-      </template>
-      <template #tabs>
-        <SettingsTabs />
-      </template>
-    </PageToolbar>
+  <div class="min-h-screen bg-white dark:bg-black overflow-x-hidden">
+    <!-- Max-width content wrapper for desktop -->
+    <div class="lg:max-w-[700px] lg:mx-auto">
 
-    <div class="px-6 pb-6">
-    <!-- Empty State -->
-    <div v-if="blogStore.categories.length === 0" class="text-center py-12 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-      <div class="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
-        <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-        </svg>
-      </div>
-      <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No categories yet</h3>
-      <p class="text-gray-500 dark:text-gray-400 mb-6">Create categories to organize your posts.</p>
+    <!-- Navigation bar -->
+    <nav class="flex items-center justify-between px-6 py-4 lg:px-0">
+      <router-link
+        :to="{ name: 'blog-posts', params: { blogId } }"
+        class="font-retro-mono text-retro-sm text-retro-gray-dark dark:text-retro-gray-medium hover:text-retro-orange uppercase tracking-wider"
+      >
+        <span class="relative -top-px">&lt;</span> {{ blogStore.currentBlog?.name || 'Posts' }}
+      </router-link>
       <button
         @click="openCreateModal"
-        class="inline-flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+        class="font-retro-mono text-retro-sm text-retro-gray-dark dark:text-retro-gray-medium hover:text-retro-orange uppercase tracking-wider"
       >
-        Create Category
+        <span class="relative -top-px">+</span> New Category
       </button>
-    </div>
+    </nav>
 
-    <!-- Categories List -->
-    <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div
-        v-for="category in blogStore.categories"
-        :key="category.id"
-        class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4"
+    <!-- Hero section -->
+    <header class="relative h-52 md:h-60">
+      <!-- Divider that extends to the right -->
+      <div class="absolute bottom-0 left-6 right-0 border-b border-retro-gray-light dark:border-retro-gray-darker lg:left-0 lg:-right-[100vw]"></div>
+      <!-- Giant background text -->
+      <span class="absolute inset-0 flex items-center justify-start font-retro-serif font-bold text-[10rem] md:text-[14rem] leading-none tracking-tighter text-retro-gray-lightest dark:text-[#1a1a1a] select-none pointer-events-none whitespace-nowrap uppercase" aria-hidden="true">
+        CATEGORIES
+      </span>
+      <!-- Foreground content -->
+      <div class="absolute bottom-4 left-6 lg:left-0">
+        <h1 class="font-retro-serif font-bold text-6xl md:text-7xl leading-none tracking-tight text-retro-gray-darker dark:text-retro-cream lowercase whitespace-nowrap">
+          categories
+        </h1>
+        <!-- Stats line -->
+        <div class="mt-2 font-retro-mono text-retro-sm text-retro-gray-medium">
+          {{ blogStore.categories.length }} categories
+        </div>
+      </div>
+    </header>
+
+    <!-- Settings tabs -->
+    <nav class="flex flex-wrap gap-x-4 gap-y-2 px-6 lg:px-0 py-4 border-b border-retro-gray-light dark:border-retro-gray-darker">
+      <router-link
+        v-for="tab in settingsTabs"
+        :key="tab.route"
+        :to="{ name: tab.route, params: { blogId } }"
+        :class="[
+          'font-retro-mono text-retro-sm uppercase tracking-wider',
+          currentRouteName === tab.route
+            ? 'text-retro-orange'
+            : 'text-retro-gray-dark dark:text-retro-gray-medium hover:text-retro-orange'
+        ]"
       >
-        <div class="flex items-start justify-between">
-          <div class="flex-1">
-            <h3 class="font-medium text-gray-900 dark:text-gray-100">{{ category.name }}</h3>
-            <p v-if="category.description" class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ category.description }}</p>
-            <p class="text-sm text-gray-400 mt-2">{{ category.postCount || 0 }} posts</p>
-          </div>
-          <div class="flex items-center gap-2">
-            <button
-              @click="openEditModal(category)"
-              class="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-            >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-              </svg>
-            </button>
-            <button
-              @click="deleteCategory(category)"
-              class="p-1.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400"
-            >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
-            </button>
+        {{ tab.name }}
+      </router-link>
+    </nav>
+
+    <!-- Content -->
+    <main class="px-6 lg:px-0 py-6">
+      <!-- Empty State -->
+      <div v-if="blogStore.categories.length === 0" class="py-12">
+        <p class="font-retro-serif text-4xl md:text-5xl font-bold text-retro-gray-darker dark:text-retro-gray-light leading-tight">
+          No categories yet.
+        </p>
+        <button
+          @click="openCreateModal"
+          class="inline-block mt-6 font-retro-mono text-retro-sm text-retro-orange hover:text-retro-orange-dark uppercase tracking-wider"
+        >
+          Create your first category &rarr;
+        </button>
+      </div>
+
+      <!-- Categories List -->
+      <div v-else class="space-y-4">
+        <div
+          v-for="category in blogStore.categories"
+          :key="category.id"
+          class="border-2 border-retro-gray-light dark:border-retro-gray-darker p-4"
+        >
+          <div class="flex items-start justify-between">
+            <div class="flex-1">
+              <h3 class="font-retro-sans text-retro-lg font-medium text-retro-gray-darker dark:text-retro-cream">{{ category.name }}</h3>
+              <p v-if="category.description" class="font-retro-sans text-retro-sm text-retro-gray-dark dark:text-retro-gray-medium mt-1">{{ category.description }}</p>
+              <p class="font-retro-mono text-retro-xs text-retro-gray-medium mt-2">{{ category.postCount || 0 }} posts</p>
+            </div>
+            <div class="flex items-center gap-4">
+              <button
+                @click="openEditModal(category)"
+                class="font-retro-mono text-retro-xs text-retro-gray-dark dark:text-retro-gray-medium hover:text-retro-orange uppercase tracking-wider"
+              >
+                Edit
+              </button>
+              <button
+                @click="deleteCategory(category)"
+                class="font-retro-mono text-retro-xs text-red-500 hover:text-red-400 uppercase tracking-wider"
+              >
+                Delete
+              </button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-    </div>
+    </main>
+
+    </div><!-- End max-width wrapper -->
 
     <!-- Modal -->
-    <div v-if="showModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div class="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+    <div v-if="showModal" class="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-6">
+      <div class="max-w-md w-full bg-white dark:bg-black border-2 border-retro-gray-light dark:border-retro-gray-darker p-6">
+        <h3 class="font-retro-serif text-2xl font-bold text-retro-gray-darker dark:text-retro-cream mb-6">
           {{ editingCategory ? 'Edit Category' : 'New Category' }}
         </h3>
 
-        <div v-if="error" class="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-800 dark:text-red-400 text-sm">
+        <div v-if="error" class="mb-4 p-3 border-2 border-red-500 font-retro-mono text-retro-sm text-red-600 dark:text-red-400">
           {{ error }}
         </div>
 
         <div class="space-y-4">
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Name</label>
+            <label class="block font-retro-mono text-retro-xs text-retro-gray-medium uppercase tracking-wider mb-2">Name</label>
             <input
               v-model="form.name"
               type="text"
-              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              class="w-full px-3 py-2 border-2 border-retro-gray-light dark:border-retro-gray-darker bg-white dark:bg-black font-retro-sans text-retro-base text-retro-gray-darker dark:text-retro-cream focus:outline-none focus:border-retro-orange"
               placeholder="Category name"
             />
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
+            <label class="block font-retro-mono text-retro-xs text-retro-gray-medium uppercase tracking-wider mb-2">Description</label>
             <textarea
               v-model="form.description"
               rows="3"
-              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              class="w-full px-3 py-2 border-2 border-retro-gray-light dark:border-retro-gray-darker bg-white dark:bg-black font-retro-sans text-retro-base text-retro-gray-darker dark:text-retro-cream focus:outline-none focus:border-retro-orange"
               placeholder="Optional description"
             ></textarea>
           </div>
         </div>
 
-        <div class="flex justify-end gap-3 mt-6">
+        <div class="flex justify-end gap-6 mt-6">
           <button
             @click="showModal = false"
-            class="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            class="font-retro-mono text-retro-sm text-retro-gray-dark dark:text-retro-gray-medium hover:text-retro-orange uppercase tracking-wider"
           >
             Cancel
           </button>
           <button
             @click="saveCategory"
             :disabled="saving"
-            class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50"
+            class="px-4 py-2 border-2 border-retro-orange bg-retro-orange font-retro-mono text-retro-sm text-white hover:bg-retro-orange-dark hover:border-retro-orange-dark uppercase tracking-wider disabled:opacity-50"
           >
             {{ saving ? 'Saving...' : 'Save' }}
           </button>
