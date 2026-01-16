@@ -113,20 +113,20 @@ async function deleteSidebarObject(obj) {
     <nav class="flex items-center justify-between px-6 py-4 lg:px-0">
       <router-link
         :to="{ name: 'blog-posts', params: { blogId } }"
-        class="font-retro-mono text-retro-sm text-retro-gray-dark dark:text-retro-gray-medium hover:text-retro-orange uppercase tracking-wider"
+        class="px-3 py-1.5 border-2 border-retro-gray-light dark:border-retro-gray-darker bg-white dark:bg-black font-retro-mono text-retro-sm text-retro-gray-dark dark:text-retro-gray-medium hover:border-retro-orange hover:text-retro-orange uppercase tracking-wider"
       >
         <span class="relative -top-px">&lt;</span> {{ blogStore.currentBlog?.name || 'Posts' }}
       </router-link>
-      <div class="flex items-center gap-4">
+      <div class="flex items-center gap-2">
         <button
           @click="openCreateModal('text')"
-          class="font-retro-mono text-retro-sm text-retro-gray-dark dark:text-retro-gray-medium hover:text-retro-orange uppercase tracking-wider"
+          class="px-3 py-1.5 border-2 border-retro-gray-light dark:border-retro-gray-darker bg-white dark:bg-black font-retro-mono text-retro-sm text-retro-gray-dark dark:text-retro-gray-medium hover:border-retro-orange hover:text-retro-orange uppercase tracking-wider"
         >
           <span class="relative -top-px">+</span> Text Block
         </button>
         <button
           @click="openCreateModal('linkList')"
-          class="font-retro-mono text-retro-sm text-retro-gray-dark dark:text-retro-gray-medium hover:text-retro-orange uppercase tracking-wider"
+          class="px-3 py-1.5 border-2 border-retro-gray-light dark:border-retro-gray-darker bg-white dark:bg-black font-retro-mono text-retro-sm text-retro-gray-dark dark:text-retro-gray-medium hover:border-retro-orange hover:text-retro-orange uppercase tracking-wider"
         >
           <span class="relative -top-px">+</span> Link List
         </button>
