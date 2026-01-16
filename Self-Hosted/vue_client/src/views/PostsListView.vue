@@ -381,7 +381,7 @@ function getBackgroundTitle(title) {
             <!-- Content -->
             <div
               v-if="post.content"
-              class="mt-4 pr-6 prose prose-sm dark:prose-invert prose-gray max-w-none font-retro-sans text-retro-sm"
+              class="mt-4 pr-6 prose prose-sm dark:prose-invert prose-gray max-w-3xl font-retro-sans text-retro-sm"
               v-html="renderMarkdown(post.content)"
             ></div>
 
