@@ -19,7 +19,7 @@ const settingsTabs = [
   { name: 'Sidebar', route: 'sidebar' },
   { name: 'Files', route: 'files' },
   { name: 'Themes', route: 'themes' },
-  { name: 'Publish', route: 'publish-settings' }
+  { name: 'Publishing', route: 'publish-settings' }
 ];
 
 const form = ref({});
@@ -161,12 +161,12 @@ async function saveSettings() {
       <div class="absolute bottom-0 left-6 right-0 border-b border-retro-gray-light dark:border-retro-gray-darker lg:left-0 lg:-right-[100vw]"></div>
       <!-- Giant background text -->
       <span class="absolute inset-0 flex items-center justify-start font-retro-serif font-bold text-[10rem] md:text-[14rem] leading-none tracking-tighter text-retro-gray-lightest dark:text-[#1a1a1a] select-none pointer-events-none whitespace-nowrap uppercase" aria-hidden="true">
-        PUBLISH
+        PUBLISHING
       </span>
       <!-- Foreground content -->
       <div class="absolute bottom-4 left-6 lg:left-0">
         <h1 class="font-retro-serif font-bold text-6xl md:text-7xl leading-none tracking-tight text-retro-gray-darker dark:text-retro-cream lowercase whitespace-nowrap">
-          publish
+          publishing
         </h1>
         <!-- Spacer -->
         <div class="mt-2 font-retro-mono text-retro-sm text-retro-gray-medium">&nbsp;</div>

@@ -18,7 +18,7 @@ const settingsTabs = [
   { name: 'Sidebar', route: 'sidebar' },
   { name: 'Files', route: 'files' },
   { name: 'Themes', route: 'themes' },
-  { name: 'Publish', route: 'publish-settings' }
+  { name: 'Publishing', route: 'publish-settings' }
 ];
 
 const form = ref({});
