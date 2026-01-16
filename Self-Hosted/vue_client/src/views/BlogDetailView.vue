@@ -33,9 +33,7 @@ async function loadBlogData() {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
-    <main class="max-w-3xl mx-auto">
-      <router-view />
-    </main>
+  <div class="min-h-screen bg-white dark:bg-black">
+    <router-view />
   </div>
 </template>
