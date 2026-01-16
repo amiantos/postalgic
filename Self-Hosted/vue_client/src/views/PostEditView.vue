@@ -88,6 +88,7 @@ function captureInitialState() {
 const showTagDropdown = ref(false);
 const showEmbedEditor = ref(false);
 const showPublishModal = ref(false);
+const showDeleteModal = ref(false);
 const wasPublished = ref(false); // Track if post was originally published
 
 // Tags matching search query (case-insensitive)
@@ -314,6 +315,17 @@ function handleUseTitle(title) {
 
 function removeEmbed() {
   form.value.embed = null;
+}
+
+async function deletePost() {
+  try {
+    await blogStore.deletePost(blogId.value, postId.value);
+    hasSaved.value = true; // Prevent unsaved changes warning
+    router.push({ name: 'blog-posts', params: { blogId: blogId.value } });
+  } catch (e) {
+    error.value = e.message;
+    showDeleteModal.value = false;
+  }
 }
 </script>
 
@@ -617,6 +629,19 @@ function removeEmbed() {
               </div>
             </div>
           </div>
+
+          <!-- Delete Post (only for existing posts) -->
+          <template v-if="!isNew">
+            <div class="border-t border-gray-100 dark:border-gray-700"></div>
+            <div>
+              <button
+                @click="showDeleteModal = true"
+                class="w-full px-3 py-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-sm font-medium transition-colors"
+              >
+                Delete Post
+              </button>
+            </div>
+          </template>
         </div>
       </div>
     </aside>
@@ -847,6 +872,43 @@ function removeEmbed() {
               </div>
             </div>
           </div>
+
+          <!-- Delete Post (only for existing posts) -->
+          <template v-if="!isNew">
+            <div class="border-t border-gray-100 dark:border-gray-700"></div>
+            <div>
+              <button
+                @click="showDeleteModal = true"
+                class="w-full px-3 py-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-sm font-medium transition-colors"
+              >
+                Delete Post
+              </button>
+            </div>
+          </template>
+        </div>
+      </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div v-if="showDeleteModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+      <div class="bg-white dark:bg-gray-900 rounded-2xl p-6 max-w-sm w-full mx-4 shadow-2xl">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Delete post?</h3>
+        <p class="text-gray-500 dark:text-gray-400 mb-6 text-sm">
+          "{{ form.title || 'Untitled post' }}" will be permanently deleted.
+        </p>
+        <div class="flex gap-3">
+          <button
+            @click="showDeleteModal = false"
+            class="flex-1 px-4 py-2.5 text-gray-700 dark:text-gray-300 font-medium rounded-xl hover:bg-gray-100 dark:hover:bg-white/5 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            @click="deletePost"
+            class="flex-1 px-4 py-2.5 bg-red-500 text-white font-medium rounded-xl hover:bg-red-600 transition-colors"
+          >
+            Delete
+          </button>
         </div>
       </div>
     </div>

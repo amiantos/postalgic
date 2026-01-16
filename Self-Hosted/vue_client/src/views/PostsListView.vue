@@ -10,9 +10,7 @@ const route = useRoute();
 const router = useRouter();
 const blogStore = useBlogStore();
 
-const showDeleteModal = ref(false);
 const showPublishModal = ref(false);
-const postToDelete = ref(null);
 const filter = ref('all'); // 'all', 'published', 'draft'
 const searchText = ref('');
 const sortOption = ref('date_desc');
@@ -95,19 +93,6 @@ const postCounts = computed(() => {
 
 function navigateToPost(postId) {
   router.push({ name: 'post-edit', params: { blogId: blogId.value, postId } });
-}
-
-function confirmDelete(post) {
-  postToDelete.value = post;
-  showDeleteModal.value = true;
-}
-
-async function deletePost() {
-  if (postToDelete.value) {
-    await blogStore.deletePost(blogId.value, postToDelete.value.id);
-    showDeleteModal.value = false;
-    postToDelete.value = null;
-  }
 }
 
 function clearSearch() {
@@ -343,13 +328,6 @@ function getBackgroundTitle(title) {
                   +{{ post.tags.length - 3 }}
                 </span>
               </template>
-              <!-- Delete button - appears on hover -->
-              <button
-                @click.stop="confirmDelete(post)"
-                class="ml-auto opacity-0 group-hover:opacity-100 font-retro-mono text-retro-xs text-retro-gray-medium hover:text-red-500 uppercase transition-opacity"
-              >
-                Delete
-              </button>
             </div>
 
             <!-- Embed (above position) -->
@@ -470,26 +448,6 @@ function getBackgroundTitle(title) {
         </button>
       </div>
     </main>
-
-    <!-- Delete Modal -->
-    <div v-if="showDeleteModal" class="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-6">
-      <div class="max-w-lg w-full">
-        <p class="font-retro-serif text-3xl md:text-4xl font-bold text-white mb-6">
-          Delete "{{ postToDelete?.displayTitle }}"?
-        </p>
-        <p class="font-retro-sans text-retro-base text-retro-gray-medium mb-8">
-          This cannot be undone.
-        </p>
-        <div class="flex gap-6">
-          <button @click="showDeleteModal = false" class="font-retro-mono text-retro-sm text-retro-gray-light hover:text-white uppercase tracking-wider">
-            Cancel
-          </button>
-          <button @click="deletePost" class="font-retro-mono text-retro-sm text-red-500 hover:text-red-400 uppercase tracking-wider">
-            Delete
-          </button>
-        </div>
-      </div>
-    </div>
 
     <!-- Publish Modal -->
     <PublishModal
