@@ -324,6 +324,12 @@ function openPreview() {
   }
 }
 
+function visitSite() {
+  if (blogStore.currentBlog?.url) {
+    window.open(blogStore.currentBlog.url, '_blank');
+  }
+}
+
 function confirmFullPublish(type) {
   fullPublishType.value = type;
   showFullPublishConfirm.value = true;
@@ -439,14 +445,22 @@ const isWorking = computed(() => generating.value || downloading.value || publis
 
         <!-- Actions -->
         <div class="space-y-3">
-          <!-- Close button after publish complete -->
-          <button
-            v-if="publishComplete"
-            @click="emit('close')"
-            class="w-full px-4 py-3 bg-retro-orange text-white font-retro-mono text-retro-sm uppercase tracking-wider hover:bg-retro-orange-dark transition-colors"
-          >
-            Done
-          </button>
+          <!-- Buttons after publish complete -->
+          <div v-if="publishComplete" class="flex gap-3">
+            <button
+              v-if="blogStore.currentBlog?.url"
+              @click="visitSite"
+              class="flex-1 px-4 py-3 bg-retro-orange text-white font-retro-mono text-retro-sm uppercase tracking-wider hover:bg-retro-orange-dark transition-colors"
+            >
+              Visit Site <span class="relative -top-px">&gt;</span>
+            </button>
+            <button
+              @click="emit('close')"
+              class="flex-1 px-4 py-3 border-2 border-retro-gray-light dark:border-retro-gray-dark text-retro-gray-dark dark:text-retro-gray-light font-retro-mono text-retro-sm uppercase tracking-wider hover:border-retro-gray-dark dark:hover:border-retro-gray-light hover:text-retro-gray-darker dark:hover:text-white transition-colors"
+            >
+              Close
+            </button>
+          </div>
 
           <!-- Publish actions (hidden after complete) -->
           <template v-else>
