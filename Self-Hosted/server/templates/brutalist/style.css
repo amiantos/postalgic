@@ -37,6 +37,8 @@ body {
     line-height: 1.6;
     color: var(--text-color);
     background-color: var(--background-color);
+    overflow-x: hidden;
+    position: relative;
 }
 
 /* Right edge fade - covers giant text overflow */
