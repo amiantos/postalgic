@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import crypto from 'crypto';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
@@ -49,6 +50,38 @@ if (needsMigration(DATA_ROOT)) {
 app.use(cors());
 app.use(express.json({ limit: '100mb' }));
 app.use(express.urlencoded({ extended: true, limit: '100mb' }));
+
+// Basic auth middleware (enabled via environment variables)
+const BASIC_AUTH_USERNAME = process.env.BASIC_AUTH_USERNAME;
+const BASIC_AUTH_PASSWORD = process.env.BASIC_AUTH_PASSWORD;
+
+if (BASIC_AUTH_USERNAME && BASIC_AUTH_PASSWORD) {
+  app.use((req, res, next) => {
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Basic ')) {
+      const decoded = Buffer.from(authHeader.slice(6), 'base64').toString();
+      const colonIndex = decoded.indexOf(':');
+      if (colonIndex !== -1) {
+        const user = decoded.slice(0, colonIndex);
+        const pass = decoded.slice(colonIndex + 1);
+        const userBuf = Buffer.from(user);
+        const passBuf = Buffer.from(pass);
+        const expectedUserBuf = Buffer.from(BASIC_AUTH_USERNAME);
+        const expectedPassBuf = Buffer.from(BASIC_AUTH_PASSWORD);
+        if (
+          userBuf.length === expectedUserBuf.length &&
+          passBuf.length === expectedPassBuf.length &&
+          crypto.timingSafeEqual(userBuf, expectedUserBuf) &&
+          crypto.timingSafeEqual(passBuf, expectedPassBuf)
+        ) {
+          return next();
+        }
+      }
+    }
+    res.set('WWW-Authenticate', 'Basic realm="Postalgic"');
+    res.status(401).send('Authentication required');
+  });
+}
 
 // Make data root available to routes
 app.locals.dataRoot = DATA_ROOT;
@@ -100,4 +133,5 @@ app.use((err, req, res, next) => {
 app.listen(PORT, () => {
   console.log(`Postalgic server running on http://localhost:${PORT}`);
   console.log(`Data directory: ${DATA_ROOT}`);
+  console.log(`Basic auth: ${BASIC_AUTH_USERNAME && BASIC_AUTH_PASSWORD ? 'enabled' : 'disabled'}`);
 });

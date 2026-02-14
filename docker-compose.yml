@@ -12,4 +12,6 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=8010
+      # - BASIC_AUTH_USERNAME=admin
+      # - BASIC_AUTH_PASSWORD=changeme
     restart: unless-stopped

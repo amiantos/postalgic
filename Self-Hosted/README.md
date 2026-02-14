@@ -120,6 +120,8 @@ All data is stored in a SQLite database at `data/postalgic.db`. Uploaded files a
 |----------|---------|-------------|
 | `PORT` | `8010` | Server port |
 | `NODE_ENV` | `development` | Environment mode |
+| `BASIC_AUTH_USERNAME` | _(none)_ | Username for HTTP Basic Auth (both username and password must be set to enable) |
+| `BASIC_AUTH_PASSWORD` | _(none)_ | Password for HTTP Basic Auth |
 
 ## License
 
