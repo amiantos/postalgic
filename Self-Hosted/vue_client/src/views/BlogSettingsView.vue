@@ -294,41 +294,6 @@ async function downloadDebugExport() {
           </div>
         </section>
 
-        <!-- Discourse Comments -->
-        <section class="border-t border-retro-gray-light dark:border-retro-gray-darker pt-8">
-          <h3 class="font-retro-mono text-retro-sm text-retro-gray-darker dark:text-retro-cream uppercase tracking-wider mb-2">Discourse Comments</h3>
-          <p class="font-retro-sans text-retro-sm text-retro-gray-dark dark:text-retro-gray-medium mb-4">
-            Enable Discourse comment embedding on individual post pages.
-            <a href="https://meta.discourse.org/t/embedding-discourse-comments-via-javascript/31963" target="_blank" class="text-retro-orange hover:text-retro-orange-dark">Learn more</a>
-          </p>
-          <div class="space-y-4">
-            <label class="flex items-center gap-3">
-              <input
-                v-model="form.discourseCommentsEnabled"
-                type="checkbox"
-                class="border-2 border-retro-gray-light dark:border-retro-gray-darker"
-              />
-              <span class="font-retro-sans text-retro-sm text-retro-gray-darker dark:text-retro-cream">
-                Enable Discourse comment embedding
-              </span>
-            </label>
-            <div v-if="form.discourseCommentsEnabled">
-              <label class="block font-retro-mono text-retro-xs text-retro-gray-medium uppercase tracking-wider mb-2">
-                Discourse Server URL
-              </label>
-              <input
-                v-model="form.discourseUrl"
-                type="url"
-                class="w-full px-3 py-2 border-2 border-retro-gray-light dark:border-retro-gray-darker bg-white dark:bg-black font-retro-mono text-retro-sm text-retro-gray-darker dark:text-retro-cream focus:outline-none focus:border-retro-orange"
-                placeholder="https://discourse.example.com/"
-              />
-              <p class="mt-2 font-retro-mono text-retro-xs text-retro-gray-medium">
-                The URL of your Discourse server. Must include a trailing slash.
-              </p>
-            </div>
-          </div>
-        </section>
-
         <!-- Actions -->
         <section class="border-t border-retro-gray-light dark:border-retro-gray-darker pt-8">
           <div class="flex justify-between">

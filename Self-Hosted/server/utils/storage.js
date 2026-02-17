@@ -72,7 +72,6 @@ class Storage {
         ftp_host, ftp_port, ftp_username, ftp_password, ftp_private_key, ftp_path,
         git_repository_url, git_username, git_token, git_branch, git_commit_message, git_private_key,
         timezone, simple_analytics_enabled, simple_analytics_domain,
-        discourse_comments_enabled, discourse_url,
         created_at, updated_at
       ) VALUES (
         ?, ?, ?, ?, ?, ?, ?,
@@ -83,7 +82,6 @@ class Storage {
         ?, ?, ?, ?, ?, ?,
         ?, ?, ?, ?, ?, ?,
         ?, ?, ?,
-        ?, ?,
         ?, ?
       )
     `);
@@ -124,8 +122,6 @@ class Storage {
       blogData.timezone || 'UTC',
       blogData.simpleAnalyticsEnabled ? 1 : 0,
       blogData.simpleAnalyticsDomain || null,
-      blogData.discourseCommentsEnabled ? 1 : 0,
-      blogData.discourseUrl || null,
       now,
       now
     );
@@ -157,7 +153,6 @@ class Storage {
         git_repository_url = ?, git_username = ?, git_token = ?,
         git_branch = ?, git_commit_message = ?, git_private_key = ?,
         timezone = ?, simple_analytics_enabled = ?, simple_analytics_domain = ?,
-        discourse_comments_enabled = ?, discourse_url = ?,
         updated_at = ?
       WHERE id = ?
     `);
@@ -197,8 +192,6 @@ class Storage {
       merged.timezone || 'UTC',
       merged.simpleAnalyticsEnabled ? 1 : 0,
       merged.simpleAnalyticsDomain,
-      merged.discourseCommentsEnabled ? 1 : 0,
-      merged.discourseUrl,
       now,
       blogId
     );
@@ -262,8 +255,6 @@ class Storage {
       timezone: row.timezone || 'UTC',
       simpleAnalyticsEnabled: !!row.simple_analytics_enabled,
       simpleAnalyticsDomain: row.simple_analytics_domain,
-      discourseCommentsEnabled: !!row.discourse_comments_enabled,
-      discourseUrl: row.discourse_url,
       createdAt: row.created_at,
       updatedAt: row.updated_at
     };
