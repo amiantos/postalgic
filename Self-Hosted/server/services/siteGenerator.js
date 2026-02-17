@@ -206,7 +206,9 @@ function buildBaseContext(blog, categories, tags, sidebarObjects, staticFiles, t
     hasSocialShareImage,
     sidebarContent,
     simpleAnalyticsEnabled: blog.simpleAnalyticsEnabled || false,
-    simpleAnalyticsDomain: blog.simpleAnalyticsDomain || null
+    simpleAnalyticsDomain: blog.simpleAnalyticsDomain || null,
+    discourseCommentsEnabled: blog.discourseCommentsEnabled || false,
+    discourseUrl: blog.discourseUrl || null
   };
 }
 
@@ -591,6 +593,8 @@ async function generatePostPages(outputDir, templates, baseContext, posts, stora
   const timezone = baseContext.timezone || 'UTC';
   for (const post of posts) {
     const postContext = buildPostContext(post, baseContext, false);
+    const urlPath = `${formatDatePath(post.createdAt, timezone)}/${post.stub}`;
+    postContext.postFullUrl = `${baseContext.blogUrl}/${urlPath}/`;
     const postContent = Mustache.render(templates.post, postContext);
     const customMeta = generatePostMeta(post, baseContext);
     const html = renderWithLayout(templates, baseContext, postContext.displayTitle, postContent, customMeta);

@@ -196,6 +196,14 @@ function runMigrations(database) {
     console.log('[Database] Running migration: adding git_private_key column to blogs table');
     database.exec(`ALTER TABLE blogs ADD COLUMN git_private_key TEXT`);
   }
+
+  // Migration: Add Discourse comments columns
+  const blogColumnsDiscourse = database.prepare(`PRAGMA table_info(blogs)`).all();
+  if (!blogColumnsDiscourse.some(col => col.name === 'discourse_comments_enabled')) {
+    console.log('[Database] Running migration: adding Discourse comments columns to blogs table');
+    database.exec(`ALTER TABLE blogs ADD COLUMN discourse_comments_enabled INTEGER DEFAULT 0`);
+    database.exec(`ALTER TABLE blogs ADD COLUMN discourse_url TEXT`);
+  }
 }
 
 /**
@@ -254,6 +262,8 @@ function createSchema(database) {
       timezone TEXT DEFAULT 'UTC',
       simple_analytics_enabled INTEGER DEFAULT 0,
       simple_analytics_domain TEXT,
+      discourse_comments_enabled INTEGER DEFAULT 0,
+      discourse_url TEXT,
       created_at TEXT NOT NULL,
       updated_at TEXT
     );
