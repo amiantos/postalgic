@@ -43,6 +43,11 @@
 		44AF0B582F46E71D00549E3C /* RemoteBlogDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44AF0B522F46E71D00549E3C /* RemoteBlogDashboardView.swift */; };
 		44AF0B592F46E71D00549E3C /* RemotePostsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44AF0B542F46E71D00549E3C /* RemotePostsView.swift */; };
 		44AF0B5A2F46E71D00549E3C /* RemotePostPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44AF0B532F46E71D00549E3C /* RemotePostPreviewView.swift */; };
+		44AF0B652F46EC6000549E3C /* RemoteCategoryManagementView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44AF0B5C2F46EC6000549E3C /* RemoteCategoryManagementView.swift */; };
+		44AF0B672F46EC6000549E3C /* RemoteTagSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44AF0B632F46EC6000549E3C /* RemoteTagSelectionView.swift */; };
+		44AF0B692F46EC6000549E3C /* RemoteCategorySelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44AF0B5D2F46EC6000549E3C /* RemoteCategorySelectionView.swift */; };
+		44AF0B6A2F46EC6000549E3C /* RemotePostView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44AF0B602F46EC6000549E3C /* RemotePostView.swift */; };
+		44AF0B6B2F46EC6000549E3C /* RemoteTagManagementView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44AF0B622F46EC6000549E3C /* RemoteTagManagementView.swift */; };
 		44C363C32DB632430057567C /* Ink in Frameworks */ = {isa = PBXBuildFile; productRef = 44C363C22DB632430057567C /* Ink */; };
 		44C364202DB768DB0057567C /* AWSPublisher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44C3640E2DB768DB0057567C /* AWSPublisher.swift */; };
 		44C364212DB768DB0057567C /* StaticSiteGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44C3640F2DB768DB0057567C /* StaticSiteGenerator.swift */; };
@@ -133,6 +138,11 @@
 		44AF0B532F46E71D00549E3C /* RemotePostPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemotePostPreviewView.swift; sourceTree = "<group>"; };
 		44AF0B542F46E71D00549E3C /* RemotePostsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemotePostsView.swift; sourceTree = "<group>"; };
 		44AF0B552F46E71D00549E3C /* RemoteServersSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteServersSettingsView.swift; sourceTree = "<group>"; };
+		44AF0B5C2F46EC6000549E3C /* RemoteCategoryManagementView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteCategoryManagementView.swift; sourceTree = "<group>"; };
+		44AF0B5D2F46EC6000549E3C /* RemoteCategorySelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteCategorySelectionView.swift; sourceTree = "<group>"; };
+		44AF0B602F46EC6000549E3C /* RemotePostView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemotePostView.swift; sourceTree = "<group>"; };
+		44AF0B622F46EC6000549E3C /* RemoteTagManagementView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteTagManagementView.swift; sourceTree = "<group>"; };
+		44AF0B632F46EC6000549E3C /* RemoteTagSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteTagSelectionView.swift; sourceTree = "<group>"; };
 		44C3640E2DB768DB0057567C /* AWSPublisher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AWSPublisher.swift; sourceTree = "<group>"; };
 		44C3640F2DB768DB0057567C /* StaticSiteGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StaticSiteGenerator.swift; sourceTree = "<group>"; };
 		44C364112DB768DB0057567C /* BlogAwsConfigView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlogAwsConfigView.swift; sourceTree = "<group>"; };
@@ -329,6 +339,11 @@
 			children = (
 				44AF0B522F46E71D00549E3C /* RemoteBlogDashboardView.swift */,
 				44AF0B532F46E71D00549E3C /* RemotePostPreviewView.swift */,
+				44AF0B5C2F46EC6000549E3C /* RemoteCategoryManagementView.swift */,
+				44AF0B5D2F46EC6000549E3C /* RemoteCategorySelectionView.swift */,
+				44AF0B602F46EC6000549E3C /* RemotePostView.swift */,
+				44AF0B622F46EC6000549E3C /* RemoteTagManagementView.swift */,
+				44AF0B632F46EC6000549E3C /* RemoteTagSelectionView.swift */,
 				44AF0B542F46E71D00549E3C /* RemotePostsView.swift */,
 				44AF0B552F46E71D00549E3C /* RemoteServersSettingsView.swift */,
 			);
@@ -591,6 +606,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				44AF0B652F46EC6000549E3C /* RemoteCategoryManagementView.swift in Sources */,
+				44AF0B672F46EC6000549E3C /* RemoteTagSelectionView.swift in Sources */,
+				44AF0B692F46EC6000549E3C /* RemoteCategorySelectionView.swift in Sources */,
+				44AF0B6A2F46EC6000549E3C /* RemotePostView.swift in Sources */,
+				44AF0B6B2F46EC6000549E3C /* RemoteTagManagementView.swift in Sources */,
 				44788A822DE2752D003F02E1 /* IntroductionView.swift in Sources */,
 				44AF0B4E2F46E6E900549E3C /* RemoteServer.swift in Sources */,
 				44AF0B4F2F46E6E900549E3C /* RemoteModels.swift in Sources */,

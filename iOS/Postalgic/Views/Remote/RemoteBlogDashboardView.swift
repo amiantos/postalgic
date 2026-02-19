@@ -16,6 +16,7 @@ struct RemoteBlogDashboardView: View {
     @State private var draftPosts: [RemotePost] = []
     @State private var isLoading = true
     @State private var errorMessage: String?
+    @State private var showingNewPost = false
 
     var body: some View {
         ScrollView {
@@ -76,6 +77,54 @@ struct RemoteBlogDashboardView: View {
                             }
                             .buttonStyle(.bordered)
                             .foregroundStyle(.primary)
+
+                            Button {
+                                showingNewPost = true
+                            } label: {
+                                VStack(spacing: 3) {
+                                    Image(systemName: "square.and.pencil")
+                                        .font(.system(size: 24))
+                                    Text("New Post")
+                                        .font(.caption)
+                                }
+                                .padding(3)
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .foregroundStyle(.primary)
+                        }
+                        .padding(.horizontal)
+
+                        HStack(spacing: 12) {
+                            NavigationLink {
+                                RemoteCategoryManagementView(server: server, blogId: blog.id)
+                            } label: {
+                                VStack(spacing: 3) {
+                                    Image(systemName: "folder")
+                                        .font(.system(size: 24))
+                                    Text("Categories")
+                                        .font(.caption)
+                                }
+                                .padding(3)
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            }
+                            .buttonStyle(.bordered)
+                            .foregroundStyle(.primary)
+
+                            NavigationLink {
+                                RemoteTagManagementView(server: server, blogId: blog.id)
+                            } label: {
+                                VStack(spacing: 3) {
+                                    Image(systemName: "tag")
+                                        .font(.system(size: 24))
+                                    Text("Tags")
+                                        .font(.caption)
+                                }
+                                .padding(3)
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            }
+                            .buttonStyle(.bordered)
+                            .foregroundStyle(.primary)
                         }
                         .padding(.horizontal)
                     }
@@ -101,7 +150,9 @@ struct RemoteBlogDashboardView: View {
                                 .padding(.horizontal)
 
                             ForEach(draftPosts) { post in
-                                RemotePostPreviewView(post: post, server: server, blog: blog)
+                                RemotePostPreviewView(post: post, server: server, blog: blog, onChanged: {
+                                    loadData()
+                                })
                             }
                         }
                     }
@@ -122,13 +173,19 @@ struct RemoteBlogDashboardView: View {
                                         .foregroundColor(.secondary)
                                     Text("No published posts")
                                         .font(.headline)
+                                    Button("Create your first post") {
+                                        showingNewPost = true
+                                    }
+                                    .buttonStyle(.borderedProminent)
                                 }
                                 .padding(.vertical, 30)
                                 Spacer()
                             }
                         } else {
                             ForEach(recentPosts) { post in
-                                RemotePostPreviewView(post: post, server: server, blog: blog)
+                                RemotePostPreviewView(post: post, server: server, blog: blog, onChanged: {
+                                    loadData()
+                                })
                             }
                         }
                     }
@@ -137,6 +194,21 @@ struct RemoteBlogDashboardView: View {
             }
         }
         .navigationTitle(blog.name)
+        .toolbar {
+            ToolbarItemGroup(placement: .primaryAction) {
+                Button {
+                    showingNewPost = true
+                } label: {
+                    Label("New Post", systemImage: "plus")
+                }
+            }
+        }
+        .sheet(isPresented: $showingNewPost) {
+            RemotePostView(server: server, blog: blog, onSave: {
+                loadData()
+            })
+            .interactiveDismissDisabled()
+        }
         .refreshable {
             await refreshData()
         }

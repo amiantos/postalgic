@@ -11,8 +11,10 @@ struct RemotePostPreviewView: View {
     let post: RemotePost
     let server: RemoteServer
     let blog: RemoteBlog
+    var onChanged: (() -> Void)?
 
-    @State private var showingDetail = false
+    @State private var showingEditSheet = false
+    @State private var showingDeleteAlert = false
 
     var body: some View {
         VStack(alignment: .leading) {
@@ -91,15 +93,21 @@ struct RemotePostPreviewView: View {
 
             // Actions
             HStack {
-                if let urlPath = post.urlPath, !blog.url.isEmpty,
-                   let url = URL(string: "\(blog.url)/\(urlPath)") {
-                    Button {
-                        UIApplication.shared.open(url)
-                    } label: {
-                        Label("View", systemImage: "safari")
-                    }
-                    .frame(maxWidth: .infinity)
+                Button {
+                    showingDeleteAlert = true
+                } label: {
+                    Label("Delete", systemImage: "trash")
                 }
+                .frame(maxWidth: .infinity)
+
+                Divider()
+
+                Button {
+                    showingEditSheet = true
+                } label: {
+                    Label("Edit", systemImage: "square.and.pencil")
+                }
+                .frame(maxWidth: .infinity)
 
                 Divider()
 
@@ -121,6 +129,34 @@ struct RemotePostPreviewView: View {
         .foregroundStyle(.primary)
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .padding(.horizontal)
+        .sheet(isPresented: $showingEditSheet) {
+            RemotePostView(server: server, blog: blog, existingPost: post, onSave: {
+                onChanged?()
+            })
+            .interactiveDismissDisabled()
+        }
+        .alert("Delete Post", isPresented: $showingDeleteAlert) {
+            Button("Cancel", role: .cancel) {}
+            Button("Delete", role: .destructive) {
+                deletePost()
+            }
+        } message: {
+            Text("Are you sure you want to delete this post? This action cannot be undone.")
+        }
+    }
+
+    private func deletePost() {
+        let client = PostalgicAPIClient(server: server)
+        Task {
+            do {
+                try await client.deletePost(blogId: blog.id, postId: post.id)
+                await MainActor.run {
+                    onChanged?()
+                }
+            } catch {
+                Log.error("Failed to delete post: \(error)")
+            }
+        }
     }
 
     private func sharePost() {
@@ -140,7 +176,6 @@ struct RemotePostPreviewView: View {
         let iso8601 = ISO8601DateFormatter()
         iso8601.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
 
-        // Try with fractional seconds first, then without
         if let date = iso8601.date(from: dateString) {
             return Self.fullDateFormatter.string(from: date)
         }

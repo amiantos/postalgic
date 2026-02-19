@@ -21,6 +21,9 @@ struct RemotePostsView: View {
     @State private var totalCount = 0
     @State private var isLoadingMore = false
 
+    // New post
+    @State private var showingNewPost = false
+
     // Search & filter
     @State private var searchText = ""
     @State private var statusFilter = "all"
@@ -151,7 +154,9 @@ struct RemotePostsView: View {
                 } else {
                     LazyVStack(spacing: 20) {
                         ForEach(posts) { post in
-                            RemotePostPreviewView(post: post, server: server, blog: blog)
+                            RemotePostPreviewView(post: post, server: server, blog: blog, onChanged: {
+                                    resetAndLoad()
+                                })
                         }
 
                         if hasMore {
@@ -178,6 +183,21 @@ struct RemotePostsView: View {
             }
         }
         .navigationTitle("All Posts")
+        .toolbar {
+            ToolbarItemGroup(placement: .primaryAction) {
+                Button {
+                    showingNewPost = true
+                } label: {
+                    Label("New Post", systemImage: "plus")
+                }
+            }
+        }
+        .sheet(isPresented: $showingNewPost) {
+            RemotePostView(server: server, blog: blog, onSave: {
+                resetAndLoad()
+            })
+            .interactiveDismissDisabled()
+        }
         .refreshable {
             await refreshPosts()
         }

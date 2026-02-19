@@ -86,16 +86,58 @@ actor PostalgicAPIClient {
         try await get("/api/blogs/\(blogId)/posts/\(postId)")
     }
 
+    // MARK: - Post Mutations
+
+    func createPost(blogId: String, body: [String: Any]) async throws -> RemotePost {
+        try await post("/api/blogs/\(blogId)/posts", body: body)
+    }
+
+    func updatePost(blogId: String, postId: String, body: [String: Any]) async throws -> RemotePost {
+        try await put("/api/blogs/\(blogId)/posts/\(postId)", body: body)
+    }
+
+    func deletePost(blogId: String, postId: String) async throws {
+        try await delete("/api/blogs/\(blogId)/posts/\(postId)")
+    }
+
     // MARK: - Categories
 
     func fetchCategories(blogId: String) async throws -> [RemoteCategory] {
         try await get("/api/blogs/\(blogId)/categories")
     }
 
+    func createCategory(blogId: String, name: String, description: String? = nil) async throws -> RemoteCategory {
+        var body: [String: Any] = ["name": name]
+        if let description { body["description"] = description }
+        return try await post("/api/blogs/\(blogId)/categories", body: body)
+    }
+
+    func updateCategory(blogId: String, categoryId: String, name: String, description: String? = nil) async throws -> RemoteCategory {
+        var body: [String: Any] = ["name": name]
+        if let description { body["description"] = description }
+        return try await put("/api/blogs/\(blogId)/categories/\(categoryId)", body: body)
+    }
+
+    func deleteCategory(blogId: String, categoryId: String) async throws {
+        try await delete("/api/blogs/\(blogId)/categories/\(categoryId)")
+    }
+
     // MARK: - Tags
 
     func fetchTags(blogId: String) async throws -> [RemoteTag] {
         try await get("/api/blogs/\(blogId)/tags")
+    }
+
+    func createTag(blogId: String, name: String) async throws -> RemoteTag {
+        try await post("/api/blogs/\(blogId)/tags", body: ["name": name])
+    }
+
+    func updateTag(blogId: String, tagId: String, name: String) async throws -> RemoteTag {
+        try await put("/api/blogs/\(blogId)/tags/\(tagId)", body: ["name": name])
+    }
+
+    func deleteTag(blogId: String, tagId: String) async throws {
+        try await delete("/api/blogs/\(blogId)/tags/\(tagId)")
     }
 
     // MARK: - Private Networking
@@ -131,6 +173,76 @@ actor PostalgicAPIClient {
         case 200...299:
             let decoder = JSONDecoder()
             return try decoder.decode(T.self, from: data)
+        case 401:
+            throw APIError.unauthorized
+        case 404:
+            throw APIError.notFound
+        default:
+            let message = String(data: data, encoding: .utf8) ?? "Unknown error"
+            throw APIError.serverError(statusCode: httpResponse.statusCode, message: message)
+        }
+    }
+
+    private func post<T: Decodable>(_ path: String, body: [String: Any]) async throws -> T {
+        try await sendJSON(path: path, method: "POST", body: body)
+    }
+
+    private func put<T: Decodable>(_ path: String, body: [String: Any]) async throws -> T {
+        try await sendJSON(path: path, method: "PUT", body: body)
+    }
+
+    private func delete(_ path: String) async throws {
+        guard let url = URL(string: "\(baseURL)\(path)") else {
+            throw APIError.invalidURL
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "DELETE"
+        request.setValue(authHeader(), forHTTPHeaderField: "Authorization")
+
+        let (data, response) = try await session.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw APIError.invalidResponse
+        }
+
+        switch httpResponse.statusCode {
+        case 200...299:
+            return
+        case 401:
+            throw APIError.unauthorized
+        case 404:
+            throw APIError.notFound
+        default:
+            let message = String(data: data, encoding: .utf8) ?? "Unknown error"
+            throw APIError.serverError(statusCode: httpResponse.statusCode, message: message)
+        }
+    }
+
+    private func sendJSON<T: Decodable>(path: String, method: String, body: [String: Any]) async throws -> T {
+        guard let url = URL(string: "\(baseURL)\(path)") else {
+            throw APIError.invalidURL
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = method
+        request.setValue(authHeader(), forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+
+        let (data, response) = try await session.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw APIError.invalidResponse
+        }
+
+        switch httpResponse.statusCode {
+        case 200...299:
+            return try JSONDecoder().decode(T.self, from: data)
+        case 400:
+            let message = String(data: data, encoding: .utf8) ?? "Bad request"
+            throw APIError.serverError(statusCode: 400, message: message)
         case 401:
             throw APIError.unauthorized
         case 404:
