@@ -215,6 +215,7 @@ async function saveSettings() {
                 <option value="aws">AWS S3</option>
                 <option value="sftp">SFTP</option>
                 <option value="git">Git (GitHub Pages, etc.)</option>
+                <option value="cloudflare">Cloudflare Pages</option>
               </select>
             </div>
 
@@ -394,6 +395,52 @@ async function saveSettings() {
                       placeholder="Update blog"
                     />
                   </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Cloudflare Pages Settings -->
+            <div v-if="form.publisherType === 'cloudflare'" class="space-y-4 p-4 border-2 border-retro-gray-light dark:border-retro-gray-darker">
+              <h4 class="font-retro-mono text-retro-sm text-retro-gray-darker dark:text-retro-cream uppercase tracking-wider">Cloudflare Pages Configuration</h4>
+              <p class="font-retro-sans text-retro-sm text-retro-gray-dark dark:text-retro-gray-medium">
+                Requires the <code class="font-retro-mono">wrangler</code> CLI to be installed. The project will be auto-created if it doesn't exist.
+              </p>
+              <div class="space-y-4">
+                <div>
+                  <label class="block font-retro-mono text-retro-xs text-retro-gray-medium uppercase tracking-wider mb-2">Account ID</label>
+                  <input
+                    v-model="form.cfAccountId"
+                    type="text"
+                    class="w-full px-3 py-2 border-2 border-retro-gray-light dark:border-retro-gray-darker bg-white dark:bg-black font-retro-mono text-retro-sm text-retro-gray-darker dark:text-retro-cream focus:outline-none focus:border-retro-orange"
+                    placeholder="Your Cloudflare Account ID"
+                  />
+                  <p class="mt-1 font-retro-mono text-retro-xs text-retro-gray-medium">
+                    Found in your Cloudflare dashboard under Account ID
+                  </p>
+                </div>
+                <div>
+                  <label class="block font-retro-mono text-retro-xs text-retro-gray-medium uppercase tracking-wider mb-2">API Token</label>
+                  <input
+                    v-model="form.cfApiToken"
+                    type="password"
+                    class="w-full px-3 py-2 border-2 border-retro-gray-light dark:border-retro-gray-darker bg-white dark:bg-black font-retro-mono text-retro-sm text-retro-gray-darker dark:text-retro-cream focus:outline-none focus:border-retro-orange"
+                    placeholder="Cloudflare API Token"
+                  />
+                  <p class="mt-1 font-retro-mono text-retro-xs text-retro-gray-medium">
+                    Create a token with "Cloudflare Pages: Edit" permission
+                  </p>
+                </div>
+                <div>
+                  <label class="block font-retro-mono text-retro-xs text-retro-gray-medium uppercase tracking-wider mb-2">Project Name</label>
+                  <input
+                    v-model="form.cfProjectName"
+                    type="text"
+                    class="w-full px-3 py-2 border-2 border-retro-gray-light dark:border-retro-gray-darker bg-white dark:bg-black font-retro-mono text-retro-sm text-retro-gray-darker dark:text-retro-cream focus:outline-none focus:border-retro-orange"
+                    placeholder="my-blog"
+                  />
+                  <p class="mt-1 font-retro-mono text-retro-xs text-retro-gray-medium">
+                    Your site will be available at &lt;project-name&gt;.pages.dev
+                  </p>
                 </div>
               </div>
             </div>

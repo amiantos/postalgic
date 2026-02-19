@@ -196,6 +196,15 @@ function runMigrations(database) {
     console.log('[Database] Running migration: adding git_private_key column to blogs table');
     database.exec(`ALTER TABLE blogs ADD COLUMN git_private_key TEXT`);
   }
+
+  // Migration: Add Cloudflare Pages columns
+  const blogColumnsCf = database.prepare(`PRAGMA table_info(blogs)`).all();
+  if (!blogColumnsCf.some(col => col.name === 'cf_account_id')) {
+    console.log('[Database] Running migration: adding Cloudflare Pages columns to blogs table');
+    database.exec(`ALTER TABLE blogs ADD COLUMN cf_account_id TEXT`);
+    database.exec(`ALTER TABLE blogs ADD COLUMN cf_api_token TEXT`);
+    database.exec(`ALTER TABLE blogs ADD COLUMN cf_project_name TEXT`);
+  }
 }
 
 /**
@@ -251,6 +260,9 @@ function createSchema(database) {
       git_branch TEXT DEFAULT 'main',
       git_commit_message TEXT,
       git_private_key TEXT,
+      cf_account_id TEXT,
+      cf_api_token TEXT,
+      cf_project_name TEXT,
       timezone TEXT DEFAULT 'UTC',
       simple_analytics_enabled INTEGER DEFAULT 0,
       simple_analytics_domain TEXT,

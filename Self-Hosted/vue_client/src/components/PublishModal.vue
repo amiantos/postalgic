@@ -66,6 +66,9 @@ function triggerAutoPublish() {
     case 'git':
       publishToGit();
       break;
+    case 'cloudflare':
+      publishToCloudflare();
+      break;
     case 'manual':
       downloadSite();
       break;
@@ -318,6 +321,30 @@ async function publishToGit() {
   }
 }
 
+async function publishToCloudflare() {
+  publishing.value = true;
+  error.value = null;
+
+  try {
+    // Perform pre-publish sync first
+    const syncOk = await performPrePublishSync();
+    if (!syncOk) {
+      publishing.value = false;
+      return;
+    }
+
+    await publishWithSSE('cloudflare/stream');
+
+    addLog('Publish complete!', 'success');
+    publishComplete.value = true;
+  } catch (e) {
+    addLog(`Publish failed: ${e.message}`, 'error');
+    error.value = e.message;
+  } finally {
+    publishing.value = false;
+  }
+}
+
 function openPreview() {
   if (previewUrl.value) {
     window.open(previewUrl.value, '_blank');
@@ -355,7 +382,8 @@ function getPublisherLabel(type) {
     manual: 'Manual (ZIP)',
     aws: 'AWS S3',
     sftp: 'SFTP',
-    git: 'Git'
+    git: 'Git',
+    cloudflare: 'Cloudflare Pages'
   };
   return labels[type] || type;
 }
@@ -580,6 +608,17 @@ const isWorking = computed(() => generating.value || downloading.value || publis
                 class="w-full px-4 py-3 bg-retro-orange text-white font-retro-mono text-retro-sm uppercase tracking-wider hover:bg-retro-orange-dark transition-colors disabled:opacity-50"
               >
                 {{ publishing ? 'Publishing...' : 'Push to Git' }}
+              </button>
+            </template>
+
+            <!-- Cloudflare Pages Publish -->
+            <template v-if="publisherType === 'cloudflare'">
+              <button
+                @click="publishToCloudflare()"
+                :disabled="isWorking || !hasPublishedPosts"
+                class="w-full px-4 py-3 bg-retro-orange text-white font-retro-mono text-retro-sm uppercase tracking-wider hover:bg-retro-orange-dark transition-colors disabled:opacity-50"
+              >
+                {{ publishing ? 'Publishing...' : 'Deploy to Cloudflare' }}
               </button>
             </template>
 

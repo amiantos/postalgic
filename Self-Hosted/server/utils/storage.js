@@ -71,6 +71,7 @@ class Storage {
         aws_access_key_id, aws_secret_access_key,
         ftp_host, ftp_port, ftp_username, ftp_password, ftp_private_key, ftp_path,
         git_repository_url, git_username, git_token, git_branch, git_commit_message, git_private_key,
+        cf_account_id, cf_api_token, cf_project_name,
         timezone, simple_analytics_enabled, simple_analytics_domain,
         created_at, updated_at
       ) VALUES (
@@ -81,6 +82,7 @@ class Storage {
         ?, ?,
         ?, ?, ?, ?, ?, ?,
         ?, ?, ?, ?, ?, ?,
+        ?, ?, ?,
         ?, ?, ?,
         ?, ?
       )
@@ -119,6 +121,9 @@ class Storage {
       blogData.gitBranch || 'main',
       blogData.gitCommitMessage || null,
       blogData.gitPrivateKey || null,
+      blogData.cfAccountId || null,
+      blogData.cfApiToken || null,
+      blogData.cfProjectName || null,
       blogData.timezone || 'UTC',
       blogData.simpleAnalyticsEnabled ? 1 : 0,
       blogData.simpleAnalyticsDomain || null,
@@ -152,6 +157,7 @@ class Storage {
         ftp_private_key = ?, ftp_path = ?,
         git_repository_url = ?, git_username = ?, git_token = ?,
         git_branch = ?, git_commit_message = ?, git_private_key = ?,
+        cf_account_id = ?, cf_api_token = ?, cf_project_name = ?,
         timezone = ?, simple_analytics_enabled = ?, simple_analytics_domain = ?,
         updated_at = ?
       WHERE id = ?
@@ -189,6 +195,9 @@ class Storage {
       merged.gitBranch,
       merged.gitCommitMessage,
       merged.gitPrivateKey,
+      merged.cfAccountId,
+      merged.cfApiToken,
+      merged.cfProjectName,
       merged.timezone || 'UTC',
       merged.simpleAnalyticsEnabled ? 1 : 0,
       merged.simpleAnalyticsDomain,
@@ -252,6 +261,9 @@ class Storage {
       gitBranch: row.git_branch,
       gitCommitMessage: row.git_commit_message,
       gitPrivateKey: row.git_private_key,
+      cfAccountId: row.cf_account_id,
+      cfApiToken: row.cf_api_token,
+      cfProjectName: row.cf_project_name,
       timezone: row.timezone || 'UTC',
       simpleAnalyticsEnabled: !!row.simple_analytics_enabled,
       simpleAnalyticsDomain: row.simple_analytics_domain,

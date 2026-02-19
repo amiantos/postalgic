@@ -15,7 +15,7 @@ import path from 'path';
 import Storage from '../utils/storage.js';
 import { generateSite } from '../services/siteGenerator.js';
 import { createZipArchive } from '../services/archiver.js';
-import { AWSPublisher, SFTPPublisher, GitPublisher } from '../services/publishers/index.js';
+import { AWSPublisher, SFTPPublisher, GitPublisher, CloudflarePagesPublisher } from '../services/publishers/index.js';
 
 const router = express.Router({ mergeParams: true });
 
@@ -666,6 +666,120 @@ router.post('/git', async (req, res) => {
     });
   } catch (error) {
     console.error('Git publish error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/blogs/:blogId/publish/cloudflare/stream - Publish to Cloudflare Pages with SSE progress
+router.get('/cloudflare/stream', async (req, res) => {
+  // Set up SSE headers
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.flushHeaders();
+
+  try {
+    const storage = getStorage(req);
+    const { blogId } = req.params;
+
+    const blog = storage.getBlog(blogId);
+    if (!blog) {
+      sendSSE(res, 'error', { message: 'Blog not found' });
+      res.end();
+      return;
+    }
+
+    if (!blog.cfAccountId || !blog.cfApiToken || !blog.cfProjectName) {
+      sendSSE(res, 'error', { message: 'Cloudflare Pages configuration incomplete' });
+      res.end();
+      return;
+    }
+
+    sendSSE(res, 'progress', { phase: 'init', message: 'Initializing Cloudflare Pages publisher...' });
+
+    const publisher = new CloudflarePagesPublisher({
+      accountId: blog.cfAccountId,
+      apiToken: blog.cfApiToken,
+      projectName: blog.cfProjectName
+    });
+
+    sendSSE(res, 'progress', { phase: 'generate', message: 'Generating site...' });
+
+    const generateResult = await generateSite(storage, blogId);
+
+    sendSSE(res, 'progress', { phase: 'generate', message: `Generated ${generateResult.fileCount} files` });
+
+    // Write hash file to the generated site directory (it will be deployed with the rest)
+    publisher.writeHashFile(generateResult.outputDir, generateResult.fileHashes, 'self-hosted');
+
+    sendSSE(res, 'progress', { phase: 'upload', message: 'Deploying to Cloudflare Pages...' });
+
+    // Progress callback for wrangler output
+    const onProgress = (message) => {
+      sendSSE(res, 'file', { current: 0, total: 0, filename: message });
+    };
+
+    const result = await publisher.publish(generateResult.outputDir, onProgress);
+
+    storage.updateSyncVersion(blogId, generateResult.syncVersion, extractSyncHashes(generateResult.fileHashes));
+
+    sendSSE(res, 'complete', {
+      success: true,
+      message: result.message || 'Published to Cloudflare Pages',
+      deploymentUrl: result.deploymentUrl
+    });
+
+    res.end();
+  } catch (error) {
+    console.error('Cloudflare Pages publish error:', error);
+    sendSSE(res, 'error', { message: error.message });
+    res.end();
+  }
+});
+
+// POST /api/blogs/:blogId/publish/cloudflare - Publish to Cloudflare Pages (non-streaming fallback)
+router.post('/cloudflare', async (req, res) => {
+  try {
+    const storage = getStorage(req);
+    const { blogId } = req.params;
+
+    const blog = storage.getBlog(blogId);
+    if (!blog) {
+      return res.status(404).json({ error: 'Blog not found' });
+    }
+
+    if (!blog.cfAccountId || !blog.cfApiToken || !blog.cfProjectName) {
+      return res.status(400).json({
+        error: 'Cloudflare Pages configuration incomplete. Please set Account ID, API Token, and Project Name in settings.'
+      });
+    }
+
+    const publisher = new CloudflarePagesPublisher({
+      accountId: blog.cfAccountId,
+      apiToken: blog.cfApiToken,
+      projectName: blog.cfProjectName
+    });
+
+    // Generate site
+    const generateResult = await generateSite(storage, blogId);
+
+    // Write hash file to the generated site directory
+    publisher.writeHashFile(generateResult.outputDir, generateResult.fileHashes, 'self-hosted');
+
+    // Publish
+    const result = await publisher.publish(generateResult.outputDir);
+
+    // Update sync version
+    storage.updateSyncVersion(blogId, generateResult.syncVersion, extractSyncHashes(generateResult.fileHashes));
+
+    res.json({
+      success: true,
+      message: result.message || 'Published to Cloudflare Pages',
+      deploymentUrl: result.deploymentUrl
+    });
+  } catch (error) {
+    console.error('Cloudflare Pages publish error:', error);
     res.status(500).json({ error: error.message });
   }
 });
