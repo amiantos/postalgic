@@ -36,6 +36,13 @@
 		448E851D2DB3984200772502 /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = 448E851C2DB3984200772502 /* ZIPFoundation */; };
 		449CAF852DB47E2900558395 /* AWSCore in Frameworks */ = {isa = PBXBuildFile; productRef = 449CAF842DB47E2900558395 /* AWSCore */; };
 		449CAF872DB47E2900558395 /* AWSS3 in Frameworks */ = {isa = PBXBuildFile; productRef = 449CAF862DB47E2900558395 /* AWSS3 */; };
+		44AF0B4E2F46E6E900549E3C /* RemoteServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44AF0B4C2F46E6E900549E3C /* RemoteServer.swift */; };
+		44AF0B4F2F46E6E900549E3C /* RemoteModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44AF0B4B2F46E6E900549E3C /* RemoteModels.swift */; };
+		44AF0B512F46E70800549E3C /* PostalgicAPIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44AF0B502F46E70800549E3C /* PostalgicAPIClient.swift */; };
+		44AF0B572F46E71D00549E3C /* RemoteServersSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44AF0B552F46E71D00549E3C /* RemoteServersSettingsView.swift */; };
+		44AF0B582F46E71D00549E3C /* RemoteBlogDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44AF0B522F46E71D00549E3C /* RemoteBlogDashboardView.swift */; };
+		44AF0B592F46E71D00549E3C /* RemotePostsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44AF0B542F46E71D00549E3C /* RemotePostsView.swift */; };
+		44AF0B5A2F46E71D00549E3C /* RemotePostPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44AF0B532F46E71D00549E3C /* RemotePostPreviewView.swift */; };
 		44C363C32DB632430057567C /* Ink in Frameworks */ = {isa = PBXBuildFile; productRef = 44C363C22DB632430057567C /* Ink */; };
 		44C364202DB768DB0057567C /* AWSPublisher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44C3640E2DB768DB0057567C /* AWSPublisher.swift */; };
 		44C364212DB768DB0057567C /* StaticSiteGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44C3640F2DB768DB0057567C /* StaticSiteGenerator.swift */; };
@@ -119,6 +126,13 @@
 		44788A712DE1BAEC003F02E1 /* StaticFileFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StaticFileFormView.swift; sourceTree = "<group>"; };
 		44788A722DE1BAEC003F02E1 /* StaticFilesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StaticFilesView.swift; sourceTree = "<group>"; };
 		44788A812DE2752D003F02E1 /* IntroductionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntroductionView.swift; sourceTree = "<group>"; };
+		44AF0B4B2F46E6E900549E3C /* RemoteModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteModels.swift; sourceTree = "<group>"; };
+		44AF0B4C2F46E6E900549E3C /* RemoteServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteServer.swift; sourceTree = "<group>"; };
+		44AF0B502F46E70800549E3C /* PostalgicAPIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostalgicAPIClient.swift; sourceTree = "<group>"; };
+		44AF0B522F46E71D00549E3C /* RemoteBlogDashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteBlogDashboardView.swift; sourceTree = "<group>"; };
+		44AF0B532F46E71D00549E3C /* RemotePostPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemotePostPreviewView.swift; sourceTree = "<group>"; };
+		44AF0B542F46E71D00549E3C /* RemotePostsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemotePostsView.swift; sourceTree = "<group>"; };
+		44AF0B552F46E71D00549E3C /* RemoteServersSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteServersSettingsView.swift; sourceTree = "<group>"; };
 		44C3640E2DB768DB0057567C /* AWSPublisher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AWSPublisher.swift; sourceTree = "<group>"; };
 		44C3640F2DB768DB0057567C /* StaticSiteGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StaticSiteGenerator.swift; sourceTree = "<group>"; };
 		44C364112DB768DB0057567C /* BlogAwsConfigView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlogAwsConfigView.swift; sourceTree = "<group>"; };
@@ -301,6 +315,26 @@
 			path = "Posts List";
 			sourceTree = "<group>";
 		};
+		44AF0B4D2F46E6E900549E3C /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				44AF0B4B2F46E6E900549E3C /* RemoteModels.swift */,
+				44AF0B4C2F46E6E900549E3C /* RemoteServer.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		44AF0B562F46E71D00549E3C /* Remote */ = {
+			isa = PBXGroup;
+			children = (
+				44AF0B522F46E71D00549E3C /* RemoteBlogDashboardView.swift */,
+				44AF0B532F46E71D00549E3C /* RemotePostPreviewView.swift */,
+				44AF0B542F46E71D00549E3C /* RemotePostsView.swift */,
+				44AF0B552F46E71D00549E3C /* RemoteServersSettingsView.swift */,
+			);
+			path = Remote;
+			sourceTree = "<group>";
+		};
 		44C364102DB768DB0057567C /* Services */ = {
 			isa = PBXGroup;
 			children = (
@@ -308,6 +342,7 @@
 				44362EF62DBDE7BF00EA704F /* Site Generation */,
 				44362E7C2DBC0B1A00EA704F /* Publishers */,
 				443F0B2F2DB8D48B00034EF1 /* LinkMetadataService.swift */,
+				44AF0B502F46E70800549E3C /* PostalgicAPIClient.swift */,
 				44E4AA0F2EE944F100364738 /* BlogExportService.swift */,
 				44DE438C2DD5A32200F31204 /* KeychainService.swift */,
 				44DE433F2DD332C200F31204 /* ThemeService.swift */,
@@ -320,6 +355,7 @@
 			isa = PBXGroup;
 			children = (
 				44788A812DE2752D003F02E1 /* IntroductionView.swift */,
+				44AF0B562F46E71D00549E3C /* Remote */,
 				44E4AA262EEF86E500364738 /* Sync */,
 				44C3642F2DB768F90057567C /* Blogs List */,
 				44C364302DB769260057567C /* Blog Dashboard */,
@@ -334,6 +370,7 @@
 		44C3641F2DB768DB0057567C /* Postalgic */ = {
 			isa = PBXGroup;
 			children = (
+				44AF0B4D2F46E6E900549E3C /* Models */,
 				44362F4F2DC1DF7700EA704F /* Info.plist */,
 				44C3641C2DB768DB0057567C /* Assets.xcassets */,
 				44C3641D2DB768DB0057567C /* Models.swift */,
@@ -555,6 +592,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				44788A822DE2752D003F02E1 /* IntroductionView.swift in Sources */,
+				44AF0B4E2F46E6E900549E3C /* RemoteServer.swift in Sources */,
+				44AF0B4F2F46E6E900549E3C /* RemoteModels.swift in Sources */,
 				44E4AA2D2EEFEF6800364738 /* SyncChecker.swift in Sources */,
 				44EB9B502F07444D0058E2C0 /* SyncSessionManager.swift in Sources */,
 				44E4AA2E2EEFEF6800364738 /* IncrementalSync.swift in Sources */,
@@ -564,6 +603,7 @@
 				44362F162DC0989000EA704F /* LinkListFormView.swift in Sources */,
 				44DE43242DD1CCFB00F31204 /* URLEmbedView.swift in Sources */,
 				44362F172DC0989000EA704F /* SidebarManagementView.swift in Sources */,
+				44AF0B512F46E70800549E3C /* PostalgicAPIClient.swift in Sources */,
 				44362F182DC0989000EA704F /* TextBlockFormView.swift in Sources */,
 				443F0B652DBB779200034EF1 /* PublishSettingsView.swift in Sources */,
 				44E4AA102EE944F100364738 /* BlogExportService.swift in Sources */,
@@ -587,6 +627,10 @@
 				44E4AA232EEF86CE00364738 /* SyncImporter.swift in Sources */,
 				44EB9BC72F0866330058E2C0 /* Logging.swift in Sources */,
 				443F0B512DBAD7AC00034EF1 /* PreviewData.swift in Sources */,
+				44AF0B572F46E71D00549E3C /* RemoteServersSettingsView.swift in Sources */,
+				44AF0B582F46E71D00549E3C /* RemoteBlogDashboardView.swift in Sources */,
+				44AF0B592F46E71D00549E3C /* RemotePostsView.swift in Sources */,
+				44AF0B5A2F46E71D00549E3C /* RemotePostPreviewView.swift in Sources */,
 				44499DE42DC5CD1E00A9624B /* PostsView.swift in Sources */,
 				44362EDD2DBD829000EA704F /* TemplateModels.swift in Sources */,
 				44499DE22DC5CBC500A9624B /* PostPreviewView.swift in Sources */,
