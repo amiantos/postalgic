@@ -164,3 +164,11 @@ struct RemotePostsResponse: Codable {
     let limit: Int
     let hasMore: Bool
 }
+
+// MARK: - Publish Status
+
+struct RemotePublishStatus: Codable {
+    let publisherType: String
+    let lastPublishedDate: String?
+    let syncVersion: String?
+}

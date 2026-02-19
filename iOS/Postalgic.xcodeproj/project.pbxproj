@@ -48,6 +48,10 @@
 		44AF0B692F46EC6000549E3C /* RemoteCategorySelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44AF0B5D2F46EC6000549E3C /* RemoteCategorySelectionView.swift */; };
 		44AF0B6A2F46EC6000549E3C /* RemotePostView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44AF0B602F46EC6000549E3C /* RemotePostView.swift */; };
 		44AF0B6B2F46EC6000549E3C /* RemoteTagManagementView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44AF0B622F46EC6000549E3C /* RemoteTagManagementView.swift */; };
+		44AF0B712F46EFFE00549E3C /* RemoteURLEmbedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44AF0B702F46EFFE00549E3C /* RemoteURLEmbedView.swift */; };
+		44AF0B722F46EFFE00549E3C /* RemotePublishView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44AF0B6F2F46EFFE00549E3C /* RemotePublishView.swift */; };
+		44AF0B732F46EFFE00549E3C /* RemoteEmbedDisplayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44AF0B6D2F46EFFE00549E3C /* RemoteEmbedDisplayView.swift */; };
+		44AF0B742F46EFFE00549E3C /* RemoteImageEmbedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44AF0B6E2F46EFFE00549E3C /* RemoteImageEmbedView.swift */; };
 		44C363C32DB632430057567C /* Ink in Frameworks */ = {isa = PBXBuildFile; productRef = 44C363C22DB632430057567C /* Ink */; };
 		44C364202DB768DB0057567C /* AWSPublisher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44C3640E2DB768DB0057567C /* AWSPublisher.swift */; };
 		44C364212DB768DB0057567C /* StaticSiteGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44C3640F2DB768DB0057567C /* StaticSiteGenerator.swift */; };
@@ -143,6 +147,10 @@
 		44AF0B602F46EC6000549E3C /* RemotePostView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemotePostView.swift; sourceTree = "<group>"; };
 		44AF0B622F46EC6000549E3C /* RemoteTagManagementView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteTagManagementView.swift; sourceTree = "<group>"; };
 		44AF0B632F46EC6000549E3C /* RemoteTagSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteTagSelectionView.swift; sourceTree = "<group>"; };
+		44AF0B6D2F46EFFE00549E3C /* RemoteEmbedDisplayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteEmbedDisplayView.swift; sourceTree = "<group>"; };
+		44AF0B6E2F46EFFE00549E3C /* RemoteImageEmbedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteImageEmbedView.swift; sourceTree = "<group>"; };
+		44AF0B6F2F46EFFE00549E3C /* RemotePublishView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemotePublishView.swift; sourceTree = "<group>"; };
+		44AF0B702F46EFFE00549E3C /* RemoteURLEmbedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteURLEmbedView.swift; sourceTree = "<group>"; };
 		44C3640E2DB768DB0057567C /* AWSPublisher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AWSPublisher.swift; sourceTree = "<group>"; };
 		44C3640F2DB768DB0057567C /* StaticSiteGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StaticSiteGenerator.swift; sourceTree = "<group>"; };
 		44C364112DB768DB0057567C /* BlogAwsConfigView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlogAwsConfigView.swift; sourceTree = "<group>"; };
@@ -346,6 +354,10 @@
 				44AF0B632F46EC6000549E3C /* RemoteTagSelectionView.swift */,
 				44AF0B542F46E71D00549E3C /* RemotePostsView.swift */,
 				44AF0B552F46E71D00549E3C /* RemoteServersSettingsView.swift */,
+				44AF0B6D2F46EFFE00549E3C /* RemoteEmbedDisplayView.swift */,
+				44AF0B6E2F46EFFE00549E3C /* RemoteImageEmbedView.swift */,
+				44AF0B6F2F46EFFE00549E3C /* RemotePublishView.swift */,
+				44AF0B702F46EFFE00549E3C /* RemoteURLEmbedView.swift */,
 			);
 			path = Remote;
 			sourceTree = "<group>";
@@ -650,6 +662,10 @@
 				44AF0B572F46E71D00549E3C /* RemoteServersSettingsView.swift in Sources */,
 				44AF0B582F46E71D00549E3C /* RemoteBlogDashboardView.swift in Sources */,
 				44AF0B592F46E71D00549E3C /* RemotePostsView.swift in Sources */,
+				44AF0B712F46EFFE00549E3C /* RemoteURLEmbedView.swift in Sources */,
+				44AF0B722F46EFFE00549E3C /* RemotePublishView.swift in Sources */,
+				44AF0B732F46EFFE00549E3C /* RemoteEmbedDisplayView.swift in Sources */,
+				44AF0B742F46EFFE00549E3C /* RemoteImageEmbedView.swift in Sources */,
 				44AF0B5A2F46E71D00549E3C /* RemotePostPreviewView.swift in Sources */,
 				44499DE42DC5CD1E00A9624B /* PostsView.swift in Sources */,
 				44362EDD2DBD829000EA704F /* TemplateModels.swift in Sources */,

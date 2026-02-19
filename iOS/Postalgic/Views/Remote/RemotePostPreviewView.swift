@@ -24,6 +24,12 @@ struct RemotePostPreviewView: View {
                 .foregroundColor(.secondary)
                 .padding(.top, 3)
 
+            // Embed (above position)
+            if let embed = post.embed, embed.position == "above" {
+                RemoteEmbedDisplayView(embed: embed, serverBaseURL: server.baseURL, blogId: blog.id, authHeader: server.authHeader)
+                    .padding(.top, 6)
+            }
+
             // Title
             if post.title != nil {
                 Text(post.displayTitle ?? post.title ?? "")
@@ -39,6 +45,12 @@ struct RemotePostPreviewView: View {
                 Text(post.excerpt ?? String(post.content.prefix(280)))
                     .font(.subheadline)
                     .lineLimit(6)
+                    .padding(.top, 6)
+            }
+
+            // Embed (below position or default)
+            if let embed = post.embed, embed.position != "above" {
+                RemoteEmbedDisplayView(embed: embed, serverBaseURL: server.baseURL, blogId: blog.id, authHeader: server.authHeader)
                     .padding(.top, 6)
             }
 

@@ -140,6 +140,31 @@ actor PostalgicAPIClient {
         try await delete("/api/blogs/\(blogId)/tags/\(tagId)")
     }
 
+    // MARK: - Publish
+
+    func fetchPublishStatus(blogId: String) async throws -> RemotePublishStatus {
+        try await get("/api/blogs/\(blogId)/publish/status")
+    }
+
+    /// Returns the SSE stream URL for publishing based on publisher type
+    nonisolated func publishStreamURL(blogId: String, publisherType: String) -> URL? {
+        let path: String
+        switch publisherType {
+        case "aws": path = "/api/blogs/\(blogId)/publish/aws/stream"
+        case "sftp": path = "/api/blogs/\(blogId)/publish/sftp/stream"
+        case "git": path = "/api/blogs/\(blogId)/publish/git/stream"
+        default: return nil
+        }
+        return URL(string: "\(baseURL)\(path)")
+    }
+
+    /// Returns the Basic Auth header value for use in manual URL requests (like SSE)
+    nonisolated func getAuthHeader() -> String {
+        let credentials = "\(username):\(password)"
+        let data = Data(credentials.utf8)
+        return "Basic \(data.base64EncodedString())"
+    }
+
     // MARK: - Private Networking
 
     private func authHeader() -> String {

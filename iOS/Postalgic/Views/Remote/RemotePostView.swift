@@ -22,6 +22,10 @@ struct RemotePostView: View {
     @State private var selectedCategoryId: String?
     @State private var selectedTagIds: [String] = []
 
+    // Embed
+    @State private var embedData: RemoteEmbedData?
+    @State private var existingEmbed: RemoteEmbed?
+
     // UI state
     @State private var showURLPrompt: Bool = false
     @State private var urlText: String = ""
@@ -31,6 +35,15 @@ struct RemotePostView: View {
     @State private var isSaving: Bool = false
     @State private var errorMessage: String?
     @State private var showingError: Bool = false
+
+    // Load guard
+    @State private var hasLoaded: Bool = false
+
+    // Embed UI state
+    @State private var showingEmbedTypeAlert: Bool = false
+    @State private var showingEmbedActionAlert: Bool = false
+    @State private var showingURLEmbed: Bool = false
+    @State private var showingImageEmbed: Bool = false
 
     // Category/tag data for display
     @State private var categories: [RemoteCategory] = []
@@ -42,6 +55,42 @@ struct RemotePostView: View {
     var onSave: (() -> Void)?
 
     private var isNewPost: Bool { existingPost == nil }
+
+    // Embed computed properties
+    private var hasEmbed: Bool { embedData != nil || existingEmbed != nil }
+
+    private var embedLabelText: String {
+        if let data = embedData {
+            switch data.type {
+            case "youtube": return "YouTube Video"
+            case "link": return "Link Embedded"
+            case "image":
+                let count = data.images?.count ?? 0
+                return count == 1 ? "1 Image" : "\(count) Images"
+            default: return "Embed Content"
+            }
+        } else if let embed = existingEmbed {
+            switch embed.type {
+            case "youtube": return "YouTube Video"
+            case "link": return "Link Embedded"
+            case "image":
+                let count = embed.images?.count ?? 0
+                return count == 1 ? "1 Image" : "\(count) Images"
+            default: return "Embed Content"
+            }
+        }
+        return "Embed Content"
+    }
+
+    private var embedIconName: String {
+        let type = embedData?.type ?? existingEmbed?.type
+        switch type {
+        case "youtube": return "play.rectangle"
+        case "link": return "link"
+        case "image": return "photo"
+        default: return "paperclip"
+        }
+    }
 
     init(server: RemoteServer, blog: RemoteBlog, existingPost: RemotePost? = nil, onSave: (() -> Void)? = nil) {
         self.server = server
@@ -89,13 +138,26 @@ struct RemotePostView: View {
                 Divider()
 
                 HStack(spacing: 0.0) {
+                    Button {
+                        if hasEmbed {
+                            showingEmbedActionAlert = true
+                        } else {
+                            showingEmbedTypeAlert = true
+                        }
+                    } label: {
+                        Label(embedLabelText, systemImage: embedIconName)
+                            .font(.footnote)
+                            .padding(.leading)
+                            .padding(.vertical, 12)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+
                     Button(action: {
                         selectedDate = createdAt
                         showingDatePicker = true
                     }) {
                         Label(shortFormattedDate, systemImage: "calendar")
                             .font(.footnote)
-                            .padding(.leading)
                             .padding(.vertical, 12)
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
@@ -147,6 +209,55 @@ struct RemotePostView: View {
             } message: {
                 Text(errorMessage ?? "An unknown error occurred")
             }
+            // Embed type selection (when no embed exists)
+            .confirmationDialog("Add Embed", isPresented: $showingEmbedTypeAlert, titleVisibility: .visible) {
+                Button("URL / YouTube Embed") {
+                    showingURLEmbed = true
+                }
+                Button("Image Embed") {
+                    showingImageEmbed = true
+                }
+                Button("Cancel", role: .cancel) {}
+            }
+            // Embed action (when embed exists)
+            .confirmationDialog("Embed Options", isPresented: $showingEmbedActionAlert, titleVisibility: .visible) {
+                Button("Edit Embed") {
+                    let type = embedData?.type ?? existingEmbed?.type
+                    if type == "image" {
+                        showingImageEmbed = true
+                    } else {
+                        showingURLEmbed = true
+                    }
+                }
+                Button("Remove Embed", role: .destructive) {
+                    embedData = nil
+                    existingEmbed = nil
+                }
+                Button("Cancel", role: .cancel) {}
+            }
+            .sheet(isPresented: $showingURLEmbed) {
+                RemoteURLEmbedView(
+                    existingEmbed: existingEmbed?.type == "youtube" || existingEmbed?.type == "link" ? existingEmbed : nil,
+                    onSave: { data in
+                        embedData = data
+                        existingEmbed = nil
+                    },
+                    onTitleUpdate: { newTitle in
+                        title = newTitle
+                    }
+                )
+            }
+            .sheet(isPresented: $showingImageEmbed) {
+                RemoteImageEmbedView(
+                    existingEmbed: existingEmbed?.type == "image" ? existingEmbed : nil,
+                    server: server,
+                    blog: blog,
+                    onSave: { data in
+                        embedData = data
+                        existingEmbed = nil
+                    }
+                )
+            }
             .sheet(isPresented: $showingDatePicker) {
                 NavigationStack {
                     ScrollView {
@@ -174,6 +285,8 @@ struct RemotePostView: View {
                 }
             }
             .onAppear {
+                guard !hasLoaded else { return }
+                hasLoaded = true
                 loadExistingPost()
             }
         }
@@ -200,6 +313,9 @@ struct RemotePostView: View {
         selectedCategoryName = post.category?.name
         selectedTagIds = post.tags?.map(\.id) ?? post.tagIds ?? []
         selectedTagNames = post.tags?.map(\.name) ?? []
+
+        // Load existing embed
+        existingEmbed = post.embed
 
         // Parse the creation date
         let iso8601 = ISO8601DateFormatter()
@@ -236,6 +352,17 @@ struct RemotePostView: View {
             body["categoryId"] = categoryId
         } else {
             body["categoryId"] = NSNull()
+        }
+
+        // Include embed data
+        if let embed = embedData {
+            body["embed"] = embed.toDictionary()
+        } else if existingEmbed != nil {
+            // Keep existing embed by not sending embed key
+            // (server will preserve it if not included in update)
+        } else if existingPost?.embed != nil {
+            // Embed was removed - send null
+            body["embed"] = NSNull()
         }
 
         let client = PostalgicAPIClient(server: server)

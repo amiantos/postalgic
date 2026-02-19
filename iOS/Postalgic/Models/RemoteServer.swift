@@ -28,6 +28,14 @@ final class RemoteServer {
         url.hasSuffix("/") ? String(url.dropLast()) : url
     }
 
+    /// Basic Auth header for authenticated requests
+    var authHeader: String {
+        let password = getPassword() ?? ""
+        let credentials = "\(username):\(password)"
+        let data = Data(credentials.utf8)
+        return "Basic \(data.base64EncodedString())"
+    }
+
     // MARK: - Keychain Password Management
 
     /// Stores the password in the Keychain

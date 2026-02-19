@@ -17,6 +17,7 @@ struct RemoteBlogDashboardView: View {
     @State private var isLoading = true
     @State private var errorMessage: String?
     @State private var showingNewPost = false
+    @State private var showingPublish = false
 
     var body: some View {
         ScrollView {
@@ -125,6 +126,21 @@ struct RemoteBlogDashboardView: View {
                             }
                             .buttonStyle(.bordered)
                             .foregroundStyle(.primary)
+
+                            Button {
+                                showingPublish = true
+                            } label: {
+                                VStack(spacing: 3) {
+                                    Image(systemName: "arrow.up.circle")
+                                        .font(.system(size: 24))
+                                    Text("Publish")
+                                        .font(.caption)
+                                }
+                                .padding(3)
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            }
+                            .buttonStyle(.bordered)
+                            .foregroundStyle(.primary)
                         }
                         .padding(.horizontal)
                     }
@@ -208,6 +224,9 @@ struct RemoteBlogDashboardView: View {
                 loadData()
             })
             .interactiveDismissDisabled()
+        }
+        .sheet(isPresented: $showingPublish) {
+            RemotePublishView(server: server, blog: blog)
         }
         .refreshable {
             await refreshData()
