@@ -25,6 +25,7 @@ struct PostalgicApp: App {
             Tag.self,
             Category.self,
             Theme.self,
+            RemoteServer.self,
         ])
 
         // Check if we're running UI tests and need to reset data
@@ -54,6 +55,7 @@ struct PostalgicApp: App {
                 try container.mainContext.delete(model: Tag.self)
                 try container.mainContext.delete(model: Category.self)
                 try container.mainContext.delete(model: Theme.self)
+                try container.mainContext.delete(model: RemoteServer.self)
             }
             
             // Initialize the theme service
