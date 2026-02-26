@@ -39,6 +39,7 @@ function loadThemeTemplates(themeDir) {
     tag: loadTemplate(themeDir, 'tag.mustache'),
     categories: loadTemplate(themeDir, 'categories.mustache'),
     category: loadTemplate(themeDir, 'category.mustache'),
+    '404': loadTemplate(themeDir, '404.mustache'),
     css: loadTemplate(themeDir, 'style.css'),
     rss: loadTemplate(themeDir, 'rss.xml'),
     robots: loadTemplate(themeDir, 'robots.txt'),

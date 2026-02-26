@@ -115,6 +115,7 @@ export async function generateSite(storage, blogId, options = {}) {
   await generateMonthlyArchivePages(outputDir, templates, baseContext, posts, fileHashes);
   await generateTagPages(outputDir, templates, baseContext, posts, tags, fileHashes);
   await generateCategoryPages(outputDir, templates, baseContext, posts, categories, fileHashes);
+  await generate404Page(outputDir, templates, baseContext, fileHashes);
 
   // Generate RSS, robots.txt, sitemap
   await generateRSSFeed(outputDir, templates, baseContext, posts, fileHashes);
@@ -654,6 +655,15 @@ async function generateArchivesPage(outputDir, templates, baseContext, posts, fi
   const archivesContent = Mustache.render(templates.archives, { years });
   const html = renderWithLayout(templates, baseContext, 'Archives', archivesContent);
   writeFile(outputDir, 'archives/index.html', html, fileHashes);
+}
+
+/**
+ * Generate 404 page
+ */
+async function generate404Page(outputDir, templates, baseContext, fileHashes) {
+  const content = Mustache.render(templates['404'], baseContext);
+  const html = renderWithLayout(templates, baseContext, 'Page Not Found', content);
+  writeFile(outputDir, '404.html', html, fileHashes);
 }
 
 /**
