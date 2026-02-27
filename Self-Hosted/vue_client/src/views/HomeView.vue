@@ -1,11 +1,18 @@
-<script setup>
-import { ref, onMounted, watch, nextTick } from 'vue';
-import { useRouter } from 'vue-router';
-import { useBlogStore } from '@/stores/blog';
-import { blogApi } from '@/api';
+<script>
+import { reactive } from 'vue';
 import { Chart, LineController, LineElement, PointElement, LinearScale, CategoryScale, Filler, Tooltip } from 'chart.js';
 
 Chart.register(LineController, LineElement, PointElement, LinearScale, CategoryScale, Filler, Tooltip);
+
+// Module-level analytics cache — survives component unmount/remount
+const analyticsData = reactive({});
+</script>
+
+<script setup>
+import { ref, onMounted, onUnmounted, nextTick } from 'vue';
+import { useRouter } from 'vue-router';
+import { useBlogStore } from '@/stores/blog';
+import { blogApi } from '@/api';
 
 const router = useRouter();
 const blogStore = useBlogStore();
@@ -13,42 +20,71 @@ const blogStore = useBlogStore();
 const showDeleteModal = ref(false);
 const blogToDelete = ref(null);
 
-// Analytics state
-const analyticsData = ref({});
-const chartInstances = ref({});
+const chartInstances = {};
 
-onMounted(() => {
-  blogStore.fetchBlogs();
+// Local loading state — only true when blogs haven't been loaded yet
+const isLoading = ref(blogStore.blogs.length === 0);
+
+onMounted(async () => {
+  await blogStore.fetchBlogs();
+  isLoading.value = false;
+
+  // Render charts — cached data means canvases are already in the DOM
+  await nextTick();
+  renderAllCharts();
+
+  // Fetch analytics for any blogs that don't have cached data
+  for (const blog of blogStore.blogs) {
+    if (blog.simpleAnalyticsEnabled && !analyticsData[blog.id]) {
+      fetchBlogAnalytics(blog);
+    }
+  }
 });
 
-// Fetch analytics for blogs that have it enabled
-async function fetchBlogAnalytics(blog) {
-  if (!blog.simpleAnalyticsEnabled) return;
+onUnmounted(() => {
+  for (const chart of Object.values(chartInstances)) {
+    chart.destroy();
+  }
+});
 
+async function fetchBlogAnalytics(blog) {
   try {
     const data = await blogApi.analytics(blog.id);
-    analyticsData.value[blog.id] = data;
+    analyticsData[blog.id] = data;
+    // Data just arrived — canvas should now appear via v-if, wait for DOM then render
     await nextTick();
-    renderChart(blog.id, data);
+    renderChart(blog.id);
   } catch (e) {
-    // Silently fail - just won't show analytics
+    // Silently fail
   }
 }
 
-function renderChart(blogId, data) {
-  const canvas = document.getElementById(`chart-${blogId}`);
-  if (!canvas || !data.histogram) return;
+function renderAllCharts() {
+  for (const blogId of Object.keys(analyticsData)) {
+    if (analyticsData[blogId]?.histogram) {
+      renderChart(blogId);
+    }
+  }
+}
 
-  // Destroy existing chart if any
-  if (chartInstances.value[blogId]) {
-    chartInstances.value[blogId].destroy();
+function renderChart(blogId) {
+  const data = analyticsData[blogId];
+  if (!data?.histogram) return;
+
+  const canvas = document.getElementById(`chart-${blogId}`);
+  if (!canvas) return;
+
+  // Destroy existing chart instance on this canvas
+  if (chartInstances[blogId]) {
+    chartInstances[blogId].destroy();
+    delete chartInstances[blogId];
   }
 
   const labels = data.histogram.map(d => d.date);
   const pageviews = data.histogram.map(d => d.pageviews || 0);
   const visitors = data.histogram.map(d => d.visitors || 0);
 
-  chartInstances.value[blogId] = new Chart(canvas, {
+  chartInstances[blogId] = new Chart(canvas, {
     type: 'line',
     data: {
       labels,
@@ -112,15 +148,6 @@ function renderChart(blogId, data) {
   });
 }
 
-// Watch for blogs to load and fetch analytics
-watch(() => blogStore.blogs, (blogs) => {
-  for (const blog of blogs) {
-    if (blog.simpleAnalyticsEnabled && !analyticsData.value[blog.id]) {
-      fetchBlogAnalytics(blog);
-    }
-  }
-}, { immediate: true });
-
 function navigateToBlog(blogId) {
   router.push({ name: 'blog-posts', params: { blogId } });
 }
@@ -173,7 +200,7 @@ async function deleteBlog() {
     <main class="max-w-[1000px] mx-auto px-8 pb-12 pt-6">
 
       <!-- Loading -->
-      <div v-if="blogStore.loading" class="py-24 text-center">
+      <div v-if="isLoading" class="py-24 text-center">
         <p class="text-[0.9em] text-site-medium">Loading...</p>
       </div>
 
