@@ -136,12 +136,14 @@ select.admin-input {
     display: flex;
     align-items: center;
     justify-content: center;
-    flex: 1;
+    flex: 1 1 auto;
     text-align: center;
     font-size: 0.75rem;
     color: var(--admin-dark);
     text-decoration: none;
+    padding: 0 0.4rem;
     border-right: 1px solid var(--admin-light);
+    white-space: nowrap;
 }
 
 .admin-nav-links a:last-child {
