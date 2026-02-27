@@ -269,6 +269,18 @@
     mask: var(--mask);
 }
 
+.wavy-separator-vertical {
+    width: 28px;
+    min-width: 28px;
+    height: 100%;
+    background-color: var(--admin-accent);
+    --mask:
+      radial-gradient(10.96px at calc(100% + 5.6px) 50%,#0000 calc(99% - 4px),#000 calc(101% - 4px) 99%,#0000 101%) calc(50% - 5.5px + .5px) calc(50% - 14px)/11px 28px repeat-y,
+      radial-gradient(10.96px at -5.6px 50%,#0000 calc(99% - 4px),#000 calc(101% - 4px) 99%,#0000 101%) calc(50% + 5.5px) 50%/11px 28px repeat-y;
+    -webkit-mask: var(--mask);
+    mask: var(--mask);
+}
+
 /* ==========================================
    Desktop (> 900px)
    ========================================== */

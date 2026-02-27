@@ -330,17 +330,17 @@ async function deletePost() {
 </script>
 
 <template>
-  <div class="min-h-screen bg-white overflow-x-hidden">
+  <div class="min-h-screen bg-white overflow-x-hidden lg:pr-[calc(16rem+28px)]">
     <!-- Max-width content wrapper for desktop -->
-    <div class="lg:max-w-[700px] lg:ml-8">
+    <div class="lg:max-w-[700px] lg:mx-auto">
 
     <!-- Navigation bar -->
     <nav class="flex items-center justify-between px-6 py-4 lg:px-0">
       <router-link
         :to="{ name: 'blog-posts', params: { blogId } }"
-        class="px-3 py-1.5 border-2 border-site-light bg-white font-mono text-sm text-site-dark hover:border-site-accent hover:text-site-accent uppercase tracking-wider"
+        class="px-4 py-2 border border-site-light text-site-dark font-semibold rounded-full hover:border-site-accent hover:text-site-accent transition-colors text-sm"
       >
-        <span class="relative -top-px">&lt;</span> {{ blogStore.currentBlog?.name || 'Posts' }}
+        &lt; {{ blogStore.currentBlog?.name || 'Posts' }}
       </router-link>
 
       <div class="flex items-center gap-4">
@@ -348,45 +348,29 @@ async function deletePost() {
         <button
           @click="saveDraft"
           :disabled="saving"
-          class="lg:hidden font-mono text-sm text-site-dark hover:text-site-accent uppercase tracking-wider disabled:opacity-50"
+          class="lg:hidden text-sm text-site-dark font-semibold hover:text-site-accent transition-colors disabled:opacity-50"
         >
           {{ saving ? 'Saving...' : 'Save Draft' }}
         </button>
         <button
           @click="publishPost"
           :disabled="saving"
-          class="lg:hidden font-mono text-sm text-site-accent hover:text-[#e89200] uppercase tracking-wider disabled:opacity-50"
+          class="lg:hidden text-sm text-site-accent font-semibold hover:text-[#e89200] transition-colors disabled:opacity-50"
         >
           Publish
         </button>
         <!-- Settings toggle (mobile only) -->
         <button
           @click="mobileSidebarOpen = true"
-          class="lg:hidden font-mono text-sm text-site-dark hover:text-site-accent uppercase tracking-wider"
+          class="lg:hidden text-sm text-site-dark font-semibold hover:text-site-accent transition-colors"
         >
           Settings
         </button>
       </div>
     </nav>
 
-    <!-- Hero section with giant title -->
-    <header class="relative h-40 md:h-48">
-      <!-- Divider that extends to the right -->
-      <div class="absolute bottom-0 left-6 right-0 border-b border-site-light lg:left-0 lg:-right-[100vw]"></div>
-      <!-- Giant background text -->
-      <span class="absolute inset-0 flex items-center justify-start font-bold text-[6rem] md:text-[8rem] leading-none tracking-tighter text-site-light select-none pointer-events-none whitespace-nowrap uppercase" aria-hidden="true">
-        {{ isNew ? 'NEW POST' : 'EDIT POST' }}
-      </span>
-      <!-- Foreground content -->
-      <div class="absolute bottom-8 left-6 lg:left-0">
-        <h1 class="font-bold text-4xl md:text-5xl leading-none tracking-tight text-site-dark lowercase whitespace-nowrap">
-          {{ isNew ? 'new post' : 'edit post' }}
-        </h1>
-      </div>
-    </header>
-
     <!-- Error -->
-    <div v-if="error" class="mx-6 lg:mx-0 mt-6 p-4 border-2 border-red-500 bg-red-50 font-mono text-sm text-red-600">
+    <div v-if="error" class="mx-6 lg:mx-0 mt-6 p-4 border border-red-300 rounded-lg bg-red-50 text-sm text-red-600">
       {{ error }}
     </div>
 
@@ -417,24 +401,25 @@ async function deletePost() {
     </div><!-- End max-width wrapper -->
 
     <!-- Desktop Sidebar (always visible on lg+) -->
-    <aside class="hidden lg:flex lg:flex-col w-64 bg-white border-l-2 border-site-light fixed top-0 right-0 h-screen overflow-y-auto overflow-x-hidden z-30">
-      <div class="p-4">
+    <aside class="hidden lg:flex lg:flex-row w-[calc(16rem+28px)] bg-white fixed top-0 right-0 h-screen z-30">
+      <div class="wavy-separator-vertical flex-shrink-0"></div>
+      <div class="flex-1 overflow-y-auto overflow-x-hidden p-4">
         <!-- Header -->
-        <h3 class="font-mono text-sm text-site-dark uppercase tracking-wider mb-4">Settings</h3>
+        <h3 class="text-sm text-site-dark font-semibold uppercase tracking-wide mb-4">Settings</h3>
 
         <!-- Action Buttons -->
         <div class="flex flex-col gap-2 mb-4">
           <button
             @click="saveDraft"
             :disabled="saving"
-            class="w-full px-3 py-2 border-2 border-site-light font-mono text-sm text-site-dark hover:border-site-accent hover:text-site-accent uppercase tracking-wider disabled:opacity-50"
+            class="w-full px-4 py-2 border border-site-light text-site-dark font-semibold rounded-full hover:border-site-accent hover:text-site-accent transition-colors text-sm disabled:opacity-50"
           >
             {{ saving ? 'Saving...' : 'Save Draft' }}
           </button>
           <button
             @click="publishPost"
             :disabled="saving"
-            class="w-full px-3 py-2 border-2 border-site-accent bg-site-accent font-mono text-sm text-white hover:bg-[#e89200] hover:border-site-accent-dark uppercase tracking-wider disabled:opacity-50"
+            class="w-full px-4 py-2 bg-site-accent text-white font-semibold rounded-full hover:bg-[#e89200] transition-colors text-sm disabled:opacity-50"
           >
             Publish
           </button>
@@ -446,7 +431,7 @@ async function deletePost() {
         <div class="space-y-4">
           <!-- Status -->
           <div>
-            <h3 class="font-mono text-xs text-site-medium uppercase tracking-wider mb-2">Status</h3>
+            <h3 class="text-xs font-semibold text-site-medium uppercase tracking-wide mb-2">Status</h3>
             <label class="flex items-center gap-2">
               <input
                 type="checkbox"
@@ -461,11 +446,11 @@ async function deletePost() {
 
           <!-- Date -->
           <div>
-            <h3 class="font-mono text-xs text-site-medium uppercase tracking-wider mb-2">Publish Date</h3>
+            <h3 class="text-xs font-semibold text-site-medium uppercase tracking-wide mb-2">Publish Date</h3>
             <input
               v-model="form.createdAt"
               type="datetime-local"
-              class="w-full px-2 py-1 border-2 border-site-light bg-white font-mono text-sm text-site-dark focus:outline-none focus:border-site-accent"
+              class="w-full px-2 py-1 border border-site-light rounded-lg bg-white text-sm text-site-dark focus:outline-none focus:border-site-accent transition-colors"
             />
           </div>
 
@@ -474,10 +459,10 @@ async function deletePost() {
             <div class="border-t border-site-light"></div>
 
             <div>
-              <h3 class="font-mono text-xs text-site-medium uppercase tracking-wider mb-2">Category</h3>
+              <h3 class="text-xs font-semibold text-site-medium uppercase tracking-wide mb-2">Category</h3>
               <select
                 v-model="form.categoryId"
-                class="w-full px-2 py-1 border-2 border-site-light bg-white font-mono text-sm text-site-dark focus:outline-none focus:border-site-accent"
+                class="w-full px-2 py-1 border border-site-light rounded-lg bg-white text-sm text-site-dark focus:outline-none focus:border-site-accent transition-colors"
               >
                 <option :value="null">No category</option>
                 <option v-for="category in blogStore.categories" :key="category.id" :value="category.id">
@@ -491,13 +476,13 @@ async function deletePost() {
 
           <!-- Tags -->
           <div>
-            <h3 class="font-mono text-xs text-site-medium uppercase tracking-wider mb-2">Tags</h3>
+            <h3 class="text-xs font-semibold text-site-medium uppercase tracking-wide mb-2">Tags</h3>
 
             <div v-if="form.tagIds.length > 0" class="flex flex-wrap gap-1.5 mb-3">
               <span
                 v-for="tagId in form.tagIds"
                 :key="tagId"
-                class="px-2 py-0.5 border border-site-accent text-site-accent font-mono text-xs flex items-center gap-1"
+                class="px-2 py-0.5 bg-site-accent text-white text-xs rounded-full flex items-center gap-1"
               >
                 {{ blogStore.tags.find(t => t.id === tagId)?.name }}
                 <button @click="toggleTag(tagId)" class="hover:text-[#e89200]">×</button>
@@ -505,13 +490,13 @@ async function deletePost() {
             </div>
 
             <div v-if="suggestedTags.length > 0" class="mb-3">
-              <p class="font-mono text-xs text-site-medium mb-1">Suggested</p>
+              <p class="text-xs font-semibold text-site-medium mb-1">Suggested</p>
               <div class="flex flex-wrap gap-1">
                 <button
                   v-for="tag in suggestedTags"
                   :key="tag.id"
                   @click="toggleTag(tag.id)"
-                  class="px-2 py-0.5 border border-site-light font-mono text-xs text-site-dark hover:border-site-accent hover:text-site-accent"
+                  class="px-2 py-0.5 border border-site-light text-xs text-site-dark rounded-full hover:border-site-accent hover:text-site-accent transition-colors"
                 >
                   + {{ tag.name }}
                 </button>
@@ -523,27 +508,27 @@ async function deletePost() {
                 v-model="tagSearchQuery"
                 type="text"
                 placeholder="Search or add tags..."
-                class="w-full px-2 py-1 border-2 border-site-light bg-white font-mono text-sm text-site-dark placeholder:text-site-medium focus:outline-none focus:border-site-accent"
+                class="w-full px-2 py-1 border border-site-light rounded-lg bg-white text-sm text-site-dark placeholder:text-site-medium focus:outline-none focus:border-site-accent transition-colors"
                 @focus="showTagDropdown = true"
                 @blur="hideTagDropdown"
                 @keyup.enter="exactTagMatch ? null : createTag()"
               />
               <div
                 v-if="showTagDropdown && (filteredTags.length > 0 || (!exactTagMatch && tagSearchQuery.trim()))"
-                class="absolute z-50 w-full mt-1 bg-white border-2 border-site-light max-h-48 overflow-y-auto"
+                class="absolute z-50 w-full mt-1 bg-white border border-site-light rounded-lg max-h-48 overflow-y-auto"
               >
                 <button
                   v-for="tag in filteredTags"
                   :key="tag.id"
                   @mousedown.prevent="selectTag(tag.id)"
-                  class="w-full px-2 py-1 text-left font-mono text-sm text-site-dark hover:bg-site-accent hover:text-white"
+                  class="w-full px-2 py-1 text-left text-sm text-site-dark hover:bg-site-accent hover:text-white"
                 >
                   {{ tag.name }}
                 </button>
                 <button
                   v-if="!exactTagMatch && tagSearchQuery.trim()"
                   @mousedown.prevent="createTag"
-                  class="w-full px-2 py-1 text-left font-mono text-sm text-site-accent hover:bg-site-accent hover:text-white border-t border-site-light"
+                  class="w-full px-2 py-1 text-left text-sm text-site-accent hover:bg-site-accent hover:text-white border-t border-site-light"
                 >
                   Create "{{ tagSearchQuery.trim() }}"
                 </button>
@@ -555,7 +540,7 @@ async function deletePost() {
 
           <!-- Embed -->
           <div>
-            <h3 class="font-mono text-xs text-site-medium uppercase tracking-wider mb-2">Embed</h3>
+            <h3 class="text-xs font-semibold text-site-medium uppercase tracking-wide mb-2">Embed</h3>
 
             <EmbedEditor
               v-if="showEmbedEditor"
@@ -570,21 +555,21 @@ async function deletePost() {
               <button
                 v-if="!form.embed"
                 @click="showEmbedEditor = true"
-                class="w-full px-3 py-2 border-2 border-dashed border-site-light font-mono text-sm text-site-medium hover:border-site-accent hover:text-site-accent flex items-center justify-center gap-2"
+                class="w-full px-4 py-2 border border-dashed border-site-light text-sm text-site-medium rounded-full hover:border-site-accent hover:text-site-accent transition-colors flex items-center justify-center gap-2"
               >
                 <span class="relative -top-px">+</span> Add Embed
               </button>
 
               <div v-else>
-                <div v-if="form.embed.type === 'youtube'" class="p-2 border-2 border-site-light">
+                <div v-if="form.embed.type === 'youtube'" class="p-2 border border-site-light rounded-lg">
                   <div class="flex items-center gap-2">
-                    <span class="font-mono text-xs text-red-500">YT</span>
+                    <span class="text-xs text-red-500">YT</span>
                     <span class="text-sm truncate text-site-dark">{{ form.embed.title || 'YouTube Video' }}</span>
                   </div>
-                  <p class="font-mono text-xs text-site-medium mt-1">{{ form.embed.position === 'above' ? 'Above' : 'Below' }} content</p>
+                  <p class="text-xs text-site-medium mt-1">{{ form.embed.position === 'above' ? 'Above' : 'Below' }} content</p>
                 </div>
 
-                <div v-else-if="form.embed.type === 'link'" class="p-2 border-2 border-site-light">
+                <div v-else-if="form.embed.type === 'link'" class="p-2 border border-site-light rounded-lg">
                   <div class="flex gap-2">
                     <img
                       v-if="form.embed.imageData || form.embed.imageFilename || (form.embed.imageUrl && !form.embed.imageUrl.startsWith('file://'))"
@@ -594,13 +579,13 @@ async function deletePost() {
                     />
                     <div class="flex-1 min-w-0">
                       <p class="text-sm truncate text-site-dark">{{ form.embed.title || 'Link' }}</p>
-                      <p v-if="form.embed.description" class="font-mono text-xs text-site-medium truncate">{{ form.embed.description }}</p>
+                      <p v-if="form.embed.description" class="text-xs text-site-medium truncate">{{ form.embed.description }}</p>
                     </div>
                   </div>
-                  <p class="font-mono text-xs text-site-medium mt-2">{{ form.embed.position === 'above' ? 'Above' : 'Below' }} content</p>
+                  <p class="text-xs text-site-medium mt-2">{{ form.embed.position === 'above' ? 'Above' : 'Below' }} content</p>
                 </div>
 
-                <div v-else-if="form.embed.type === 'image'" class="p-2 border-2 border-site-light">
+                <div v-else-if="form.embed.type === 'image'" class="p-2 border border-site-light rounded-lg">
                   <div class="flex gap-1 mb-2">
                     <img
                       v-for="(img, index) in form.embed.images?.slice(0, 4)"
@@ -611,24 +596,24 @@ async function deletePost() {
                     />
                     <div
                       v-if="form.embed.images?.length > 4"
-                      class="w-10 h-10 border border-site-light flex items-center justify-center font-mono text-xs text-site-medium"
+                      class="w-10 h-10 border border-site-light flex items-center justify-center text-xs text-site-medium"
                     >
                       +{{ form.embed.images.length - 4 }}
                     </div>
                   </div>
-                  <p class="font-mono text-xs text-site-medium">{{ form.embed.images?.length || 0 }} image(s) - {{ form.embed.position === 'above' ? 'Above' : 'Below' }} content</p>
+                  <p class="text-xs text-site-medium">{{ form.embed.images?.length || 0 }} image(s) - {{ form.embed.position === 'above' ? 'Above' : 'Below' }} content</p>
                 </div>
 
                 <div class="flex gap-2 mt-2">
                   <button
                     @click="showEmbedEditor = true"
-                    class="flex-1 px-2 py-1 border-2 border-site-light font-mono text-xs text-site-dark hover:border-site-accent hover:text-site-accent uppercase"
+                    class="flex-1 px-2 py-1 border border-site-light text-xs text-site-dark rounded-full hover:border-site-accent hover:text-site-accent transition-colors"
                   >
                     Edit
                   </button>
                   <button
                     @click="removeEmbed"
-                    class="px-2 py-1 border-2 border-red-500 font-mono text-xs text-red-500 hover:bg-red-500 hover:text-white uppercase"
+                    class="px-2 py-1 text-xs bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
                   >
                     Remove
                   </button>
@@ -643,7 +628,7 @@ async function deletePost() {
             <div>
               <button
                 @click="showDeleteModal = true"
-                class="w-full px-3 py-2 border-2 border-red-500 font-mono text-sm text-red-500 hover:bg-red-500 hover:text-white uppercase tracking-wider"
+                class="w-full px-4 py-2 bg-red-500 text-white font-semibold rounded-full hover:bg-red-600 transition-colors text-sm"
               >
                 Delete Post
               </button>
@@ -664,16 +649,16 @@ async function deletePost() {
 
       <!-- Panel -->
       <div
-        class="absolute right-0 top-0 bottom-0 w-80 bg-white border-l-2 border-site-light overflow-y-auto"
+        class="absolute right-0 top-0 bottom-0 w-80 bg-white border-l border-site-light overflow-y-auto"
         @click.stop
       >
         <div class="p-4">
           <!-- Header -->
           <div class="flex items-center justify-between mb-4">
-            <h3 class="font-mono text-sm text-site-dark uppercase tracking-wider">Settings</h3>
+            <h3 class="text-sm text-site-dark font-semibold uppercase tracking-wide">Settings</h3>
             <button
               @click="mobileSidebarOpen = false"
-              class="font-mono text-sm text-site-dark hover:text-site-accent"
+              class="text-sm text-site-dark hover:text-site-accent transition-colors"
             >
               <span class="relative -top-px">×</span>
             </button>
@@ -683,7 +668,7 @@ async function deletePost() {
           <div class="space-y-4">
             <!-- Status -->
             <div>
-              <h3 class="font-mono text-xs text-site-medium uppercase tracking-wider mb-2">Status</h3>
+              <h3 class="text-xs font-semibold text-site-medium uppercase tracking-wide mb-2">Status</h3>
               <label class="flex items-center gap-2">
                 <input
                   type="checkbox"
@@ -698,11 +683,11 @@ async function deletePost() {
 
             <!-- Date -->
             <div>
-              <h3 class="font-mono text-xs text-site-medium uppercase tracking-wider mb-2">Publish Date</h3>
+              <h3 class="text-xs font-semibold text-site-medium uppercase tracking-wide mb-2">Publish Date</h3>
               <input
                 v-model="form.createdAt"
                 type="datetime-local"
-                class="w-full px-2 py-1 border-2 border-site-light bg-white font-mono text-sm text-site-dark focus:outline-none focus:border-site-accent"
+                class="w-full px-2 py-1 border border-site-light rounded-lg bg-white text-sm text-site-dark focus:outline-none focus:border-site-accent transition-colors"
               />
             </div>
 
@@ -711,10 +696,10 @@ async function deletePost() {
               <div class="border-t border-site-light"></div>
 
               <div>
-                <h3 class="font-mono text-xs text-site-medium uppercase tracking-wider mb-2">Category</h3>
+                <h3 class="text-xs font-semibold text-site-medium uppercase tracking-wide mb-2">Category</h3>
                 <select
                   v-model="form.categoryId"
-                  class="w-full px-2 py-1 border-2 border-site-light bg-white font-mono text-sm text-site-dark focus:outline-none focus:border-site-accent"
+                  class="w-full px-2 py-1 border border-site-light rounded-lg bg-white text-sm text-site-dark focus:outline-none focus:border-site-accent transition-colors"
                 >
                   <option :value="null">No category</option>
                   <option v-for="category in blogStore.categories" :key="category.id" :value="category.id">
@@ -728,13 +713,13 @@ async function deletePost() {
 
             <!-- Tags -->
             <div>
-              <h3 class="font-mono text-xs text-site-medium uppercase tracking-wider mb-2">Tags</h3>
+              <h3 class="text-xs font-semibold text-site-medium uppercase tracking-wide mb-2">Tags</h3>
 
               <div v-if="form.tagIds.length > 0" class="flex flex-wrap gap-1.5 mb-3">
                 <span
                   v-for="tagId in form.tagIds"
                   :key="tagId"
-                  class="px-2 py-0.5 border border-site-accent text-site-accent font-mono text-xs flex items-center gap-1"
+                  class="px-2 py-0.5 bg-site-accent text-white text-xs rounded-full flex items-center gap-1"
                 >
                   {{ blogStore.tags.find(t => t.id === tagId)?.name }}
                   <button @click="toggleTag(tagId)" class="hover:text-[#e89200]">×</button>
@@ -742,13 +727,13 @@ async function deletePost() {
               </div>
 
               <div v-if="suggestedTags.length > 0" class="mb-3">
-                <p class="font-mono text-xs text-site-medium mb-1">Suggested</p>
+                <p class="text-xs font-semibold text-site-medium mb-1">Suggested</p>
                 <div class="flex flex-wrap gap-1">
                   <button
                     v-for="tag in suggestedTags"
                     :key="tag.id"
                     @click="toggleTag(tag.id)"
-                    class="px-2 py-0.5 border border-site-light font-mono text-xs text-site-dark hover:border-site-accent hover:text-site-accent"
+                    class="px-2 py-0.5 border border-site-light text-xs text-site-dark rounded-full hover:border-site-accent hover:text-site-accent transition-colors"
                   >
                     + {{ tag.name }}
                   </button>
@@ -760,27 +745,27 @@ async function deletePost() {
                   v-model="tagSearchQuery"
                   type="text"
                   placeholder="Search or add tags..."
-                  class="w-full px-2 py-1 border-2 border-site-light bg-white font-mono text-sm text-site-dark placeholder:text-site-medium focus:outline-none focus:border-site-accent"
+                  class="w-full px-2 py-1 border border-site-light rounded-lg bg-white text-sm text-site-dark placeholder:text-site-medium focus:outline-none focus:border-site-accent transition-colors"
                   @focus="showTagDropdown = true"
                   @blur="hideTagDropdown"
                   @keyup.enter="exactTagMatch ? null : createTag()"
                 />
                 <div
                   v-if="showTagDropdown && (filteredTags.length > 0 || (!exactTagMatch && tagSearchQuery.trim()))"
-                  class="absolute z-50 w-full mt-1 bg-white border-2 border-site-light max-h-48 overflow-y-auto"
+                  class="absolute z-50 w-full mt-1 bg-white border border-site-light rounded-lg max-h-48 overflow-y-auto"
                 >
                   <button
                     v-for="tag in filteredTags"
                     :key="tag.id"
                     @mousedown.prevent="selectTag(tag.id)"
-                    class="w-full px-2 py-1 text-left font-mono text-sm text-site-dark hover:bg-site-accent hover:text-white"
+                    class="w-full px-2 py-1 text-left text-sm text-site-dark hover:bg-site-accent hover:text-white"
                   >
                     {{ tag.name }}
                   </button>
                   <button
                     v-if="!exactTagMatch && tagSearchQuery.trim()"
                     @mousedown.prevent="createTag"
-                    class="w-full px-2 py-1 text-left font-mono text-sm text-site-accent hover:bg-site-accent hover:text-white border-t border-site-light"
+                    class="w-full px-2 py-1 text-left text-sm text-site-accent hover:bg-site-accent hover:text-white border-t border-site-light"
                   >
                     Create "{{ tagSearchQuery.trim() }}"
                   </button>
@@ -792,7 +777,7 @@ async function deletePost() {
 
             <!-- Embed -->
             <div>
-              <h3 class="font-mono text-xs text-site-medium uppercase tracking-wider mb-2">Embed</h3>
+              <h3 class="text-xs font-semibold text-site-medium uppercase tracking-wide mb-2">Embed</h3>
 
               <EmbedEditor
                 v-if="showEmbedEditor"
@@ -807,21 +792,21 @@ async function deletePost() {
                 <button
                   v-if="!form.embed"
                   @click="showEmbedEditor = true"
-                  class="w-full px-3 py-2 border-2 border-dashed border-site-light font-mono text-sm text-site-medium hover:border-site-accent hover:text-site-accent flex items-center justify-center gap-2"
+                  class="w-full px-4 py-2 border border-dashed border-site-light text-sm text-site-medium rounded-full hover:border-site-accent hover:text-site-accent transition-colors flex items-center justify-center gap-2"
                 >
                   <span class="relative -top-px">+</span> Add Embed
                 </button>
 
                 <div v-else>
-                  <div v-if="form.embed.type === 'youtube'" class="p-2 border-2 border-site-light">
+                  <div v-if="form.embed.type === 'youtube'" class="p-2 border border-site-light rounded-lg">
                     <div class="flex items-center gap-2">
-                      <span class="font-mono text-xs text-red-500">YT</span>
+                      <span class="text-xs text-red-500">YT</span>
                       <span class="text-sm truncate text-site-dark">{{ form.embed.title || 'YouTube Video' }}</span>
                     </div>
-                    <p class="font-mono text-xs text-site-medium mt-1">{{ form.embed.position === 'above' ? 'Above' : 'Below' }} content</p>
+                    <p class="text-xs text-site-medium mt-1">{{ form.embed.position === 'above' ? 'Above' : 'Below' }} content</p>
                   </div>
 
-                  <div v-else-if="form.embed.type === 'link'" class="p-2 border-2 border-site-light">
+                  <div v-else-if="form.embed.type === 'link'" class="p-2 border border-site-light rounded-lg">
                     <div class="flex gap-2">
                       <img
                         v-if="form.embed.imageData || form.embed.imageFilename || (form.embed.imageUrl && !form.embed.imageUrl.startsWith('file://'))"
@@ -831,13 +816,13 @@ async function deletePost() {
                       />
                       <div class="flex-1 min-w-0">
                         <p class="text-sm truncate text-site-dark">{{ form.embed.title || 'Link' }}</p>
-                        <p v-if="form.embed.description" class="font-mono text-xs text-site-medium truncate">{{ form.embed.description }}</p>
+                        <p v-if="form.embed.description" class="text-xs text-site-medium truncate">{{ form.embed.description }}</p>
                       </div>
                     </div>
-                    <p class="font-mono text-xs text-site-medium mt-2">{{ form.embed.position === 'above' ? 'Above' : 'Below' }} content</p>
+                    <p class="text-xs text-site-medium mt-2">{{ form.embed.position === 'above' ? 'Above' : 'Below' }} content</p>
                   </div>
 
-                  <div v-else-if="form.embed.type === 'image'" class="p-2 border-2 border-site-light">
+                  <div v-else-if="form.embed.type === 'image'" class="p-2 border border-site-light rounded-lg">
                     <div class="flex gap-1 mb-2">
                       <img
                         v-for="(img, index) in form.embed.images?.slice(0, 4)"
@@ -848,24 +833,24 @@ async function deletePost() {
                       />
                       <div
                         v-if="form.embed.images?.length > 4"
-                        class="w-10 h-10 border border-site-light flex items-center justify-center font-mono text-xs text-site-medium"
+                        class="w-10 h-10 border border-site-light flex items-center justify-center text-xs text-site-medium"
                       >
                         +{{ form.embed.images.length - 4 }}
                       </div>
                     </div>
-                    <p class="font-mono text-xs text-site-medium">{{ form.embed.images?.length || 0 }} image(s) - {{ form.embed.position === 'above' ? 'Above' : 'Below' }} content</p>
+                    <p class="text-xs text-site-medium">{{ form.embed.images?.length || 0 }} image(s) - {{ form.embed.position === 'above' ? 'Above' : 'Below' }} content</p>
                   </div>
 
                   <div class="flex gap-2 mt-2">
                     <button
                       @click="showEmbedEditor = true"
-                      class="flex-1 px-2 py-1 border-2 border-site-light font-mono text-xs text-site-dark hover:border-site-accent hover:text-site-accent uppercase"
+                      class="flex-1 px-2 py-1 border border-site-light text-xs text-site-dark rounded-full hover:border-site-accent hover:text-site-accent transition-colors"
                     >
                       Edit
                     </button>
                     <button
                       @click="removeEmbed"
-                      class="px-2 py-1 border-2 border-red-500 font-mono text-xs text-red-500 hover:bg-red-500 hover:text-white uppercase"
+                      class="px-2 py-1 text-xs bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
                     >
                       Remove
                     </button>
@@ -881,7 +866,7 @@ async function deletePost() {
             <div class="mt-4">
               <button
                 @click="showDeleteModal = true"
-                class="w-full px-3 py-2 border-2 border-red-500 font-mono text-sm text-red-500 hover:bg-red-500 hover:text-white uppercase tracking-wider"
+                class="w-full px-4 py-2 bg-red-500 text-white font-semibold rounded-full hover:bg-red-600 transition-colors text-sm"
               >
                 Delete Post
               </button>
@@ -900,16 +885,16 @@ async function deletePost() {
         <p class="text-base text-site-medium mb-8">
           This cannot be undone.
         </p>
-        <div class="flex gap-6">
+        <div class="flex gap-4">
           <button
             @click="showDeleteModal = false"
-            class="font-mono text-sm text-site-light hover:text-white uppercase tracking-wider"
+            class="px-4 py-2 border border-white/30 text-white font-semibold rounded-full hover:border-white hover:text-white transition-colors text-sm"
           >
             Cancel
           </button>
           <button
             @click="deletePost"
-            class="font-mono text-sm text-red-500 hover:text-red-400 uppercase tracking-wider"
+            class="px-4 py-2 bg-red-500 text-white font-semibold rounded-full hover:bg-red-600 transition-colors text-sm"
           >
             Delete
           </button>
