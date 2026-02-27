@@ -90,48 +90,48 @@ async function downloadDebugExport() {
 <template>
   <div>
     <!-- Messages -->
-    <div v-if="error" class="mb-6 p-4 border border-red-500 font-mono text-sm text-red-600">
+    <div v-if="error" class="mb-6 p-4 border border-red-500 text-sm text-red-600">
       {{ error }}
     </div>
-    <div v-if="success" class="mb-6 p-4 border border-green-500 font-mono text-sm text-green-600">
+    <div v-if="success" class="mb-6 p-4 border border-green-500 text-sm text-green-600">
       Settings saved successfully!
     </div>
 
     <form @submit.prevent="saveSettings" class="space-y-8">
       <!-- Basic Info -->
       <section>
-        <h3 class="font-mono text-sm text-site-dark uppercase tracking-wider mb-4">Basic Information</h3>
+        <h3 class="text-sm font-semibold text-site-dark mb-4">Basic Information</h3>
         <div class="space-y-4">
           <div>
-            <label class="block font-mono text-xs text-site-medium uppercase tracking-wider mb-2">Blog Name</label>
+            <label class="block text-xs font-semibold text-site-medium mb-2">Blog Name</label>
             <input
               v-model="form.name"
               type="text"
-              class="w-full px-3 py-2 border border-site-light focus:outline-none focus:border-site-accent"
+              class="admin-input"
             />
           </div>
           <div>
-            <label class="block font-mono text-xs text-site-medium uppercase tracking-wider mb-2">Blog URL</label>
+            <label class="block text-xs font-semibold text-site-medium mb-2">Blog URL</label>
             <input
               v-model="form.url"
               type="url"
-              class="w-full px-3 py-2 border border-site-light font-mono text-sm focus:outline-none focus:border-site-accent"
+              class="admin-input"
               placeholder="https://myblog.com"
             />
           </div>
           <div>
-            <label class="block font-mono text-xs text-site-medium uppercase tracking-wider mb-2">Tagline</label>
+            <label class="block text-xs font-semibold text-site-medium mb-2">Tagline</label>
             <input
               v-model="form.tagline"
               type="text"
-              class="w-full px-3 py-2 border border-site-light focus:outline-none focus:border-site-accent"
+              class="admin-input"
             />
           </div>
           <div>
-            <label class="block font-mono text-xs text-site-medium uppercase tracking-wider mb-2">Timezone</label>
+            <label class="block text-xs font-semibold text-site-medium mb-2">Timezone</label>
             <select
               v-model="form.timezone"
-              class="w-full px-3 py-2 border border-site-light font-mono text-sm focus:outline-none focus:border-site-accent"
+              class="admin-input"
             >
               <option value="UTC">UTC</option>
               <optgroup label="Americas">
@@ -180,37 +180,37 @@ async function downloadDebugExport() {
                 <option value="Africa/Lagos">Lagos</option>
               </optgroup>
             </select>
-            <p class="mt-2 font-mono text-xs text-site-medium">Dates on your published blog will display in this timezone</p>
+            <p class="mt-2 text-xs text-site-medium">Dates on your published blog will display in this timezone</p>
           </div>
         </div>
       </section>
 
       <!-- Author Info -->
       <section class="border-t border-site-light pt-8">
-        <h3 class="font-mono text-sm text-site-dark uppercase tracking-wider mb-4">Author Information</h3>
+        <h3 class="text-sm font-semibold text-site-dark mb-4">Author Information</h3>
         <div class="space-y-4">
           <div>
-            <label class="block font-mono text-xs text-site-medium uppercase tracking-wider mb-2">Author Name</label>
+            <label class="block text-xs font-semibold text-site-medium mb-2">Author Name</label>
             <input
               v-model="form.authorName"
               type="text"
-              class="w-full px-3 py-2 border border-site-light focus:outline-none focus:border-site-accent"
+              class="admin-input"
             />
           </div>
           <div>
-            <label class="block font-mono text-xs text-site-medium uppercase tracking-wider mb-2">Author URL</label>
+            <label class="block text-xs font-semibold text-site-medium mb-2">Author URL</label>
             <input
               v-model="form.authorUrl"
               type="url"
-              class="w-full px-3 py-2 border border-site-light font-mono text-sm focus:outline-none focus:border-site-accent"
+              class="admin-input"
             />
           </div>
           <div>
-            <label class="block font-mono text-xs text-site-medium uppercase tracking-wider mb-2">Author Email</label>
+            <label class="block text-xs font-semibold text-site-medium mb-2">Author Email</label>
             <input
               v-model="form.authorEmail"
               type="email"
-              class="w-full px-3 py-2 border border-site-light font-mono text-sm focus:outline-none focus:border-site-accent"
+              class="admin-input"
             />
           </div>
         </div>
@@ -218,7 +218,7 @@ async function downloadDebugExport() {
 
       <!-- Simple Analytics -->
       <section class="border-t border-site-light pt-8">
-        <h3 class="font-mono text-sm text-site-dark uppercase tracking-wider mb-2">Simple Analytics</h3>
+        <h3 class="text-sm font-semibold text-site-dark mb-2">Simple Analytics</h3>
         <p class="text-sm text-site-dark mb-4">
           Enable Simple Analytics to track pageviews and visitors on your published blog.
           <a href="https://simpleanalytics.com" target="_blank" class="text-site-accent hover:text-site-accent">Learn more</a>
@@ -235,16 +235,16 @@ async function downloadDebugExport() {
             </span>
           </label>
           <div v-if="form.simpleAnalyticsEnabled">
-            <label class="block font-mono text-xs text-site-medium uppercase tracking-wider mb-2">
+            <label class="block text-xs font-semibold text-site-medium mb-2">
               Domain Override (optional)
             </label>
             <input
               v-model="form.simpleAnalyticsDomain"
               type="text"
-              class="w-full px-3 py-2 border border-site-light font-mono text-sm focus:outline-none focus:border-site-accent"
+              class="admin-input"
               placeholder="example.com"
             />
-            <p class="mt-2 font-mono text-xs text-site-medium">
+            <p class="mt-2 text-xs text-site-medium">
               Leave empty to use the domain from your Blog URL. Use this if your site is registered under a different domain in Simple Analytics.
             </p>
           </div>
@@ -257,14 +257,14 @@ async function downloadDebugExport() {
           <button
             type="button"
             @click="deleteBlog"
-            class="font-mono text-sm text-red-500 hover:text-red-400 uppercase tracking-wider"
+            class="text-sm font-semibold text-red-500 hover:text-red-400"
           >
             Delete Blog
           </button>
           <button
             type="submit"
             :disabled="saving"
-            class="px-4 py-2 border border-site-accent bg-site-accent font-mono text-sm text-white hover:bg-[#e89200] hover:border-[#e89200] uppercase tracking-wider disabled:opacity-50"
+            class="px-4 py-2 border border-site-accent bg-site-accent text-sm font-semibold text-white rounded-full hover:bg-[#e89200] hover:border-[#e89200] disabled:opacity-50"
           >
             {{ saving ? 'Saving...' : 'Save Settings' }}
           </button>
@@ -274,18 +274,18 @@ async function downloadDebugExport() {
 
     <!-- Maintenance -->
     <section class="border-t border-site-light pt-8 mt-8">
-      <h3 class="font-mono text-sm text-site-dark uppercase tracking-wider mb-2">Maintenance</h3>
+      <h3 class="text-sm font-semibold text-site-dark mb-2">Maintenance</h3>
       <p class="text-sm text-site-dark mb-4">
         Download and save YouTube embed thumbnails locally for posts that are still using the YouTube CDN.
       </p>
-      <div v-if="backfillResult" class="mb-4 p-4 border border-green-500 font-mono text-sm text-green-600">
+      <div v-if="backfillResult" class="mb-4 p-4 border border-green-500 text-sm text-green-600">
         {{ backfillResult }}
       </div>
       <button
         type="button"
         @click="backfillYouTubeThumbnails"
         :disabled="backfilling"
-        class="px-4 py-2 border border-site-dark font-mono text-sm text-site-dark hover:border-site-accent hover:text-site-accent uppercase tracking-wider disabled:opacity-50"
+        class="px-4 py-2 border border-site-dark text-sm font-semibold text-site-dark rounded-full hover:border-site-accent hover:text-site-accent disabled:opacity-50"
       >
         {{ backfilling ? 'Backfilling...' : 'Backfill YouTube Thumbnails' }}
       </button>
@@ -293,7 +293,7 @@ async function downloadDebugExport() {
 
     <!-- Developer Tools -->
     <section class="border-t border-site-light pt-8 mt-8">
-      <h3 class="font-mono text-sm text-site-dark uppercase tracking-wider mb-2">Developer Tools</h3>
+      <h3 class="text-sm font-semibold text-site-dark mb-2">Developer Tools</h3>
       <p class="text-sm text-site-dark mb-4">
         Export a debug bundle containing the full generated site and sync data. Useful for comparing output between iOS and Self-Hosted apps.
       </p>
@@ -301,7 +301,7 @@ async function downloadDebugExport() {
         type="button"
         @click="downloadDebugExport"
         :disabled="exporting"
-        class="px-4 py-2 border border-site-dark font-mono text-sm text-site-dark hover:border-site-accent hover:text-site-accent uppercase tracking-wider disabled:opacity-50"
+        class="px-4 py-2 border border-site-dark text-sm font-semibold text-site-dark rounded-full hover:border-site-accent hover:text-site-accent disabled:opacity-50"
       >
         {{ exporting ? 'Exporting...' : 'Download Debug Export' }}
       </button>
