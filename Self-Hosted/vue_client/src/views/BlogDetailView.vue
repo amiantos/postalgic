@@ -28,10 +28,6 @@ function handleResize() {
   }
 }
 
-// Clear blog data SYNCHRONOUSLY during setup to prevent stale data from
-// being rendered by child components before onMounted completes
-blogStore.clearBlogData();
-
 onMounted(async () => {
   window.addEventListener('resize', handleResize);
   await loadBlogData();
@@ -41,9 +37,8 @@ onUnmounted(() => {
   window.removeEventListener('resize', handleResize);
 });
 
-watch(blogId, async () => {
-  // Also clear synchronously when blogId changes (component reuse)
-  blogStore.clearBlogData();
+watch(blogId, async (newId, oldId) => {
+  if (oldId) blogStore.clearBlogData();
   await loadBlogData();
 });
 
@@ -54,11 +49,8 @@ watch(() => route.name, () => {
 
 async function loadBlogData() {
   await blogStore.fetchBlog(blogId.value);
-  await Promise.all([
-    blogStore.fetchPosts(blogId.value),
-    blogStore.fetchCategories(blogId.value),
-    blogStore.fetchTags(blogId.value)
-  ]);
+  blogStore.fetchCategories(blogId.value);
+  blogStore.fetchTags(blogId.value);
 }
 </script>
 
@@ -74,6 +66,25 @@ async function loadBlogData() {
     class="admin-container"
     :class="{ 'sidebar-open': sidebarOpen }"
   >
+    <!-- Top Toolbar -->
+    <div class="admin-toolbar">
+      <router-link to="/" class="toolbar-back">&larr; All Blogs</router-link>
+      <div class="toolbar-actions">
+        <button
+          @click="showPublishModal = true"
+          class="px-4 py-1.5 bg-site-accent text-white font-semibold rounded-full hover:bg-[#e89200] transition-colors text-sm"
+        >
+          Deploy
+        </button>
+        <router-link
+          :to="{ name: 'post-create', params: { blogId } }"
+          class="px-4 py-1.5 bg-site-accent text-white font-semibold rounded-full hover:bg-[#e89200] transition-colors text-sm"
+        >
+          + New Post
+        </router-link>
+      </div>
+    </div>
+
     <!-- Header -->
     <header class="admin-header">
       <button class="hamburger-menu" @click="toggleSidebar">
@@ -83,9 +94,6 @@ async function loadBlogData() {
           <span></span>
         </div>
       </button>
-      <nav class="back-nav">
-        <router-link to="/">&larr; All Blogs</router-link>
-      </nav>
       <h1>
         <router-link :to="{ name: 'blog-posts', params: { blogId } }">
           {{ blogStore.currentBlog?.name }}
@@ -102,7 +110,6 @@ async function loadBlogData() {
       <div class="mobile-sidebar-overlay" @click="closeSidebar"></div>
       <AdminSidebar
         :blog-id="blogId"
-        @deploy="showPublishModal = true"
         @close-mobile="closeSidebar"
       />
       <main>

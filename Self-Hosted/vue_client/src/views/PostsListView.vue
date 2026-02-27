@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch, onBeforeUnmount } from 'vue';
+import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useBlogStore } from '@/stores/blog';
 import { marked } from 'marked';
@@ -34,6 +34,10 @@ watch([() => blogStore.searchText, sortOption], () => {
 
 // Fetch posts when filter changes (immediate)
 watch(filter, () => {
+  fetchPosts();
+});
+
+onMounted(() => {
   fetchPosts();
 });
 
@@ -133,50 +137,55 @@ function formatLocalDateTime(dateString) {
 
 <template>
   <div>
-    <!-- New Post button -->
-    <div class="mb-6">
-      <router-link
-        :to="{ name: 'post-create', params: { blogId } }"
-        class="inline-block px-4 py-2 bg-site-accent text-white font-semibold rounded-full hover:bg-[#e89200] transition-colors"
-      >
-        + New Post
-      </router-link>
-    </div>
-
     <!-- Controls bar -->
     <div class="mb-6">
-      <div class="flex flex-col sm:flex-row sm:items-center gap-3">
-        <div class="flex items-center gap-3">
-          <!-- Filter toggles -->
-          <div class="flex items-center border border-site-light rounded-lg overflow-hidden">
-            <button
-              v-for="f in ['all', 'published', 'draft']"
-              :key="f"
-              @click="filter = f"
-              :class="[
-                'px-3 py-2 capitalize transition-colors',
-                filter === f
-                  ? 'bg-site-accent text-white'
-                  : 'bg-white text-site-medium hover:bg-site-bg hover:text-site-text'
-              ]"
-            >
-              {{ f }}
-            </button>
-          </div>
-
-          <!-- Sort dropdown -->
-          <div class="relative border border-site-light rounded-lg bg-white">
-            <select
-              v-model="sortOption"
-              class="appearance-none px-3 py-2 pr-8 bg-transparent text-site-text focus:outline-none cursor-pointer rounded-lg"
-            >
-              <option v-for="opt in sortOptions" :key="opt.value" :value="opt.value">
-                {{ opt.label }}
-              </option>
-            </select>
-            <span class="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-site-medium">&darr;</span>
-          </div>
+      <div class="flex items-center gap-3">
+        <!-- Filter dropdown -->
+        <div class="relative border border-site-light rounded-lg bg-white">
+          <select
+            v-model="filter"
+            class="appearance-none px-3 py-2 pr-8 bg-transparent text-site-text focus:outline-none cursor-pointer rounded-lg capitalize"
+          >
+            <option value="all">All</option>
+            <option value="published">Published</option>
+            <option value="draft">Drafts</option>
+          </select>
+          <span class="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-site-medium">&darr;</span>
         </div>
+
+        <!-- Sort dropdown -->
+        <div class="relative border border-site-light rounded-lg bg-white">
+          <select
+            v-model="sortOption"
+            class="appearance-none px-3 py-2 pr-8 bg-transparent text-site-text focus:outline-none cursor-pointer rounded-lg"
+          >
+            <option v-for="opt in sortOptions" :key="opt.value" :value="opt.value">
+              {{ opt.label }}
+            </option>
+          </select>
+          <span class="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-site-medium">&darr;</span>
+        </div>
+
+        <!-- Search -->
+        <div class="relative flex-1">
+          <input
+            v-model="blogStore.searchText"
+            type="text"
+            placeholder="Search posts..."
+            class="w-full px-3 py-2 border border-site-light rounded-lg bg-white text-site-text focus:outline-none focus:border-site-accent"
+          />
+          <button
+            v-if="blogStore.searchText"
+            @click="blogStore.clearSearch()"
+            class="absolute right-2 top-1/2 -translate-y-1/2 text-site-medium hover:text-site-text bg-transparent border-none cursor-pointer text-lg leading-none"
+          >
+            &times;
+          </button>
+        </div>
+
+        <span class="text-site-medium text-sm whitespace-nowrap hidden sm:inline">
+          {{ blogStore.postsPublishedCount }} published<span v-if="blogStore.postsDraftCount > 0"> / {{ blogStore.postsDraftCount }} drafts</span>
+        </span>
       </div>
 
       <p v-if="blogStore.searchText && !effectiveSearchText" class="mt-2 text-[0.8em] text-site-medium">

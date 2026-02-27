@@ -30,24 +30,43 @@
 }
 
 /* ==========================================
+   Top Toolbar
+   ========================================== */
+.admin-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75em 2em;
+    border-bottom: 1px solid var(--admin-light);
+}
+
+.admin-toolbar .toolbar-back {
+    font-size: 0.8rem;
+    color: var(--admin-medium);
+    text-decoration: none;
+}
+
+.admin-toolbar .toolbar-back:hover {
+    color: var(--admin-accent);
+}
+
+.admin-toolbar .toolbar-actions {
+    display: flex;
+    gap: 0.5em;
+    align-items: center;
+}
+
+.admin-toolbar .toolbar-actions a {
+    text-decoration: none;
+}
+
+/* ==========================================
    Header
    ========================================== */
 .admin-header {
     padding: 2em;
     padding-bottom: 1em;
     position: relative;
-}
-
-.admin-header .back-nav {
-    margin-bottom: 0.25em;
-}
-.admin-header .back-nav a {
-    font-size: 0.75rem;
-    color: var(--admin-medium);
-    text-decoration: none;
-}
-.admin-header .back-nav a:hover {
-    color: var(--admin-accent);
 }
 
 .admin-header h1 {
@@ -131,7 +150,7 @@
     color: var(--admin-accent);
 }
 
-.admin-container .sidebar-nav a.router-link-active,
+.admin-container .sidebar-nav a.router-link-exact-active,
 .admin-container .sidebar-nav a.active {
     color: var(--admin-accent);
 }
@@ -150,32 +169,6 @@
 
 .admin-container .sidebar-section {
     margin-bottom: 1.5em;
-}
-
-.admin-container .sidebar-stats {
-    font-size: 0.85em;
-    color: var(--admin-medium);
-    margin-top: 0.5em;
-}
-
-.admin-container .sidebar-search input {
-    width: 100%;
-    padding: 6px 10px;
-    border: 1px solid var(--admin-light);
-    border-radius: 6px;
-    background: white;
-    color: var(--admin-text);
-    font-size: 0.9rem;
-    box-sizing: border-box;
-}
-
-.admin-container .sidebar-search input::placeholder {
-    color: var(--admin-medium);
-}
-
-.admin-container .sidebar-search input:focus {
-    outline: none;
-    border-color: var(--admin-accent);
 }
 
 /* ==========================================
@@ -317,6 +310,10 @@
         padding: 0.5em;
         position: relative;
         overflow-x: hidden;
+    }
+
+    .admin-toolbar {
+        padding: 0.75em 1em;
     }
 
     .admin-header {

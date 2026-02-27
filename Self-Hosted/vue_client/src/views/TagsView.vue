@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { useBlogStore } from '@/stores/blog';
 
@@ -7,6 +7,12 @@ const route = useRoute();
 const blogStore = useBlogStore();
 
 const blogId = computed(() => route.params.blogId);
+
+onMounted(async () => {
+  if (blogStore.tags.length === 0) {
+    await blogStore.fetchTags(blogId.value);
+  }
+});
 
 const showModal = ref(false);
 const editingTag = ref(null);
