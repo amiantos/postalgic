@@ -19,6 +19,7 @@ export const useBlogStore = defineStore('blog', () => {
   const staticFiles = ref([]);
   const loading = ref(false);
   const error = ref(null);
+  const searchText = ref('');
 
   // Getters
   const publishedPosts = computed(() => posts.value.filter(p => !p.isDraft));
@@ -241,6 +242,10 @@ export const useBlogStore = defineStore('blog', () => {
     return await publishApi.download(blogId);
   }
 
+  function clearSearch() {
+    searchText.value = '';
+  }
+
   function clearBlogData() {
     // Stop sync checking and reset sync state
     const syncStore = useSyncStore();
@@ -272,6 +277,7 @@ export const useBlogStore = defineStore('blog', () => {
     staticFiles,
     loading,
     error,
+    searchText,
 
     // Getters
     publishedPosts,
@@ -306,6 +312,7 @@ export const useBlogStore = defineStore('blog', () => {
     deleteStaticFile,
     generateSite,
     downloadSite,
+    clearSearch,
     clearBlogData
   };
 });

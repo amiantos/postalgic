@@ -22,7 +22,7 @@ function handleClick() {
   <Transition name="fade">
     <span
       v-if="isChecking && !showBadge"
-      class="font-retro-mono text-retro-sm text-retro-gray-medium uppercase tracking-wider"
+      class="font-mono text-sm text-site-medium uppercase tracking-wider"
     >
       Syncing
     </span>
@@ -32,7 +32,7 @@ function handleClick() {
   <button
     v-if="showBadge"
     @click="handleClick"
-    class="font-retro-mono text-retro-sm text-retro-orange hover:text-retro-orange-dark uppercase tracking-wider"
+    class="font-mono text-sm text-site-accent hover:underline uppercase tracking-wider"
     title="Remote changes available - click to sync"
   >
     Sync Available

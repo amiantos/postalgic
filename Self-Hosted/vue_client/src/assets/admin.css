@@ -1,0 +1,367 @@
+/* ==========================================
+   Admin Layout CSS
+   Mirrors the default blog template (style.css)
+   Scoped under .admin-container
+   ========================================== */
+
+/* CSS Variables matching the site-* Tailwind tokens */
+:root {
+    --admin-accent: #FFA100;
+    --admin-bg: #efefef;
+    --admin-text: #2d3748;
+    --admin-light: #dedede;
+    --admin-medium: #a0aec0;
+    --admin-dark: #4a5568;
+}
+
+/* ==========================================
+   Container
+   ========================================== */
+.admin-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    background-color: var(--admin-bg);
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    color: var(--admin-text);
+    line-height: 1.6;
+}
+
+/* ==========================================
+   Header
+   ========================================== */
+.admin-header {
+    padding: 2em;
+    padding-bottom: 1em;
+    position: relative;
+}
+
+.admin-header .back-nav {
+    margin-bottom: 0.25em;
+}
+.admin-header .back-nav a {
+    font-size: 0.75rem;
+    color: var(--admin-medium);
+    text-decoration: none;
+}
+.admin-header .back-nav a:hover {
+    color: var(--admin-accent);
+}
+
+.admin-header h1 {
+    font-weight: bold;
+    font-size: 2em;
+    margin: 0;
+}
+
+.admin-header h1 a {
+    color: var(--admin-dark);
+    text-decoration: none;
+}
+
+.admin-header h1 a:hover {
+    color: var(--admin-accent);
+}
+
+.admin-header .tagline {
+    color: var(--admin-medium);
+    font-size: 1.2rem;
+    font-style: italic;
+    margin-top: 0.25em;
+}
+
+.admin-header .header-separator {
+    height: 28px;
+    width: 100%;
+    background-color: var(--admin-accent);
+    --mask:
+      radial-gradient(10.96px at 50% calc(100% + 5.6px),#0000 calc(99% - 4px),#000 calc(101% - 4px) 99%,#0000 101%) calc(50% - 14px) calc(50% - 5.5px + .5px)/28px 11px repeat-x,
+      radial-gradient(10.96px at 50% -5.6px,#0000 calc(99% - 4px),#000 calc(101% - 4px) 99%,#0000 101%) 50% calc(50% + 5.5px)/28px 11px repeat-x;
+    -webkit-mask: var(--mask);
+    mask: var(--mask);
+    margin-top: 2em;
+}
+
+/* ==========================================
+   Content Wrapper
+   ========================================== */
+.admin-container .content-wrapper {
+    display: block;
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+}
+
+.admin-container .clearfix {
+    clear: both;
+    width: 100%;
+    display: block;
+}
+
+/* ==========================================
+   Sidebar
+   ========================================== */
+.admin-container .sidebar {
+    width: 100%;
+    padding: 1.5em;
+    box-sizing: border-box;
+    background-color: var(--admin-bg);
+}
+
+.admin-container .sidebar-nav ul {
+    display: flex;
+    flex-direction: column;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.admin-container .sidebar-nav a {
+    display: block;
+    padding: 8px 0;
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: var(--admin-dark);
+    text-decoration: none;
+}
+
+.admin-container .sidebar-nav a:hover {
+    color: var(--admin-accent);
+}
+
+.admin-container .sidebar-nav a.router-link-active,
+.admin-container .sidebar-nav a.active {
+    color: var(--admin-accent);
+}
+
+.admin-container .sidebar h2 {
+    margin-bottom: 0.3em;
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: var(--admin-dark);
+    margin-top: 1.5em;
+}
+
+.admin-container .sidebar h2:first-child {
+    margin-top: 0;
+}
+
+.admin-container .sidebar-section {
+    margin-bottom: 1.5em;
+}
+
+.admin-container .sidebar-stats {
+    font-size: 0.85em;
+    color: var(--admin-medium);
+    margin-top: 0.5em;
+}
+
+.admin-container .sidebar-search input {
+    width: 100%;
+    padding: 6px 10px;
+    border: 1px solid var(--admin-light);
+    border-radius: 6px;
+    background: white;
+    color: var(--admin-text);
+    font-size: 0.9rem;
+    box-sizing: border-box;
+}
+
+.admin-container .sidebar-search input::placeholder {
+    color: var(--admin-medium);
+}
+
+.admin-container .sidebar-search input:focus {
+    outline: none;
+    border-color: var(--admin-accent);
+}
+
+/* ==========================================
+   Main Content
+   ========================================== */
+.admin-container main {
+    display: flex;
+    flex-direction: column;
+    padding: 2em;
+    overflow: hidden;
+    margin-bottom: 30px;
+    flex: 1;
+}
+
+/* ==========================================
+   Footer
+   ========================================== */
+.admin-footer {
+    text-align: center;
+    padding: 2em;
+    color: var(--admin-medium);
+    font-size: 0.9rem;
+    margin-top: auto;
+    width: 100%;
+    border-top: 1px solid var(--admin-light);
+}
+
+.admin-footer a {
+    color: var(--admin-accent);
+    text-decoration: none;
+}
+
+.admin-footer a:hover {
+    text-decoration: underline;
+}
+
+/* ==========================================
+   Hamburger Menu (Mobile)
+   ========================================== */
+.hamburger-menu {
+    display: none;
+    cursor: pointer;
+    padding: 10px;
+    background: none;
+    border: none;
+}
+
+.hamburger-menu .hamburger-icon span {
+    display: block;
+    width: 25px;
+    height: 3px;
+    background-color: var(--admin-dark);
+    margin: 5px 0;
+    transition: 0.3s;
+}
+
+/* Mobile Sidebar Overlay */
+.mobile-sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 998;
+}
+
+/* Hamburger → X transform when sidebar-open */
+.admin-container.sidebar-open .hamburger-icon span:nth-child(1) {
+    transform: rotate(-45deg) translate(-5px, 6px);
+}
+
+.admin-container.sidebar-open .hamburger-icon span:nth-child(2) {
+    opacity: 0;
+}
+
+.admin-container.sidebar-open .hamburger-icon span:nth-child(3) {
+    transform: rotate(45deg) translate(-5px, -6px);
+}
+
+/* Show overlay when sidebar is open */
+.admin-container.sidebar-open .mobile-sidebar-overlay {
+    display: block;
+}
+
+/* ==========================================
+   Wavy Separator
+   ========================================== */
+.wavy-separator {
+    height: 28px;
+    width: 100%;
+    background-color: var(--admin-accent);
+    --mask:
+      radial-gradient(10.96px at 50% calc(100% + 5.6px),#0000 calc(99% - 4px),#000 calc(101% - 4px) 99%,#0000 101%) calc(50% - 14px) calc(50% - 5.5px + .5px)/28px 11px repeat-x,
+      radial-gradient(10.96px at 50% -5.6px,#0000 calc(99% - 4px),#000 calc(101% - 4px) 99%,#0000 101%) 50% calc(50% + 5.5px)/28px 11px repeat-x;
+    -webkit-mask: var(--mask);
+    mask: var(--mask);
+}
+
+/* ==========================================
+   Desktop (> 900px)
+   ========================================== */
+@media (min-width: 901px) {
+    .admin-container {
+        font-size: 115%;
+    }
+
+    .admin-container .sidebar {
+        float: right;
+        width: 30%;
+        padding: 1.5em;
+        margin-left: 1.5em;
+        position: static;
+        height: auto;
+        right: auto;
+        top: auto;
+    }
+
+    .admin-container main {
+        overflow: auto;
+        margin-right: 0;
+    }
+
+    .mobile-sidebar-overlay {
+        display: none !important;
+    }
+
+    .hamburger-menu {
+        display: none !important;
+    }
+}
+
+/* ==========================================
+   Mobile (≤ 900px)
+   ========================================== */
+@media (max-width: 900px) {
+    .admin-container {
+        padding: 0.5em;
+        position: relative;
+        overflow-x: hidden;
+    }
+
+    .admin-header {
+        padding: 1em;
+    }
+
+    .admin-footer {
+        padding: 1em;
+    }
+
+    /* Show hamburger menu on mobile */
+    .hamburger-menu {
+        display: block;
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        z-index: 1000;
+    }
+
+    /* Mobile sidebar styling */
+    .admin-container .sidebar {
+        position: fixed;
+        top: 0;
+        right: -85%;
+        width: 85%;
+        height: 100%;
+        background-color: var(--admin-bg);
+        padding: 25px 20px;
+        padding-top: 30px;
+        margin: 0;
+        float: none;
+        border: none;
+        transition: right 0.3s ease;
+        z-index: 999;
+        overflow-y: auto;
+        box-shadow: -2px 0 5px rgba(0,0,0,0.1);
+    }
+
+    .admin-container.sidebar-open .sidebar {
+        right: 0;
+    }
+
+    .admin-container main {
+        padding-left: 1em;
+        padding-right: 1em;
+        width: 100%;
+    }
+}

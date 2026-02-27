@@ -3,16 +3,12 @@ import { ref, computed, watch, onBeforeUnmount } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useBlogStore } from '@/stores/blog';
 import { marked } from 'marked';
-import PublishModal from '@/components/PublishModal.vue';
-import SyncBadge from '@/components/SyncBadge.vue';
 
 const route = useRoute();
 const router = useRouter();
 const blogStore = useBlogStore();
 
-const showPublishModal = ref(false);
 const filter = ref('all'); // 'all', 'published', 'draft'
-const searchText = ref('');
 const sortOption = ref('date_desc');
 const POSTS_PER_PAGE = 10;
 let searchTimeout = null;
@@ -29,7 +25,7 @@ const blogId = computed(() => route.params.blogId);
 const MIN_SEARCH_LENGTH = 2;
 
 // Fetch posts when search/sort changes (with debounce for search)
-watch([searchText, sortOption], () => {
+watch([() => blogStore.searchText, sortOption], () => {
   if (searchTimeout) clearTimeout(searchTimeout);
   searchTimeout = setTimeout(() => {
     fetchPosts();
@@ -50,7 +46,7 @@ onBeforeUnmount(() => {
 });
 
 const effectiveSearchText = computed(() => {
-  return searchText.value.length >= MIN_SEARCH_LENGTH ? searchText.value : '';
+  return blogStore.searchText.length >= MIN_SEARCH_LENGTH ? blogStore.searchText : '';
 });
 
 // Map filter values to API status values
@@ -83,20 +79,8 @@ async function loadMorePosts() {
   });
 }
 
-const postCounts = computed(() => {
-  return {
-    all: blogStore.postsTotal,
-    published: blogStore.postsPublishedCount,
-    drafts: blogStore.postsDraftCount
-  };
-});
-
 function navigateToPost(postId) {
   router.push({ name: 'post-edit', params: { blogId: blogId.value, postId } });
-}
-
-function clearSearch() {
-  searchText.value = '';
 }
 
 function getEmbedImageUrl(filename) {
@@ -145,112 +129,35 @@ function formatLocalDateTime(dateString) {
     timeZone: timezone
   });
 }
-
-// Get truncated title for background text (first 3 words or 20 chars)
-function getBackgroundTitle(title) {
-  if (!title) return 'UNTITLED';
-  return title.toUpperCase();
-}
 </script>
 
 <template>
-  <div class="min-h-screen bg-white dark:bg-black overflow-x-hidden">
-    <!-- Right edge fade - covers overflow on desktop (light mode) -->
-    <div
-      class="hidden lg:block dark:lg:hidden fixed right-0 top-0 h-full z-10 w-24"
-      style="background: linear-gradient(to right, transparent, white);"
-    ></div>
-    <!-- Right edge fade - covers overflow on desktop (dark mode) -->
-    <div
-      class="hidden dark:lg:block fixed right-0 top-0 h-full z-10 w-24"
-      style="background: linear-gradient(to right, transparent, black);"
-    ></div>
-
-    <!-- Max-width content wrapper for desktop -->
-    <div class="lg:max-w-[700px] lg:ml-8">
-
-    <!-- Navigation bar -->
-    <nav class="flex items-center justify-between px-6 py-4 lg:px-0">
-      <router-link to="/" class="px-3 py-1.5 border-2 border-retro-gray-light dark:border-retro-gray-darker bg-white dark:bg-black font-retro-mono text-retro-sm text-retro-gray-dark dark:text-retro-gray-medium hover:border-retro-orange hover:text-retro-orange uppercase tracking-wider">
-        <span class="relative -top-px">&lt;</span> All Blogs
+  <div>
+    <!-- New Post button -->
+    <div class="mb-6">
+      <router-link
+        :to="{ name: 'post-create', params: { blogId } }"
+        class="inline-block px-4 py-2 bg-site-accent text-white font-semibold rounded-full hover:bg-[#e89200] transition-colors"
+      >
+        + New Post
       </router-link>
-
-      <div class="flex items-center gap-2">
-        <SyncBadge />
-        <router-link
-          :to="{ name: 'post-create', params: { blogId } }"
-          class="px-3 py-1.5 border-2 border-retro-gray-light dark:border-retro-gray-darker bg-white dark:bg-black font-retro-mono text-retro-sm text-retro-gray-dark dark:text-retro-gray-medium hover:border-retro-orange hover:text-retro-orange uppercase tracking-wider"
-        >
-          <span class="relative -top-px">+</span> New Post
-        </router-link>
-        <button
-          @click="showPublishModal = true"
-          class="px-3 py-1.5 border-2 border-retro-gray-light dark:border-retro-gray-darker bg-white dark:bg-black font-retro-mono text-retro-sm text-retro-gray-dark dark:text-retro-gray-medium hover:border-retro-orange hover:text-retro-orange uppercase tracking-wider"
-        >
-          Deploy
-        </button>
-        <router-link
-          :to="{ name: 'blog-settings', params: { blogId } }"
-          class="px-3 py-1.5 border-2 border-retro-gray-light dark:border-retro-gray-darker bg-white dark:bg-black font-retro-mono text-retro-sm text-retro-gray-dark dark:text-retro-gray-medium hover:border-retro-orange hover:text-retro-orange uppercase tracking-wider"
-        >
-          Settings
-        </router-link>
-      </div>
-    </nav>
-
-    <!-- Hero section with giant blog name -->
-    <header class="relative h-52 md:h-60">
-      <!-- Divider with left padding -->
-      <div class="absolute bottom-0 left-6 right-0 border-b border-retro-gray-light dark:border-retro-gray-darker lg:left-0 lg:-right-[100vw]"></div>
-      <!-- Giant background text - uppercase, vertically centered for equal spacing -->
-      <span class="absolute inset-0 flex items-center justify-start font-retro-serif font-bold text-[10rem] md:text-[14rem] leading-none tracking-tighter text-retro-gray-lightest dark:text-[#1a1a1a] select-none pointer-events-none whitespace-nowrap uppercase" aria-hidden="true">
-        {{ blogStore.currentBlog?.name }}
-      </span>
-      <!-- Foreground content - positioned lower -->
-      <div class="absolute bottom-4 left-6 lg:left-0">
-        <h1 class="font-retro-serif font-bold text-6xl md:text-7xl leading-none tracking-tight text-retro-gray-darker dark:text-retro-cream lowercase">
-          {{ blogStore.currentBlog?.name }}
-        </h1>
-        <!-- Stats line -->
-        <div class="mt-2 font-retro-mono text-retro-sm text-retro-gray-medium">
-          {{ postCounts.published }} published<span v-if="postCounts.drafts > 0">, {{ postCounts.drafts }} drafts</span>
-        </div>
-      </div>
-    </header>
+    </div>
 
     <!-- Controls bar -->
-    <div class="relative px-6 py-4 lg:px-0">
+    <div class="mb-6">
       <div class="flex flex-col sm:flex-row sm:items-center gap-3">
-        <!-- Search -->
-        <div class="flex-1 flex items-center border-2 border-retro-gray-light dark:border-retro-gray-darker bg-white dark:bg-black">
-          <input
-            v-model="searchText"
-            type="text"
-            placeholder="Search..."
-            class="flex-1 px-3 py-2 font-retro-mono text-retro-sm bg-transparent text-retro-gray-darker dark:text-retro-cream placeholder-retro-gray-medium focus:outline-none"
-          />
-          <button
-            v-if="searchText"
-            @click="clearSearch"
-            class="px-3 text-retro-gray-medium hover:text-retro-gray-darker dark:hover:text-retro-cream"
-          >
-            &times;
-          </button>
-        </div>
-
-        <!-- Filter and Sort row -->
         <div class="flex items-center gap-3">
           <!-- Filter toggles -->
-          <div class="flex items-center border-2 border-retro-gray-light dark:border-retro-gray-darker">
+          <div class="flex items-center border border-site-light rounded-lg overflow-hidden">
             <button
               v-for="f in ['all', 'published', 'draft']"
               :key="f"
               @click="filter = f"
               :class="[
-                'px-3 py-2 font-retro-mono text-retro-sm uppercase tracking-wider transition-colors',
+                'px-3 py-2 capitalize transition-colors',
                 filter === f
-                  ? 'bg-retro-gray-darker text-white dark:bg-retro-cream dark:text-black'
-                  : 'text-retro-gray-dark dark:text-retro-gray-medium hover:bg-retro-gray-light dark:hover:bg-retro-gray-darker'
+                  ? 'bg-site-accent text-white'
+                  : 'bg-white text-site-medium hover:bg-site-bg hover:text-site-text'
               ]"
             >
               {{ f }}
@@ -258,219 +165,203 @@ function getBackgroundTitle(title) {
           </div>
 
           <!-- Sort dropdown -->
-          <div class="relative border-2 border-retro-gray-light dark:border-retro-gray-darker">
+          <div class="relative border border-site-light rounded-lg bg-white">
             <select
               v-model="sortOption"
-              class="appearance-none px-3 py-2 pr-8 font-retro-mono text-retro-sm bg-white dark:bg-black text-retro-gray-darker dark:text-retro-cream focus:outline-none cursor-pointer"
+              class="appearance-none px-3 py-2 pr-8 bg-transparent text-site-text focus:outline-none cursor-pointer rounded-lg"
             >
               <option v-for="opt in sortOptions" :key="opt.value" :value="opt.value">
                 {{ opt.label }}
               </option>
             </select>
-            <span class="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-retro-gray-medium">&darr;</span>
+            <span class="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-site-medium">&darr;</span>
           </div>
         </div>
       </div>
 
-      <p v-if="searchText && !effectiveSearchText" class="mt-2 font-retro-mono text-retro-xs text-retro-gray-medium">
-        Type {{ MIN_SEARCH_LENGTH - searchText.length }} more character{{ MIN_SEARCH_LENGTH - searchText.length > 1 ? 's' : '' }} to search
+      <p v-if="blogStore.searchText && !effectiveSearchText" class="mt-2 text-[0.8em] text-site-medium">
+        Type {{ MIN_SEARCH_LENGTH - blogStore.searchText.length }} more character{{ MIN_SEARCH_LENGTH - blogStore.searchText.length > 1 ? 's' : '' }} to search
       </p>
     </div>
 
-    <!-- Content -->
-    <main>
-      <!-- Empty State -->
-      <div v-if="blogStore.posts.length === 0" class="py-24 px-6 lg:px-0">
-        <p class="font-retro-serif text-4xl md:text-6xl font-bold text-retro-gray-darker dark:text-retro-gray-light leading-tight">
-          {{ searchText ? 'No posts match your search.' : 'No posts yet.' }}
-        </p>
-        <router-link
-          v-if="!searchText"
-          :to="{ name: 'post-create', params: { blogId } }"
-          class="inline-block mt-6 font-retro-mono text-retro-sm text-retro-orange hover:text-retro-orange-dark uppercase tracking-wider"
-        >
-          Create your first post &rarr;
-        </router-link>
-        <button
-          v-else
-          @click="clearSearch"
-          class="inline-block mt-6 font-retro-mono text-retro-sm text-retro-orange hover:text-retro-orange-dark uppercase tracking-wider"
-        >
-          Clear search &rarr;
-        </button>
-      </div>
+    <!-- Empty State -->
+    <div v-if="blogStore.posts.length === 0" class="py-24 text-center">
+      <p class="text-[1.2rem] font-bold text-site-dark mb-2">
+        {{ blogStore.searchText ? 'No posts match your search' : 'No posts yet' }}
+      </p>
+      <router-link
+        v-if="!blogStore.searchText"
+        :to="{ name: 'post-create', params: { blogId } }"
+        class="inline-block mt-4 px-5 py-2 bg-site-accent text-white font-semibold rounded-full hover:bg-[#e89200] transition-colors"
+      >
+        Create your first post
+      </router-link>
+      <button
+        v-else
+        @click="blogStore.clearSearch()"
+        class="inline-block mt-4 text-site-accent hover:underline"
+      >
+        Clear search &rarr;
+      </button>
+    </div>
 
-      <!-- Posts List -->
-      <div v-else class="space-y-0">
+    <!-- Posts List -->
+    <div v-else>
+      <template v-for="(post, index) in blogStore.posts" :key="post.id">
         <article
-          v-for="post in blogStore.posts"
-          :key="post.id"
-          class="group cursor-pointer relative ml-6 lg:ml-0 pt-6 pb-6"
+          class="group cursor-pointer"
           @click="navigateToPost(post.id)"
         >
-          <!-- Divider that extends to the right -->
-          <div class="absolute bottom-0 left-0 right-0 border-b border-retro-gray-light dark:border-retro-gray-darker lg:-right-[100vw]"></div>
-          <!-- Giant background text - post title uppercase -->
-          <span class="absolute top-6 left-0 h-24 md:h-32 flex items-center font-retro-serif font-bold text-[6rem] md:text-[8rem] leading-none tracking-tighter text-retro-gray-lightest dark:text-[#1a1a1a] select-none pointer-events-none whitespace-nowrap uppercase" aria-hidden="true">
-            {{ post.title || post.content?.replace(/[#*_`>\[\]]/g, '').substring(0, 200) || 'UNTITLED' }}
-          </span>
+          <!-- Post title -->
+          <h2 v-if="post.title" class="font-bold text-site-dark leading-snug group-hover:text-site-accent transition-colors">
+            {{ post.title }}
+          </h2>
 
-          <!-- Foreground content - flows naturally with padding -->
-          <div class="relative pt-16 md:pt-20 pb-4">
-            <!-- Post title -->
-            <h2 class="font-retro-serif font-bold text-3xl md:text-4xl leading-none tracking-tight text-retro-gray-darker dark:text-retro-cream group-hover:text-retro-orange transition-colors lowercase whitespace-nowrap">
-              {{ post.title || post.content?.replace(/[#*_`>\[\]]/g, '').substring(0, 200) || 'untitled' }}
-            </h2>
+          <!-- Post date -->
+          <div class="text-[0.9em] text-site-medium mt-1">
+            {{ formatLocalDateTime(post.createdAt) }}
+            <span
+              v-if="post.isDraft"
+              class="ml-2 text-site-accent font-semibold"
+            >
+              Draft
+            </span>
+          </div>
 
-            <!-- Meta line -->
-            <div class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 pr-6 lg:pr-0">
-              <time class="font-retro-mono text-retro-xs text-retro-gray-medium">{{ formatLocalDateTime(post.createdAt) }}</time>
-              <span
-                v-if="post.isDraft"
-                class="font-retro-mono text-retro-xs text-retro-orange uppercase"
-              >
-                Draft
-              </span>
-              <span v-if="post.category" class="font-retro-mono text-retro-xs text-retro-gray-dark dark:text-retro-gray-medium">
-                {{ post.category.name }}
-              </span>
-              <template v-if="post.tags?.length > 0">
-                <span v-for="tag in post.tags?.slice(0, 3)" :key="tag.id" class="font-retro-mono text-retro-xs text-retro-gray-medium">
-                  #{{ tag.name }}
-                </span>
-                <span v-if="post.tags?.length > 3" class="font-retro-mono text-retro-xs text-retro-gray-medium">
-                  +{{ post.tags.length - 3 }}
-                </span>
-              </template>
+          <!-- Embed (above position) -->
+          <div v-if="post.embed && post.embed.position === 'above'" class="mt-[1.5em]">
+            <!-- YouTube -->
+            <div v-if="post.embed.type === 'youtube' && getYouTubeVideoId(post.embed)" class="aspect-video max-h-96">
+              <iframe
+                :src="`https://www.youtube.com/embed/${getYouTubeVideoId(post.embed)}`"
+                class="w-full h-full"
+                frameborder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowfullscreen
+              ></iframe>
             </div>
 
-            <!-- Embed (above position) -->
-            <div v-if="post.embed && post.embed.position === 'above'" class="mt-4 pr-6 lg:pr-0">
-              <!-- YouTube -->
-              <div v-if="post.embed.type === 'youtube' && getYouTubeVideoId(post.embed)" class="aspect-video max-h-96 border-2 border-retro-gray-light dark:border-retro-gray-darker">
-                <iframe
-                  :src="`https://www.youtube.com/embed/${getYouTubeVideoId(post.embed)}`"
-                  class="w-full h-full"
-                  frameborder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowfullscreen
-                ></iframe>
+            <!-- Link -->
+            <a
+              v-else-if="post.embed.type === 'link'"
+              :href="post.embed.url"
+              @click.stop
+              target="_blank"
+              rel="noopener noreferrer"
+              class="flex gap-4 max-w-xl border border-site-light p-3 hover:border-site-accent transition-colors"
+            >
+              <img
+                v-if="getLinkEmbedImageSrc(post.embed)"
+                :src="getLinkEmbedImageSrc(post.embed)"
+                class="w-20 h-20 object-cover shrink-0"
+                alt=""
+              />
+              <div class="flex-1 min-w-0">
+                <p v-if="post.embed.title" class="font-medium text-site-dark line-clamp-2">{{ post.embed.title }}</p>
+                <p v-if="post.embed.description" class="text-[0.9em] text-site-medium line-clamp-2 mt-1">{{ post.embed.description }}</p>
+                <p class="text-[0.8em] text-site-medium mt-2 truncate">{{ post.embed.url }}</p>
               </div>
+            </a>
 
-              <!-- Link -->
-              <a
-                v-else-if="post.embed.type === 'link'"
-                :href="post.embed.url"
-                @click.stop
-                target="_blank"
-                rel="noopener noreferrer"
-                class="flex gap-4 max-w-xl border-2 border-retro-gray-light dark:border-retro-gray-darker p-3 hover:border-retro-orange transition-colors"
-              >
-                <img
-                  v-if="getLinkEmbedImageSrc(post.embed)"
-                  :src="getLinkEmbedImageSrc(post.embed)"
-                  class="w-20 h-20 object-cover shrink-0"
-                  alt=""
-                />
-                <div class="flex-1 min-w-0">
-                  <p v-if="post.embed.title" class="font-retro-sans text-retro-sm font-medium text-retro-gray-darker dark:text-retro-cream line-clamp-2">{{ post.embed.title }}</p>
-                  <p v-if="post.embed.description" class="font-retro-sans text-retro-xs text-retro-gray-dark dark:text-retro-gray-medium line-clamp-2 mt-1">{{ post.embed.description }}</p>
-                  <p class="font-retro-mono text-retro-xs text-retro-gray-medium mt-2 truncate">{{ post.embed.url }}</p>
-                </div>
-              </a>
-
-              <!-- Image -->
-              <div v-else-if="post.embed.type === 'image' && post.embed.images?.length > 0">
-                <img
-                  :src="getEmbedImageUrl(post.embed.images[0]?.filename)"
-                  class="max-w-full max-h-96 object-contain border-2 border-retro-gray-light dark:border-retro-gray-darker"
-                  alt=""
-                />
-                <p v-if="post.embed.images.length > 1" class="font-retro-mono text-retro-xs text-retro-gray-medium mt-2">
-                  +{{ post.embed.images.length - 1 }} more
-                </p>
-              </div>
-            </div>
-
-            <!-- Content -->
-            <div
-              v-if="post.content"
-              class="mt-4 pr-6 lg:pr-0 prose prose-sm dark:prose-invert prose-gray max-w-3xl font-retro-sans text-retro-sm"
-              v-html="renderMarkdown(post.content)"
-            ></div>
-
-            <!-- Embed (below position) -->
-            <div v-if="post.embed && post.embed.position === 'below'" class="mt-4 pr-6 lg:pr-0">
-              <!-- YouTube -->
-              <div v-if="post.embed.type === 'youtube' && getYouTubeVideoId(post.embed)" class="aspect-video max-h-96 border-2 border-retro-gray-light dark:border-retro-gray-darker">
-                <iframe
-                  :src="`https://www.youtube.com/embed/${getYouTubeVideoId(post.embed)}`"
-                  class="w-full h-full"
-                  frameborder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowfullscreen
-                ></iframe>
-              </div>
-
-              <!-- Link -->
-              <a
-                v-else-if="post.embed.type === 'link'"
-                :href="post.embed.url"
-                @click.stop
-                target="_blank"
-                rel="noopener noreferrer"
-                class="flex gap-4 max-w-xl border-2 border-retro-gray-light dark:border-retro-gray-darker p-3 hover:border-retro-orange transition-colors"
-              >
-                <img
-                  v-if="getLinkEmbedImageSrc(post.embed)"
-                  :src="getLinkEmbedImageSrc(post.embed)"
-                  class="w-20 h-20 object-cover shrink-0"
-                  alt=""
-                />
-                <div class="flex-1 min-w-0">
-                  <p v-if="post.embed.title" class="font-retro-sans text-retro-sm font-medium text-retro-gray-darker dark:text-retro-cream line-clamp-2">{{ post.embed.title }}</p>
-                  <p v-if="post.embed.description" class="font-retro-sans text-retro-xs text-retro-gray-dark dark:text-retro-gray-medium line-clamp-2 mt-1">{{ post.embed.description }}</p>
-                  <p class="font-retro-mono text-retro-xs text-retro-gray-medium mt-2 truncate">{{ post.embed.url }}</p>
-                </div>
-              </a>
-
-              <!-- Image -->
-              <div v-else-if="post.embed.type === 'image' && post.embed.images?.length > 0">
-                <img
-                  :src="getEmbedImageUrl(post.embed.images[0]?.filename)"
-                  class="max-w-full max-h-96 object-contain border-2 border-retro-gray-light dark:border-retro-gray-darker"
-                  alt=""
-                />
-                <p v-if="post.embed.images.length > 1" class="font-retro-mono text-retro-xs text-retro-gray-medium mt-2">
-                  +{{ post.embed.images.length - 1 }} more
-                </p>
-              </div>
+            <!-- Image -->
+            <div v-else-if="post.embed.type === 'image' && post.embed.images?.length > 0">
+              <img
+                :src="getEmbedImageUrl(post.embed.images[0]?.filename)"
+                class="max-w-full max-h-96 object-contain"
+                alt=""
+              />
+              <p v-if="post.embed.images.length > 1" class="text-[0.8em] text-site-medium mt-2">
+                +{{ post.embed.images.length - 1 }} more
+              </p>
             </div>
           </div>
+
+          <!-- Content -->
+          <div
+            v-if="post.content"
+            class="mt-[1.5em] prose max-w-none leading-[1.8]"
+            v-html="renderMarkdown(post.content)"
+          ></div>
+
+          <!-- Embed (below position) -->
+          <div v-if="post.embed && post.embed.position === 'below'" class="mt-[1.5em]">
+            <!-- YouTube -->
+            <div v-if="post.embed.type === 'youtube' && getYouTubeVideoId(post.embed)" class="aspect-video max-h-96">
+              <iframe
+                :src="`https://www.youtube.com/embed/${getYouTubeVideoId(post.embed)}`"
+                class="w-full h-full"
+                frameborder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowfullscreen
+              ></iframe>
+            </div>
+
+            <!-- Link -->
+            <a
+              v-else-if="post.embed.type === 'link'"
+              :href="post.embed.url"
+              @click.stop
+              target="_blank"
+              rel="noopener noreferrer"
+              class="flex gap-4 max-w-xl border border-site-light p-3 hover:border-site-accent transition-colors"
+            >
+              <img
+                v-if="getLinkEmbedImageSrc(post.embed)"
+                :src="getLinkEmbedImageSrc(post.embed)"
+                class="w-20 h-20 object-cover shrink-0"
+                alt=""
+              />
+              <div class="flex-1 min-w-0">
+                <p v-if="post.embed.title" class="font-medium text-site-dark line-clamp-2">{{ post.embed.title }}</p>
+                <p v-if="post.embed.description" class="text-[0.9em] text-site-medium line-clamp-2 mt-1">{{ post.embed.description }}</p>
+                <p class="text-[0.8em] text-site-medium mt-2 truncate">{{ post.embed.url }}</p>
+              </div>
+            </a>
+
+            <!-- Image -->
+            <div v-else-if="post.embed.type === 'image' && post.embed.images?.length > 0">
+              <img
+                :src="getEmbedImageUrl(post.embed.images[0]?.filename)"
+                class="max-w-full max-h-96 object-contain"
+                alt=""
+              />
+              <p v-if="post.embed.images.length > 1" class="text-[0.8em] text-site-medium mt-2">
+                +{{ post.embed.images.length - 1 }} more
+              </p>
+            </div>
+          </div>
+
+          <!-- Tags & Category -->
+          <div v-if="post.category || post.tags?.length > 0" class="mt-[3em] text-[0.6em] flex flex-wrap items-center gap-2">
+            <span v-if="post.category" class="inline-block text-white bg-site-accent border border-site-accent px-2 py-0.5 rounded-full hover:bg-site-bg hover:text-site-accent transition-colors">
+              {{ post.category.name }}
+            </span>
+            <template v-if="post.tags?.length > 0">
+              <span v-for="tag in post.tags?.slice(0, 3)" :key="tag.id" class="inline-block text-site-accent bg-site-bg border border-site-accent px-2 py-0.5 rounded-full hover:bg-site-accent hover:text-white transition-colors">
+                #{{ tag.name }}
+              </span>
+              <span v-if="post.tags?.length > 3" class="text-site-medium">
+                +{{ post.tags.length - 3 }}
+              </span>
+            </template>
+          </div>
         </article>
-      </div>
 
-      <!-- Load More -->
-      <div v-if="hasMorePosts" class="py-8 px-6 lg:px-0">
-        <button
-          @click="loadMorePosts"
-          :disabled="blogStore.loading"
-          class="font-retro-mono text-retro-sm text-retro-gray-darker dark:text-retro-gray-light hover:text-retro-orange uppercase tracking-wider disabled:opacity-50"
-        >
-          <template v-if="blogStore.loading">Loading...</template>
-          <template v-else>Load more ({{ remainingPostsCount }}) &darr;</template>
-        </button>
-      </div>
-    </main>
+        <!-- Wavy separator -->
+        <div class="wavy-separator my-[3em]"></div>
+      </template>
+    </div>
 
-    </div><!-- End max-width wrapper -->
-
-    <!-- Publish Modal -->
-    <PublishModal
-      v-if="showPublishModal"
-      :blog-id="blogId"
-      :show="showPublishModal"
-      @close="showPublishModal = false"
-    />
+    <!-- Load More -->
+    <div v-if="hasMorePosts" class="py-8 text-center">
+      <button
+        @click="loadMorePosts"
+        :disabled="blogStore.loading"
+        class="text-site-accent hover:underline disabled:opacity-50"
+      >
+        <template v-if="blogStore.loading">Loading...</template>
+        <template v-else>Load more ({{ remainingPostsCount }}) &darr;</template>
+      </button>
+    </div>
   </div>
 </template>

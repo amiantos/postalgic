@@ -87,10 +87,10 @@ function addLog(text, type = 'info') {
 
 function getLogClass(type) {
   switch (type) {
-    case 'error': return 'text-red-600 dark:text-red-500';
-    case 'success': return 'text-green-600 dark:text-green-500';
-    case 'warning': return 'text-yellow-600 dark:text-yellow-500';
-    default: return 'text-retro-gray-dark dark:text-retro-gray-medium';
+    case 'error': return 'text-red-600';
+    case 'success': return 'text-green-600';
+    case 'warning': return 'text-yellow-600';
+    default: return 'text-site-dark';
   }
 }
 
@@ -395,7 +395,7 @@ const isWorking = computed(() => generating.value || downloading.value || publis
   <Teleport to="body">
     <div
       v-if="show"
-      class="fixed inset-0 bg-white dark:bg-black flex items-center justify-center z-50 p-6 overflow-hidden"
+      class="fixed inset-0 bg-site-bg flex items-center justify-center z-50 p-6 overflow-hidden"
       @click.self="!isWorking && emit('close')"
     >
       <!-- Tiled DEPLOY background -->
@@ -403,7 +403,7 @@ const isWorking = computed(() => generating.value || downloading.value || publis
         <div class="absolute inset-0 flex flex-col justify-center -rotate-12 scale-150 origin-center">
           <div v-for="row in 12" :key="row" class="flex whitespace-nowrap">
             <span
-              class="font-retro-serif font-bold text-[6rem] md:text-[8rem] leading-none tracking-tighter text-retro-gray-lightest dark:text-[#1a1a1a]"
+              class="font-bold text-[6rem] md:text-[8rem] leading-none tracking-tighter text-site-light"
               :class="row % 2 === 0 ? '' : 'ml-32'"
             >
               DEPLOY DEPLOY DEPLOY DEPLOY DEPLOY DEPLOY DEPLOY DEPLOY DEPLOY DEPLOY
@@ -416,26 +416,26 @@ const isWorking = computed(() => generating.value || downloading.value || publis
         <!-- Header -->
         <div class="flex items-end justify-between mb-6">
           <div>
-            <h2 class="font-retro-serif text-5xl md:text-6xl font-bold text-retro-gray-darker dark:text-white leading-none lowercase">
+            <h2 class="text-5xl md:text-6xl font-bold text-site-dark leading-none lowercase">
               deploy
             </h2>
-            <p class="font-retro-mono text-retro-sm text-retro-gray-medium mt-2">
+            <p class="font-mono text-sm text-site-medium mt-2">
               via {{ getPublisherLabel(publisherType) }}
             </p>
           </div>
           <button
             @click="emit('close')"
             :disabled="isWorking"
-            class="font-retro-mono text-retro-sm text-retro-gray-dark dark:text-retro-gray-light hover:text-retro-gray-darker dark:hover:text-white uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed"
+            class="font-mono text-sm text-site-dark hover:text-site-accent uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <span class="relative -top-px">&times;</span> Close
           </button>
         </div>
 
         <!-- Blog URL Warning -->
-        <div v-if="!blogStore.currentBlog?.url" class="mb-4 p-3 border-2 border-yellow-500 bg-yellow-500/10">
-          <p class="font-retro-mono text-retro-sm text-yellow-500 uppercase">Warning: Blog URL not set</p>
-          <p class="font-retro-sans text-retro-sm text-retro-gray-dark dark:text-retro-gray-light mt-1">
+        <div v-if="!blogStore.currentBlog?.url" class="mb-4 p-3 border border-yellow-500 bg-yellow-500/10">
+          <p class="font-mono text-sm text-yellow-500 uppercase">Warning: Blog URL not set</p>
+          <p class="text-sm text-site-dark mt-1">
             Set your blog URL in Settings for correct links.
           </p>
         </div>
@@ -443,30 +443,30 @@ const isWorking = computed(() => generating.value || downloading.value || publis
         <!-- Terminal Log -->
         <div
           ref="logContainer"
-          class="bg-retro-gray-lightest dark:bg-black border-2 border-retro-gray-light dark:border-retro-gray-darker p-4 h-48 overflow-y-auto font-retro-mono text-retro-sm mb-4"
+          class="bg-white border border-site-light p-4 h-48 overflow-y-auto font-mono text-sm mb-4"
         >
           <div
             v-for="(msg, index) in logMessages"
             :key="index"
             :class="getLogClass(msg.type)"
           >
-            <span class="text-retro-gray-medium dark:text-retro-gray-dark">{{ msg.time }}</span> {{ msg.text }}
+            <span class="text-site-medium">{{ msg.time }}</span> {{ msg.text }}
           </div>
-          <div v-if="isWorking" class="text-retro-gray-dark dark:text-retro-gray-medium animate-pulse">
-            <span class="text-retro-gray-medium dark:text-retro-gray-dark">{{ new Date().toLocaleTimeString('en-US', { hour12: false }) }}</span> Working...
+          <div v-if="isWorking" class="text-site-dark animate-pulse">
+            <span class="text-site-medium">{{ new Date().toLocaleTimeString('en-US', { hour12: false }) }}</span> Working...
           </div>
         </div>
 
         <!-- Error Message -->
-        <div v-if="error" class="mb-4 p-3 border-2 border-red-500 bg-red-500/10">
-          <p class="font-retro-mono text-retro-sm text-red-500">{{ error }}</p>
+        <div v-if="error" class="mb-4 p-3 border border-red-500 bg-red-500/10">
+          <p class="font-mono text-sm text-red-500">{{ error }}</p>
         </div>
 
         <!-- Preview Button -->
         <button
           v-if="previewUrl"
           @click="openPreview"
-          class="w-full mb-4 px-4 py-3 border-2 border-retro-gray-light dark:border-retro-gray-dark text-retro-gray-dark dark:text-retro-gray-light font-retro-mono text-retro-sm uppercase tracking-wider hover:border-retro-gray-dark dark:hover:border-retro-gray-light hover:text-retro-gray-darker dark:hover:text-white transition-colors"
+          class="w-full mb-4 px-4 py-3 border border-site-light text-site-dark font-mono text-sm uppercase tracking-wider hover:border-site-dark hover:text-site-dark transition-colors"
         >
           Open Preview <span class="relative -top-px">&gt;</span>
         </button>
@@ -478,13 +478,13 @@ const isWorking = computed(() => generating.value || downloading.value || publis
             <button
               v-if="blogStore.currentBlog?.url"
               @click="visitSite"
-              class="flex-1 px-4 py-3 bg-retro-orange text-white font-retro-mono text-retro-sm uppercase tracking-wider hover:bg-retro-orange-dark transition-colors"
+              class="flex-1 px-4 py-3 bg-site-accent text-white font-mono text-sm uppercase tracking-wider hover:bg-[#e89200] transition-colors"
             >
               Visit Site <span class="relative -top-px">&gt;</span>
             </button>
             <button
               @click="emit('close')"
-              class="flex-1 px-4 py-3 border-2 border-retro-gray-light dark:border-retro-gray-dark text-retro-gray-dark dark:text-retro-gray-light font-retro-mono text-retro-sm uppercase tracking-wider hover:border-retro-gray-dark dark:hover:border-retro-gray-light hover:text-retro-gray-darker dark:hover:text-white transition-colors"
+              class="flex-1 px-4 py-3 border border-site-light text-site-dark font-mono text-sm uppercase tracking-wider hover:border-site-dark transition-colors"
             >
               Close
             </button>
@@ -497,7 +497,7 @@ const isWorking = computed(() => generating.value || downloading.value || publis
               v-if="!previewUrl && publisherType !== 'manual'"
               @click="generateSite"
               :disabled="isWorking"
-              class="w-full px-4 py-3 border-2 border-retro-gray-light dark:border-retro-gray-dark text-retro-gray-dark dark:text-retro-gray-light font-retro-mono text-retro-sm uppercase tracking-wider hover:border-retro-gray-dark dark:hover:border-retro-gray-light hover:text-retro-gray-darker dark:hover:text-white transition-colors disabled:opacity-50"
+              class="w-full px-4 py-3 border border-site-light text-site-dark font-mono text-sm uppercase tracking-wider hover:border-site-dark transition-colors disabled:opacity-50"
             >
               {{ generating ? 'Generating...' : 'Generate Preview' }}
             </button>
@@ -507,11 +507,11 @@ const isWorking = computed(() => generating.value || downloading.value || publis
               <button
                 @click="downloadSite"
                 :disabled="isWorking || !hasPublishedPosts"
-                class="w-full px-4 py-3 bg-retro-orange text-white font-retro-mono text-retro-sm uppercase tracking-wider hover:bg-retro-orange-dark transition-colors disabled:opacity-50"
+                class="w-full px-4 py-3 bg-site-accent text-white font-mono text-sm uppercase tracking-wider hover:bg-[#e89200] transition-colors disabled:opacity-50"
               >
                 {{ downloading ? 'Downloading...' : 'Download ZIP' }}
               </button>
-              <p v-if="!hasPublishedPosts" class="font-retro-mono text-retro-xs text-retro-gray-medium text-center">
+              <p v-if="!hasPublishedPosts" class="font-mono text-xs text-site-medium text-center">
                 No published posts to deploy
               </p>
             </template>
@@ -520,19 +520,19 @@ const isWorking = computed(() => generating.value || downloading.value || publis
             <template v-if="publisherType === 'aws'">
               <!-- Full publish confirmation -->
               <div v-if="showFullPublishConfirm && fullPublishType === 'aws'" class="space-y-3">
-                <p class="font-retro-sans text-retro-sm text-retro-gray-dark dark:text-retro-gray-light">
+                <p class="text-sm text-site-dark">
                   Full publish will re-upload all files. This may take a long time for large sites.
                 </p>
                 <div class="flex gap-3">
                   <button
                     @click="cancelFullPublish"
-                    class="flex-1 px-4 py-3 border-2 border-retro-gray-light dark:border-retro-gray-dark text-retro-gray-dark dark:text-retro-gray-light font-retro-mono text-retro-sm uppercase tracking-wider hover:border-retro-gray-dark dark:hover:border-retro-gray-light hover:text-retro-gray-darker dark:hover:text-white transition-colors"
+                    class="flex-1 px-4 py-3 border border-site-light text-site-dark font-mono text-sm uppercase tracking-wider hover:border-site-dark transition-colors"
                   >
                     Cancel
                   </button>
                   <button
                     @click="executeFullPublish"
-                    class="flex-1 px-4 py-3 bg-retro-orange text-white font-retro-mono text-retro-sm uppercase tracking-wider hover:bg-retro-orange-dark transition-colors"
+                    class="flex-1 px-4 py-3 bg-site-accent text-white font-mono text-sm uppercase tracking-wider hover:bg-[#e89200] transition-colors"
                   >
                     Continue
                   </button>
@@ -543,14 +543,14 @@ const isWorking = computed(() => generating.value || downloading.value || publis
                 <button
                   @click="publishToAWS(false)"
                   :disabled="isWorking || !hasPublishedPosts"
-                  class="flex-1 px-4 py-3 bg-retro-orange text-white font-retro-mono text-retro-sm uppercase tracking-wider hover:bg-retro-orange-dark transition-colors disabled:opacity-50"
+                  class="flex-1 px-4 py-3 bg-site-accent text-white font-mono text-sm uppercase tracking-wider hover:bg-[#e89200] transition-colors disabled:opacity-50"
                 >
                   {{ publishing ? 'Publishing...' : 'Publish' }}
                 </button>
                 <button
                   @click="confirmFullPublish('aws')"
                   :disabled="isWorking || !hasPublishedPosts"
-                  class="px-4 py-3 border-2 border-retro-orange text-retro-orange font-retro-mono text-retro-sm uppercase tracking-wider hover:bg-retro-orange hover:text-white transition-colors disabled:opacity-50"
+                  class="px-4 py-3 border border-site-accent text-site-accent font-mono text-sm uppercase tracking-wider hover:bg-site-accent hover:text-white transition-colors disabled:opacity-50"
                   title="Re-upload all files"
                 >
                   Full
@@ -562,19 +562,19 @@ const isWorking = computed(() => generating.value || downloading.value || publis
             <template v-if="publisherType === 'sftp'">
               <!-- Full publish confirmation -->
               <div v-if="showFullPublishConfirm && fullPublishType === 'sftp'" class="space-y-3">
-                <p class="font-retro-sans text-retro-sm text-retro-gray-dark dark:text-retro-gray-light">
+                <p class="text-sm text-site-dark">
                   Full publish will re-upload all files. This may take a long time for large sites.
                 </p>
                 <div class="flex gap-3">
                   <button
                     @click="cancelFullPublish"
-                    class="flex-1 px-4 py-3 border-2 border-retro-gray-light dark:border-retro-gray-dark text-retro-gray-dark dark:text-retro-gray-light font-retro-mono text-retro-sm uppercase tracking-wider hover:border-retro-gray-dark dark:hover:border-retro-gray-light hover:text-retro-gray-darker dark:hover:text-white transition-colors"
+                    class="flex-1 px-4 py-3 border border-site-light text-site-dark font-mono text-sm uppercase tracking-wider hover:border-site-dark transition-colors"
                   >
                     Cancel
                   </button>
                   <button
                     @click="executeFullPublish"
-                    class="flex-1 px-4 py-3 bg-retro-orange text-white font-retro-mono text-retro-sm uppercase tracking-wider hover:bg-retro-orange-dark transition-colors"
+                    class="flex-1 px-4 py-3 bg-site-accent text-white font-mono text-sm uppercase tracking-wider hover:bg-[#e89200] transition-colors"
                   >
                     Continue
                   </button>
@@ -585,14 +585,14 @@ const isWorking = computed(() => generating.value || downloading.value || publis
                 <button
                   @click="publishToSFTP(false)"
                   :disabled="isWorking || !hasPublishedPosts"
-                  class="flex-1 px-4 py-3 bg-retro-orange text-white font-retro-mono text-retro-sm uppercase tracking-wider hover:bg-retro-orange-dark transition-colors disabled:opacity-50"
+                  class="flex-1 px-4 py-3 bg-site-accent text-white font-mono text-sm uppercase tracking-wider hover:bg-[#e89200] transition-colors disabled:opacity-50"
                 >
                   {{ publishing ? 'Publishing...' : 'Publish' }}
                 </button>
                 <button
                   @click="confirmFullPublish('sftp')"
                   :disabled="isWorking || !hasPublishedPosts"
-                  class="px-4 py-3 border-2 border-retro-orange text-retro-orange font-retro-mono text-retro-sm uppercase tracking-wider hover:bg-retro-orange hover:text-white transition-colors disabled:opacity-50"
+                  class="px-4 py-3 border border-site-accent text-site-accent font-mono text-sm uppercase tracking-wider hover:bg-site-accent hover:text-white transition-colors disabled:opacity-50"
                   title="Re-upload all files"
                 >
                   Full
@@ -605,7 +605,7 @@ const isWorking = computed(() => generating.value || downloading.value || publis
               <button
                 @click="publishToGit()"
                 :disabled="isWorking || !hasPublishedPosts"
-                class="w-full px-4 py-3 bg-retro-orange text-white font-retro-mono text-retro-sm uppercase tracking-wider hover:bg-retro-orange-dark transition-colors disabled:opacity-50"
+                class="w-full px-4 py-3 bg-site-accent text-white font-mono text-sm uppercase tracking-wider hover:bg-[#e89200] transition-colors disabled:opacity-50"
               >
                 {{ publishing ? 'Publishing...' : 'Push to Git' }}
               </button>
@@ -616,13 +616,13 @@ const isWorking = computed(() => generating.value || downloading.value || publis
               <button
                 @click="publishToCloudflare()"
                 :disabled="isWorking || !hasPublishedPosts"
-                class="w-full px-4 py-3 bg-retro-orange text-white font-retro-mono text-retro-sm uppercase tracking-wider hover:bg-retro-orange-dark transition-colors disabled:opacity-50"
+                class="w-full px-4 py-3 bg-site-accent text-white font-mono text-sm uppercase tracking-wider hover:bg-[#e89200] transition-colors disabled:opacity-50"
               >
                 {{ publishing ? 'Publishing...' : 'Deploy to Cloudflare' }}
               </button>
             </template>
 
-            <p v-if="!hasPublishedPosts && publisherType !== 'manual'" class="font-retro-mono text-retro-xs text-retro-gray-medium text-center">
+            <p v-if="!hasPublishedPosts && publisherType !== 'manual'" class="font-mono text-xs text-site-medium text-center">
               No published posts to deploy
             </p>
           </template>

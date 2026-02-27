@@ -34,11 +34,13 @@ const routes = [
       {
         path: 'posts/new',
         name: 'post-create',
+        meta: { fullWidth: true },
         component: () => import('./views/PostEditView.vue')
       },
       {
         path: 'posts/:postId',
         name: 'post-edit',
+        meta: { fullWidth: true },
         component: () => import('./views/PostEditView.vue')
       },
       {
