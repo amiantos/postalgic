@@ -132,23 +132,23 @@ async function saveSettings() {
 <template>
   <div>
     <!-- Messages -->
-    <div v-if="error" class="mb-6 p-4 border border-red-500 font-mono text-sm text-red-600">
+    <div v-if="error" class="mb-6 p-4 border border-red-500 text-sm text-red-600">
       {{ error }}
     </div>
-    <div v-if="success" class="mb-6 p-4 border border-green-500 font-mono text-sm text-green-600">
+    <div v-if="success" class="mb-6 p-4 border border-green-500 text-sm text-green-600">
       Settings saved successfully!
     </div>
 
     <form @submit.prevent="saveSettings" class="space-y-8">
       <!-- Publishing Settings -->
       <section>
-        <h3 class="font-mono text-sm text-site-dark uppercase tracking-wider mb-4">Publishing</h3>
+        <h3 class="text-sm font-semibold text-site-dark mb-4">Publishing</h3>
         <div class="space-y-4">
           <div>
-            <label class="block font-mono text-xs text-site-medium uppercase tracking-wider mb-2">Publisher Type</label>
+            <label class="block text-xs font-semibold text-site-medium mb-2">Publisher Type</label>
             <select
               v-model="form.publisherType"
-              class="w-full px-3 py-2 border border-site-light font-mono text-sm text-site-dark focus:outline-none focus:border-site-accent"
+              class="admin-input"
             >
               <option value="manual">Manual (Download ZIP)</option>
               <option value="aws">AWS S3</option>
@@ -160,48 +160,48 @@ async function saveSettings() {
 
           <!-- AWS Settings -->
           <div v-if="form.publisherType === 'aws'" class="space-y-4 p-4 border border-site-light">
-            <h4 class="font-mono text-sm text-site-dark uppercase tracking-wider">AWS S3 Configuration</h4>
+            <h4 class="text-sm font-semibold text-site-dark">AWS S3 Configuration</h4>
             <div class="grid grid-cols-2 gap-4">
               <div>
-                <label class="block font-mono text-xs text-site-medium uppercase tracking-wider mb-2">Region</label>
+                <label class="block text-xs font-semibold text-site-medium mb-2">Region</label>
                 <input
                   v-model="form.awsRegion"
                   type="text"
-                  class="w-full px-3 py-2 border border-site-light font-mono text-sm text-site-dark focus:outline-none focus:border-site-accent"
+                  class="admin-input"
                   placeholder="us-east-1"
                 />
               </div>
               <div>
-                <label class="block font-mono text-xs text-site-medium uppercase tracking-wider mb-2">S3 Bucket</label>
+                <label class="block text-xs font-semibold text-site-medium mb-2">S3 Bucket</label>
                 <input
                   v-model="form.awsS3Bucket"
                   type="text"
-                  class="w-full px-3 py-2 border border-site-light font-mono text-sm text-site-dark focus:outline-none focus:border-site-accent"
+                  class="admin-input"
                   placeholder="my-blog-bucket"
                 />
               </div>
               <div>
-                <label class="block font-mono text-xs text-site-medium uppercase tracking-wider mb-2">Access Key ID</label>
+                <label class="block text-xs font-semibold text-site-medium mb-2">Access Key ID</label>
                 <input
                   v-model="form.awsAccessKeyId"
                   type="text"
-                  class="w-full px-3 py-2 border border-site-light font-mono text-sm text-site-dark focus:outline-none focus:border-site-accent"
+                  class="admin-input"
                 />
               </div>
               <div>
-                <label class="block font-mono text-xs text-site-medium uppercase tracking-wider mb-2">Secret Access Key</label>
+                <label class="block text-xs font-semibold text-site-medium mb-2">Secret Access Key</label>
                 <input
                   v-model="form.awsSecretAccessKey"
                   type="password"
-                  class="w-full px-3 py-2 border border-site-light font-mono text-sm text-site-dark focus:outline-none focus:border-site-accent"
+                  class="admin-input"
                 />
               </div>
               <div class="col-span-2">
-                <label class="block font-mono text-xs text-site-medium uppercase tracking-wider mb-2">CloudFront Distribution ID</label>
+                <label class="block text-xs font-semibold text-site-medium mb-2">CloudFront Distribution ID</label>
                 <input
                   v-model="form.awsCloudFrontDistId"
                   type="text"
-                  class="w-full px-3 py-2 border border-site-light font-mono text-sm text-site-dark focus:outline-none focus:border-site-accent"
+                  class="admin-input"
                   placeholder="Optional - for cache invalidation"
                 />
               </div>
@@ -210,57 +210,57 @@ async function saveSettings() {
 
           <!-- SFTP Settings -->
           <div v-if="form.publisherType === 'sftp'" class="space-y-4 p-4 border border-site-light">
-            <h4 class="font-mono text-sm text-site-dark uppercase tracking-wider">SFTP Configuration</h4>
+            <h4 class="text-sm font-semibold text-site-dark">SFTP Configuration</h4>
             <div class="grid grid-cols-2 gap-4">
               <div>
-                <label class="block font-mono text-xs text-site-medium uppercase tracking-wider mb-2">Host</label>
+                <label class="block text-xs font-semibold text-site-medium mb-2">Host</label>
                 <input
                   v-model="form.ftpHost"
                   type="text"
-                  class="w-full px-3 py-2 border border-site-light font-mono text-sm text-site-dark focus:outline-none focus:border-site-accent"
+                  class="admin-input"
                   placeholder="sftp.example.com"
                 />
               </div>
               <div>
-                <label class="block font-mono text-xs text-site-medium uppercase tracking-wider mb-2">Port</label>
+                <label class="block text-xs font-semibold text-site-medium mb-2">Port</label>
                 <input
                   v-model.number="form.ftpPort"
                   type="number"
-                  class="w-full px-3 py-2 border border-site-light font-mono text-sm text-site-dark focus:outline-none focus:border-site-accent"
+                  class="admin-input"
                   placeholder="22"
                 />
               </div>
               <div>
-                <label class="block font-mono text-xs text-site-medium uppercase tracking-wider mb-2">Username</label>
+                <label class="block text-xs font-semibold text-site-medium mb-2">Username</label>
                 <input
                   v-model="form.ftpUsername"
                   type="text"
-                  class="w-full px-3 py-2 border border-site-light font-mono text-sm text-site-dark focus:outline-none focus:border-site-accent"
+                  class="admin-input"
                 />
               </div>
               <div>
-                <label class="block font-mono text-xs text-site-medium uppercase tracking-wider mb-2">Password</label>
+                <label class="block text-xs font-semibold text-site-medium mb-2">Password</label>
                 <input
                   v-model="form.ftpPassword"
                   type="password"
-                  class="w-full px-3 py-2 border border-site-light font-mono text-sm text-site-dark focus:outline-none focus:border-site-accent"
+                  class="admin-input"
                 />
               </div>
               <div class="col-span-2">
-                <label class="block font-mono text-xs text-site-medium uppercase tracking-wider mb-2">Remote Path</label>
+                <label class="block text-xs font-semibold text-site-medium mb-2">Remote Path</label>
                 <input
                   v-model="form.ftpPath"
                   type="text"
-                  class="w-full px-3 py-2 border border-site-light font-mono text-sm text-site-dark focus:outline-none focus:border-site-accent"
+                  class="admin-input"
                   placeholder="/var/www/html"
                 />
               </div>
               <div class="col-span-2">
-                <label class="block font-mono text-xs text-site-medium uppercase tracking-wider mb-2">Private Key (optional)</label>
+                <label class="block text-xs font-semibold text-site-medium mb-2">Private Key (optional)</label>
                 <textarea
                   v-model="form.ftpPrivateKey"
                   rows="3"
-                  class="w-full px-3 py-2 border border-site-light font-mono text-xs text-site-dark focus:outline-none focus:border-site-accent"
+                  class="admin-input"
                   placeholder="-----BEGIN OPENSSH PRIVATE KEY-----..."
                 ></textarea>
               </div>
@@ -269,68 +269,68 @@ async function saveSettings() {
 
           <!-- Git Settings -->
           <div v-if="form.publisherType === 'git'" class="space-y-4 p-4 border border-site-light">
-            <h4 class="font-mono text-sm text-site-dark uppercase tracking-wider">Git Configuration</h4>
+            <h4 class="text-sm font-semibold text-site-dark">Git Configuration</h4>
             <div class="space-y-4">
               <div>
-                <label class="block font-mono text-xs text-site-medium uppercase tracking-wider mb-2">Repository URL</label>
+                <label class="block text-xs font-semibold text-site-medium mb-2">Repository URL</label>
                 <input
                   v-model="form.gitRepositoryUrl"
                   type="text"
-                  class="w-full px-3 py-2 border border-site-light font-mono text-sm text-site-dark focus:outline-none focus:border-site-accent"
+                  class="admin-input"
                   placeholder="https://github.com/user/repo.git"
                 />
-                <p class="mt-2 font-mono text-xs text-site-medium">
+                <p class="mt-2 text-xs text-site-medium">
                   Use HTTPS URL with username/token, or SSH URL with private key
                 </p>
               </div>
               <div class="grid grid-cols-2 gap-4">
                 <div>
-                  <label class="block font-mono text-xs text-site-medium uppercase tracking-wider mb-2">Username</label>
+                  <label class="block text-xs font-semibold text-site-medium mb-2">Username</label>
                   <input
                     v-model="form.gitUsername"
                     type="text"
-                    class="w-full px-3 py-2 border border-site-light font-mono text-sm text-site-dark focus:outline-none focus:border-site-accent"
+                    class="admin-input"
                     placeholder="For HTTPS URLs"
                   />
                 </div>
                 <div>
-                  <label class="block font-mono text-xs text-site-medium uppercase tracking-wider mb-2">Personal Access Token</label>
+                  <label class="block text-xs font-semibold text-site-medium mb-2">Personal Access Token</label>
                   <input
                     v-model="form.gitToken"
                     type="password"
-                    class="w-full px-3 py-2 border border-site-light font-mono text-sm text-site-dark focus:outline-none focus:border-site-accent"
+                    class="admin-input"
                     placeholder="For HTTPS URLs"
                   />
                 </div>
               </div>
               <div>
-                <label class="block font-mono text-xs text-site-medium uppercase tracking-wider mb-2">Private Key (for SSH URLs)</label>
+                <label class="block text-xs font-semibold text-site-medium mb-2">Private Key (for SSH URLs)</label>
                 <textarea
                   v-model="form.gitPrivateKey"
                   rows="3"
-                  class="w-full px-3 py-2 border border-site-light font-mono text-xs text-site-dark focus:outline-none focus:border-site-accent"
+                  class="admin-input"
                   placeholder="-----BEGIN OPENSSH PRIVATE KEY-----..."
                 ></textarea>
-                <p class="mt-2 font-mono text-xs text-site-medium">
+                <p class="mt-2 text-xs text-site-medium">
                   Required for SSH URLs. Leave blank for HTTPS URLs.
                 </p>
               </div>
               <div class="grid grid-cols-2 gap-4">
                 <div>
-                  <label class="block font-mono text-xs text-site-medium uppercase tracking-wider mb-2">Branch</label>
+                  <label class="block text-xs font-semibold text-site-medium mb-2">Branch</label>
                   <input
                     v-model="form.gitBranch"
                     type="text"
-                    class="w-full px-3 py-2 border border-site-light font-mono text-sm text-site-dark focus:outline-none focus:border-site-accent"
+                    class="admin-input"
                     placeholder="main"
                   />
                 </div>
                 <div>
-                  <label class="block font-mono text-xs text-site-medium uppercase tracking-wider mb-2">Commit Message</label>
+                  <label class="block text-xs font-semibold text-site-medium mb-2">Commit Message</label>
                   <input
                     v-model="form.gitCommitMessage"
                     type="text"
-                    class="w-full px-3 py-2 border border-site-light font-mono text-sm text-site-dark focus:outline-none focus:border-site-accent"
+                    class="admin-input"
                     placeholder="Update blog"
                   />
                 </div>
@@ -340,44 +340,44 @@ async function saveSettings() {
 
           <!-- Cloudflare Pages Settings -->
           <div v-if="form.publisherType === 'cloudflare'" class="space-y-4 p-4 border border-site-light">
-            <h4 class="font-mono text-sm text-site-dark uppercase tracking-wider">Cloudflare Pages Configuration</h4>
+            <h4 class="text-sm font-semibold text-site-dark">Cloudflare Pages Configuration</h4>
             <p class="text-sm text-site-dark">
               Requires the <code class="font-mono">wrangler</code> CLI to be installed. The project will be auto-created if it doesn't exist.
             </p>
             <div class="space-y-4">
               <div>
-                <label class="block font-mono text-xs text-site-medium uppercase tracking-wider mb-2">Account ID</label>
+                <label class="block text-xs font-semibold text-site-medium mb-2">Account ID</label>
                 <input
                   v-model="form.cfAccountId"
                   type="text"
-                  class="w-full px-3 py-2 border border-site-light font-mono text-sm text-site-dark focus:outline-none focus:border-site-accent"
+                  class="admin-input"
                   placeholder="Your Cloudflare Account ID"
                 />
-                <p class="mt-1 font-mono text-xs text-site-medium">
+                <p class="mt-1 text-xs text-site-medium">
                   Found in your Cloudflare dashboard under Account ID
                 </p>
               </div>
               <div>
-                <label class="block font-mono text-xs text-site-medium uppercase tracking-wider mb-2">API Token</label>
+                <label class="block text-xs font-semibold text-site-medium mb-2">API Token</label>
                 <input
                   v-model="form.cfApiToken"
                   type="password"
-                  class="w-full px-3 py-2 border border-site-light font-mono text-sm text-site-dark focus:outline-none focus:border-site-accent"
+                  class="admin-input"
                   placeholder="Cloudflare API Token"
                 />
-                <p class="mt-1 font-mono text-xs text-site-medium">
+                <p class="mt-1 text-xs text-site-medium">
                   Create a token with "Cloudflare Pages: Edit" permission
                 </p>
               </div>
               <div>
-                <label class="block font-mono text-xs text-site-medium uppercase tracking-wider mb-2">Project Name</label>
+                <label class="block text-xs font-semibold text-site-medium mb-2">Project Name</label>
                 <input
                   v-model="form.cfProjectName"
                   type="text"
-                  class="w-full px-3 py-2 border border-site-light font-mono text-sm text-site-dark focus:outline-none focus:border-site-accent"
+                  class="admin-input"
                   placeholder="my-blog"
                 />
-                <p class="mt-1 font-mono text-xs text-site-medium">
+                <p class="mt-1 text-xs text-site-medium">
                   Your site will be available at &lt;project-name&gt;.pages.dev
                 </p>
               </div>
@@ -388,7 +388,7 @@ async function saveSettings() {
 
       <!-- Sync Settings -->
       <section class="border-t border-site-light pt-8">
-        <h3 class="font-mono text-sm text-site-dark uppercase tracking-wider mb-2">Sync</h3>
+        <h3 class="text-sm font-semibold text-site-dark mb-2">Sync</h3>
         <p class="text-sm text-site-dark mb-4">
           Sync data is automatically generated alongside your published site, allowing you to import your blog on other devices or the iOS app.
           Drafts are not synced - they remain local to each device.
@@ -396,7 +396,7 @@ async function saveSettings() {
 
         <!-- Loading -->
         <div v-if="syncLoading" class="py-4">
-          <p class="font-mono text-sm text-site-medium uppercase tracking-widest">Loading...</p>
+          <p class="text-sm text-site-medium">Loading...</p>
         </div>
 
         <!-- Sync Status -->
@@ -412,42 +412,42 @@ async function saveSettings() {
 
           <!-- Sync Down Section -->
           <div v-if="form.url" class="mt-4 pt-4 border-t border-site-light">
-            <h4 class="font-mono text-sm text-site-dark uppercase tracking-wider mb-3">Sync Down</h4>
+            <h4 class="text-sm font-semibold text-site-dark mb-3">Sync Down</h4>
             <p class="text-sm text-site-dark mb-3">
               Pull changes from your published site to update this instance.
             </p>
 
             <!-- Sync Down Error -->
-            <div v-if="syncDownError" class="mb-4 p-3 border border-red-500 font-mono text-sm text-red-600">
+            <div v-if="syncDownError" class="mb-4 p-3 border border-red-500 text-sm text-red-600">
               {{ syncDownError }}
             </div>
 
             <!-- Sync Down Result -->
             <div v-if="syncDownResult" class="mb-4 p-3 border" :class="syncDownResult.success ? 'border-green-500' : 'border-red-500'">
-              <span :class="syncDownResult.success ? 'text-green-600' : 'text-red-600'" class="font-mono text-sm">
+              <span :class="syncDownResult.success ? 'text-green-600' : 'text-red-600'" class="text-sm">
                 {{ syncDownResult.message }}
               </span>
             </div>
 
             <!-- Checking Changes -->
             <div v-if="checkingChanges" class="p-3 border border-site-light">
-              <span class="font-mono text-sm text-site-dark">Checking for changes...</span>
+              <span class="text-sm text-site-dark">Checking for changes...</span>
             </div>
 
             <!-- Syncing -->
             <div v-else-if="syncingDown" class="p-3 border border-site-light">
-              <span class="font-mono text-sm text-site-dark">{{ syncDownProgress || 'Syncing...' }}</span>
+              <span class="text-sm text-site-dark">{{ syncDownProgress || 'Syncing...' }}</span>
             </div>
 
             <!-- Check Result -->
             <div v-else-if="syncCheckResult" class="p-3 border border-site-light">
               <div v-if="syncCheckResult.hasChanges" class="space-y-3">
-                <div class="font-mono text-sm text-site-dark uppercase">
+                <div class="text-sm text-site-dark">
                   Changes available
                 </div>
 
                 <!-- Version info -->
-                <div class="font-mono text-xs text-site-medium">
+                <div class="text-xs text-site-medium">
                   Local v{{ syncCheckResult.localVersion }} → Remote v{{ syncCheckResult.remoteVersion }}
                 </div>
 
@@ -457,8 +457,8 @@ async function saveSettings() {
                 </p>
 
                 <!-- Detailed breakdown -->
-                <div v-if="syncCheckResult.details" class="mt-3 space-y-2 font-mono text-xs border-t border-site-light pt-3">
-                  <div class="font-mono text-xs text-site-medium uppercase mb-2">Detailed Changes:</div>
+                <div v-if="syncCheckResult.details" class="mt-3 space-y-2 text-xs border-t border-site-light pt-3">
+                  <div class="text-xs font-semibold text-site-medium mb-2">Detailed Changes:</div>
 
                   <!-- Blog settings -->
                   <div v-if="hasChangesInCategory(syncCheckResult.details.blog)" class="pl-2 border-l border-blue-400">
@@ -542,12 +542,12 @@ async function saveSettings() {
                 <button
                   type="button"
                   @click="pullChanges"
-                  class="px-4 py-2 border border-site-accent bg-site-accent font-mono text-sm text-white hover:bg-[#e89200] hover:border-[#e89200] uppercase tracking-wider"
+                  class="h-10 px-3 font-mono text-sm uppercase tracking-wider bg-site-accent text-white hover:bg-[#e89200] transition-colors"
                 >
                   Pull Changes
                 </button>
               </div>
-              <div v-else class="font-mono text-sm text-green-600">
+              <div v-else class="text-sm text-green-600">
                 Up to date (v{{ syncCheckResult.localVersion }})
               </div>
             </div>
@@ -557,7 +557,7 @@ async function saveSettings() {
               <button
                 type="button"
                 @click="checkForChanges"
-                class="px-4 py-2 border border-site-dark font-mono text-sm text-site-dark hover:border-site-accent hover:text-site-accent uppercase tracking-wider"
+                class="h-10 px-3 font-mono text-sm uppercase tracking-wider border border-site-dark text-site-dark hover:border-site-accent hover:text-site-accent transition-colors"
               >
                 Check for Changes
               </button>
@@ -577,7 +577,7 @@ async function saveSettings() {
           <button
             type="submit"
             :disabled="saving"
-            class="px-4 py-2 border border-site-accent bg-site-accent font-mono text-sm text-white hover:bg-[#e89200] hover:border-[#e89200] uppercase tracking-wider disabled:opacity-50"
+            class="h-10 px-3 font-mono text-sm uppercase tracking-wider bg-site-accent text-white hover:bg-[#e89200] transition-colors disabled:opacity-50"
           >
             {{ saving ? 'Saving...' : 'Save Settings' }}
           </button>

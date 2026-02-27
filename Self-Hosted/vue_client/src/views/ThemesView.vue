@@ -15,6 +15,7 @@ const error = ref(null);
 const duplicating = ref(false);
 const themeToDelete = ref(null);
 const selectedThemeId = ref(null);
+const searchText = ref('');
 
 // Editing state
 const editingTheme = ref(null);
@@ -44,6 +45,12 @@ onMounted(async () => {
   await loadThemes();
   // Get current theme from blog
   selectedThemeId.value = blogStore.currentBlog?.themeIdentifier || 'default';
+});
+
+const filteredThemes = computed(() => {
+  if (!searchText.value.trim()) return themes.value;
+  const query = searchText.value.toLowerCase();
+  return themes.value.filter(t => t.name.toLowerCase().includes(query));
 });
 
 const colorPreviewHtml = computed(() => {
@@ -301,32 +308,37 @@ const templateNames = computed(() => {
 
 <template>
   <div>
-    <!-- Header row with New Theme button -->
-    <div class="flex items-center justify-between mb-6">
-      <h2 class="text-lg font-bold text-site-dark">Themes</h2>
+    <!-- Header row with search and New Theme button -->
+    <div class="flex items-center gap-3 mb-6">
+      <input
+        v-model="searchText"
+        type="text"
+        placeholder="Search themes..."
+        class="admin-input flex-1"
+      />
       <button
         @click="duplicateTheme('default')"
         :disabled="duplicating"
-        class="px-3 py-1.5 border border-site-accent bg-site-accent font-mono text-sm text-white hover:bg-[#e89200] hover:border-[#e89200] uppercase tracking-wider disabled:opacity-50"
+        class="h-10 px-3 font-mono text-sm uppercase tracking-wider bg-site-accent text-white hover:bg-[#e89200] transition-colors disabled:opacity-50"
       >
         {{ duplicating ? 'Creating...' : 'New Theme' }}
       </button>
     </div>
 
     <!-- Error -->
-    <div v-if="error" class="mb-6 p-4 border border-red-500 font-mono text-sm text-red-600">
+    <div v-if="error" class="mb-6 p-4 border border-red-500 text-sm text-red-600">
       {{ error }}
     </div>
 
     <!-- Loading -->
     <div v-if="loading" class="py-12">
-      <p class="font-mono text-sm text-site-medium uppercase tracking-widest">Loading themes...</p>
+      <p class="text-sm text-site-medium">Loading themes...</p>
     </div>
 
     <!-- Theme List -->
     <div v-else class="space-y-3">
       <div
-        v-for="theme in themes"
+        v-for="theme in filteredThemes"
         :key="theme.id"
         :class="[
           'border p-4',
@@ -354,8 +366,8 @@ const templateNames = computed(() => {
               </div>
               <div class="text-left">
                 <p class="m-0 text-site-dark">{{ theme.name }}</p>
-                <p v-if="theme.isDefault" class="m-0 font-mono text-xs text-site-medium">Built-in</p>
-                <p v-else class="m-0 font-mono text-xs text-site-medium">Custom</p>
+                <p v-if="theme.isDefault" class="m-0 text-xs text-site-medium">Built-in</p>
+                <p v-else class="m-0 text-xs text-site-medium">Custom</p>
               </div>
             </button>
           </div>
@@ -365,7 +377,7 @@ const templateNames = computed(() => {
             <button
               v-if="!theme.isDefault"
               @click="openThemeEditor(theme.id)"
-              class="font-mono text-xs text-site-dark hover:text-site-accent uppercase tracking-wider"
+              class="text-xs font-semibold text-site-dark hover:text-site-accent"
             >
               Edit
             </button>
@@ -374,7 +386,7 @@ const templateNames = computed(() => {
             <button
               @click="duplicateTheme(theme.id)"
               :disabled="duplicating"
-              class="font-mono text-xs text-site-dark hover:text-site-accent uppercase tracking-wider"
+              class="text-xs font-semibold text-site-dark hover:text-site-accent"
             >
               Duplicate
             </button>
@@ -383,7 +395,7 @@ const templateNames = computed(() => {
             <button
               v-if="!theme.isDefault"
               @click="themeToDelete = theme"
-              class="font-mono text-xs text-red-500 hover:text-red-400 uppercase tracking-wider"
+              class="text-xs font-semibold text-red-500 hover:text-red-400"
             >
               Delete
             </button>
@@ -398,15 +410,15 @@ const templateNames = computed(() => {
 
     <!-- Theme Colors -->
     <section class="border-t border-site-light pt-8 mt-8">
-      <h3 class="font-mono text-sm text-site-dark uppercase tracking-wider mb-4">Theme Colors</h3>
+      <h3 class="text-sm font-semibold text-site-dark mb-4">Theme Colors</h3>
 
-      <div v-if="colorSuccess" class="mb-4 p-4 border border-green-500 font-mono text-sm text-green-600">
+      <div v-if="colorSuccess" class="mb-4 p-4 border border-green-500 text-sm text-green-600">
         Colors saved successfully!
       </div>
 
       <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
         <div>
-          <label class="block font-mono text-xs text-site-medium uppercase tracking-wider mb-2">Accent Color</label>
+          <label class="block text-xs font-semibold text-site-medium mb-2">Accent Color</label>
           <div class="flex items-center gap-2">
             <input
               v-model="colorForm.accentColor"
@@ -416,12 +428,12 @@ const templateNames = computed(() => {
             <input
               v-model="colorForm.accentColor"
               type="text"
-              class="min-w-0 flex-1 px-2 py-1 border border-site-light bg-white font-mono text-xs text-site-dark focus:outline-none focus:border-site-accent"
+              class="admin-input min-w-0 flex-1"
             />
           </div>
         </div>
         <div>
-          <label class="block font-mono text-xs text-site-medium uppercase tracking-wider mb-2">Background</label>
+          <label class="block text-xs font-semibold text-site-medium mb-2">Background</label>
           <div class="flex items-center gap-2">
             <input
               v-model="colorForm.backgroundColor"
@@ -431,12 +443,12 @@ const templateNames = computed(() => {
             <input
               v-model="colorForm.backgroundColor"
               type="text"
-              class="min-w-0 flex-1 px-2 py-1 border border-site-light bg-white font-mono text-xs text-site-dark focus:outline-none focus:border-site-accent"
+              class="admin-input min-w-0 flex-1"
             />
           </div>
         </div>
         <div>
-          <label class="block font-mono text-xs text-site-medium uppercase tracking-wider mb-2">Text Color</label>
+          <label class="block text-xs font-semibold text-site-medium mb-2">Text Color</label>
           <div class="flex items-center gap-2">
             <input
               v-model="colorForm.textColor"
@@ -446,12 +458,12 @@ const templateNames = computed(() => {
             <input
               v-model="colorForm.textColor"
               type="text"
-              class="min-w-0 flex-1 px-2 py-1 border border-site-light bg-white font-mono text-xs text-site-dark focus:outline-none focus:border-site-accent"
+              class="admin-input min-w-0 flex-1"
             />
           </div>
         </div>
         <div>
-          <label class="block font-mono text-xs text-site-medium uppercase tracking-wider mb-2">Light Shade</label>
+          <label class="block text-xs font-semibold text-site-medium mb-2">Light Shade</label>
           <div class="flex items-center gap-2">
             <input
               v-model="colorForm.lightShade"
@@ -461,12 +473,12 @@ const templateNames = computed(() => {
             <input
               v-model="colorForm.lightShade"
               type="text"
-              class="min-w-0 flex-1 px-2 py-1 border border-site-light bg-white font-mono text-xs text-site-dark focus:outline-none focus:border-site-accent"
+              class="admin-input min-w-0 flex-1"
             />
           </div>
         </div>
         <div>
-          <label class="block font-mono text-xs text-site-medium uppercase tracking-wider mb-2">Medium Shade</label>
+          <label class="block text-xs font-semibold text-site-medium mb-2">Medium Shade</label>
           <div class="flex items-center gap-2">
             <input
               v-model="colorForm.mediumShade"
@@ -476,12 +488,12 @@ const templateNames = computed(() => {
             <input
               v-model="colorForm.mediumShade"
               type="text"
-              class="min-w-0 flex-1 px-2 py-1 border border-site-light bg-white font-mono text-xs text-site-dark focus:outline-none focus:border-site-accent"
+              class="admin-input min-w-0 flex-1"
             />
           </div>
         </div>
         <div>
-          <label class="block font-mono text-xs text-site-medium uppercase tracking-wider mb-2">Dark Shade</label>
+          <label class="block text-xs font-semibold text-site-medium mb-2">Dark Shade</label>
           <div class="flex items-center gap-2">
             <input
               v-model="colorForm.darkShade"
@@ -491,7 +503,7 @@ const templateNames = computed(() => {
             <input
               v-model="colorForm.darkShade"
               type="text"
-              class="min-w-0 flex-1 px-2 py-1 border border-site-light bg-white font-mono text-xs text-site-dark focus:outline-none focus:border-site-accent"
+              class="admin-input min-w-0 flex-1"
             />
           </div>
         </div>
@@ -499,7 +511,7 @@ const templateNames = computed(() => {
 
       <!-- Color Preview -->
       <div class="mt-6">
-        <label class="block font-mono text-xs text-site-medium uppercase tracking-wider mb-2">Preview</label>
+        <label class="block text-xs font-semibold text-site-medium mb-2">Preview</label>
         <div class="border border-site-light overflow-hidden">
           <iframe
             :srcdoc="colorPreviewHtml"
@@ -514,7 +526,7 @@ const templateNames = computed(() => {
         <button
           @click="saveColors"
           :disabled="savingColors"
-          class="px-4 py-2 border border-site-accent bg-site-accent font-mono text-sm text-white hover:bg-[#e89200] hover:border-[#e89200] uppercase tracking-wider disabled:opacity-50"
+          class="h-10 px-3 font-mono text-sm uppercase tracking-wider bg-site-accent text-white hover:bg-[#e89200] transition-colors disabled:opacity-50"
         >
           {{ savingColors ? 'Saving...' : 'Save Colors' }}
         </button>
@@ -535,13 +547,13 @@ const templateNames = computed(() => {
         <div class="flex justify-end gap-6">
           <button
             @click="themeToDelete = null"
-            class="font-mono text-sm text-site-dark hover:text-site-accent uppercase tracking-wider"
+            class="text-xs font-semibold text-site-dark hover:text-site-accent"
           >
             Cancel
           </button>
           <button
             @click="confirmDeleteTheme"
-            class="font-mono text-sm text-red-500 hover:text-red-400 uppercase tracking-wider"
+            class="text-xs font-semibold text-red-500 hover:text-red-400"
           >
             Delete
           </button>
@@ -562,7 +574,7 @@ const templateNames = computed(() => {
           </h3>
           <button
             @click="closeEditor"
-            class="font-mono text-sm text-site-dark hover:text-site-accent uppercase"
+            class="text-xs font-semibold text-site-dark hover:text-site-accent"
           >
             Close
           </button>
@@ -573,7 +585,7 @@ const templateNames = computed(() => {
           <!-- Template List -->
           <div class="w-64 border-r border-site-light overflow-y-auto">
             <div class="p-4">
-              <h4 class="font-mono text-xs text-site-medium uppercase tracking-wider mb-3">Templates</h4>
+              <h4 class="text-xs font-semibold text-site-medium mb-3">Templates</h4>
               <div class="space-y-1">
                 <button
                   v-for="name in templateNames"
@@ -596,11 +608,11 @@ const templateNames = computed(() => {
           <div class="flex-1 flex flex-col">
             <div v-if="editingTemplateName" class="flex-1 flex flex-col">
               <div class="p-4 border-b border-site-light flex items-center justify-between">
-                <h4 class="font-mono text-sm text-site-dark uppercase">{{ editingTemplateName }}</h4>
+                <h4 class="text-sm font-semibold text-site-dark">{{ editingTemplateName }}</h4>
                 <button
                   @click="saveTemplate"
                   :disabled="savingTemplate"
-                  class="px-4 py-2 border border-site-accent bg-site-accent font-mono text-sm text-white hover:bg-[#e89200] hover:border-[#e89200] uppercase tracking-wider disabled:opacity-50"
+                  class="h-10 px-3 font-mono text-sm uppercase tracking-wider bg-site-accent text-white hover:bg-[#e89200] transition-colors disabled:opacity-50"
                 >
                   {{ savingTemplate ? 'Saving...' : 'Save Template' }}
                 </button>
@@ -614,7 +626,7 @@ const templateNames = computed(() => {
               </div>
             </div>
             <div v-else class="flex-1 flex items-center justify-center">
-              <p class="font-mono text-sm text-site-medium">Select a template to edit</p>
+              <p class="text-sm text-site-medium">Select a template to edit</p>
             </div>
           </div>
         </div>

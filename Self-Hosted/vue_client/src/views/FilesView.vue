@@ -13,6 +13,7 @@ const faviconInput = ref(null);
 const socialShareInput = ref(null);
 const uploading = ref(false);
 const error = ref(null);
+const searchText = ref('');
 
 onMounted(async () => {
   await blogStore.fetchStaticFiles(blogId.value);
@@ -21,6 +22,12 @@ onMounted(async () => {
 const regularFiles = computed(() =>
   blogStore.staticFiles.filter(f => !f.isSpecialFile)
 );
+
+const filteredFiles = computed(() => {
+  if (!searchText.value.trim()) return regularFiles.value;
+  const query = searchText.value.toLowerCase();
+  return regularFiles.value.filter(f => f.filename.toLowerCase().includes(query));
+});
 
 const favicon = computed(() =>
   blogStore.staticFiles.find(f => f.specialFileType === 'favicon')
@@ -118,17 +125,20 @@ function formatFileSize(bytes) {
 
 <template>
   <div>
-    <!-- Header with upload button -->
-    <div class="flex items-center justify-between mb-6">
-      <h2 class="font-mono text-sm text-site-dark uppercase tracking-wider">
-        {{ blogStore.staticFiles.length }} files
-      </h2>
+    <!-- Header with search and upload button -->
+    <div class="flex items-center gap-3 mb-6">
+      <input
+        v-model="searchText"
+        type="text"
+        placeholder="Search files..."
+        class="admin-input flex-1"
+      />
       <button
         @click="triggerFileUpload"
         :disabled="uploading"
-        class="px-4 py-2 bg-site-accent text-white font-semibold rounded-full hover:bg-[#e89200] transition-colors disabled:opacity-50"
+        class="h-10 px-3 font-mono text-sm uppercase tracking-wider bg-site-accent text-white hover:bg-[#e89200] transition-colors disabled:opacity-50"
       >
-        {{ uploading ? 'Uploading...' : '+ Upload Files' }}
+        {{ uploading ? 'Uploading...' : 'Upload Files' }}
       </button>
     </div>
     <input
@@ -140,13 +150,13 @@ function formatFileSize(bytes) {
     />
 
     <!-- Error -->
-    <div v-if="error" class="mb-6 p-4 border border-red-500 font-mono text-sm text-red-600">
+    <div v-if="error" class="mb-6 p-4 border border-red-500 text-sm text-red-600">
       {{ error }}
     </div>
 
     <!-- Favicon Section -->
     <section class="border border-site-light p-4 mb-6">
-      <h3 class="font-mono text-sm text-site-dark uppercase tracking-wider mb-4">Favicon</h3>
+      <h3 class="text-sm font-semibold text-site-dark mb-4">Favicon</h3>
       <div class="flex items-center gap-4">
         <div class="w-16 h-16 border border-site-light flex items-center justify-center overflow-hidden bg-white">
           <img
@@ -155,7 +165,7 @@ function formatFileSize(bytes) {
             alt="Favicon"
             class="w-full h-full object-contain"
           />
-          <span v-else class="font-mono text-xs text-site-medium">None</span>
+          <span v-else class="text-xs text-site-medium">None</span>
         </div>
         <div>
           <p class="text-sm text-site-dark mb-2">
@@ -181,7 +191,7 @@ function formatFileSize(bytes) {
 
     <!-- Social Share Image Section -->
     <section class="border border-site-light p-4 mb-6">
-      <h3 class="font-mono text-sm text-site-dark uppercase tracking-wider mb-2">Social Share Image</h3>
+      <h3 class="text-sm font-semibold text-site-dark mb-2">Social Share Image</h3>
       <p class="text-sm text-site-dark mb-4">This image appears when your blog is shared on social media (Open Graph image).</p>
       <div class="flex items-start gap-4">
         <div class="w-32 h-20 border border-site-light flex items-center justify-center overflow-hidden flex-shrink-0 bg-white">
@@ -191,13 +201,13 @@ function formatFileSize(bytes) {
             alt="Social Share Image"
             class="w-full h-full object-cover"
           />
-          <span v-else class="font-mono text-xs text-site-medium">None</span>
+          <span v-else class="text-xs text-site-medium">None</span>
         </div>
         <div>
           <p class="text-sm text-site-dark mb-1">
             {{ socialShareImage ? 'Current social share image' : 'No social share image set' }}
           </p>
-          <p class="font-mono text-xs text-site-medium mb-2">Recommended: 1200 x 630 pixels</p>
+          <p class="text-xs text-site-medium mb-2">Recommended: 1200 x 630 pixels</p>
           <button
             @click="triggerSocialShareUpload"
             :disabled="uploading"
@@ -218,18 +228,18 @@ function formatFileSize(bytes) {
 
     <!-- Files List -->
     <section class="border border-site-light">
-      <div v-if="regularFiles.length === 0" class="p-8 text-center">
+      <div v-if="filteredFiles.length === 0" class="p-8 text-center">
         <p class="text-xl font-bold text-site-dark">
-          No files yet.
+          {{ searchText.trim() ? 'No matching files.' : 'No files yet.' }}
         </p>
         <p class="text-sm text-site-dark mt-2">
-          Upload files to use in your blog.
+          {{ searchText.trim() ? 'Try a different search.' : 'Upload files to use in your blog.' }}
         </p>
       </div>
 
       <div v-else>
         <div
-          v-for="file in regularFiles"
+          v-for="file in filteredFiles"
           :key="file.id"
           class="p-4 flex items-center justify-between border-b border-site-light last:border-b-0"
         >
@@ -241,24 +251,24 @@ function formatFileSize(bytes) {
                 :alt="file.filename"
                 class="w-full h-full object-cover"
               />
-              <span v-else class="font-mono text-xs text-site-medium">FILE</span>
+              <span v-else class="text-xs text-site-medium">FILE</span>
             </div>
             <div>
-              <p class="font-mono text-sm text-site-dark">{{ file.filename }}</p>
-              <p class="font-mono text-xs text-site-medium">{{ formatFileSize(file.size) }}</p>
+              <p class="text-sm text-site-dark">{{ file.filename }}</p>
+              <p class="text-xs text-site-medium">{{ formatFileSize(file.size) }}</p>
             </div>
           </div>
           <div class="flex items-center gap-4">
             <a
               :href="file.url"
               target="_blank"
-              class="font-mono text-xs text-site-dark hover:text-site-accent uppercase tracking-wider"
+              class="text-xs font-semibold text-site-dark hover:text-site-accent"
             >
               View
             </a>
             <button
               @click="deleteFile(file.id)"
-              class="font-mono text-xs text-red-500 hover:text-red-400 uppercase tracking-wider"
+              class="text-xs font-semibold text-red-500 hover:text-red-400"
             >
               Delete
             </button>
