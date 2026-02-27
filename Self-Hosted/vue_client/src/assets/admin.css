@@ -121,39 +121,44 @@ select.admin-input {
 }
 
 /* ==========================================
-   Horizontal Nav Bar
+   Horizontal Nav Bar (Segmented Control)
    ========================================== */
-.admin-nav {
-    padding: 0.75em 2em;
-    border-bottom: 1px solid var(--admin-light);
-}
-
 .admin-nav-links {
     display: flex;
-    flex-wrap: wrap;
+    border: 1px solid var(--admin-light);
+    background: #f7f7f7;
+    height: 40px;
+    box-sizing: border-box;
+    margin-bottom: 1em;
+}
+
+.admin-nav-links a {
+    display: flex;
+    align-items: center;
     justify-content: center;
-    gap: 0.25em 1.25em;
+    flex: 1;
+    text-align: center;
+    font-size: 0.75rem;
+    color: var(--admin-dark);
+    text-decoration: none;
+    border-right: 1px solid var(--admin-light);
+}
+
+.admin-nav-links a:last-child {
+    border-right: none;
+}
+
+.admin-nav-links a:hover {
+    color: var(--admin-accent);
+}
+
+.admin-nav-links a.router-link-exact-active,
+.admin-nav-links a.active {
+    color: var(--admin-accent);
 }
 
 .admin-nav-select {
     display: none;
-}
-
-.admin-nav a {
-    font-weight: 600;
-    font-size: 0.95rem;
-    color: var(--admin-dark);
-    text-decoration: none;
-    padding: 0.2em 0;
-}
-
-.admin-nav a:hover {
-    color: var(--admin-accent);
-}
-
-.admin-nav a.router-link-exact-active,
-.admin-nav a.active {
-    color: var(--admin-accent);
 }
 
 
@@ -167,9 +172,11 @@ select.admin-input {
     overflow: hidden;
     margin-bottom: 30px;
     flex: 1;
+    width: 100%;
     max-width: 700px;
     margin-left: auto;
     margin-right: auto;
+    box-sizing: border-box;
 }
 
 /* ==========================================
@@ -261,7 +268,7 @@ select.admin-input {
 
     .admin-nav-select {
         display: block;
-        padding: 0.75em 1em;
+        margin-bottom: 1em;
     }
 
     .admin-container main {

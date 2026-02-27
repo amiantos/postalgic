@@ -15,7 +15,7 @@ const showPublishModal = ref(false);
 
 const navLinks = [
   { name: 'Posts', route: 'blog-posts' },
-  { name: 'Blog Settings', route: 'blog-settings' },
+  { name: 'Metadata', route: 'blog-settings' },
   { name: 'Categories', route: 'categories' },
   { name: 'Tags', route: 'tags' },
   { name: 'Sidebar', route: 'sidebar' },
@@ -81,36 +81,36 @@ async function loadBlogData() {
     <!-- Wavy Separator -->
     <div class="wavy-separator"></div>
 
-    <!-- Horizontal Nav (desktop) -->
-    <nav class="admin-nav admin-nav-links">
-      <router-link
-        v-for="link in navLinks"
-        :key="link.route"
-        :to="{ name: link.route, params: { blogId } }"
-      >
-        {{ link.name }}
-      </router-link>
-    </nav>
-
-    <!-- Nav Dropdown (mobile) -->
-    <div class="admin-nav admin-nav-select">
-      <select
-        :value="currentRouteName"
-        @change="onNavSelect"
-        class="admin-input"
-      >
-        <option
-          v-for="link in navLinks"
-          :key="link.route"
-          :value="link.route"
-        >
-          {{ link.name }}
-        </option>
-      </select>
-    </div>
-
     <!-- Main Content -->
     <main>
+      <!-- Horizontal Nav (desktop) -->
+      <nav class="admin-nav-links">
+        <router-link
+          v-for="link in navLinks"
+          :key="link.route"
+          :to="{ name: link.route, params: { blogId } }"
+        >
+          {{ link.name }}
+        </router-link>
+      </nav>
+
+      <!-- Nav Dropdown (mobile) -->
+      <div class="admin-nav-select">
+        <select
+          :value="currentRouteName"
+          @change="onNavSelect"
+          class="admin-input"
+        >
+          <option
+            v-for="link in navLinks"
+            :key="link.route"
+            :value="link.route"
+          >
+            {{ link.name }}
+          </option>
+        </select>
+      </div>
+
       <router-view />
     </main>
 
