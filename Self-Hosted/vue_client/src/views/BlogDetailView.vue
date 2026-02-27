@@ -1,10 +1,11 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { useBlogStore } from '@/stores/blog';
 import PublishModal from '@/components/PublishModal.vue';
 
 const route = useRoute();
+const router = useRouter();
 const blogStore = useBlogStore();
 
 const blogId = computed(() => route.params.blogId);
@@ -22,6 +23,12 @@ const navLinks = [
   { name: 'Themes', route: 'themes' },
   { name: 'Publishing', route: 'publish-settings' }
 ];
+
+const currentRouteName = computed(() => route.name);
+
+function onNavSelect(event) {
+  router.push({ name: event.target.value, params: { blogId: blogId.value } });
+}
 
 onMounted(async () => {
   await loadBlogData();
@@ -74,8 +81,8 @@ async function loadBlogData() {
     <!-- Wavy Separator -->
     <div class="wavy-separator"></div>
 
-    <!-- Horizontal Nav -->
-    <nav class="admin-nav">
+    <!-- Horizontal Nav (desktop) -->
+    <nav class="admin-nav admin-nav-links">
       <router-link
         v-for="link in navLinks"
         :key="link.route"
@@ -84,6 +91,23 @@ async function loadBlogData() {
         {{ link.name }}
       </router-link>
     </nav>
+
+    <!-- Nav Dropdown (mobile) -->
+    <div class="admin-nav admin-nav-select">
+      <select
+        :value="currentRouteName"
+        @change="onNavSelect"
+        class="admin-input"
+      >
+        <option
+          v-for="link in navLinks"
+          :key="link.route"
+          :value="link.route"
+        >
+          {{ link.name }}
+        </option>
+      </select>
+    </div>
 
     <!-- Main Content -->
     <main>

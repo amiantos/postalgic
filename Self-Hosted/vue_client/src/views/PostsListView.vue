@@ -8,33 +8,19 @@ const route = useRoute();
 const router = useRouter();
 const blogStore = useBlogStore();
 
-const filter = ref('all'); // 'all', 'published', 'draft'
-const sortOption = ref('date_desc');
 const POSTS_PER_PAGE = 10;
 let searchTimeout = null;
-
-const sortOptions = [
-  { value: 'date_desc', label: 'Date (newest)' },
-  { value: 'date_asc', label: 'Date (oldest)' },
-  { value: 'title_asc', label: 'Title (A-Z)' },
-  { value: 'title_desc', label: 'Title (Z-A)' }
-];
 
 const blogId = computed(() => route.params.blogId);
 
 const MIN_SEARCH_LENGTH = 2;
 
-// Fetch posts when search/sort changes (with debounce for search)
-watch([() => blogStore.searchText, sortOption], () => {
+// Fetch posts when search changes (with debounce)
+watch(() => blogStore.searchText, () => {
   if (searchTimeout) clearTimeout(searchTimeout);
   searchTimeout = setTimeout(() => {
     fetchPosts();
   }, 300);
-});
-
-// Fetch posts when filter changes (immediate)
-watch(filter, () => {
-  fetchPosts();
 });
 
 onMounted(() => {
@@ -53,17 +39,11 @@ const effectiveSearchText = computed(() => {
   return blogStore.searchText.length >= MIN_SEARCH_LENGTH ? blogStore.searchText : '';
 });
 
-// Map filter values to API status values
-function getStatusFromFilter(filterValue) {
-  if (filterValue === 'draft') return 'drafts';
-  return filterValue; // 'all' and 'published' map directly
-}
-
 async function fetchPosts() {
   await blogStore.fetchPosts(blogId.value, {
-    status: getStatusFromFilter(filter.value),
+    status: 'all',
     search: effectiveSearchText.value,
-    sort: sortOption.value,
+    sort: 'date_desc',
     limit: POSTS_PER_PAGE
   });
 }
@@ -76,9 +56,9 @@ const remainingPostsCount = computed(() => {
 
 async function loadMorePosts() {
   await blogStore.loadMorePosts(blogId.value, {
-    status: getStatusFromFilter(filter.value),
+    status: 'all',
     search: effectiveSearchText.value,
-    sort: sortOption.value,
+    sort: 'date_desc',
     limit: POSTS_PER_PAGE
   });
 }
@@ -150,55 +130,22 @@ function formatLocalDateTime(dateString) {
 
 <template>
   <div>
-    <!-- Controls bar -->
-    <div class="mb-6">
-      <div class="flex items-center gap-3">
-        <!-- Filter dropdown -->
-        <div class="relative border border-site-light rounded-lg bg-white">
-          <select
-            v-model="filter"
-            class="appearance-none px-3 py-2 pr-8 bg-transparent text-site-text focus:outline-none cursor-pointer rounded-lg capitalize"
-          >
-            <option value="all">All</option>
-            <option value="published">Published</option>
-            <option value="draft">Drafts</option>
-          </select>
-          <span class="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-site-medium">&darr;</span>
-        </div>
-
-        <!-- Sort dropdown -->
-        <div class="relative border border-site-light rounded-lg bg-white">
-          <select
-            v-model="sortOption"
-            class="appearance-none px-3 py-2 pr-8 bg-transparent text-site-text focus:outline-none cursor-pointer rounded-lg"
-          >
-            <option v-for="opt in sortOptions" :key="opt.value" :value="opt.value">
-              {{ opt.label }}
-            </option>
-          </select>
-          <span class="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-site-medium">&darr;</span>
-        </div>
-
-        <!-- Search -->
-        <div class="relative flex-1">
-          <input
-            v-model="blogStore.searchText"
-            type="text"
-            placeholder="Search posts..."
-            class="w-full px-3 py-2 border border-site-light rounded-lg bg-white text-site-text focus:outline-none focus:border-site-accent"
-          />
-          <button
-            v-if="blogStore.searchText"
-            @click="blogStore.clearSearch()"
-            class="absolute right-2 top-1/2 -translate-y-1/2 text-site-medium hover:text-site-text bg-transparent border-none cursor-pointer text-lg leading-none"
-          >
-            &times;
-          </button>
-        </div>
-
-        <span class="text-site-medium text-sm whitespace-nowrap hidden sm:inline">
-          {{ blogStore.postsPublishedCount }} published<span v-if="blogStore.postsDraftCount > 0"> / {{ blogStore.postsDraftCount }} drafts</span>
-        </span>
+    <!-- Search -->
+    <div class="mb-8">
+      <div class="relative">
+        <input
+          v-model="blogStore.searchText"
+          type="text"
+          placeholder="Search posts..."
+          class="admin-input"
+        />
+        <button
+          v-if="blogStore.searchText"
+          @click="blogStore.clearSearch()"
+          class="absolute right-2 top-1/2 -translate-y-1/2 text-site-medium hover:text-site-text bg-transparent border-none cursor-pointer text-lg leading-none"
+        >
+          &times;
+        </button>
       </div>
 
       <p v-if="blogStore.searchText && !effectiveSearchText" class="mt-2 text-[0.8em] text-site-medium">

@@ -4,6 +4,41 @@
    Scoped under .admin-container
    ========================================== */
 
+/* Standard admin form control */
+.admin-input {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--admin-light);
+    font-family: inherit;
+    font-size: 0.875rem;
+    color: var(--admin-text);
+    background: #f7f7f7;
+    box-sizing: border-box;
+}
+
+.admin-input:focus {
+    outline: none;
+    border-color: var(--admin-accent);
+}
+
+.admin-input::placeholder {
+    color: var(--admin-medium);
+}
+
+/* Select variant — strips browser chrome */
+select.admin-input {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    border-radius: 0;
+    cursor: pointer;
+    padding-right: 1.75rem;
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath fill='%23a0aec0' d='M0 0l5 6 5-6z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.5rem center;
+    background-size: 10px;
+}
+
 /* CSS Variables matching the site-* Tailwind tokens */
 :root {
     --admin-accent: #FFA100;
@@ -44,6 +79,7 @@
     font-size: 0.8rem;
     color: var(--admin-medium);
     text-decoration: none;
+    flex-shrink: 0;
     z-index: 1;
 }
 
@@ -52,17 +88,15 @@
 }
 
 .admin-toolbar .toolbar-title {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
     font-weight: bold;
     font-size: 1.1em;
     margin: 0;
-    white-space: nowrap;
+    text-align: center;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 50%;
-    text-align: center;
+    white-space: nowrap;
+    min-width: 0;
+    padding: 0 0.75em;
 }
 
 .admin-toolbar .toolbar-title a {
@@ -78,6 +112,7 @@
     display: flex;
     gap: 0.5em;
     align-items: center;
+    flex-shrink: 0;
     z-index: 1;
 }
 
@@ -89,12 +124,19 @@
    Horizontal Nav Bar
    ========================================== */
 .admin-nav {
+    padding: 0.75em 2em;
+    border-bottom: 1px solid var(--admin-light);
+}
+
+.admin-nav-links {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
     gap: 0.25em 1.25em;
-    padding: 0.75em 2em;
-    border-bottom: 1px solid var(--admin-light);
+}
+
+.admin-nav-select {
+    display: none;
 }
 
 .admin-nav a {
@@ -114,13 +156,14 @@
     color: var(--admin-accent);
 }
 
+
 /* ==========================================
    Main Content
    ========================================== */
 .admin-container main {
     display: flex;
     flex-direction: column;
-    padding: 2em;
+    padding: 1em 2em 2em;
     overflow: hidden;
     margin-bottom: 30px;
     flex: 1;
@@ -185,6 +228,14 @@
         font-size: 115%;
     }
 
+    .admin-toolbar .toolbar-title {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        max-width: 50%;
+        padding: 0;
+    }
+
     .admin-container main {
         overflow: auto;
     }
@@ -204,7 +255,12 @@
         padding: 0.75em 1em;
     }
 
-    .admin-nav {
+    .admin-nav-links {
+        display: none;
+    }
+
+    .admin-nav-select {
+        display: block;
         padding: 0.75em 1em;
     }
 
