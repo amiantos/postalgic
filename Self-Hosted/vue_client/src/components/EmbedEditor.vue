@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue';
 import { metadataApi } from '@/api';
+import EmbedPreview from '@/components/EmbedPreview.vue';
 
 const props = defineProps({
   embed: {
@@ -18,7 +19,6 @@ const emit = defineEmits(['save', 'cancel', 'use-title']);
 // Form state
 const embedType = ref('youtube');
 const url = ref('');
-const position = ref('below');
 const isLoading = ref(false);
 const error = ref(null);
 
@@ -41,7 +41,6 @@ onMounted(() => {
   if (props.embed) {
     embedType.value = props.embed.type || 'youtube';
     url.value = props.embed.url || '';
-    position.value = props.embed.position || 'below';
 
     if (props.embed.type === 'youtube') {
       metadata.value = {
@@ -80,11 +79,31 @@ const hasMetadata = computed(() => {
   return false;
 });
 
-// Compute the image source for link embeds, supporting imageData, imageUrl, or imageFilename
-const linkImageSrc = computed(() => {
-  if (metadata.value.imageData) return metadata.value.imageData;
-  if (metadata.value.imageFilename) return `/uploads/${props.blogId}/${metadata.value.imageFilename}`;
-  if (metadata.value.imageUrl && !metadata.value.imageUrl.startsWith('file://')) return metadata.value.imageUrl;
+// Build a preview embed object for EmbedPreview
+const previewEmbed = computed(() => {
+  if (embedType.value === 'image' && images.value.length > 0) {
+    return { type: 'image', images: images.value };
+  }
+  if (!hasMetadata.value) return null;
+  if (embedType.value === 'youtube') {
+    return {
+      type: 'youtube',
+      url: url.value,
+      title: metadata.value.title,
+      videoId: metadata.value.videoId
+    };
+  }
+  if (embedType.value === 'link') {
+    return {
+      type: 'link',
+      url: url.value,
+      title: metadata.value.title,
+      description: metadata.value.description,
+      imageUrl: metadata.value.imageUrl,
+      imageData: metadata.value.imageData,
+      imageFilename: metadata.value.imageFilename
+    };
+  }
   return null;
 });
 
@@ -161,7 +180,6 @@ function handleImageSelect(event) {
 
 function removeImage(index) {
   images.value.splice(index, 1);
-  // Update order
   images.value.forEach((img, i) => {
     img.order = i;
   });
@@ -175,7 +193,6 @@ function moveImage(index, direction) {
   images.value[index] = images.value[newIndex];
   images.value[newIndex] = temp;
 
-  // Update order
   images.value.forEach((img, i) => {
     img.order = i;
   });
@@ -190,7 +207,7 @@ function useAsPostTitle() {
 function save() {
   const embedData = {
     type: embedType.value,
-    position: position.value
+    position: props.embed?.position || 'below'
   };
 
   if (embedType.value === 'youtube') {
@@ -217,22 +234,22 @@ function cancel() {
 </script>
 
 <template>
-  <div class="bg-white border border-site-light p-4">
-    <h3 class="font-medium text-site-dark mb-4">
+  <div class="rounded-lg bg-site-bg/50 p-4 space-y-4">
+    <h3 class="font-medium text-site-dark">
       {{ embed ? 'Edit Embed' : 'Add Embed' }}
     </h3>
 
     <!-- Embed Type Selector -->
-    <div class="mb-4">
+    <div>
       <label class="block text-sm font-medium text-site-dark mb-2">Type</label>
       <div class="flex gap-2">
         <button
           @click="embedType = 'youtube'"
           :class="[
-            'px-3 py-1.5 text-sm transition-colors',
+            'px-4 py-1.5 text-sm rounded-full transition-colors',
             embedType === 'youtube'
               ? 'bg-site-accent text-white'
-              : 'bg-site-bg text-site-dark hover:bg-site-light'
+              : 'bg-white border border-site-light text-site-dark hover:border-site-accent hover:text-site-accent'
           ]"
         >
           YouTube
@@ -240,10 +257,10 @@ function cancel() {
         <button
           @click="embedType = 'link'"
           :class="[
-            'px-3 py-1.5 text-sm transition-colors',
+            'px-4 py-1.5 text-sm rounded-full transition-colors',
             embedType === 'link'
               ? 'bg-site-accent text-white'
-              : 'bg-site-bg text-site-dark hover:bg-site-light'
+              : 'bg-white border border-site-light text-site-dark hover:border-site-accent hover:text-site-accent'
           ]"
         >
           Link
@@ -251,10 +268,10 @@ function cancel() {
         <button
           @click="embedType = 'image'"
           :class="[
-            'px-3 py-1.5 text-sm transition-colors',
+            'px-4 py-1.5 text-sm rounded-full transition-colors',
             embedType === 'image'
               ? 'bg-site-accent text-white'
-              : 'bg-site-bg text-site-dark hover:bg-site-light'
+              : 'bg-white border border-site-light text-site-dark hover:border-site-accent hover:text-site-accent'
           ]"
         >
           Images
@@ -263,19 +280,19 @@ function cancel() {
     </div>
 
     <!-- URL Input (for YouTube and Link) -->
-    <div v-if="embedType !== 'image'" class="mb-4">
+    <div v-if="embedType !== 'image'">
       <label class="block text-sm font-medium text-site-dark mb-2">URL</label>
       <div class="flex gap-2">
         <input
           v-model="url"
           type="url"
-          class="flex-1 px-3 py-2 border border-site-light bg-white text-site-dark focus:outline-none focus:border-site-accent text-sm"
+          class="flex-1 px-3 py-2 border border-site-light rounded-lg bg-white text-site-dark focus:outline-none focus:border-site-accent text-sm"
           :placeholder="embedType === 'youtube' ? 'https://youtube.com/watch?v=...' : 'https://example.com/article'"
         />
         <button
           @click="fetchMetadata"
           :disabled="isLoading || !url.trim()"
-          class="px-4 py-2 bg-site-bg text-site-dark hover:bg-site-light transition-colors disabled:opacity-50 text-sm"
+          class="px-4 py-2 bg-site-accent text-white rounded-full hover:bg-[#e89200] transition-colors disabled:opacity-50 text-sm"
         >
           {{ isLoading ? 'Loading...' : 'Fetch' }}
         </button>
@@ -283,54 +300,26 @@ function cancel() {
     </div>
 
     <!-- Error Message -->
-    <div v-if="error" class="mb-4 p-3 bg-red-50 border border-red-200 text-red-800 text-sm">
+    <div v-if="error" class="p-3 bg-red-50 border border-red-200 rounded-lg text-red-800 text-sm">
       {{ error }}
     </div>
 
-    <!-- YouTube Preview -->
-    <div v-if="embedType === 'youtube' && hasMetadata" class="mb-4 p-3 bg-site-bg">
-      <p class="text-sm font-medium text-site-dark">{{ metadata.title || 'YouTube Video' }}</p>
-      <p v-if="metadata.videoId" class="text-xs text-site-medium mt-1">Video ID: {{ metadata.videoId }}</p>
+    <!-- Use as title button (YouTube/Link with metadata) -->
+    <div v-if="(embedType === 'youtube' || embedType === 'link') && hasMetadata && metadata.title">
       <button
-        v-if="metadata.title"
         @click="useAsPostTitle"
-        class="mt-2 text-xs text-site-accent hover:text-[#e89200]"
+        class="text-xs text-site-accent hover:text-[#e89200] transition-colors"
       >
-        Use as post title
+        Use "{{ metadata.title }}" as post title
       </button>
     </div>
 
-    <!-- Link Preview -->
-    <div v-if="embedType === 'link' && hasMetadata" class="mb-4 p-3 bg-site-bg">
-      <div class="flex gap-3">
-        <img
-          v-if="linkImageSrc"
-          :src="linkImageSrc"
-          class="w-20 h-20 object-cover rounded"
-          alt=""
-        />
-        <div class="flex-1 min-w-0">
-          <p class="text-sm font-medium text-site-dark truncate">{{ metadata.title || 'No title' }}</p>
-          <p v-if="metadata.description" class="text-xs text-site-medium mt-1 line-clamp-2">
-            {{ metadata.description }}
-          </p>
-          <button
-            v-if="metadata.title"
-            @click="useAsPostTitle"
-            class="mt-2 text-xs text-site-accent hover:text-[#e89200]"
-          >
-            Use as post title
-          </button>
-        </div>
-      </div>
-    </div>
-
     <!-- Image Upload -->
-    <div v-if="embedType === 'image'" class="mb-4">
+    <div v-if="embedType === 'image'">
       <label class="block text-sm font-medium text-site-dark mb-2">Images</label>
 
       <!-- Image Grid -->
-      <div v-if="images.length > 0" class="grid grid-cols-3 gap-2 mb-3">
+      <div v-if="images.length > 0" class="grid grid-cols-4 gap-2 mb-3">
         <div
           v-for="(image, index) in images"
           :key="image.id"
@@ -338,36 +327,36 @@ function cancel() {
         >
           <img
             :src="image.data || `/uploads/${props.blogId}/${image.filename}`"
-            class="w-full h-24 object-cover rounded"
+            class="w-full h-20 object-cover rounded-lg"
             alt=""
           />
-          <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all rounded flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100">
+          <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all rounded-lg flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100">
             <button
               v-if="index > 0"
               @click="moveImage(index, -1)"
-              class="p-1 bg-white rounded text-site-dark hover:bg-site-light"
+              class="p-1 bg-white rounded-full text-site-dark hover:bg-site-light"
               title="Move left"
             >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
               </svg>
             </button>
             <button
               v-if="index < images.length - 1"
               @click="moveImage(index, 1)"
-              class="p-1 bg-white rounded text-site-dark hover:bg-site-light"
+              class="p-1 bg-white rounded-full text-site-dark hover:bg-site-light"
               title="Move right"
             >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
               </svg>
             </button>
             <button
               @click="removeImage(index)"
-              class="p-1 bg-red-500 rounded text-white hover:bg-red-600"
+              class="p-1 bg-red-500 rounded-full text-white hover:bg-red-600"
               title="Remove"
             >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
@@ -386,36 +375,30 @@ function cancel() {
       />
       <button
         @click="imageInput?.click()"
-        class="w-full px-4 py-3 border-2 border-dashed border-site-light text-site-medium hover:border-site-accent hover:text-site-accent transition-colors text-sm"
+        class="w-full px-4 py-3 border-2 border-dashed border-site-light rounded-lg text-site-medium hover:border-site-accent hover:text-site-accent transition-colors text-sm"
       >
         Click to add images
       </button>
     </div>
 
-    <!-- Position Selector -->
-    <div class="mb-4">
-      <label class="block text-sm font-medium text-site-dark mb-2">Position</label>
-      <select
-        v-model="position"
-        class="w-full px-3 py-2 border border-site-light bg-white text-site-dark focus:outline-none focus:border-site-accent text-sm"
-      >
-        <option value="above">Above content</option>
-        <option value="below">Below content</option>
-      </select>
+    <!-- Live Preview -->
+    <div v-if="previewEmbed" class="border-t border-site-light pt-4">
+      <p class="text-xs font-semibold text-site-medium uppercase tracking-wide mb-2">Preview</p>
+      <EmbedPreview :embed="previewEmbed" :blog-id="blogId" />
     </div>
 
     <!-- Actions -->
-    <div class="flex justify-end gap-2">
+    <div class="flex justify-end gap-2 pt-2">
       <button
         @click="cancel"
-        class="px-4 py-2 text-site-dark hover:bg-site-light transition-colors text-sm"
+        class="px-4 py-2 border border-site-light text-site-dark rounded-full hover:border-site-accent hover:text-site-accent transition-colors text-sm"
       >
         Cancel
       </button>
       <button
         @click="save"
         :disabled="!canSave"
-        class="px-4 py-2 bg-site-accent text-white hover:bg-[#e89200] transition-colors disabled:opacity-50 text-sm"
+        class="px-4 py-2 bg-site-accent text-white rounded-full hover:bg-[#e89200] transition-colors disabled:opacity-50 text-sm"
       >
         {{ embed ? 'Update' : 'Add' }} Embed
       </button>

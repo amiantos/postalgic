@@ -3,6 +3,7 @@ import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
 import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router';
 import { useBlogStore } from '@/stores/blog';
 import EmbedEditor from '@/components/EmbedEditor.vue';
+import EmbedPreview from '@/components/EmbedPreview.vue';
 import PublishModal from '@/components/PublishModal.vue';
 
 const route = useRoute();
@@ -21,8 +22,10 @@ const contentTextarea = ref(null);
 function autoResize() {
   const textarea = contentTextarea.value;
   if (textarea) {
+    const hasEmbedBelow = embedPosition.value === 'below' && (showEmbedEditor.value || form.value.embed);
+    const minH = hasEmbedBelow ? 100 : 400;
     textarea.style.height = 'auto';
-    textarea.style.height = Math.max(400, textarea.scrollHeight) + 'px';
+    textarea.style.height = Math.max(minH, textarea.scrollHeight) + 'px';
   }
 }
 
@@ -300,9 +303,19 @@ const embedLabel = computed(() => {
   }
 });
 
+const embedPosition = computed(() => form.value.embed?.position ?? 'below');
+
 function handleEmbedSave(embedData) {
+  // Preserve position from sidebar control
+  embedData.position = embedPosition.value;
   form.value.embed = embedData;
   showEmbedEditor.value = false;
+}
+
+function setEmbedPosition(pos) {
+  if (form.value.embed) {
+    form.value.embed.position = pos;
+  }
 }
 
 function handleEmbedCancel() {
@@ -330,9 +343,9 @@ async function deletePost() {
 </script>
 
 <template>
-  <div class="min-h-screen bg-white overflow-x-hidden lg:pr-[calc(16rem+28px)]">
+  <div class="min-h-screen bg-site-bg overflow-x-hidden lg:pr-[calc(16rem+28px)]">
     <!-- Max-width content wrapper for desktop -->
-    <div class="lg:max-w-[700px] lg:mx-auto">
+    <div class="lg:max-w-[600px] lg:mx-auto">
 
     <!-- Navigation bar -->
     <nav class="flex items-center justify-between px-6 py-4 lg:px-0">
@@ -381,9 +394,39 @@ async function deletePost() {
         <input
           v-model="form.title"
           type="text"
-          class="w-full text-3xl md:text-4xl font-bold bg-transparent border-none outline-none text-site-dark placeholder:text-site-medium"
+          class="w-full text-3xl md:text-4xl font-bold bg-transparent border-none outline-none text-site-text placeholder:text-site-medium"
+          style="font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;"
           placeholder="Post title..."
         />
+      </div>
+
+      <!-- Embed Above -->
+      <div v-if="embedPosition === 'above' && (showEmbedEditor || form.embed)" class="mb-6">
+        <EmbedEditor
+          v-if="showEmbedEditor"
+          :embed="form.embed"
+          :blog-id="blogId"
+          @save="handleEmbedSave"
+          @cancel="handleEmbedCancel"
+          @use-title="handleUseTitle"
+        />
+        <div v-else-if="form.embed" class="group relative">
+          <EmbedPreview :embed="form.embed" :blog-id="blogId" />
+          <div class="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <button
+              @click="showEmbedEditor = true"
+              class="px-3 py-1 bg-white/90 border border-site-light text-xs text-site-dark rounded-full hover:border-site-accent hover:text-site-accent transition-colors shadow-sm"
+            >
+              Edit
+            </button>
+            <button
+              @click="removeEmbed"
+              class="px-3 py-1 bg-red-500/90 text-xs text-white rounded-full hover:bg-red-600 transition-colors shadow-sm"
+            >
+              Remove
+            </button>
+          </div>
+        </div>
       </div>
 
       <!-- Content -->
@@ -392,16 +435,49 @@ async function deletePost() {
           ref="contentTextarea"
           v-model="form.content"
           @input="autoResize"
-          class="w-full min-h-[400px] text-base leading-relaxed bg-transparent border-none outline-none resize-none text-site-dark placeholder:text-site-medium"
+          :class="[
+            'w-full bg-transparent border-none outline-none resize-none text-site-text placeholder:text-site-medium',
+            (embedPosition === 'below' && (showEmbedEditor || form.embed)) ? 'min-h-[100px]' : 'min-h-[400px]'
+          ]"
+          style="font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; font-size: 1.15rem; line-height: 1.8;"
           placeholder="Write your post content in Markdown..."
         ></textarea>
+      </div>
+
+      <!-- Embed Below -->
+      <div v-if="embedPosition === 'below' && (showEmbedEditor || form.embed)" class="mt-2">
+        <EmbedEditor
+          v-if="showEmbedEditor"
+          :embed="form.embed"
+          :blog-id="blogId"
+          @save="handleEmbedSave"
+          @cancel="handleEmbedCancel"
+          @use-title="handleUseTitle"
+        />
+        <div v-else-if="form.embed" class="group relative">
+          <EmbedPreview :embed="form.embed" :blog-id="blogId" />
+          <div class="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <button
+              @click="showEmbedEditor = true"
+              class="px-3 py-1 bg-white/90 border border-site-light text-xs text-site-dark rounded-full hover:border-site-accent hover:text-site-accent transition-colors shadow-sm"
+            >
+              Edit
+            </button>
+            <button
+              @click="removeEmbed"
+              class="px-3 py-1 bg-red-500/90 text-xs text-white rounded-full hover:bg-red-600 transition-colors shadow-sm"
+            >
+              Remove
+            </button>
+          </div>
+        </div>
       </div>
     </main>
 
     </div><!-- End max-width wrapper -->
 
     <!-- Desktop Sidebar (always visible on lg+) -->
-    <aside class="hidden lg:flex lg:flex-row w-[calc(16rem+28px)] bg-white fixed top-0 right-0 h-screen z-30">
+    <aside class="hidden lg:flex lg:flex-row w-[calc(16rem+28px)] bg-site-bg fixed top-0 right-0 h-screen z-30">
       <div class="wavy-separator-vertical flex-shrink-0"></div>
       <div class="flex-1 overflow-y-auto overflow-x-hidden p-4">
         <!-- Header -->
@@ -542,82 +618,41 @@ async function deletePost() {
           <div>
             <h3 class="text-xs font-semibold text-site-medium uppercase tracking-wide mb-2">Embed</h3>
 
-            <EmbedEditor
-              v-if="showEmbedEditor"
-              :embed="form.embed"
-              :blog-id="blogId"
-              @save="handleEmbedSave"
-              @cancel="handleEmbedCancel"
-              @use-title="handleUseTitle"
-            />
+            <button
+              v-if="!form.embed && !showEmbedEditor"
+              @click="showEmbedEditor = true"
+              class="w-full px-4 py-2 border border-dashed border-site-light text-sm text-site-medium rounded-full hover:border-site-accent hover:text-site-accent transition-colors flex items-center justify-center gap-2"
+            >
+              <span class="relative -top-px">+</span> Add Embed
+            </button>
 
             <div v-else>
-              <button
-                v-if="!form.embed"
-                @click="showEmbedEditor = true"
-                class="w-full px-4 py-2 border border-dashed border-site-light text-sm text-site-medium rounded-full hover:border-site-accent hover:text-site-accent transition-colors flex items-center justify-center gap-2"
+              <p class="text-sm text-site-dark mb-2">{{ embedLabel }}</p>
+
+              <!-- Position selector -->
+              <select
+                :value="embedPosition"
+                @change="setEmbedPosition($event.target.value)"
+                class="w-full px-2 py-1 border border-site-light rounded-lg bg-white text-sm text-site-dark focus:outline-none focus:border-site-accent transition-colors mb-2"
               >
-                <span class="relative -top-px">+</span> Add Embed
-              </button>
+                <option value="above">Above content</option>
+                <option value="below">Below content</option>
+              </select>
 
-              <div v-else>
-                <div v-if="form.embed.type === 'youtube'" class="p-2 border border-site-light rounded-lg">
-                  <div class="flex items-center gap-2">
-                    <span class="text-xs text-red-500">YT</span>
-                    <span class="text-sm truncate text-site-dark">{{ form.embed.title || 'YouTube Video' }}</span>
-                  </div>
-                  <p class="text-xs text-site-medium mt-1">{{ form.embed.position === 'above' ? 'Above' : 'Below' }} content</p>
-                </div>
-
-                <div v-else-if="form.embed.type === 'link'" class="p-2 border border-site-light rounded-lg">
-                  <div class="flex gap-2">
-                    <img
-                      v-if="form.embed.imageData || form.embed.imageFilename || (form.embed.imageUrl && !form.embed.imageUrl.startsWith('file://'))"
-                      :src="form.embed.imageData || (form.embed.imageFilename ? `/uploads/${blogId}/${form.embed.imageFilename}` : form.embed.imageUrl)"
-                      class="w-10 h-10 object-cover flex-shrink-0"
-                      alt=""
-                    />
-                    <div class="flex-1 min-w-0">
-                      <p class="text-sm truncate text-site-dark">{{ form.embed.title || 'Link' }}</p>
-                      <p v-if="form.embed.description" class="text-xs text-site-medium truncate">{{ form.embed.description }}</p>
-                    </div>
-                  </div>
-                  <p class="text-xs text-site-medium mt-2">{{ form.embed.position === 'above' ? 'Above' : 'Below' }} content</p>
-                </div>
-
-                <div v-else-if="form.embed.type === 'image'" class="p-2 border border-site-light rounded-lg">
-                  <div class="flex gap-1 mb-2">
-                    <img
-                      v-for="(img, index) in form.embed.images?.slice(0, 4)"
-                      :key="index"
-                      :src="img.data || `/uploads/${blogId}/${img.filename}`"
-                      class="w-10 h-10 object-cover"
-                      alt=""
-                    />
-                    <div
-                      v-if="form.embed.images?.length > 4"
-                      class="w-10 h-10 border border-site-light flex items-center justify-center text-xs text-site-medium"
-                    >
-                      +{{ form.embed.images.length - 4 }}
-                    </div>
-                  </div>
-                  <p class="text-xs text-site-medium">{{ form.embed.images?.length || 0 }} image(s) - {{ form.embed.position === 'above' ? 'Above' : 'Below' }} content</p>
-                </div>
-
-                <div class="flex gap-2 mt-2">
-                  <button
-                    @click="showEmbedEditor = true"
-                    class="flex-1 px-2 py-1 border border-site-light text-xs text-site-dark rounded-full hover:border-site-accent hover:text-site-accent transition-colors"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    @click="removeEmbed"
-                    class="px-2 py-1 text-xs bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
-                  >
-                    Remove
-                  </button>
-                </div>
+              <div class="flex gap-2">
+                <button
+                  v-if="!showEmbedEditor"
+                  @click="showEmbedEditor = true"
+                  class="flex-1 px-2 py-1 border border-site-light text-xs text-site-dark rounded-full hover:border-site-accent hover:text-site-accent transition-colors"
+                >
+                  Edit
+                </button>
+                <button
+                  @click="removeEmbed(); showEmbedEditor = false"
+                  class="px-2 py-1 text-xs bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
+                >
+                  Remove
+                </button>
               </div>
             </div>
           </div>
@@ -649,7 +684,7 @@ async function deletePost() {
 
       <!-- Panel -->
       <div
-        class="absolute right-0 top-0 bottom-0 w-80 bg-white border-l border-site-light overflow-y-auto"
+        class="absolute right-0 top-0 bottom-0 w-80 bg-site-bg border-l border-site-light overflow-y-auto"
         @click.stop
       >
         <div class="p-4">
@@ -779,82 +814,41 @@ async function deletePost() {
             <div>
               <h3 class="text-xs font-semibold text-site-medium uppercase tracking-wide mb-2">Embed</h3>
 
-              <EmbedEditor
-                v-if="showEmbedEditor"
-                :embed="form.embed"
-                :blog-id="blogId"
-                @save="handleEmbedSave"
-                @cancel="handleEmbedCancel"
-                @use-title="handleUseTitle"
-              />
+              <button
+                v-if="!form.embed && !showEmbedEditor"
+                @click="showEmbedEditor = true; mobileSidebarOpen = false"
+                class="w-full px-4 py-2 border border-dashed border-site-light text-sm text-site-medium rounded-full hover:border-site-accent hover:text-site-accent transition-colors flex items-center justify-center gap-2"
+              >
+                <span class="relative -top-px">+</span> Add Embed
+              </button>
 
               <div v-else>
-                <button
-                  v-if="!form.embed"
-                  @click="showEmbedEditor = true"
-                  class="w-full px-4 py-2 border border-dashed border-site-light text-sm text-site-medium rounded-full hover:border-site-accent hover:text-site-accent transition-colors flex items-center justify-center gap-2"
+                <p class="text-sm text-site-dark mb-2">{{ embedLabel }}</p>
+
+                <!-- Position selector -->
+                <select
+                  :value="embedPosition"
+                  @change="setEmbedPosition($event.target.value)"
+                  class="w-full px-2 py-1 border border-site-light rounded-lg bg-white text-sm text-site-dark focus:outline-none focus:border-site-accent transition-colors mb-2"
                 >
-                  <span class="relative -top-px">+</span> Add Embed
-                </button>
+                  <option value="above">Above content</option>
+                  <option value="below">Below content</option>
+                </select>
 
-                <div v-else>
-                  <div v-if="form.embed.type === 'youtube'" class="p-2 border border-site-light rounded-lg">
-                    <div class="flex items-center gap-2">
-                      <span class="text-xs text-red-500">YT</span>
-                      <span class="text-sm truncate text-site-dark">{{ form.embed.title || 'YouTube Video' }}</span>
-                    </div>
-                    <p class="text-xs text-site-medium mt-1">{{ form.embed.position === 'above' ? 'Above' : 'Below' }} content</p>
-                  </div>
-
-                  <div v-else-if="form.embed.type === 'link'" class="p-2 border border-site-light rounded-lg">
-                    <div class="flex gap-2">
-                      <img
-                        v-if="form.embed.imageData || form.embed.imageFilename || (form.embed.imageUrl && !form.embed.imageUrl.startsWith('file://'))"
-                        :src="form.embed.imageData || (form.embed.imageFilename ? `/uploads/${blogId}/${form.embed.imageFilename}` : form.embed.imageUrl)"
-                        class="w-10 h-10 object-cover flex-shrink-0"
-                        alt=""
-                      />
-                      <div class="flex-1 min-w-0">
-                        <p class="text-sm truncate text-site-dark">{{ form.embed.title || 'Link' }}</p>
-                        <p v-if="form.embed.description" class="text-xs text-site-medium truncate">{{ form.embed.description }}</p>
-                      </div>
-                    </div>
-                    <p class="text-xs text-site-medium mt-2">{{ form.embed.position === 'above' ? 'Above' : 'Below' }} content</p>
-                  </div>
-
-                  <div v-else-if="form.embed.type === 'image'" class="p-2 border border-site-light rounded-lg">
-                    <div class="flex gap-1 mb-2">
-                      <img
-                        v-for="(img, index) in form.embed.images?.slice(0, 4)"
-                        :key="index"
-                        :src="img.data || `/uploads/${blogId}/${img.filename}`"
-                        class="w-10 h-10 object-cover"
-                        alt=""
-                      />
-                      <div
-                        v-if="form.embed.images?.length > 4"
-                        class="w-10 h-10 border border-site-light flex items-center justify-center text-xs text-site-medium"
-                      >
-                        +{{ form.embed.images.length - 4 }}
-                      </div>
-                    </div>
-                    <p class="text-xs text-site-medium">{{ form.embed.images?.length || 0 }} image(s) - {{ form.embed.position === 'above' ? 'Above' : 'Below' }} content</p>
-                  </div>
-
-                  <div class="flex gap-2 mt-2">
-                    <button
-                      @click="showEmbedEditor = true"
-                      class="flex-1 px-2 py-1 border border-site-light text-xs text-site-dark rounded-full hover:border-site-accent hover:text-site-accent transition-colors"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      @click="removeEmbed"
-                      class="px-2 py-1 text-xs bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
-                    >
-                      Remove
-                    </button>
-                  </div>
+                <div class="flex gap-2">
+                  <button
+                    v-if="!showEmbedEditor"
+                    @click="showEmbedEditor = true; mobileSidebarOpen = false"
+                    class="flex-1 px-2 py-1 border border-site-light text-xs text-site-dark rounded-full hover:border-site-accent hover:text-site-accent transition-colors"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    @click="removeEmbed(); showEmbedEditor = false"
+                    class="px-2 py-1 text-xs bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
+                  >
+                    Remove
+                  </button>
                 </div>
               </div>
             </div>
