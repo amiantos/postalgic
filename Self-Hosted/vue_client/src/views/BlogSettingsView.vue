@@ -100,7 +100,7 @@ async function downloadDebugExport() {
     <form @submit.prevent="saveSettings" class="space-y-8">
       <!-- Basic Info -->
       <section>
-        <h3 class="text-sm font-semibold text-site-dark mb-4">Basic Information</h3>
+        <h3 class="text-sm font-semibold text-site-dark mb-4 mt-2">Basic Information</h3>
         <div class="space-y-4">
           <div>
             <label class="block text-xs font-semibold text-site-medium mb-2">Blog Name</label>
