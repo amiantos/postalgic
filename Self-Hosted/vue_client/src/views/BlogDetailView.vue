@@ -1,8 +1,7 @@
 <script setup>
-import { ref, onMounted, onUnmounted, watch, computed } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useBlogStore } from '@/stores/blog';
-import AdminSidebar from '@/components/AdminSidebar.vue';
 import PublishModal from '@/components/PublishModal.vue';
 
 const route = useRoute();
@@ -11,40 +10,26 @@ const blogStore = useBlogStore();
 const blogId = computed(() => route.params.blogId);
 const isFullWidthRoute = computed(() => route.meta.fullWidth === true);
 
-const sidebarOpen = ref(false);
 const showPublishModal = ref(false);
 
-function toggleSidebar() {
-  sidebarOpen.value = !sidebarOpen.value;
-}
-
-function closeSidebar() {
-  sidebarOpen.value = false;
-}
-
-function handleResize() {
-  if (window.innerWidth > 900 && sidebarOpen.value) {
-    sidebarOpen.value = false;
-  }
-}
+const navLinks = [
+  { name: 'Posts', route: 'blog-posts' },
+  { name: 'Blog Settings', route: 'blog-settings' },
+  { name: 'Categories', route: 'categories' },
+  { name: 'Tags', route: 'tags' },
+  { name: 'Sidebar', route: 'sidebar' },
+  { name: 'Files', route: 'files' },
+  { name: 'Themes', route: 'themes' },
+  { name: 'Publishing', route: 'publish-settings' }
+];
 
 onMounted(async () => {
-  window.addEventListener('resize', handleResize);
   await loadBlogData();
-});
-
-onUnmounted(() => {
-  window.removeEventListener('resize', handleResize);
 });
 
 watch(blogId, async (newId, oldId) => {
   if (oldId) blogStore.clearBlogData();
   await loadBlogData();
-});
-
-// Close sidebar on route change (mobile nav)
-watch(() => route.name, () => {
-  sidebarOpen.value = false;
 });
 
 async function loadBlogData() {
@@ -61,14 +46,15 @@ async function loadBlogData() {
   </div>
 
   <!-- Normal mode: layout shell mirroring the blog template -->
-  <div
-    v-else
-    class="admin-container"
-    :class="{ 'sidebar-open': sidebarOpen }"
-  >
+  <div v-else class="admin-container">
     <!-- Top Toolbar -->
     <div class="admin-toolbar">
       <router-link to="/" class="toolbar-back">&larr; All Blogs</router-link>
+      <h1 v-if="blogStore.currentBlog?.name" class="toolbar-title">
+        <router-link :to="{ name: 'blog-posts', params: { blogId } }">
+          {{ blogStore.currentBlog.name }}
+        </router-link>
+      </h1>
       <div class="toolbar-actions">
         <button
           @click="showPublishModal = true"
@@ -85,38 +71,24 @@ async function loadBlogData() {
       </div>
     </div>
 
-    <!-- Header -->
-    <header class="admin-header">
-      <button class="hamburger-menu" @click="toggleSidebar">
-        <div class="hamburger-icon">
-          <span></span>
-          <span></span>
-          <span></span>
-        </div>
-      </button>
-      <h1>
-        <router-link :to="{ name: 'blog-posts', params: { blogId } }">
-          {{ blogStore.currentBlog?.name }}
-        </router-link>
-      </h1>
-      <p v-if="blogStore.currentBlog?.tagline" class="tagline">
-        {{ blogStore.currentBlog.tagline }}
-      </p>
-      <div class="header-separator"></div>
-    </header>
+    <!-- Wavy Separator -->
+    <div class="wavy-separator"></div>
 
-    <!-- Content Wrapper -->
-    <div class="content-wrapper">
-      <div class="mobile-sidebar-overlay" @click="closeSidebar"></div>
-      <AdminSidebar
-        :blog-id="blogId"
-        @close-mobile="closeSidebar"
-      />
-      <main>
-        <router-view />
-      </main>
-      <div class="clearfix"></div>
-    </div>
+    <!-- Horizontal Nav -->
+    <nav class="admin-nav">
+      <router-link
+        v-for="link in navLinks"
+        :key="link.route"
+        :to="{ name: link.route, params: { blogId } }"
+      >
+        {{ link.name }}
+      </router-link>
+    </nav>
+
+    <!-- Main Content -->
+    <main>
+      <router-view />
+    </main>
 
     <!-- Footer -->
     <footer class="admin-footer">
