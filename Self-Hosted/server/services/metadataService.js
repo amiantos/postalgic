@@ -130,7 +130,10 @@ async function fetchImageAsBase64(imageUrl) {
   }
 }
 
+export { fetchImageAsBase64 };
+
 export default {
   fetchMetadata,
-  fetchYouTubeTitle
+  fetchYouTubeTitle,
+  fetchImageAsBase64
 };

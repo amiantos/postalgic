@@ -1,5 +1,5 @@
 import express from 'express';
-import { fetchMetadata, fetchYouTubeTitle } from '../services/metadataService.js';
+import { fetchMetadata, fetchYouTubeTitle, fetchImageAsBase64 } from '../services/metadataService.js';
 import { extractYouTubeId } from '../utils/helpers.js';
 
 const router = express.Router();
@@ -24,15 +24,17 @@ router.get('/', async (req, res) => {
     const youtubeId = extractYouTubeId(url);
 
     if (youtubeId) {
-      // Fetch YouTube title
+      // Fetch YouTube title and thumbnail
       const title = await fetchYouTubeTitle(url);
+      const thumbUrl = `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`;
+      const imageData = await fetchImageAsBase64(thumbUrl);
       return res.json({
         type: 'youtube',
         videoId: youtubeId,
         title,
         description: null,
         imageUrl: null,
-        imageData: null
+        imageData
       });
     }
 

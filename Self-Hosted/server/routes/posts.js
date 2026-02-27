@@ -1,6 +1,7 @@
 import express from 'express';
 import crypto from 'crypto';
 import Storage from '../utils/storage.js';
+import { fetchImageAsBase64 } from '../services/metadataService.js';
 import { renderMarkdown } from '../utils/markdown.js';
 import {
   generateStub,
@@ -225,6 +226,23 @@ function processEmbed(embed, storage, blogId) {
 
   if (embed.type === 'youtube') {
     processed.videoId = extractYouTubeId(embed.url);
+    processed.title = embed.title || '';
+
+    // Handle YouTube thumbnail image - same pattern as link embeds
+    if (embed.imageData && embed.imageData.startsWith('data:')) {
+      const urlHash = crypto.createHash('sha256').update(embed.url || '').digest('hex').substring(0, 16);
+      const imageFilename = `embed-${urlHash}.jpg`;
+
+      const matches = embed.imageData.match(/^data:([^;]+);base64,(.+)$/);
+      if (matches) {
+        const base64Data = matches[2];
+        const buffer = Buffer.from(base64Data, 'base64');
+        storage.saveEmbedImage(blogId, imageFilename, buffer);
+        processed.imageFilename = imageFilename;
+      }
+    } else if (embed.imageFilename) {
+      processed.imageFilename = embed.imageFilename;
+    }
   } else if (embed.type === 'link') {
     processed.title = embed.title || '';
     processed.description = embed.description || '';
@@ -337,5 +355,59 @@ function enrichPost(post, storage, blogId) {
 
   return enriched;
 }
+
+// POST /api/blogs/:blogId/posts/backfill-youtube-thumbnails - Backfill YouTube thumbnails
+router.post('/backfill-youtube-thumbnails', async (req, res) => {
+  try {
+    const storage = getStorage(req);
+    const { blogId } = req.params;
+
+    const allPosts = storage.getAllPosts(blogId, 'all');
+
+    // Find posts with YouTube embeds missing imageFilename
+    const postsToUpdate = allPosts.filter(post => {
+      const embed = post.embed;
+      if (!embed || embed.type !== 'youtube' || embed.imageFilename) return false;
+      return embed.videoId || extractYouTubeId(embed.url);
+    });
+
+    const totalYouTubeEmbeds = allPosts.filter(post =>
+      post.embed && post.embed.type === 'youtube' && (post.embed.videoId || extractYouTubeId(post.embed?.url))
+    ).length;
+
+    let updated = 0;
+
+    for (const post of postsToUpdate) {
+      try {
+        const videoId = post.embed.videoId || extractYouTubeId(post.embed.url);
+        if (!videoId) continue;
+        const thumbUrl = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+        const imageData = await fetchImageAsBase64(thumbUrl);
+
+        if (imageData && imageData.startsWith('data:')) {
+          const urlHash = crypto.createHash('sha256').update(post.embed.url || '').digest('hex').substring(0, 16);
+          const imageFilename = `embed-${urlHash}.jpg`;
+
+          const matches = imageData.match(/^data:([^;]+);base64,(.+)$/);
+          if (matches) {
+            const base64Data = matches[2];
+            const buffer = Buffer.from(base64Data, 'base64');
+            storage.saveEmbedImage(blogId, imageFilename, buffer);
+
+            const updatedEmbed = { ...post.embed, imageFilename, videoId };
+            storage.updatePost(blogId, post.id, { embed: updatedEmbed });
+            updated++;
+          }
+        }
+      } catch (err) {
+        console.error(`Failed to backfill thumbnail for post ${post.id}:`, err.message);
+      }
+    }
+
+    res.json({ updated, total: totalYouTubeEmbeds });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 export default router;

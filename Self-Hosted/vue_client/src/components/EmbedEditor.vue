@@ -45,7 +45,9 @@ onMounted(() => {
     if (props.embed.type === 'youtube') {
       metadata.value = {
         title: props.embed.title || null,
-        videoId: props.embed.videoId || null
+        videoId: props.embed.videoId || null,
+        imageData: props.embed.imageData || null,
+        imageFilename: props.embed.imageFilename || null
       };
     } else if (props.embed.type === 'link') {
       metadata.value = {
@@ -90,7 +92,9 @@ const previewEmbed = computed(() => {
       type: 'youtube',
       url: url.value,
       title: metadata.value.title,
-      videoId: metadata.value.videoId
+      videoId: metadata.value.videoId,
+      imageData: metadata.value.imageData,
+      imageFilename: metadata.value.imageFilename
     };
   }
   if (embedType.value === 'link') {
@@ -132,7 +136,9 @@ async function fetchMetadata() {
       embedType.value = 'youtube';
       metadata.value = {
         title: result.title,
-        videoId: result.videoId
+        videoId: result.videoId,
+        imageData: result.imageData,
+        imageFilename: null
       };
     } else {
       metadata.value = {
@@ -214,6 +220,8 @@ function save() {
     embedData.url = url.value;
     embedData.title = metadata.value.title;
     embedData.videoId = metadata.value.videoId;
+    embedData.imageData = metadata.value.imageData;
+    embedData.imageFilename = metadata.value.imageFilename;
   } else if (embedType.value === 'link') {
     embedData.url = url.value;
     embedData.title = metadata.value.title;

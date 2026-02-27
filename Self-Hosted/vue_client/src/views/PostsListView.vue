@@ -121,6 +121,19 @@ function getYouTubeVideoId(embed) {
   return embed.videoId || extractYouTubeId(embed.url);
 }
 
+function getYouTubeThumbSrc(embed) {
+  if (embed.imageFilename) return `/uploads/${blogId.value}/${embed.imageFilename}`;
+  const vid = getYouTubeVideoId(embed);
+  if (vid) return `https://img.youtube.com/vi/${vid}/hqdefault.jpg`;
+  return null;
+}
+
+const activeYouTubePostIds = ref(new Set());
+
+function activateYouTube(postId) {
+  activeYouTubePostIds.value = new Set([...activeYouTubePostIds.value, postId]);
+}
+
 function formatLocalDateTime(dateString) {
   const date = new Date(dateString);
   const timezone = blogStore.currentBlog?.timezone || 'UTC';
@@ -242,12 +255,27 @@ function formatLocalDateTime(dateString) {
             <!-- YouTube -->
             <div v-if="post.embed.type === 'youtube' && getYouTubeVideoId(post.embed)" class="aspect-video max-h-96">
               <iframe
-                :src="`https://www.youtube.com/embed/${getYouTubeVideoId(post.embed)}`"
+                v-if="activeYouTubePostIds.has(post.id)"
+                :src="`https://www.youtube.com/embed/${getYouTubeVideoId(post.embed)}?autoplay=1`"
                 class="w-full h-full"
                 frameborder="0"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowfullscreen
               ></iframe>
+              <div v-else class="relative w-full h-full cursor-pointer" @click.stop="activateYouTube(post.id)">
+                <img
+                  v-if="getYouTubeThumbSrc(post.embed)"
+                  :src="getYouTubeThumbSrc(post.embed)"
+                  class="w-full h-full object-cover"
+                  alt=""
+                />
+                <div class="absolute inset-0 flex items-center justify-center">
+                  <svg class="w-16 h-auto drop-shadow-lg" viewBox="0 0 28.57 20" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M27.9727 3.12324C27.6435 1.89323 26.6768 0.926623 25.4468 0.597366C23.2197 0 14.285 0 14.285 0S5.35042 0 3.12323 0.597366C1.89323 0.926623 0.926623 1.89323 0.597366 3.12324 0 5.35042 0 10 0 10S0 14.6496 0.597366 16.8768C0.926623 18.1068 1.89323 19.0734 3.12323 19.4026 5.35042 20 14.285 20 14.285 20S23.2197 20 25.4468 19.4026C26.6768 19.0734 27.6435 18.1068 27.9727 16.8768 28.5701 14.6496 28.5701 10 28.5701 10S28.5677 5.35042 27.9727 3.12324Z" fill="#FF0000"/>
+                    <path d="M11.4253 14.2854L18.8477 10.0004 11.4253 5.71533V14.2854Z" fill="white"/>
+                  </svg>
+                </div>
+              </div>
             </div>
 
             <!-- Link -->
@@ -297,12 +325,27 @@ function formatLocalDateTime(dateString) {
             <!-- YouTube -->
             <div v-if="post.embed.type === 'youtube' && getYouTubeVideoId(post.embed)" class="aspect-video max-h-96">
               <iframe
-                :src="`https://www.youtube.com/embed/${getYouTubeVideoId(post.embed)}`"
+                v-if="activeYouTubePostIds.has(post.id)"
+                :src="`https://www.youtube.com/embed/${getYouTubeVideoId(post.embed)}?autoplay=1`"
                 class="w-full h-full"
                 frameborder="0"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowfullscreen
               ></iframe>
+              <div v-else class="relative w-full h-full cursor-pointer" @click.stop="activateYouTube(post.id)">
+                <img
+                  v-if="getYouTubeThumbSrc(post.embed)"
+                  :src="getYouTubeThumbSrc(post.embed)"
+                  class="w-full h-full object-cover"
+                  alt=""
+                />
+                <div class="absolute inset-0 flex items-center justify-center">
+                  <svg class="w-16 h-auto drop-shadow-lg" viewBox="0 0 28.57 20" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M27.9727 3.12324C27.6435 1.89323 26.6768 0.926623 25.4468 0.597366C23.2197 0 14.285 0 14.285 0S5.35042 0 3.12323 0.597366C1.89323 0.926623 0.926623 1.89323 0.597366 3.12324 0 5.35042 0 10 0 10S0 14.6496 0.597366 16.8768C0.926623 18.1068 1.89323 19.0734 3.12323 19.4026 5.35042 20 14.285 20 14.285 20S23.2197 20 25.4468 19.4026C26.6768 19.0734 27.6435 18.1068 27.9727 16.8768 28.5701 14.6496 28.5701 10 28.5701 10S28.5677 5.35042 27.9727 3.12324Z" fill="#FF0000"/>
+                    <path d="M11.4253 14.2854L18.8477 10.0004 11.4253 5.71533V14.2854Z" fill="white"/>
+                  </svg>
+                </div>
+              </div>
             </div>
 
             <!-- Link -->

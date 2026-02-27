@@ -63,7 +63,9 @@ export const postApi = {
   update: (blogId, postId, data) =>
     fetchApi(`/blogs/${blogId}/posts/${postId}`, { method: 'PUT', body: JSON.stringify(data) }),
   delete: (blogId, postId) =>
-    fetchApi(`/blogs/${blogId}/posts/${postId}`, { method: 'DELETE' })
+    fetchApi(`/blogs/${blogId}/posts/${postId}`, { method: 'DELETE' }),
+  backfillYouTubeThumbnails: (blogId) =>
+    fetchApi(`/blogs/${blogId}/posts/backfill-youtube-thumbnails`, { method: 'POST' })
 };
 
 // Category API

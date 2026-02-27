@@ -16,8 +16,11 @@ const props = defineProps({
 const currentIndex = ref(0);
 
 const youtubeThumb = computed(() => {
-  if (props.embed.type !== 'youtube' || !props.embed.videoId) return null;
-  return `https://img.youtube.com/vi/${props.embed.videoId}/hqdefault.jpg`;
+  if (props.embed.type !== 'youtube') return null;
+  if (props.embed.imageData) return props.embed.imageData;
+  if (props.embed.imageFilename) return `/uploads/${props.blogId}/${props.embed.imageFilename}`;
+  if (props.embed.videoId) return `https://img.youtube.com/vi/${props.embed.videoId}/hqdefault.jpg`;
+  return null;
 });
 
 const linkImageSrc = computed(() => {
@@ -66,15 +69,13 @@ function urlDomain(url) {
         class="absolute inset-0 w-full h-full object-cover"
         alt=""
       />
-      <div class="absolute inset-0 bg-black/20 flex items-center justify-center">
-        <div class="w-16 h-16 bg-red-600 rounded-xl flex items-center justify-center shadow-lg">
-          <svg class="w-8 h-8 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M8 5v14l11-7z" />
-          </svg>
-        </div>
+      <div class="absolute inset-0 flex items-center justify-center">
+        <svg class="w-16 h-auto drop-shadow-lg" viewBox="0 0 28.57 20" xmlns="http://www.w3.org/2000/svg">
+          <path d="M27.9727 3.12324C27.6435 1.89323 26.6768 0.926623 25.4468 0.597366C23.2197 0 14.285 0 14.285 0S5.35042 0 3.12323 0.597366C1.89323 0.926623 0.926623 1.89323 0.597366 3.12324 0 5.35042 0 10 0 10S0 14.6496 0.597366 16.8768C0.926623 18.1068 1.89323 19.0734 3.12323 19.4026 5.35042 20 14.285 20 14.285 20S23.2197 20 25.4468 19.4026C26.6768 19.0734 27.6435 18.1068 27.9727 16.8768 28.5701 14.6496 28.5701 10 28.5701 10S28.5677 5.35042 27.9727 3.12324Z" fill="#FF0000"/>
+          <path d="M11.4253 14.2854L18.8477 10.0004 11.4253 5.71533V14.2854Z" fill="white"/>
+        </svg>
       </div>
     </div>
-    <p v-if="embed.title" class="text-sm font-medium text-site-dark mt-2">{{ embed.title }}</p>
   </div>
 
   <!-- Link Preview -->

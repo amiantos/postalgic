@@ -2,7 +2,7 @@
 import { ref, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useBlogStore } from '@/stores/blog';
-import { blogApi } from '@/api';
+import { blogApi, postApi } from '@/api';
 
 const route = useRoute();
 const router = useRouter();
@@ -15,6 +15,8 @@ const saving = ref(false);
 const error = ref(null);
 const success = ref(false);
 const exporting = ref(false);
+const backfilling = ref(false);
+const backfillResult = ref(null);
 
 watch(() => blogStore.currentBlog, (blog) => {
   if (blog) {
@@ -42,6 +44,22 @@ async function deleteBlog() {
   if (confirm(`Are you sure you want to delete "${blogStore.currentBlog?.name}"? This cannot be undone.`)) {
     await blogStore.deleteBlog(blogId.value);
     router.push('/');
+  }
+}
+
+async function backfillYouTubeThumbnails() {
+  backfilling.value = true;
+  backfillResult.value = null;
+  error.value = null;
+
+  try {
+    const result = await postApi.backfillYouTubeThumbnails(blogId.value);
+    backfillResult.value = `Updated ${result.updated} of ${result.total} YouTube thumbnails`;
+    setTimeout(() => backfillResult.value = null, 5000);
+  } catch (e) {
+    error.value = e.message;
+  } finally {
+    backfilling.value = false;
   }
 }
 
@@ -253,6 +271,25 @@ async function downloadDebugExport() {
         </div>
       </section>
     </form>
+
+    <!-- Maintenance -->
+    <section class="border-t border-site-light pt-8 mt-8">
+      <h3 class="font-mono text-sm text-site-dark uppercase tracking-wider mb-2">Maintenance</h3>
+      <p class="text-sm text-site-dark mb-4">
+        Download and save YouTube embed thumbnails locally for posts that are still using the YouTube CDN.
+      </p>
+      <div v-if="backfillResult" class="mb-4 p-4 border border-green-500 font-mono text-sm text-green-600">
+        {{ backfillResult }}
+      </div>
+      <button
+        type="button"
+        @click="backfillYouTubeThumbnails"
+        :disabled="backfilling"
+        class="px-4 py-2 border border-site-dark font-mono text-sm text-site-dark hover:border-site-accent hover:text-site-accent uppercase tracking-wider disabled:opacity-50"
+      >
+        {{ backfilling ? 'Backfilling...' : 'Backfill YouTube Thumbnails' }}
+      </button>
+    </section>
 
     <!-- Developer Tools -->
     <section class="border-t border-site-light pt-8 mt-8">
