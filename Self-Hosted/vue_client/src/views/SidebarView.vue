@@ -18,6 +18,13 @@ const form = ref({
 });
 const saving = ref(false);
 const error = ref(null);
+const searchText = ref('');
+
+const filteredSidebarObjects = computed(() => {
+  if (!searchText.value.trim()) return blogStore.sidebarObjects;
+  const query = searchText.value.toLowerCase();
+  return blogStore.sidebarObjects.filter(obj => obj.title.toLowerCase().includes(query));
+});
 
 onMounted(async () => {
   await blogStore.fetchSidebarObjects(blogId.value);
@@ -95,25 +102,26 @@ async function deleteSidebarObject(obj) {
 
 <template>
   <div>
-    <!-- Header with create buttons -->
-    <div class="flex items-center justify-between mb-6">
-      <h2 class="font-mono text-sm text-site-dark uppercase tracking-wider">
-        {{ blogStore.sidebarObjects.length }} items
-      </h2>
-      <div class="flex items-center gap-2">
-        <button
-          @click="openCreateModal('text')"
-          class="px-4 py-2 bg-site-accent text-white font-semibold rounded-full hover:bg-[#e89200] transition-colors"
-        >
-          + Text Block
-        </button>
-        <button
-          @click="openCreateModal('linkList')"
-          class="px-4 py-2 border border-site-accent text-site-accent font-semibold rounded-full hover:bg-site-accent hover:text-white transition-colors"
-        >
-          + Link List
-        </button>
-      </div>
+    <!-- Header with search and create buttons -->
+    <div class="flex items-center gap-2 mb-6">
+      <input
+        v-model="searchText"
+        type="text"
+        class="admin-input flex-1"
+        placeholder="Search sidebar items..."
+      />
+      <button
+        @click="openCreateModal('text')"
+        class="h-10 px-3 font-mono text-sm uppercase tracking-wider bg-site-accent text-white hover:bg-[#e89200] transition-colors"
+      >
+        New Text Block
+      </button>
+      <button
+        @click="openCreateModal('linkList')"
+        class="h-10 px-3 font-mono text-sm uppercase tracking-wider border border-site-accent text-site-accent hover:bg-site-accent hover:text-white transition-colors"
+      >
+        New Link List
+      </button>
     </div>
 
     <!-- Empty State -->
@@ -129,7 +137,7 @@ async function deleteSidebarObject(obj) {
     <!-- Sidebar Objects List -->
     <div v-else class="space-y-4">
       <div
-        v-for="obj in blogStore.sidebarObjects"
+        v-for="obj in filteredSidebarObjects"
         :key="obj.id"
         class="border border-site-light p-4"
       >
@@ -137,27 +145,27 @@ async function deleteSidebarObject(obj) {
           <div class="flex-1">
             <div class="flex items-center gap-2 mb-2">
               <h3 class="font-medium text-site-dark">{{ obj.title }}</h3>
-              <span class="font-mono text-xs text-site-medium uppercase">
+              <span class="text-xs text-site-medium">
                 {{ obj.type === 'text' ? 'Text' : 'Links' }}
               </span>
             </div>
             <div v-if="obj.type === 'text'" class="text-sm text-site-dark line-clamp-2">
               {{ obj.content }}
             </div>
-            <div v-else class="font-mono text-xs text-site-medium">
+            <div v-else class="text-xs text-site-medium">
               {{ obj.links?.length || 0 }} links
             </div>
           </div>
           <div class="flex items-center gap-4">
             <button
               @click="openEditModal(obj)"
-              class="font-mono text-xs text-site-dark hover:text-site-accent uppercase tracking-wider"
+              class="text-xs font-semibold text-site-dark hover:text-site-accent"
             >
               Edit
             </button>
             <button
               @click="deleteSidebarObject(obj)"
-              class="font-mono text-xs text-red-500 hover:text-red-400 uppercase tracking-wider"
+              class="text-xs font-semibold text-red-500 hover:text-red-400"
             >
               Delete
             </button>
@@ -173,26 +181,26 @@ async function deleteSidebarObject(obj) {
           {{ editingObject ? 'Edit Sidebar Item' : 'New Sidebar Item' }}
         </h3>
 
-        <div v-if="error" class="mb-4 p-3 border border-red-500 font-mono text-sm text-red-600">
+        <div v-if="error" class="mb-4 p-3 border border-red-500 text-sm text-red-600">
           {{ error }}
         </div>
 
         <div class="space-y-4">
           <div>
-            <label class="block font-mono text-xs text-site-medium uppercase tracking-wider mb-2">Title</label>
+            <label class="block text-xs font-semibold text-site-medium mb-2">Title</label>
             <input
               v-model="form.title"
               type="text"
-              class="w-full px-3 py-2 border border-site-light focus:outline-none focus:border-site-accent"
+              class="admin-input"
               placeholder="Section title"
             />
           </div>
 
           <div v-if="!editingObject">
-            <label class="block font-mono text-xs text-site-medium uppercase tracking-wider mb-2">Type</label>
+            <label class="block text-xs font-semibold text-site-medium mb-2">Type</label>
             <select
               v-model="form.type"
-              class="w-full px-3 py-2 border border-site-light font-mono text-sm focus:outline-none focus:border-site-accent"
+              class="admin-input"
             >
               <option value="text">Text Block</option>
               <option value="linkList">Link List</option>
@@ -201,30 +209,30 @@ async function deleteSidebarObject(obj) {
 
           <!-- Text Content -->
           <div v-if="form.type === 'text'">
-            <label class="block font-mono text-xs text-site-medium uppercase tracking-wider mb-2">Content</label>
+            <label class="block text-xs font-semibold text-site-medium mb-2">Content</label>
             <textarea
               v-model="form.content"
               rows="5"
-              class="w-full px-3 py-2 border border-site-light focus:outline-none focus:border-site-accent"
+              class="admin-input"
               placeholder="Write your content (Markdown supported)"
             ></textarea>
           </div>
 
           <!-- Link List -->
           <div v-else>
-            <label class="block font-mono text-xs text-site-medium uppercase tracking-wider mb-2">Links</label>
+            <label class="block text-xs font-semibold text-site-medium mb-2">Links</label>
             <div class="space-y-3">
               <div v-for="(link, index) in form.links" :key="index" class="flex gap-2">
                 <input
                   v-model="link.title"
                   type="text"
-                  class="flex-1 px-3 py-2 border border-site-light text-sm focus:outline-none focus:border-site-accent"
+                  class="admin-input flex-1"
                   placeholder="Link title"
                 />
                 <input
                   v-model="link.url"
                   type="url"
-                  class="flex-1 px-3 py-2 border border-site-light font-mono text-xs focus:outline-none focus:border-site-accent"
+                  class="admin-input flex-1"
                   placeholder="URL"
                 />
                 <button
@@ -255,7 +263,7 @@ async function deleteSidebarObject(obj) {
           <button
             @click="saveSidebarObject"
             :disabled="saving"
-            class="px-4 py-2 bg-site-accent text-white font-semibold rounded-full hover:bg-[#e89200] transition-colors disabled:opacity-50"
+            class="h-10 px-3 font-mono text-sm uppercase tracking-wider bg-site-accent text-white hover:bg-[#e89200] transition-colors disabled:opacity-50"
           >
             {{ saving ? 'Saving...' : 'Save' }}
           </button>

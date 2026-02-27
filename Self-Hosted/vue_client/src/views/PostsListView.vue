@@ -130,22 +130,30 @@ function formatLocalDateTime(dateString) {
 
 <template>
   <div>
-    <!-- Search -->
+    <!-- Search + New Post -->
     <div class="mb-8">
-      <div class="relative">
-        <input
-          v-model="blogStore.searchText"
-          type="text"
-          placeholder="Search posts..."
-          class="admin-input"
-        />
-        <button
-          v-if="blogStore.searchText"
-          @click="blogStore.clearSearch()"
-          class="absolute right-2 top-1/2 -translate-y-1/2 text-site-medium hover:text-site-text bg-transparent border-none cursor-pointer text-lg leading-none"
+      <div class="flex items-center gap-4">
+        <div class="relative flex-1">
+          <input
+            v-model="blogStore.searchText"
+            type="text"
+            placeholder="Search posts..."
+            class="admin-input"
+          />
+          <button
+            v-if="blogStore.searchText"
+            @click="blogStore.clearSearch()"
+            class="absolute right-2 top-1/2 -translate-y-1/2 text-site-medium hover:text-site-text bg-transparent border-none cursor-pointer text-lg leading-none"
+          >
+            &times;
+          </button>
+        </div>
+        <router-link
+          :to="{ name: 'post-create', params: { blogId } }"
+          class="h-10 px-3 font-mono text-sm uppercase tracking-wider bg-site-accent text-white hover:bg-[#e89200] transition-colors whitespace-nowrap inline-flex items-center"
         >
-          &times;
-        </button>
+          New Post
+        </router-link>
       </div>
 
       <p v-if="blogStore.searchText && !effectiveSearchText" class="mt-2 text-[0.8em] text-site-medium">

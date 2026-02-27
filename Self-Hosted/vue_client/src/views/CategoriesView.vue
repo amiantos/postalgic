@@ -19,6 +19,13 @@ const editingCategory = ref(null);
 const form = ref({ name: '', description: '' });
 const saving = ref(false);
 const error = ref(null);
+const searchText = ref('');
+
+const filteredCategories = computed(() => {
+  if (!searchText.value.trim()) return blogStore.categories;
+  const query = searchText.value.toLowerCase();
+  return blogStore.categories.filter(cat => cat.name.toLowerCase().includes(query));
+});
 
 function openCreateModal() {
   editingCategory.value = null;
@@ -66,16 +73,19 @@ async function deleteCategory(category) {
 
 <template>
   <div>
-    <!-- Header with create button -->
-    <div class="flex items-center justify-between mb-6">
-      <h2 class="font-mono text-sm text-site-dark uppercase tracking-wider">
-        {{ blogStore.categories.length }} categories
-      </h2>
+    <!-- Header with search and create button -->
+    <div class="flex items-center gap-4 mb-6">
+      <input
+        v-model="searchText"
+        type="text"
+        class="admin-input flex-1"
+        placeholder="Search categories..."
+      />
       <button
         @click="openCreateModal"
-        class="px-4 py-2 bg-site-accent text-white font-semibold rounded-full hover:bg-[#e89200] transition-colors"
+        class="h-10 px-3 font-mono text-sm uppercase tracking-wider bg-site-accent text-white hover:bg-[#e89200] transition-colors"
       >
-        + New Category
+        New Category
       </button>
     </div>
 
@@ -95,7 +105,7 @@ async function deleteCategory(category) {
     <!-- Categories List -->
     <div v-else class="space-y-4">
       <div
-        v-for="category in blogStore.categories"
+        v-for="category in filteredCategories"
         :key="category.id"
         class="border border-site-light p-4"
       >
@@ -103,18 +113,18 @@ async function deleteCategory(category) {
           <div class="flex-1">
             <h3 class="font-medium text-site-dark">{{ category.name }}</h3>
             <p v-if="category.description" class="text-sm text-site-dark mt-1">{{ category.description }}</p>
-            <p class="font-mono text-xs text-site-medium mt-2">{{ category.postCount || 0 }} posts</p>
+            <p class="text-xs text-site-medium mt-2">{{ category.postCount || 0 }} posts</p>
           </div>
           <div class="flex items-center gap-4">
             <button
               @click="openEditModal(category)"
-              class="font-mono text-xs text-site-dark hover:text-site-accent uppercase tracking-wider"
+              class="text-xs font-semibold text-site-dark hover:text-site-accent"
             >
               Edit
             </button>
             <button
               @click="deleteCategory(category)"
-              class="font-mono text-xs text-red-500 hover:text-red-400 uppercase tracking-wider"
+              class="text-xs font-semibold text-red-500 hover:text-red-400"
             >
               Delete
             </button>
@@ -130,27 +140,27 @@ async function deleteCategory(category) {
           {{ editingCategory ? 'Edit Category' : 'New Category' }}
         </h3>
 
-        <div v-if="error" class="mb-4 p-3 border border-red-500 font-mono text-sm text-red-600">
+        <div v-if="error" class="mb-4 p-3 border border-red-500 text-sm text-red-600">
           {{ error }}
         </div>
 
         <div class="space-y-4">
           <div>
-            <label class="block font-mono text-xs text-site-medium uppercase tracking-wider mb-2">Name</label>
+            <label class="block text-xs font-semibold text-site-medium mb-2">Name</label>
             <input
               v-model="form.name"
               type="text"
-              class="w-full px-3 py-2 border border-site-light focus:outline-none focus:border-site-accent"
+              class="admin-input"
               placeholder="Category name"
             />
           </div>
 
           <div>
-            <label class="block font-mono text-xs text-site-medium uppercase tracking-wider mb-2">Description</label>
+            <label class="block text-xs font-semibold text-site-medium mb-2">Description</label>
             <textarea
               v-model="form.description"
               rows="3"
-              class="w-full px-3 py-2 border border-site-light focus:outline-none focus:border-site-accent"
+              class="admin-input"
               placeholder="Optional description"
             ></textarea>
           </div>
@@ -166,7 +176,7 @@ async function deleteCategory(category) {
           <button
             @click="saveCategory"
             :disabled="saving"
-            class="px-4 py-2 bg-site-accent text-white font-semibold rounded-full hover:bg-[#e89200] transition-colors disabled:opacity-50"
+            class="h-10 px-3 font-mono text-sm uppercase tracking-wider bg-site-accent text-white hover:bg-[#e89200] transition-colors disabled:opacity-50"
           >
             {{ saving ? 'Saving...' : 'Save' }}
           </button>

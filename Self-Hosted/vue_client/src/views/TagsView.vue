@@ -19,6 +19,13 @@ const editingTag = ref(null);
 const form = ref({ name: '' });
 const saving = ref(false);
 const error = ref(null);
+const searchText = ref('');
+
+const filteredTags = computed(() => {
+  if (!searchText.value.trim()) return blogStore.tags;
+  const query = searchText.value.toLowerCase();
+  return blogStore.tags.filter(tag => tag.name.toLowerCase().includes(query));
+});
 
 function openCreateModal() {
   editingTag.value = null;
@@ -66,16 +73,19 @@ async function deleteTag(tag) {
 
 <template>
   <div>
-    <!-- Header with create button -->
-    <div class="flex items-center justify-between mb-6">
-      <h2 class="font-mono text-sm text-site-dark uppercase tracking-wider">
-        {{ blogStore.tags.length }} tags
-      </h2>
+    <!-- Header with search and create button -->
+    <div class="flex items-center gap-4 mb-6">
+      <input
+        v-model="searchText"
+        type="text"
+        class="admin-input flex-1"
+        placeholder="Search tags..."
+      />
       <button
         @click="openCreateModal"
-        class="px-4 py-2 bg-site-accent text-white font-semibold rounded-full hover:bg-[#e89200] transition-colors"
+        class="h-10 px-3 font-mono text-sm uppercase tracking-wider bg-site-accent text-white hover:bg-[#e89200] transition-colors whitespace-nowrap"
       >
-        + New Tag
+        New Tag
       </button>
     </div>
 
@@ -95,22 +105,22 @@ async function deleteTag(tag) {
     <!-- Tags List -->
     <div v-else class="flex flex-wrap gap-3">
       <div
-        v-for="tag in blogStore.tags"
+        v-for="tag in filteredTags"
         :key="tag.id"
         class="border border-site-light px-4 py-2 flex items-center gap-3"
       >
-        <span class="font-mono text-sm text-site-dark">#{{ tag.name }}</span>
-        <span class="font-mono text-xs text-site-medium">({{ tag.postCount || 0 }})</span>
+        <span class="text-sm text-site-dark">#{{ tag.name }}</span>
+        <span class="text-xs text-site-medium">({{ tag.postCount || 0 }})</span>
         <div class="flex items-center gap-2 ml-2">
           <button
             @click="openEditModal(tag)"
-            class="font-mono text-xs text-site-dark hover:text-site-accent uppercase"
+            class="text-xs font-semibold text-site-dark hover:text-site-accent"
           >
             Edit
           </button>
           <button
             @click="deleteTag(tag)"
-            class="font-mono text-xs text-red-500 hover:text-red-400 uppercase"
+            class="text-xs font-semibold text-red-500 hover:text-red-400"
           >
             &times;
           </button>
@@ -125,20 +135,20 @@ async function deleteTag(tag) {
           {{ editingTag ? 'Edit Tag' : 'New Tag' }}
         </h3>
 
-        <div v-if="error" class="mb-4 p-3 border border-red-500 font-mono text-sm text-red-600">
+        <div v-if="error" class="mb-4 p-3 border border-red-500 text-sm text-red-600">
           {{ error }}
         </div>
 
         <div>
-          <label class="block font-mono text-xs text-site-medium uppercase tracking-wider mb-2">Name</label>
+          <label class="block text-xs font-semibold text-site-medium mb-2">Name</label>
           <input
             v-model="form.name"
             type="text"
-            class="w-full px-3 py-2 border border-site-light focus:outline-none focus:border-site-accent"
+            class="admin-input"
             placeholder="Tag name"
             @keyup.enter="saveTag"
           />
-          <p class="mt-2 font-mono text-xs text-site-medium">Tags are automatically lowercased</p>
+          <p class="mt-2 text-xs text-site-medium">Tags are automatically lowercased</p>
         </div>
 
         <div class="flex justify-end gap-6 mt-6">
@@ -151,7 +161,7 @@ async function deleteTag(tag) {
           <button
             @click="saveTag"
             :disabled="saving"
-            class="px-4 py-2 bg-site-accent text-white font-semibold rounded-full hover:bg-[#e89200] transition-colors disabled:opacity-50"
+            class="h-10 px-3 font-mono text-sm uppercase tracking-wider bg-site-accent text-white hover:bg-[#e89200] transition-colors disabled:opacity-50"
           >
             {{ saving ? 'Saving...' : 'Save' }}
           </button>

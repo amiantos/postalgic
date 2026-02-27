@@ -65,16 +65,10 @@ async function loadBlogData() {
       <div class="toolbar-actions">
         <button
           @click="showPublishModal = true"
-          class="px-4 py-1.5 bg-site-accent text-white font-semibold rounded-full hover:bg-[#e89200] transition-colors text-sm"
+          class="h-10 px-3 font-mono text-sm uppercase tracking-wider bg-site-accent text-white hover:bg-[#e89200] transition-colors"
         >
           Deploy
         </button>
-        <router-link
-          :to="{ name: 'post-create', params: { blogId } }"
-          class="px-4 py-1.5 bg-site-accent text-white font-semibold rounded-full hover:bg-[#e89200] transition-colors text-sm"
-        >
-          + New Post
-        </router-link>
       </div>
     </div>
 
