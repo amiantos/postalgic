@@ -171,9 +171,7 @@ async function deleteBlog() {
     <!-- Header -->
     <header class="max-w-[1000px] mx-auto px-8 pt-8 pb-4">
       <div class="flex items-center justify-between mb-4">
-        <h1 class="font-bold text-site-dark">
-          Your Blogs
-        </h1>
+        <img src="/postalgic-logo.png" alt="Postalgic" class="h-16" />
         <div class="relative group">
           <button class="px-5 py-2 bg-site-accent text-white font-semibold rounded-full hover:bg-[#e89200] transition-colors">
             + New Blog
