@@ -330,7 +330,7 @@ async function deletePost() {
 </script>
 
 <template>
-  <div class="min-h-screen bg-white dark:bg-black overflow-x-hidden">
+  <div class="min-h-screen bg-white overflow-x-hidden">
     <!-- Max-width content wrapper for desktop -->
     <div class="lg:max-w-[700px] lg:ml-8">
 
@@ -338,7 +338,7 @@ async function deletePost() {
     <nav class="flex items-center justify-between px-6 py-4 lg:px-0">
       <router-link
         :to="{ name: 'blog-posts', params: { blogId } }"
-        class="px-3 py-1.5 border-2 border-retro-gray-light dark:border-retro-gray-darker bg-white dark:bg-black font-retro-mono text-retro-sm text-retro-gray-dark dark:text-retro-gray-medium hover:border-retro-orange hover:text-retro-orange uppercase tracking-wider"
+        class="px-3 py-1.5 border-2 border-site-light bg-white font-mono text-sm text-site-dark hover:border-site-accent hover:text-site-accent uppercase tracking-wider"
       >
         <span class="relative -top-px">&lt;</span> {{ blogStore.currentBlog?.name || 'Posts' }}
       </router-link>
@@ -348,21 +348,21 @@ async function deletePost() {
         <button
           @click="saveDraft"
           :disabled="saving"
-          class="lg:hidden font-retro-mono text-retro-sm text-retro-gray-dark dark:text-retro-gray-medium hover:text-retro-orange uppercase tracking-wider disabled:opacity-50"
+          class="lg:hidden font-mono text-sm text-site-dark hover:text-site-accent uppercase tracking-wider disabled:opacity-50"
         >
           {{ saving ? 'Saving...' : 'Save Draft' }}
         </button>
         <button
           @click="publishPost"
           :disabled="saving"
-          class="lg:hidden font-retro-mono text-retro-sm text-retro-orange hover:text-retro-orange-dark uppercase tracking-wider disabled:opacity-50"
+          class="lg:hidden font-mono text-sm text-site-accent hover:text-[#e89200] uppercase tracking-wider disabled:opacity-50"
         >
           Publish
         </button>
         <!-- Settings toggle (mobile only) -->
         <button
           @click="mobileSidebarOpen = true"
-          class="lg:hidden font-retro-mono text-retro-sm text-retro-gray-dark dark:text-retro-gray-medium hover:text-retro-orange uppercase tracking-wider"
+          class="lg:hidden font-mono text-sm text-site-dark hover:text-site-accent uppercase tracking-wider"
         >
           Settings
         </button>
@@ -372,21 +372,21 @@ async function deletePost() {
     <!-- Hero section with giant title -->
     <header class="relative h-40 md:h-48">
       <!-- Divider that extends to the right -->
-      <div class="absolute bottom-0 left-6 right-0 border-b border-retro-gray-light dark:border-retro-gray-darker lg:left-0 lg:-right-[100vw]"></div>
+      <div class="absolute bottom-0 left-6 right-0 border-b border-site-light lg:left-0 lg:-right-[100vw]"></div>
       <!-- Giant background text -->
-      <span class="absolute inset-0 flex items-center justify-start font-retro-serif font-bold text-[6rem] md:text-[8rem] leading-none tracking-tighter text-retro-gray-lightest dark:text-[#1a1a1a] select-none pointer-events-none whitespace-nowrap uppercase" aria-hidden="true">
+      <span class="absolute inset-0 flex items-center justify-start font-bold text-[6rem] md:text-[8rem] leading-none tracking-tighter text-site-light select-none pointer-events-none whitespace-nowrap uppercase" aria-hidden="true">
         {{ isNew ? 'NEW POST' : 'EDIT POST' }}
       </span>
       <!-- Foreground content -->
       <div class="absolute bottom-8 left-6 lg:left-0">
-        <h1 class="font-retro-serif font-bold text-4xl md:text-5xl leading-none tracking-tight text-retro-gray-darker dark:text-retro-cream lowercase whitespace-nowrap">
+        <h1 class="font-bold text-4xl md:text-5xl leading-none tracking-tight text-site-dark lowercase whitespace-nowrap">
           {{ isNew ? 'new post' : 'edit post' }}
         </h1>
       </div>
     </header>
 
     <!-- Error -->
-    <div v-if="error" class="mx-6 lg:mx-0 mt-6 p-4 border-2 border-red-500 bg-red-50 dark:bg-red-900/20 font-retro-mono text-retro-sm text-red-600 dark:text-red-400">
+    <div v-if="error" class="mx-6 lg:mx-0 mt-6 p-4 border-2 border-red-500 bg-red-50 font-mono text-sm text-red-600">
       {{ error }}
     </div>
 
@@ -397,7 +397,7 @@ async function deletePost() {
         <input
           v-model="form.title"
           type="text"
-          class="w-full font-retro-serif text-3xl md:text-4xl font-bold bg-transparent border-none outline-none text-retro-gray-darker dark:text-retro-cream placeholder:text-retro-gray-medium"
+          class="w-full text-3xl md:text-4xl font-bold bg-transparent border-none outline-none text-site-dark placeholder:text-site-medium"
           placeholder="Post title..."
         />
       </div>
@@ -408,7 +408,7 @@ async function deletePost() {
           ref="contentTextarea"
           v-model="form.content"
           @input="autoResize"
-          class="w-full min-h-[400px] font-retro-sans text-retro-base leading-relaxed bg-transparent border-none outline-none resize-none text-retro-gray-darker dark:text-retro-cream placeholder:text-retro-gray-medium"
+          class="w-full min-h-[400px] text-base leading-relaxed bg-transparent border-none outline-none resize-none text-site-dark placeholder:text-site-medium"
           placeholder="Write your post content in Markdown..."
         ></textarea>
       </div>
@@ -417,67 +417,67 @@ async function deletePost() {
     </div><!-- End max-width wrapper -->
 
     <!-- Desktop Sidebar (always visible on lg+) -->
-    <aside class="hidden lg:flex lg:flex-col w-64 bg-white dark:bg-black border-l-2 border-retro-gray-light dark:border-retro-gray-darker fixed top-0 right-0 h-screen overflow-y-auto overflow-x-hidden z-30">
+    <aside class="hidden lg:flex lg:flex-col w-64 bg-white border-l-2 border-site-light fixed top-0 right-0 h-screen overflow-y-auto overflow-x-hidden z-30">
       <div class="p-4">
         <!-- Header -->
-        <h3 class="font-retro-mono text-retro-sm text-retro-gray-darker dark:text-retro-cream uppercase tracking-wider mb-4">Settings</h3>
+        <h3 class="font-mono text-sm text-site-dark uppercase tracking-wider mb-4">Settings</h3>
 
         <!-- Action Buttons -->
         <div class="flex flex-col gap-2 mb-4">
           <button
             @click="saveDraft"
             :disabled="saving"
-            class="w-full px-3 py-2 border-2 border-retro-gray-light dark:border-retro-gray-darker font-retro-mono text-retro-sm text-retro-gray-darker dark:text-retro-cream hover:border-retro-orange hover:text-retro-orange uppercase tracking-wider disabled:opacity-50"
+            class="w-full px-3 py-2 border-2 border-site-light font-mono text-sm text-site-dark hover:border-site-accent hover:text-site-accent uppercase tracking-wider disabled:opacity-50"
           >
             {{ saving ? 'Saving...' : 'Save Draft' }}
           </button>
           <button
             @click="publishPost"
             :disabled="saving"
-            class="w-full px-3 py-2 border-2 border-retro-orange bg-retro-orange font-retro-mono text-retro-sm text-white hover:bg-retro-orange-dark hover:border-retro-orange-dark uppercase tracking-wider disabled:opacity-50"
+            class="w-full px-3 py-2 border-2 border-site-accent bg-site-accent font-mono text-sm text-white hover:bg-[#e89200] hover:border-site-accent-dark uppercase tracking-wider disabled:opacity-50"
           >
             Publish
           </button>
         </div>
 
-        <div class="border-t border-retro-gray-light dark:border-retro-gray-darker mb-4"></div>
+        <div class="border-t border-site-light mb-4"></div>
 
         <!-- Settings Content -->
         <div class="space-y-4">
           <!-- Status -->
           <div>
-            <h3 class="font-retro-mono text-retro-xs text-retro-gray-medium uppercase tracking-wider mb-2">Status</h3>
+            <h3 class="font-mono text-xs text-site-medium uppercase tracking-wider mb-2">Status</h3>
             <label class="flex items-center gap-2">
               <input
                 type="checkbox"
                 v-model="form.isDraft"
-                class="border-retro-gray-light dark:border-retro-gray-darker"
+                class="border-site-light"
               />
-              <span class="font-retro-sans text-retro-sm text-retro-gray-darker dark:text-retro-cream">Save as draft</span>
+              <span class="text-sm text-site-dark">Save as draft</span>
             </label>
           </div>
 
-          <div class="border-t border-retro-gray-light dark:border-retro-gray-darker"></div>
+          <div class="border-t border-site-light"></div>
 
           <!-- Date -->
           <div>
-            <h3 class="font-retro-mono text-retro-xs text-retro-gray-medium uppercase tracking-wider mb-2">Publish Date</h3>
+            <h3 class="font-mono text-xs text-site-medium uppercase tracking-wider mb-2">Publish Date</h3>
             <input
               v-model="form.createdAt"
               type="datetime-local"
-              class="w-full px-2 py-1 border-2 border-retro-gray-light dark:border-retro-gray-darker bg-white dark:bg-black font-retro-mono text-retro-sm text-retro-gray-darker dark:text-retro-cream focus:outline-none focus:border-retro-orange"
+              class="w-full px-2 py-1 border-2 border-site-light bg-white font-mono text-sm text-site-dark focus:outline-none focus:border-site-accent"
             />
           </div>
 
           <!-- Category -->
           <template v-if="blogStore.categories.length > 0">
-            <div class="border-t border-retro-gray-light dark:border-retro-gray-darker"></div>
+            <div class="border-t border-site-light"></div>
 
             <div>
-              <h3 class="font-retro-mono text-retro-xs text-retro-gray-medium uppercase tracking-wider mb-2">Category</h3>
+              <h3 class="font-mono text-xs text-site-medium uppercase tracking-wider mb-2">Category</h3>
               <select
                 v-model="form.categoryId"
-                class="w-full px-2 py-1 border-2 border-retro-gray-light dark:border-retro-gray-darker bg-white dark:bg-black font-retro-mono text-retro-sm text-retro-gray-darker dark:text-retro-cream focus:outline-none focus:border-retro-orange"
+                class="w-full px-2 py-1 border-2 border-site-light bg-white font-mono text-sm text-site-dark focus:outline-none focus:border-site-accent"
               >
                 <option :value="null">No category</option>
                 <option v-for="category in blogStore.categories" :key="category.id" :value="category.id">
@@ -487,31 +487,31 @@ async function deletePost() {
             </div>
           </template>
 
-          <div class="border-t border-retro-gray-light dark:border-retro-gray-darker"></div>
+          <div class="border-t border-site-light"></div>
 
           <!-- Tags -->
           <div>
-            <h3 class="font-retro-mono text-retro-xs text-retro-gray-medium uppercase tracking-wider mb-2">Tags</h3>
+            <h3 class="font-mono text-xs text-site-medium uppercase tracking-wider mb-2">Tags</h3>
 
             <div v-if="form.tagIds.length > 0" class="flex flex-wrap gap-1.5 mb-3">
               <span
                 v-for="tagId in form.tagIds"
                 :key="tagId"
-                class="px-2 py-0.5 border border-retro-orange text-retro-orange font-retro-mono text-retro-xs flex items-center gap-1"
+                class="px-2 py-0.5 border border-site-accent text-site-accent font-mono text-xs flex items-center gap-1"
               >
                 {{ blogStore.tags.find(t => t.id === tagId)?.name }}
-                <button @click="toggleTag(tagId)" class="hover:text-retro-orange-dark">×</button>
+                <button @click="toggleTag(tagId)" class="hover:text-[#e89200]">×</button>
               </span>
             </div>
 
             <div v-if="suggestedTags.length > 0" class="mb-3">
-              <p class="font-retro-mono text-retro-xs text-retro-gray-medium mb-1">Suggested</p>
+              <p class="font-mono text-xs text-site-medium mb-1">Suggested</p>
               <div class="flex flex-wrap gap-1">
                 <button
                   v-for="tag in suggestedTags"
                   :key="tag.id"
                   @click="toggleTag(tag.id)"
-                  class="px-2 py-0.5 border border-retro-gray-light dark:border-retro-gray-darker font-retro-mono text-retro-xs text-retro-gray-dark dark:text-retro-gray-medium hover:border-retro-orange hover:text-retro-orange"
+                  class="px-2 py-0.5 border border-site-light font-mono text-xs text-site-dark hover:border-site-accent hover:text-site-accent"
                 >
                   + {{ tag.name }}
                 </button>
@@ -523,27 +523,27 @@ async function deletePost() {
                 v-model="tagSearchQuery"
                 type="text"
                 placeholder="Search or add tags..."
-                class="w-full px-2 py-1 border-2 border-retro-gray-light dark:border-retro-gray-darker bg-white dark:bg-black font-retro-mono text-retro-sm text-retro-gray-darker dark:text-retro-cream placeholder:text-retro-gray-medium focus:outline-none focus:border-retro-orange"
+                class="w-full px-2 py-1 border-2 border-site-light bg-white font-mono text-sm text-site-dark placeholder:text-site-medium focus:outline-none focus:border-site-accent"
                 @focus="showTagDropdown = true"
                 @blur="hideTagDropdown"
                 @keyup.enter="exactTagMatch ? null : createTag()"
               />
               <div
                 v-if="showTagDropdown && (filteredTags.length > 0 || (!exactTagMatch && tagSearchQuery.trim()))"
-                class="absolute z-50 w-full mt-1 bg-white dark:bg-black border-2 border-retro-gray-light dark:border-retro-gray-darker max-h-48 overflow-y-auto"
+                class="absolute z-50 w-full mt-1 bg-white border-2 border-site-light max-h-48 overflow-y-auto"
               >
                 <button
                   v-for="tag in filteredTags"
                   :key="tag.id"
                   @mousedown.prevent="selectTag(tag.id)"
-                  class="w-full px-2 py-1 text-left font-retro-mono text-retro-sm text-retro-gray-darker dark:text-retro-cream hover:bg-retro-orange hover:text-white"
+                  class="w-full px-2 py-1 text-left font-mono text-sm text-site-dark hover:bg-site-accent hover:text-white"
                 >
                   {{ tag.name }}
                 </button>
                 <button
                   v-if="!exactTagMatch && tagSearchQuery.trim()"
                   @mousedown.prevent="createTag"
-                  class="w-full px-2 py-1 text-left font-retro-mono text-retro-sm text-retro-orange hover:bg-retro-orange hover:text-white border-t border-retro-gray-light dark:border-retro-gray-darker"
+                  class="w-full px-2 py-1 text-left font-mono text-sm text-site-accent hover:bg-site-accent hover:text-white border-t border-site-light"
                 >
                   Create "{{ tagSearchQuery.trim() }}"
                 </button>
@@ -551,11 +551,11 @@ async function deletePost() {
             </div>
           </div>
 
-          <div class="border-t border-retro-gray-light dark:border-retro-gray-darker"></div>
+          <div class="border-t border-site-light"></div>
 
           <!-- Embed -->
           <div>
-            <h3 class="font-retro-mono text-retro-xs text-retro-gray-medium uppercase tracking-wider mb-2">Embed</h3>
+            <h3 class="font-mono text-xs text-site-medium uppercase tracking-wider mb-2">Embed</h3>
 
             <EmbedEditor
               v-if="showEmbedEditor"
@@ -570,21 +570,21 @@ async function deletePost() {
               <button
                 v-if="!form.embed"
                 @click="showEmbedEditor = true"
-                class="w-full px-3 py-2 border-2 border-dashed border-retro-gray-light dark:border-retro-gray-darker font-retro-mono text-retro-sm text-retro-gray-medium hover:border-retro-orange hover:text-retro-orange flex items-center justify-center gap-2"
+                class="w-full px-3 py-2 border-2 border-dashed border-site-light font-mono text-sm text-site-medium hover:border-site-accent hover:text-site-accent flex items-center justify-center gap-2"
               >
                 <span class="relative -top-px">+</span> Add Embed
               </button>
 
               <div v-else>
-                <div v-if="form.embed.type === 'youtube'" class="p-2 border-2 border-retro-gray-light dark:border-retro-gray-darker">
+                <div v-if="form.embed.type === 'youtube'" class="p-2 border-2 border-site-light">
                   <div class="flex items-center gap-2">
-                    <span class="font-retro-mono text-retro-xs text-red-500">YT</span>
-                    <span class="font-retro-sans text-retro-sm truncate text-retro-gray-darker dark:text-retro-cream">{{ form.embed.title || 'YouTube Video' }}</span>
+                    <span class="font-mono text-xs text-red-500">YT</span>
+                    <span class="text-sm truncate text-site-dark">{{ form.embed.title || 'YouTube Video' }}</span>
                   </div>
-                  <p class="font-retro-mono text-retro-xs text-retro-gray-medium mt-1">{{ form.embed.position === 'above' ? 'Above' : 'Below' }} content</p>
+                  <p class="font-mono text-xs text-site-medium mt-1">{{ form.embed.position === 'above' ? 'Above' : 'Below' }} content</p>
                 </div>
 
-                <div v-else-if="form.embed.type === 'link'" class="p-2 border-2 border-retro-gray-light dark:border-retro-gray-darker">
+                <div v-else-if="form.embed.type === 'link'" class="p-2 border-2 border-site-light">
                   <div class="flex gap-2">
                     <img
                       v-if="form.embed.imageData || form.embed.imageFilename || (form.embed.imageUrl && !form.embed.imageUrl.startsWith('file://'))"
@@ -593,14 +593,14 @@ async function deletePost() {
                       alt=""
                     />
                     <div class="flex-1 min-w-0">
-                      <p class="font-retro-sans text-retro-sm truncate text-retro-gray-darker dark:text-retro-cream">{{ form.embed.title || 'Link' }}</p>
-                      <p v-if="form.embed.description" class="font-retro-mono text-retro-xs text-retro-gray-medium truncate">{{ form.embed.description }}</p>
+                      <p class="text-sm truncate text-site-dark">{{ form.embed.title || 'Link' }}</p>
+                      <p v-if="form.embed.description" class="font-mono text-xs text-site-medium truncate">{{ form.embed.description }}</p>
                     </div>
                   </div>
-                  <p class="font-retro-mono text-retro-xs text-retro-gray-medium mt-2">{{ form.embed.position === 'above' ? 'Above' : 'Below' }} content</p>
+                  <p class="font-mono text-xs text-site-medium mt-2">{{ form.embed.position === 'above' ? 'Above' : 'Below' }} content</p>
                 </div>
 
-                <div v-else-if="form.embed.type === 'image'" class="p-2 border-2 border-retro-gray-light dark:border-retro-gray-darker">
+                <div v-else-if="form.embed.type === 'image'" class="p-2 border-2 border-site-light">
                   <div class="flex gap-1 mb-2">
                     <img
                       v-for="(img, index) in form.embed.images?.slice(0, 4)"
@@ -611,24 +611,24 @@ async function deletePost() {
                     />
                     <div
                       v-if="form.embed.images?.length > 4"
-                      class="w-10 h-10 border border-retro-gray-light dark:border-retro-gray-darker flex items-center justify-center font-retro-mono text-retro-xs text-retro-gray-medium"
+                      class="w-10 h-10 border border-site-light flex items-center justify-center font-mono text-xs text-site-medium"
                     >
                       +{{ form.embed.images.length - 4 }}
                     </div>
                   </div>
-                  <p class="font-retro-mono text-retro-xs text-retro-gray-medium">{{ form.embed.images?.length || 0 }} image(s) - {{ form.embed.position === 'above' ? 'Above' : 'Below' }} content</p>
+                  <p class="font-mono text-xs text-site-medium">{{ form.embed.images?.length || 0 }} image(s) - {{ form.embed.position === 'above' ? 'Above' : 'Below' }} content</p>
                 </div>
 
                 <div class="flex gap-2 mt-2">
                   <button
                     @click="showEmbedEditor = true"
-                    class="flex-1 px-2 py-1 border-2 border-retro-gray-light dark:border-retro-gray-darker font-retro-mono text-retro-xs text-retro-gray-darker dark:text-retro-cream hover:border-retro-orange hover:text-retro-orange uppercase"
+                    class="flex-1 px-2 py-1 border-2 border-site-light font-mono text-xs text-site-dark hover:border-site-accent hover:text-site-accent uppercase"
                   >
                     Edit
                   </button>
                   <button
                     @click="removeEmbed"
-                    class="px-2 py-1 border-2 border-red-500 font-retro-mono text-retro-xs text-red-500 hover:bg-red-500 hover:text-white uppercase"
+                    class="px-2 py-1 border-2 border-red-500 font-mono text-xs text-red-500 hover:bg-red-500 hover:text-white uppercase"
                   >
                     Remove
                   </button>
@@ -639,11 +639,11 @@ async function deletePost() {
 
           <!-- Delete Post (only for existing posts) -->
           <template v-if="!isNew">
-            <div class="border-t border-retro-gray-light dark:border-retro-gray-darker"></div>
+            <div class="border-t border-site-light"></div>
             <div>
               <button
                 @click="showDeleteModal = true"
-                class="w-full px-3 py-2 border-2 border-red-500 font-retro-mono text-retro-sm text-red-500 hover:bg-red-500 hover:text-white uppercase tracking-wider"
+                class="w-full px-3 py-2 border-2 border-red-500 font-mono text-sm text-red-500 hover:bg-red-500 hover:text-white uppercase tracking-wider"
               >
                 Delete Post
               </button>
@@ -664,16 +664,16 @@ async function deletePost() {
 
       <!-- Panel -->
       <div
-        class="absolute right-0 top-0 bottom-0 w-80 bg-white dark:bg-black border-l-2 border-retro-gray-light dark:border-retro-gray-darker overflow-y-auto"
+        class="absolute right-0 top-0 bottom-0 w-80 bg-white border-l-2 border-site-light overflow-y-auto"
         @click.stop
       >
         <div class="p-4">
           <!-- Header -->
           <div class="flex items-center justify-between mb-4">
-            <h3 class="font-retro-mono text-retro-sm text-retro-gray-darker dark:text-retro-cream uppercase tracking-wider">Settings</h3>
+            <h3 class="font-mono text-sm text-site-dark uppercase tracking-wider">Settings</h3>
             <button
               @click="mobileSidebarOpen = false"
-              class="font-retro-mono text-retro-sm text-retro-gray-dark dark:text-retro-gray-medium hover:text-retro-orange"
+              class="font-mono text-sm text-site-dark hover:text-site-accent"
             >
               <span class="relative -top-px">×</span>
             </button>
@@ -683,38 +683,38 @@ async function deletePost() {
           <div class="space-y-4">
             <!-- Status -->
             <div>
-              <h3 class="font-retro-mono text-retro-xs text-retro-gray-medium uppercase tracking-wider mb-2">Status</h3>
+              <h3 class="font-mono text-xs text-site-medium uppercase tracking-wider mb-2">Status</h3>
               <label class="flex items-center gap-2">
                 <input
                   type="checkbox"
                   v-model="form.isDraft"
-                  class="border-retro-gray-light dark:border-retro-gray-darker"
+                  class="border-site-light"
                 />
-                <span class="font-retro-sans text-retro-sm text-retro-gray-darker dark:text-retro-cream">Save as draft</span>
+                <span class="text-sm text-site-dark">Save as draft</span>
               </label>
             </div>
 
-            <div class="border-t border-retro-gray-light dark:border-retro-gray-darker"></div>
+            <div class="border-t border-site-light"></div>
 
             <!-- Date -->
             <div>
-              <h3 class="font-retro-mono text-retro-xs text-retro-gray-medium uppercase tracking-wider mb-2">Publish Date</h3>
+              <h3 class="font-mono text-xs text-site-medium uppercase tracking-wider mb-2">Publish Date</h3>
               <input
                 v-model="form.createdAt"
                 type="datetime-local"
-                class="w-full px-2 py-1 border-2 border-retro-gray-light dark:border-retro-gray-darker bg-white dark:bg-black font-retro-mono text-retro-sm text-retro-gray-darker dark:text-retro-cream focus:outline-none focus:border-retro-orange"
+                class="w-full px-2 py-1 border-2 border-site-light bg-white font-mono text-sm text-site-dark focus:outline-none focus:border-site-accent"
               />
             </div>
 
             <!-- Category -->
             <template v-if="blogStore.categories.length > 0">
-              <div class="border-t border-retro-gray-light dark:border-retro-gray-darker"></div>
+              <div class="border-t border-site-light"></div>
 
               <div>
-                <h3 class="font-retro-mono text-retro-xs text-retro-gray-medium uppercase tracking-wider mb-2">Category</h3>
+                <h3 class="font-mono text-xs text-site-medium uppercase tracking-wider mb-2">Category</h3>
                 <select
                   v-model="form.categoryId"
-                  class="w-full px-2 py-1 border-2 border-retro-gray-light dark:border-retro-gray-darker bg-white dark:bg-black font-retro-mono text-retro-sm text-retro-gray-darker dark:text-retro-cream focus:outline-none focus:border-retro-orange"
+                  class="w-full px-2 py-1 border-2 border-site-light bg-white font-mono text-sm text-site-dark focus:outline-none focus:border-site-accent"
                 >
                   <option :value="null">No category</option>
                   <option v-for="category in blogStore.categories" :key="category.id" :value="category.id">
@@ -724,31 +724,31 @@ async function deletePost() {
               </div>
             </template>
 
-            <div class="border-t border-retro-gray-light dark:border-retro-gray-darker"></div>
+            <div class="border-t border-site-light"></div>
 
             <!-- Tags -->
             <div>
-              <h3 class="font-retro-mono text-retro-xs text-retro-gray-medium uppercase tracking-wider mb-2">Tags</h3>
+              <h3 class="font-mono text-xs text-site-medium uppercase tracking-wider mb-2">Tags</h3>
 
               <div v-if="form.tagIds.length > 0" class="flex flex-wrap gap-1.5 mb-3">
                 <span
                   v-for="tagId in form.tagIds"
                   :key="tagId"
-                  class="px-2 py-0.5 border border-retro-orange text-retro-orange font-retro-mono text-retro-xs flex items-center gap-1"
+                  class="px-2 py-0.5 border border-site-accent text-site-accent font-mono text-xs flex items-center gap-1"
                 >
                   {{ blogStore.tags.find(t => t.id === tagId)?.name }}
-                  <button @click="toggleTag(tagId)" class="hover:text-retro-orange-dark">×</button>
+                  <button @click="toggleTag(tagId)" class="hover:text-[#e89200]">×</button>
                 </span>
               </div>
 
               <div v-if="suggestedTags.length > 0" class="mb-3">
-                <p class="font-retro-mono text-retro-xs text-retro-gray-medium mb-1">Suggested</p>
+                <p class="font-mono text-xs text-site-medium mb-1">Suggested</p>
                 <div class="flex flex-wrap gap-1">
                   <button
                     v-for="tag in suggestedTags"
                     :key="tag.id"
                     @click="toggleTag(tag.id)"
-                    class="px-2 py-0.5 border border-retro-gray-light dark:border-retro-gray-darker font-retro-mono text-retro-xs text-retro-gray-dark dark:text-retro-gray-medium hover:border-retro-orange hover:text-retro-orange"
+                    class="px-2 py-0.5 border border-site-light font-mono text-xs text-site-dark hover:border-site-accent hover:text-site-accent"
                   >
                     + {{ tag.name }}
                   </button>
@@ -760,27 +760,27 @@ async function deletePost() {
                   v-model="tagSearchQuery"
                   type="text"
                   placeholder="Search or add tags..."
-                  class="w-full px-2 py-1 border-2 border-retro-gray-light dark:border-retro-gray-darker bg-white dark:bg-black font-retro-mono text-retro-sm text-retro-gray-darker dark:text-retro-cream placeholder:text-retro-gray-medium focus:outline-none focus:border-retro-orange"
+                  class="w-full px-2 py-1 border-2 border-site-light bg-white font-mono text-sm text-site-dark placeholder:text-site-medium focus:outline-none focus:border-site-accent"
                   @focus="showTagDropdown = true"
                   @blur="hideTagDropdown"
                   @keyup.enter="exactTagMatch ? null : createTag()"
                 />
                 <div
                   v-if="showTagDropdown && (filteredTags.length > 0 || (!exactTagMatch && tagSearchQuery.trim()))"
-                  class="absolute z-50 w-full mt-1 bg-white dark:bg-black border-2 border-retro-gray-light dark:border-retro-gray-darker max-h-48 overflow-y-auto"
+                  class="absolute z-50 w-full mt-1 bg-white border-2 border-site-light max-h-48 overflow-y-auto"
                 >
                   <button
                     v-for="tag in filteredTags"
                     :key="tag.id"
                     @mousedown.prevent="selectTag(tag.id)"
-                    class="w-full px-2 py-1 text-left font-retro-mono text-retro-sm text-retro-gray-darker dark:text-retro-cream hover:bg-retro-orange hover:text-white"
+                    class="w-full px-2 py-1 text-left font-mono text-sm text-site-dark hover:bg-site-accent hover:text-white"
                   >
                     {{ tag.name }}
                   </button>
                   <button
                     v-if="!exactTagMatch && tagSearchQuery.trim()"
                     @mousedown.prevent="createTag"
-                    class="w-full px-2 py-1 text-left font-retro-mono text-retro-sm text-retro-orange hover:bg-retro-orange hover:text-white border-t border-retro-gray-light dark:border-retro-gray-darker"
+                    class="w-full px-2 py-1 text-left font-mono text-sm text-site-accent hover:bg-site-accent hover:text-white border-t border-site-light"
                   >
                     Create "{{ tagSearchQuery.trim() }}"
                   </button>
@@ -788,11 +788,11 @@ async function deletePost() {
               </div>
             </div>
 
-            <div class="border-t border-retro-gray-light dark:border-retro-gray-darker"></div>
+            <div class="border-t border-site-light"></div>
 
             <!-- Embed -->
             <div>
-              <h3 class="font-retro-mono text-retro-xs text-retro-gray-medium uppercase tracking-wider mb-2">Embed</h3>
+              <h3 class="font-mono text-xs text-site-medium uppercase tracking-wider mb-2">Embed</h3>
 
               <EmbedEditor
                 v-if="showEmbedEditor"
@@ -807,21 +807,21 @@ async function deletePost() {
                 <button
                   v-if="!form.embed"
                   @click="showEmbedEditor = true"
-                  class="w-full px-3 py-2 border-2 border-dashed border-retro-gray-light dark:border-retro-gray-darker font-retro-mono text-retro-sm text-retro-gray-medium hover:border-retro-orange hover:text-retro-orange flex items-center justify-center gap-2"
+                  class="w-full px-3 py-2 border-2 border-dashed border-site-light font-mono text-sm text-site-medium hover:border-site-accent hover:text-site-accent flex items-center justify-center gap-2"
                 >
                   <span class="relative -top-px">+</span> Add Embed
                 </button>
 
                 <div v-else>
-                  <div v-if="form.embed.type === 'youtube'" class="p-2 border-2 border-retro-gray-light dark:border-retro-gray-darker">
+                  <div v-if="form.embed.type === 'youtube'" class="p-2 border-2 border-site-light">
                     <div class="flex items-center gap-2">
-                      <span class="font-retro-mono text-retro-xs text-red-500">YT</span>
-                      <span class="font-retro-sans text-retro-sm truncate text-retro-gray-darker dark:text-retro-cream">{{ form.embed.title || 'YouTube Video' }}</span>
+                      <span class="font-mono text-xs text-red-500">YT</span>
+                      <span class="text-sm truncate text-site-dark">{{ form.embed.title || 'YouTube Video' }}</span>
                     </div>
-                    <p class="font-retro-mono text-retro-xs text-retro-gray-medium mt-1">{{ form.embed.position === 'above' ? 'Above' : 'Below' }} content</p>
+                    <p class="font-mono text-xs text-site-medium mt-1">{{ form.embed.position === 'above' ? 'Above' : 'Below' }} content</p>
                   </div>
 
-                  <div v-else-if="form.embed.type === 'link'" class="p-2 border-2 border-retro-gray-light dark:border-retro-gray-darker">
+                  <div v-else-if="form.embed.type === 'link'" class="p-2 border-2 border-site-light">
                     <div class="flex gap-2">
                       <img
                         v-if="form.embed.imageData || form.embed.imageFilename || (form.embed.imageUrl && !form.embed.imageUrl.startsWith('file://'))"
@@ -830,14 +830,14 @@ async function deletePost() {
                         alt=""
                       />
                       <div class="flex-1 min-w-0">
-                        <p class="font-retro-sans text-retro-sm truncate text-retro-gray-darker dark:text-retro-cream">{{ form.embed.title || 'Link' }}</p>
-                        <p v-if="form.embed.description" class="font-retro-mono text-retro-xs text-retro-gray-medium truncate">{{ form.embed.description }}</p>
+                        <p class="text-sm truncate text-site-dark">{{ form.embed.title || 'Link' }}</p>
+                        <p v-if="form.embed.description" class="font-mono text-xs text-site-medium truncate">{{ form.embed.description }}</p>
                       </div>
                     </div>
-                    <p class="font-retro-mono text-retro-xs text-retro-gray-medium mt-2">{{ form.embed.position === 'above' ? 'Above' : 'Below' }} content</p>
+                    <p class="font-mono text-xs text-site-medium mt-2">{{ form.embed.position === 'above' ? 'Above' : 'Below' }} content</p>
                   </div>
 
-                  <div v-else-if="form.embed.type === 'image'" class="p-2 border-2 border-retro-gray-light dark:border-retro-gray-darker">
+                  <div v-else-if="form.embed.type === 'image'" class="p-2 border-2 border-site-light">
                     <div class="flex gap-1 mb-2">
                       <img
                         v-for="(img, index) in form.embed.images?.slice(0, 4)"
@@ -848,24 +848,24 @@ async function deletePost() {
                       />
                       <div
                         v-if="form.embed.images?.length > 4"
-                        class="w-10 h-10 border border-retro-gray-light dark:border-retro-gray-darker flex items-center justify-center font-retro-mono text-retro-xs text-retro-gray-medium"
+                        class="w-10 h-10 border border-site-light flex items-center justify-center font-mono text-xs text-site-medium"
                       >
                         +{{ form.embed.images.length - 4 }}
                       </div>
                     </div>
-                    <p class="font-retro-mono text-retro-xs text-retro-gray-medium">{{ form.embed.images?.length || 0 }} image(s) - {{ form.embed.position === 'above' ? 'Above' : 'Below' }} content</p>
+                    <p class="font-mono text-xs text-site-medium">{{ form.embed.images?.length || 0 }} image(s) - {{ form.embed.position === 'above' ? 'Above' : 'Below' }} content</p>
                   </div>
 
                   <div class="flex gap-2 mt-2">
                     <button
                       @click="showEmbedEditor = true"
-                      class="flex-1 px-2 py-1 border-2 border-retro-gray-light dark:border-retro-gray-darker font-retro-mono text-retro-xs text-retro-gray-darker dark:text-retro-cream hover:border-retro-orange hover:text-retro-orange uppercase"
+                      class="flex-1 px-2 py-1 border-2 border-site-light font-mono text-xs text-site-dark hover:border-site-accent hover:text-site-accent uppercase"
                     >
                       Edit
                     </button>
                     <button
                       @click="removeEmbed"
-                      class="px-2 py-1 border-2 border-red-500 font-retro-mono text-retro-xs text-red-500 hover:bg-red-500 hover:text-white uppercase"
+                      class="px-2 py-1 border-2 border-red-500 font-mono text-xs text-red-500 hover:bg-red-500 hover:text-white uppercase"
                     >
                       Remove
                     </button>
@@ -877,11 +877,11 @@ async function deletePost() {
 
           <!-- Delete Post (only for existing posts) -->
           <template v-if="!isNew">
-            <div class="border-t border-retro-gray-light dark:border-retro-gray-darker mt-4"></div>
+            <div class="border-t border-site-light mt-4"></div>
             <div class="mt-4">
               <button
                 @click="showDeleteModal = true"
-                class="w-full px-3 py-2 border-2 border-red-500 font-retro-mono text-retro-sm text-red-500 hover:bg-red-500 hover:text-white uppercase tracking-wider"
+                class="w-full px-3 py-2 border-2 border-red-500 font-mono text-sm text-red-500 hover:bg-red-500 hover:text-white uppercase tracking-wider"
               >
                 Delete Post
               </button>
@@ -894,22 +894,22 @@ async function deletePost() {
     <!-- Delete Confirmation Modal -->
     <div v-if="showDeleteModal" class="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-6">
       <div class="max-w-lg w-full">
-        <p class="font-retro-serif text-3xl md:text-4xl font-bold text-white mb-6">
+        <p class="text-3xl md:text-4xl font-bold text-white mb-6">
           Delete "{{ form.title || 'Untitled post' }}"?
         </p>
-        <p class="font-retro-sans text-retro-base text-retro-gray-medium mb-8">
+        <p class="text-base text-site-medium mb-8">
           This cannot be undone.
         </p>
         <div class="flex gap-6">
           <button
             @click="showDeleteModal = false"
-            class="font-retro-mono text-retro-sm text-retro-gray-light hover:text-white uppercase tracking-wider"
+            class="font-mono text-sm text-site-light hover:text-white uppercase tracking-wider"
           >
             Cancel
           </button>
           <button
             @click="deletePost"
-            class="font-retro-mono text-retro-sm text-red-500 hover:text-red-400 uppercase tracking-wider"
+            class="font-mono text-sm text-red-500 hover:text-red-400 uppercase tracking-wider"
           >
             Delete
           </button>
