@@ -235,13 +235,6 @@ async function publishToGit() {
   error.value = null;
 
   try {
-    // Perform pre-publish sync first
-    const syncOk = await performPrePublishSync();
-    if (!syncOk) {
-      publishing.value = false;
-      return;
-    }
-
     await publishWithSSE('git/stream');
 
     addLog('Publish complete!', 'success');
@@ -259,13 +252,6 @@ async function publishToCloudflare() {
   error.value = null;
 
   try {
-    // Perform pre-publish sync first
-    const syncOk = await performPrePublishSync();
-    if (!syncOk) {
-      publishing.value = false;
-      return;
-    }
-
     await publishWithSSE('cloudflare/stream');
 
     addLog('Publish complete!', 'success');
