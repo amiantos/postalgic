@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, nextTick } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useBlogStore } from '@/stores/blog';
 import { blogApi, postApi } from '@/api';
@@ -13,28 +13,67 @@ const blogId = computed(() => route.params.blogId);
 const form = ref({});
 const saving = ref(false);
 const error = ref(null);
-const success = ref(false);
+const saveStatus = ref(''); // '', 'saving', 'saved'
 const exporting = ref(false);
 const backfilling = ref(false);
 const backfillResult = ref(null);
+const searchText = ref('');
+const skipNextSave = ref(true);
 
+const sections = [
+  { id: 'basic', label: 'Basic Information', terms: 'blog name url tagline timezone' },
+  { id: 'author', label: 'Author Information', terms: 'author name url email' },
+  { id: 'analytics', label: 'Simple Analytics', terms: 'simple analytics tracking pageviews visitors domain' },
+  { id: 'publishing', label: 'Publishing', terms: 'publishing publisher type aws s3 sftp ftp git github cloudflare pages deploy bucket region' },
+  { id: 'maintenance', label: 'Maintenance', terms: 'maintenance youtube thumbnails backfill' },
+  { id: 'developer', label: 'Developer Tools', terms: 'developer tools debug export' },
+  { id: 'danger', label: 'Danger Zone', terms: 'danger delete blog' },
+];
+
+function isSectionVisible(sectionId) {
+  if (!searchText.value.trim()) return true;
+  const query = searchText.value.toLowerCase();
+  const section = sections.find(s => s.id === sectionId);
+  return section ? section.terms.includes(query) : true;
+}
+
+// Load blog data into form
 watch(() => blogStore.currentBlog, (blog) => {
   if (blog) {
+    skipNextSave.value = true;
     form.value = { ...blog };
   }
 }, { immediate: true });
 
-async function saveSettings() {
+// Debounced auto-save
+let saveTimeout = null;
+let savedTimeout = null;
+
+watch(form, () => {
+  if (skipNextSave.value) {
+    skipNextSave.value = false;
+    return;
+  }
+
+  if (saveTimeout) clearTimeout(saveTimeout);
+  saveTimeout = setTimeout(() => autoSave(), 1000);
+}, { deep: true });
+
+async function autoSave() {
   saving.value = true;
+  saveStatus.value = 'saving';
   error.value = null;
-  success.value = false;
 
   try {
     await blogStore.updateBlog(blogId.value, form.value);
-    success.value = true;
-    setTimeout(() => success.value = false, 3000);
+    saveStatus.value = 'saved';
+    if (savedTimeout) clearTimeout(savedTimeout);
+    savedTimeout = setTimeout(() => {
+      saveStatus.value = '';
+    }, 2000);
   } catch (e) {
     error.value = e.message;
+    saveStatus.value = '';
   } finally {
     saving.value = false;
   }
@@ -70,7 +109,6 @@ async function downloadDebugExport() {
   try {
     const { blob, filename } = await blogApi.debugExport(blogId.value);
 
-    // Create download link
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -89,17 +127,40 @@ async function downloadDebugExport() {
 
 <template>
   <div>
-    <!-- Messages -->
+    <!-- Search & Status Bar -->
+    <div class="relative mb-6">
+      <input
+        v-model="searchText"
+        type="text"
+        placeholder="Search settings..."
+        class="admin-input pl-8"
+      />
+      <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-site-medium pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+      </svg>
+      <div class="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-2">
+        <span v-if="saveStatus === 'saving'" class="text-xs text-site-accent">Saving...</span>
+        <span v-else-if="saveStatus === 'saved'" class="text-xs text-green-600">Saved</span>
+        <button
+          v-if="searchText"
+          @click="searchText = ''"
+          class="text-site-medium hover:text-site-dark"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Error -->
     <div v-if="error" class="mb-6 p-4 border border-red-500 text-sm text-red-600">
       {{ error }}
     </div>
-    <div v-if="success" class="mb-6 p-4 border border-green-500 text-sm text-green-600">
-      Settings saved successfully!
-    </div>
 
-    <form @submit.prevent="saveSettings" class="space-y-8">
+    <div class="space-y-8">
       <!-- Basic Info -->
-      <section>
+      <section v-show="isSectionVisible('basic')">
         <h3 class="text-sm font-semibold text-site-dark mb-4 mt-2">Basic Information</h3>
         <div class="space-y-4">
           <div>
@@ -186,7 +247,7 @@ async function downloadDebugExport() {
       </section>
 
       <!-- Author Info -->
-      <section class="border-t border-site-light pt-8">
+      <section v-show="isSectionVisible('author')" class="border-t border-site-light pt-8">
         <h3 class="text-sm font-semibold text-site-dark mb-4">Author Information</h3>
         <div class="space-y-4">
           <div>
@@ -217,7 +278,7 @@ async function downloadDebugExport() {
       </section>
 
       <!-- Simple Analytics -->
-      <section class="border-t border-site-light pt-8">
+      <section v-show="isSectionVisible('analytics')" class="border-t border-site-light pt-8">
         <h3 class="text-sm font-semibold text-site-dark mb-2">Simple Analytics</h3>
         <p class="text-sm text-site-dark mb-4">
           Enable Simple Analytics to track pageviews and visitors on your published blog.
@@ -251,60 +312,301 @@ async function downloadDebugExport() {
         </div>
       </section>
 
-      <!-- Actions -->
-      <section class="border-t border-site-light pt-8">
-        <div class="flex justify-between">
-          <button
-            type="button"
-            @click="deleteBlog"
-            class="text-sm font-semibold text-red-500 hover:text-red-400"
-          >
-            Delete Blog
-          </button>
-          <button
-            type="submit"
-            :disabled="saving"
-            class="px-4 py-2 border border-site-accent bg-site-accent text-sm font-semibold text-white rounded-full hover:bg-[#e89200] hover:border-[#e89200] disabled:opacity-50"
-          >
-            {{ saving ? 'Saving...' : 'Save Settings' }}
-          </button>
+      <!-- Publishing -->
+      <section v-show="isSectionVisible('publishing')" class="border-t border-site-light pt-8">
+        <h3 class="text-sm font-semibold text-site-dark mb-4">Publishing</h3>
+        <div class="space-y-4">
+          <div>
+            <label class="block text-xs font-semibold text-site-medium mb-2">Publisher Type</label>
+            <select
+              v-model="form.publisherType"
+              class="admin-input"
+            >
+              <option value="manual">Manual (Download ZIP)</option>
+              <option value="aws">AWS S3</option>
+              <option value="sftp">SFTP</option>
+              <option value="git">Git (GitHub Pages, etc.)</option>
+              <option value="cloudflare">Cloudflare Pages</option>
+            </select>
+          </div>
+
+          <!-- AWS Settings -->
+          <div v-if="form.publisherType === 'aws'" class="space-y-4 p-4 border border-site-light">
+            <h4 class="text-sm font-semibold text-site-dark">AWS S3 Configuration</h4>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-semibold text-site-medium mb-2">Region</label>
+                <input
+                  v-model="form.awsRegion"
+                  type="text"
+                  class="admin-input"
+                  placeholder="us-east-1"
+                />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-site-medium mb-2">S3 Bucket</label>
+                <input
+                  v-model="form.awsS3Bucket"
+                  type="text"
+                  class="admin-input"
+                  placeholder="my-blog-bucket"
+                />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-site-medium mb-2">Access Key ID</label>
+                <input
+                  v-model="form.awsAccessKeyId"
+                  type="text"
+                  class="admin-input"
+                />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-site-medium mb-2">Secret Access Key</label>
+                <input
+                  v-model="form.awsSecretAccessKey"
+                  type="password"
+                  class="admin-input"
+                />
+              </div>
+              <div class="col-span-2">
+                <label class="block text-xs font-semibold text-site-medium mb-2">CloudFront Distribution ID</label>
+                <input
+                  v-model="form.awsCloudFrontDistId"
+                  type="text"
+                  class="admin-input"
+                  placeholder="Optional - for cache invalidation"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- SFTP Settings -->
+          <div v-if="form.publisherType === 'sftp'" class="space-y-4 p-4 border border-site-light">
+            <h4 class="text-sm font-semibold text-site-dark">SFTP Configuration</h4>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-semibold text-site-medium mb-2">Host</label>
+                <input
+                  v-model="form.ftpHost"
+                  type="text"
+                  class="admin-input"
+                  placeholder="sftp.example.com"
+                />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-site-medium mb-2">Port</label>
+                <input
+                  v-model.number="form.ftpPort"
+                  type="number"
+                  class="admin-input"
+                  placeholder="22"
+                />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-site-medium mb-2">Username</label>
+                <input
+                  v-model="form.ftpUsername"
+                  type="text"
+                  class="admin-input"
+                />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-site-medium mb-2">Password</label>
+                <input
+                  v-model="form.ftpPassword"
+                  type="password"
+                  class="admin-input"
+                />
+              </div>
+              <div class="col-span-2">
+                <label class="block text-xs font-semibold text-site-medium mb-2">Remote Path</label>
+                <input
+                  v-model="form.ftpPath"
+                  type="text"
+                  class="admin-input"
+                  placeholder="/var/www/html"
+                />
+              </div>
+              <div class="col-span-2">
+                <label class="block text-xs font-semibold text-site-medium mb-2">Private Key (optional)</label>
+                <textarea
+                  v-model="form.ftpPrivateKey"
+                  rows="3"
+                  class="admin-input"
+                  placeholder="-----BEGIN OPENSSH PRIVATE KEY-----..."
+                ></textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- Git Settings -->
+          <div v-if="form.publisherType === 'git'" class="space-y-4 p-4 border border-site-light">
+            <h4 class="text-sm font-semibold text-site-dark">Git Configuration</h4>
+            <div class="space-y-4">
+              <div>
+                <label class="block text-xs font-semibold text-site-medium mb-2">Repository URL</label>
+                <input
+                  v-model="form.gitRepositoryUrl"
+                  type="text"
+                  class="admin-input"
+                  placeholder="https://github.com/user/repo.git"
+                />
+                <p class="mt-2 text-xs text-site-medium">
+                  Use HTTPS URL with username/token, or SSH URL with private key
+                </p>
+              </div>
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-xs font-semibold text-site-medium mb-2">Username</label>
+                  <input
+                    v-model="form.gitUsername"
+                    type="text"
+                    class="admin-input"
+                    placeholder="For HTTPS URLs"
+                  />
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-site-medium mb-2">Personal Access Token</label>
+                  <input
+                    v-model="form.gitToken"
+                    type="password"
+                    class="admin-input"
+                    placeholder="For HTTPS URLs"
+                  />
+                </div>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-site-medium mb-2">Private Key (for SSH URLs)</label>
+                <textarea
+                  v-model="form.gitPrivateKey"
+                  rows="3"
+                  class="admin-input"
+                  placeholder="-----BEGIN OPENSSH PRIVATE KEY-----..."
+                ></textarea>
+                <p class="mt-2 text-xs text-site-medium">
+                  Required for SSH URLs. Leave blank for HTTPS URLs.
+                </p>
+              </div>
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-xs font-semibold text-site-medium mb-2">Branch</label>
+                  <input
+                    v-model="form.gitBranch"
+                    type="text"
+                    class="admin-input"
+                    placeholder="main"
+                  />
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-site-medium mb-2">Commit Message</label>
+                  <input
+                    v-model="form.gitCommitMessage"
+                    type="text"
+                    class="admin-input"
+                    placeholder="Update blog"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Cloudflare Pages Settings -->
+          <div v-if="form.publisherType === 'cloudflare'" class="space-y-4 p-4 border border-site-light">
+            <h4 class="text-sm font-semibold text-site-dark">Cloudflare Pages Configuration</h4>
+            <p class="text-sm text-site-dark">
+              Requires the <code class="font-mono">wrangler</code> CLI to be installed. The project will be auto-created if it doesn't exist.
+            </p>
+            <div class="space-y-4">
+              <div>
+                <label class="block text-xs font-semibold text-site-medium mb-2">Account ID</label>
+                <input
+                  v-model="form.cfAccountId"
+                  type="text"
+                  class="admin-input"
+                  placeholder="Your Cloudflare Account ID"
+                />
+                <p class="mt-1 text-xs text-site-medium">
+                  Found in your Cloudflare dashboard under Account ID
+                </p>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-site-medium mb-2">API Token</label>
+                <input
+                  v-model="form.cfApiToken"
+                  type="password"
+                  class="admin-input"
+                  placeholder="Cloudflare API Token"
+                />
+                <p class="mt-1 text-xs text-site-medium">
+                  Create a token with "Cloudflare Pages: Edit" permission
+                </p>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-site-medium mb-2">Project Name</label>
+                <input
+                  v-model="form.cfProjectName"
+                  type="text"
+                  class="admin-input"
+                  placeholder="my-blog"
+                />
+                <p class="mt-1 text-xs text-site-medium">
+                  Your site will be available at &lt;project-name&gt;.pages.dev
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
-    </form>
 
-    <!-- Maintenance -->
-    <section class="border-t border-site-light pt-8 mt-8">
-      <h3 class="text-sm font-semibold text-site-dark mb-2">Maintenance</h3>
-      <p class="text-sm text-site-dark mb-4">
-        Download and save YouTube embed thumbnails locally for posts that are still using the YouTube CDN.
-      </p>
-      <div v-if="backfillResult" class="mb-4 p-4 border border-green-500 text-sm text-green-600">
-        {{ backfillResult }}
-      </div>
-      <button
-        type="button"
-        @click="backfillYouTubeThumbnails"
-        :disabled="backfilling"
-        class="px-4 py-2 border border-site-dark text-sm font-semibold text-site-dark rounded-full hover:border-site-accent hover:text-site-accent disabled:opacity-50"
-      >
-        {{ backfilling ? 'Backfilling...' : 'Backfill YouTube Thumbnails' }}
-      </button>
-    </section>
+      <!-- Maintenance -->
+      <section v-show="isSectionVisible('maintenance')" class="border-t border-site-light pt-8">
+        <h3 class="text-sm font-semibold text-site-dark mb-2">Maintenance</h3>
+        <p class="text-sm text-site-dark mb-4">
+          Download and save YouTube embed thumbnails locally for posts that are still using the YouTube CDN.
+        </p>
+        <div v-if="backfillResult" class="mb-4 p-4 border border-green-500 text-sm text-green-600">
+          {{ backfillResult }}
+        </div>
+        <button
+          type="button"
+          @click="backfillYouTubeThumbnails"
+          :disabled="backfilling"
+          class="px-4 py-2 border border-site-dark text-sm font-semibold text-site-dark rounded-full hover:border-site-accent hover:text-site-accent disabled:opacity-50"
+        >
+          {{ backfilling ? 'Backfilling...' : 'Backfill YouTube Thumbnails' }}
+        </button>
+      </section>
 
-    <!-- Developer Tools -->
-    <section class="border-t border-site-light pt-8 mt-8">
-      <h3 class="text-sm font-semibold text-site-dark mb-2">Developer Tools</h3>
-      <p class="text-sm text-site-dark mb-4">
-        Export a debug bundle containing the full generated site.
-      </p>
-      <button
-        type="button"
-        @click="downloadDebugExport"
-        :disabled="exporting"
-        class="px-4 py-2 border border-site-dark text-sm font-semibold text-site-dark rounded-full hover:border-site-accent hover:text-site-accent disabled:opacity-50"
-      >
-        {{ exporting ? 'Exporting...' : 'Download Debug Export' }}
-      </button>
-    </section>
+      <!-- Developer Tools -->
+      <section v-show="isSectionVisible('developer')" class="border-t border-site-light pt-8">
+        <h3 class="text-sm font-semibold text-site-dark mb-2">Developer Tools</h3>
+        <p class="text-sm text-site-dark mb-4">
+          Export a debug bundle containing the full generated site.
+        </p>
+        <button
+          type="button"
+          @click="downloadDebugExport"
+          :disabled="exporting"
+          class="px-4 py-2 border border-site-dark text-sm font-semibold text-site-dark rounded-full hover:border-site-accent hover:text-site-accent disabled:opacity-50"
+        >
+          {{ exporting ? 'Exporting...' : 'Download Debug Export' }}
+        </button>
+      </section>
+
+      <!-- Danger Zone -->
+      <section v-show="isSectionVisible('danger')" class="border-t border-red-300 pt-8">
+        <h3 class="text-sm font-semibold text-red-500 mb-4">Danger Zone</h3>
+        <p class="text-sm text-site-dark mb-4">
+          Permanently delete this blog and all of its posts, files, and settings. This action cannot be undone.
+        </p>
+        <button
+          type="button"
+          @click="deleteBlog"
+          class="px-4 py-2 border border-red-500 text-sm font-semibold text-red-500 rounded-full hover:bg-red-500 hover:text-white"
+        >
+          Delete Blog
+        </button>
+      </section>
+    </div>
   </div>
 </template>

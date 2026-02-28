@@ -68,11 +68,6 @@ const routes = [
         name: 'themes',
         component: () => import('./views/ThemesView.vue')
       },
-      {
-        path: 'publish-settings',
-        name: 'publish-settings',
-        component: () => import('./views/PublishSettingsView.vue')
-      }
     ]
   }
 ];
