@@ -184,9 +184,6 @@ async function deleteBlog() {
               <router-link to="/blogs/import" class="block px-4 py-3 text-site-text hover:bg-site-accent hover:text-white transition-colors border-t border-site-light">
                 Import from ZIP
               </router-link>
-              <router-link to="/blogs/import-from-url" class="block px-4 py-3 text-site-text hover:bg-site-accent hover:text-white transition-colors border-t border-site-light">
-                Import from URL
-              </router-link>
             </div>
           </div>
         </div>

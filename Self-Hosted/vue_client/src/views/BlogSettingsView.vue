@@ -295,7 +295,7 @@ async function downloadDebugExport() {
     <section class="border-t border-site-light pt-8 mt-8">
       <h3 class="text-sm font-semibold text-site-dark mb-2">Developer Tools</h3>
       <p class="text-sm text-site-dark mb-4">
-        Export a debug bundle containing the full generated site and sync data. Useful for comparing output between iOS and Self-Hosted apps.
+        Export a debug bundle containing the full generated site.
       </p>
       <button
         type="button"

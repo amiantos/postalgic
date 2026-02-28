@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, nextTick, watch } from 'vue';
 import { useBlogStore } from '@/stores/blog';
-import { publishApi, syncApi } from '@/api';
+import { publishApi } from '@/api';
 
 const props = defineProps({
   blogId: { type: String, required: true },
@@ -26,9 +26,6 @@ const publishComplete = ref(false);
 // Terminal log state
 const logMessages = ref([]);
 const logContainer = ref(null);
-
-// Pre-publish sync state
-const prePublishSyncing = ref(false);
 
 // Full publish confirmation
 const showFullPublishConfirm = ref(false);
@@ -91,56 +88,6 @@ function getLogClass(type) {
     case 'success': return 'text-green-600';
     case 'warning': return 'text-yellow-600';
     default: return 'text-site-dark';
-  }
-}
-
-/**
- * Performs pre-publish sync if the blog has sync enabled (has a URL).
- * Returns true if sync succeeded or was not needed, false if sync failed.
- */
-async function performPrePublishSync() {
-  // Skip sync if blog has no URL configured
-  if (!blogStore.currentBlog?.url) {
-    return true;
-  }
-
-  prePublishSyncing.value = true;
-  addLog('Checking for remote changes...', 'info');
-  error.value = null;
-
-  try {
-    // Check for remote changes
-    const checkResult = await syncApi.checkChanges(props.blogId);
-
-    if (checkResult.hasChanges) {
-      addLog(`Syncing remote changes: ${checkResult.changeSummary || 'updating...'}`, 'info');
-
-      // Pull changes
-      const pullResult = await syncApi.pull(props.blogId);
-
-      if (!pullResult.success) {
-        throw new Error(pullResult.message || 'Sync failed');
-      }
-
-      // Refresh store data after sync
-      await Promise.all([
-        blogStore.fetchBlog(props.blogId),
-        blogStore.fetchPosts(props.blogId),
-        blogStore.fetchCategories(props.blogId),
-        blogStore.fetchTags(props.blogId)
-      ]);
-      addLog('Sync completed successfully', 'success');
-    } else {
-      addLog('No remote changes detected', 'success');
-    }
-
-    prePublishSyncing.value = false;
-    return true;
-  } catch (e) {
-    prePublishSyncing.value = false;
-    addLog(`Sync failed: ${e.message}`, 'error');
-    error.value = `Sync failed: ${e.message}. Please resolve this before publishing.`;
-    return false;
   }
 }
 
@@ -250,13 +197,6 @@ async function publishToAWS(forceUploadAll = false) {
   error.value = null;
 
   try {
-    // Perform pre-publish sync first
-    const syncOk = await performPrePublishSync();
-    if (!syncOk) {
-      publishing.value = false;
-      return;
-    }
-
     addLog(forceUploadAll ? 'Full publish: uploading all files' : 'Smart publish: uploading changed files only', 'info');
 
     await publishWithSSE('aws/stream', { forceUploadAll });
@@ -276,13 +216,6 @@ async function publishToSFTP(forceUploadAll = false) {
   error.value = null;
 
   try {
-    // Perform pre-publish sync first
-    const syncOk = await performPrePublishSync();
-    if (!syncOk) {
-      publishing.value = false;
-      return;
-    }
-
     addLog(forceUploadAll ? 'Full publish: uploading all files' : 'Smart publish: uploading changed files only', 'info');
 
     await publishWithSSE('sftp/stream', { forceUploadAll });
@@ -388,7 +321,7 @@ function getPublisherLabel(type) {
   return labels[type] || type;
 }
 
-const isWorking = computed(() => generating.value || downloading.value || publishing.value || prePublishSyncing.value);
+const isWorking = computed(() => generating.value || downloading.value || publishing.value);
 </script>
 
 <template>

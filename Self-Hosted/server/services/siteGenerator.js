@@ -1,24 +1,8 @@
 /**
  * Static Site Generator
  *
- * IMPORTANT: There are TWO separate hash/file tracking systems in Postalgic:
- *
- * 1. SMART PUBLISHING SYSTEM (`.postalgic/hashes.json`)
- *    - Tracks hashes of ALL generated site files (HTML, CSS, images, sync/, etc.)
- *    - Used for incremental/smart publishing to avoid re-uploading unchanged files
- *    - Stored remotely on the published site in `.postalgic/hashes.json`
- *    - Paths include everything: `index.html`, `css/style.css`, `sync/blog.json`, etc.
- *
- * 2. CROSS-PLATFORM SYNC SYSTEM (`/sync/manifest.json` + localFileHashes)
- *    - Tracks hashes of ONLY sync data files (blog.json, posts/*.json, etc.)
- *    - Used for syncing blog data between iOS and Self-Hosted apps
- *    - Manifest stored at `/sync/manifest.json` on the published site
- *    - Local hashes stored in blog's sync config (via storage.updateSyncVersion)
- *    - Paths are relative to sync folder: `blog.json`, `posts/xxx.json` (NO `sync/` prefix)
- *
- * These systems are UNRELATED and should not be confused:
- * - `.postalgic/` = smart publishing hashes (full site)
- * - `/sync/` = cross-platform sync data (blog content only)
+ * Uses a hash-based smart publishing system (`.postalgic/hashes.json`)
+ * to track hashes of all generated site files for incremental publishing.
  */
 
 import fs from 'fs';
@@ -27,7 +11,6 @@ import Mustache from 'mustache';
 import { renderMarkdown } from '../utils/markdown.js';
 import { getDefaultTemplates, getBuiltInTemplates } from './templates.js';
 import { generateFavicons } from './imageProcessor.js';
-import { generateSyncDirectory } from './syncGenerator.js';
 import {
   formatDatePath,
   formatDate,
@@ -122,28 +105,10 @@ export async function generateSite(storage, blogId, options = {}) {
   await generateRobotsTxt(outputDir, templates, baseContext, fileHashes);
   await generateSitemap(outputDir, templates, baseContext, posts, tags, categories, fileHashes);
 
-  // Always generate sync directory for iOS app sync
-  let syncResult = null;
-  try {
-    console.log('[SiteGenerator] Generating sync directory...');
-    syncResult = await generateSyncDirectory(storage, blogId, outputDir);
-
-    // Merge sync file hashes into main hashes (prefixed with sync/)
-    for (const [filePath, hash] of Object.entries(syncResult.fileHashes)) {
-      fileHashes[`sync/${filePath}`] = hash;
-    }
-
-    console.log(`[SiteGenerator] Sync directory generated with ${syncResult.fileCount} files (version ${syncResult.syncVersion})`);
-  } catch (error) {
-    console.error('[SiteGenerator] Failed to generate sync directory:', error);
-    // Don't fail the whole publish - sync is optional
-  }
-
   return {
     outputDir,
     fileHashes,
-    fileCount: Object.keys(fileHashes).length,
-    syncVersion: syncResult?.syncVersion || null
+    fileCount: Object.keys(fileHashes).length
   };
 }
 

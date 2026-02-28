@@ -1,8 +1,8 @@
 ![Postalgic](/postalgic-logo.png?raw=true)
 
-Postalgic is a static CMS for creating and publishing blogs. Write from iOS or the self-hosted web app, generate static HTML, and publish to your own hosting (S3, SFTP, Git). Your other devices sync changes directly from your published site—no central server required.
+Postalgic is a static CMS for creating and publishing blogs. Write from iOS or the self-hosted web app, generate static HTML, and publish to your own hosting (S3, SFTP, Git).
 
-Build anywhere. Publish anywhere. Sync everywhere.
+Build anywhere. Publish anywhere.
 
 # Features
 
@@ -13,7 +13,6 @@ Build anywhere. Publish anywhere. Sync everywhere.
   - [x] AWS S3 with CloudFront
   - [x] Any SFTP Server
   - [x] Any Git Repository
-- [x] Sync across devices through your published site—no central server involved
 
 # Self-Hosted
 

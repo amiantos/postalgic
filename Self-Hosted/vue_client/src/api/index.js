@@ -203,21 +203,6 @@ export const metadataApi = {
   fetch: (url) => fetchApi(`/metadata?url=${encodeURIComponent(url)}`)
 };
 
-// Sync API
-export const syncApi = {
-  check: (url) =>
-    fetchApi('/sync/check', { method: 'POST', body: JSON.stringify({ url }) }),
-  import: (url) =>
-    fetchApi('/sync/import', { method: 'POST', body: JSON.stringify({ url }) }),
-  getStatus: (blogId) =>
-    fetchApi(`/sync/blogs/${blogId}/status`),
-  // Sync Down (Pull) endpoints
-  checkChanges: (blogId) =>
-    fetchApi(`/sync/blogs/${blogId}/check-changes`, { method: 'POST' }),
-  pull: (blogId) =>
-    fetchApi(`/sync/blogs/${blogId}/pull`, { method: 'POST' })
-};
-
 // Import API
 export const importApi = {
   validate: async (file) => {
