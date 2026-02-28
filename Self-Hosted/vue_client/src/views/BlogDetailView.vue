@@ -15,12 +15,12 @@ const showPublishModal = ref(false);
 
 const navLinks = [
   { name: 'Posts', route: 'blog-posts' },
-  { name: 'Settings', route: 'blog-settings' },
   { name: 'Categories', route: 'categories' },
   { name: 'Tags', route: 'tags' },
   { name: 'Sidebar', route: 'sidebar' },
   { name: 'Files', route: 'files' },
   { name: 'Themes', route: 'themes' },
+  { name: 'Settings', route: 'blog-settings' },
 ];
 
 const currentRouteName = computed(() => route.name);
