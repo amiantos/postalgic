@@ -24,7 +24,7 @@ export default {
         'site-text': '#2d3748',
         'site-accent': '#FFA100',
         'site-light': '#dedede',
-        'site-medium': '#a0aec0',
+        'site-medium': '#7a8a9e',
         'site-dark': '#4a5568',
       },
     },

@@ -147,6 +147,22 @@ export const staticFileApi = {
 
     return response.json();
   },
+  uploadSocialShareImage: async (blogId, file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await fetch(`${API_BASE}/blogs/${blogId}/static-files/social-share`, {
+      method: 'POST',
+      body: formData
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Unknown error' }));
+      throw new Error(error.error || `HTTP ${response.status}`);
+    }
+
+    return response.json();
+  },
   delete: (blogId, fileId) =>
     fetchApi(`/blogs/${blogId}/static-files/${fileId}`, { method: 'DELETE' })
 };

@@ -154,7 +154,7 @@ router.post('/favicon', upload.single('file'), async (req, res) => {
     // Process favicon to correct size
     try {
       fileBuffer = await processImage(fileBuffer, {
-        resize: { width: 32, height: 32 },
+        resize: { width: 180, height: 180 },
         format: 'png'
       });
     } catch (err) {

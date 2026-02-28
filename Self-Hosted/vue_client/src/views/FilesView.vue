@@ -76,11 +76,7 @@ async function handleFaviconUpload(event) {
   error.value = null;
 
   try {
-    await blogStore.uploadStaticFile(blogId.value, file, {
-      isSpecialFile: true,
-      specialFileType: 'favicon'
-    });
-    await blogStore.fetchStaticFiles(blogId.value);
+    await blogStore.uploadFavicon(blogId.value, file);
   } catch (e) {
     error.value = e.message;
   } finally {
@@ -97,11 +93,7 @@ async function handleSocialShareUpload(event) {
   error.value = null;
 
   try {
-    await blogStore.uploadStaticFile(blogId.value, file, {
-      isSpecialFile: true,
-      specialFileType: 'social-share'
-    });
-    await blogStore.fetchStaticFiles(blogId.value);
+    await blogStore.uploadSocialShareImage(blogId.value, file);
   } catch (e) {
     error.value = e.message;
   } finally {
@@ -161,7 +153,7 @@ function formatFileSize(bytes) {
 
     <!-- Favicon Section -->
     <section class="border border-site-light p-4 mb-6">
-      <h3 class="text-sm font-semibold text-site-dark mb-4">Favicon</h3>
+      <h3 class="text-base font-semibold text-site-dark mb-4">Favicon</h3>
       <div class="flex items-center gap-4">
         <div class="w-16 h-16 border border-site-light flex items-center justify-center overflow-hidden bg-white">
           <img
@@ -196,7 +188,7 @@ function formatFileSize(bytes) {
 
     <!-- Social Share Image Section -->
     <section class="border border-site-light p-4 mb-6">
-      <h3 class="text-sm font-semibold text-site-dark mb-2">Social Share Image</h3>
+      <h3 class="text-base font-semibold text-site-dark mb-2">Social Share Image</h3>
       <p class="text-sm text-site-dark mb-4">This image appears when your blog is shared on social media (Open Graph image).</p>
       <div class="flex items-start gap-4">
         <div class="w-32 h-20 border border-site-light flex items-center justify-center overflow-hidden flex-shrink-0 bg-white">

@@ -415,7 +415,7 @@ const templateNames = computed(() => {
 
     <!-- Theme Colors -->
     <section class="border-t border-site-light pt-8 mt-8">
-      <h3 class="text-sm font-semibold text-site-dark mb-4">Theme Colors</h3>
+      <h3 class="text-base font-semibold text-site-dark mb-4">Theme Colors</h3>
 
       <div v-if="colorSuccess" class="mb-4 p-4 border border-green-500 text-sm text-green-600">
         Colors saved successfully!

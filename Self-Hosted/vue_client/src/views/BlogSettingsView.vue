@@ -161,7 +161,7 @@ async function downloadDebugExport() {
     <div class="space-y-8">
       <!-- Basic Info -->
       <section v-show="isSectionVisible('basic')">
-        <h3 class="text-sm font-semibold text-site-dark mb-4 mt-2">Basic Information</h3>
+        <h3 class="text-base font-semibold text-site-dark mb-4 mt-2">Basic Information</h3>
         <div class="space-y-4">
           <div>
             <label class="block text-xs font-semibold text-site-medium mb-2">Blog Name</label>
@@ -248,7 +248,7 @@ async function downloadDebugExport() {
 
       <!-- Author Info -->
       <section v-show="isSectionVisible('author')" class="border-t border-site-light pt-8">
-        <h3 class="text-sm font-semibold text-site-dark mb-4">Author Information</h3>
+        <h3 class="text-base font-semibold text-site-dark mb-4">Author Information</h3>
         <div class="space-y-4">
           <div>
             <label class="block text-xs font-semibold text-site-medium mb-2">Author Name</label>
@@ -279,7 +279,7 @@ async function downloadDebugExport() {
 
       <!-- Simple Analytics -->
       <section v-show="isSectionVisible('analytics')" class="border-t border-site-light pt-8">
-        <h3 class="text-sm font-semibold text-site-dark mb-2">Simple Analytics</h3>
+        <h3 class="text-base font-semibold text-site-dark mb-2">Simple Analytics</h3>
         <p class="text-sm text-site-dark mb-4">
           Enable Simple Analytics to track pageviews and visitors on your published blog.
           <a href="https://simpleanalytics.com" target="_blank" class="text-site-accent hover:text-site-accent">Learn more</a>
@@ -314,7 +314,7 @@ async function downloadDebugExport() {
 
       <!-- Publishing -->
       <section v-show="isSectionVisible('publishing')" class="border-t border-site-light pt-8">
-        <h3 class="text-sm font-semibold text-site-dark mb-4">Publishing</h3>
+        <h3 class="text-base font-semibold text-site-dark mb-4">Publishing</h3>
         <div class="space-y-4">
           <div>
             <label class="block text-xs font-semibold text-site-medium mb-2">Publisher Type</label>
@@ -560,7 +560,7 @@ async function downloadDebugExport() {
 
       <!-- Maintenance -->
       <section v-show="isSectionVisible('maintenance')" class="border-t border-site-light pt-8">
-        <h3 class="text-sm font-semibold text-site-dark mb-2">Maintenance</h3>
+        <h3 class="text-base font-semibold text-site-dark mb-2">Maintenance</h3>
         <p class="text-sm text-site-dark mb-4">
           Download and save YouTube embed thumbnails locally for posts that are still using the YouTube CDN.
         </p>
@@ -579,7 +579,7 @@ async function downloadDebugExport() {
 
       <!-- Developer Tools -->
       <section v-show="isSectionVisible('developer')" class="border-t border-site-light pt-8">
-        <h3 class="text-sm font-semibold text-site-dark mb-2">Developer Tools</h3>
+        <h3 class="text-base font-semibold text-site-dark mb-2">Developer Tools</h3>
         <p class="text-sm text-site-dark mb-4">
           Export a debug bundle containing the full generated site.
         </p>
@@ -595,7 +595,7 @@ async function downloadDebugExport() {
 
       <!-- Danger Zone -->
       <section v-show="isSectionVisible('danger')" class="border-t border-red-300 pt-8">
-        <h3 class="text-sm font-semibold text-red-500 mb-4">Danger Zone</h3>
+        <h3 class="text-base font-semibold text-red-500 mb-4">Danger Zone</h3>
         <p class="text-sm text-site-dark mb-4">
           Permanently delete this blog and all of its posts, files, and settings. This action cannot be undone.
         </p>

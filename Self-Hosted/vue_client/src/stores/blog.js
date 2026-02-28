@@ -222,6 +222,22 @@ export const useBlogStore = defineStore('blog', () => {
     return uploaded;
   }
 
+  async function uploadFavicon(blogId, file) {
+    const uploaded = await staticFileApi.uploadFavicon(blogId, file);
+    // Remove old favicon from local state and add new one
+    staticFiles.value = staticFiles.value.filter(f => f.specialFileType !== 'favicon');
+    staticFiles.value.push(uploaded);
+    return uploaded;
+  }
+
+  async function uploadSocialShareImage(blogId, file) {
+    const uploaded = await staticFileApi.uploadSocialShareImage(blogId, file);
+    // Remove old social share image from local state and add new one
+    staticFiles.value = staticFiles.value.filter(f => f.specialFileType !== 'social-share');
+    staticFiles.value.push(uploaded);
+    return uploaded;
+  }
+
   async function deleteStaticFile(blogId, fileId) {
     await staticFileApi.delete(blogId, fileId);
     staticFiles.value = staticFiles.value.filter(f => f.id !== fileId);
@@ -299,6 +315,8 @@ export const useBlogStore = defineStore('blog', () => {
     deleteSidebarObject,
     fetchStaticFiles,
     uploadStaticFile,
+    uploadFavicon,
+    uploadSocialShareImage,
     deleteStaticFile,
     generateSite,
     downloadSite,
