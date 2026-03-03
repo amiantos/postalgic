@@ -4,7 +4,7 @@
 
 services:
   postalgic:
-    image: ghcr.io/amiantos/postalgic-sh:latest
+    image: ghcr.io/amiantos/postalgic:latest
     ports:
       - "8010:8010"
     volumes:

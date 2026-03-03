@@ -16,7 +16,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository_owner }}/postalgic-sh
+  IMAGE_NAME: ${{ github.repository_owner }}/postalgic
 
 jobs:
   build-and-push:
