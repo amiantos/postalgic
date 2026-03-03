@@ -25,6 +25,15 @@ docker compose up -d
 
 Access the app at http://localhost:8010
 
+## Development
+
+```bash
+npm run install:all
+npm run dev
+```
+
+This installs dependencies for both the server and Vue client, then starts both in development mode with hot reloading.
+
 # iOS App
 
 Looking for the iOS app? It has moved to its own repository: [postalgic-ios](https://github.com/amiantos/postalgic-ios)
