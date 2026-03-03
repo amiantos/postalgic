@@ -5,7 +5,11 @@ on:
     branches:
       - main
     paths:
-      - 'Self-Hosted/**'
+      - 'server/**'
+      - 'vue_client/**'
+      - 'Dockerfile'
+      - 'package.json'
+      - 'package-lock.json'
   release:
     types: [published]
   workflow_dispatch:
@@ -49,7 +53,7 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: ./Self-Hosted
+          context: .
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
