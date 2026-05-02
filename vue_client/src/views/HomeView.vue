@@ -13,6 +13,9 @@ import { ref, onMounted, onUnmounted, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import { useBlogStore } from '@/stores/blog';
 import { blogApi } from '@/api';
+import { useAuth, logout } from '@/composables/useAuth';
+
+const auth = useAuth();
 
 const router = useRouter();
 const blogStore = useBlogStore();
@@ -172,18 +175,28 @@ async function deleteBlog() {
     <header class="max-w-[1000px] mx-auto px-8 pt-8 pb-4">
       <div class="flex items-center justify-between mb-4">
         <img src="/postalgic-logo.png" alt="Postalgic" class="h-16" />
-        <div class="relative group">
-          <button class="px-5 py-2 bg-site-accent text-white font-semibold rounded-full hover:bg-[#e89200] transition-colors">
-            + New Blog
+        <div class="flex items-center gap-3">
+          <button
+            v-if="!auth.basicAuth"
+            @click="logout"
+            class="px-3 py-2 text-[0.85em] text-site-medium hover:text-site-accent transition-colors"
+            title="Sign out"
+          >
+            Sign out
           </button>
-          <div class="absolute right-0 top-full hidden group-hover:block z-20 pt-1">
-            <div class="bg-white border border-site-light rounded-lg min-w-[200px] shadow-lg overflow-hidden">
-              <router-link to="/blogs/new" class="block px-4 py-3 text-site-text hover:bg-site-accent hover:text-white transition-colors">
-                New Blog
-              </router-link>
-              <router-link to="/blogs/import" class="block px-4 py-3 text-site-text hover:bg-site-accent hover:text-white transition-colors border-t border-site-light">
-                Import from ZIP
-              </router-link>
+          <div class="relative group">
+            <button class="px-5 py-2 bg-site-accent text-white font-semibold rounded-full hover:bg-[#e89200] transition-colors">
+              + New Blog
+            </button>
+            <div class="absolute right-0 top-full hidden group-hover:block z-20 pt-1">
+              <div class="bg-white border border-site-light rounded-lg min-w-[200px] shadow-lg overflow-hidden">
+                <router-link to="/blogs/new" class="block px-4 py-3 text-site-text hover:bg-site-accent hover:text-white transition-colors">
+                  New Blog
+                </router-link>
+                <router-link to="/blogs/import" class="block px-4 py-3 text-site-text hover:bg-site-accent hover:text-white transition-colors border-t border-site-light">
+                  Import from ZIP
+                </router-link>
+              </div>
             </div>
           </div>
         </div>

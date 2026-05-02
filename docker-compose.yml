@@ -12,6 +12,10 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=8010
+      # Auth: Postalgic uses passkeys by default. The first time you visit the
+      # web app you'll be prompted to register one. WebAuthn requires HTTPS
+      # (browsers exempt localhost). If you serve Postalgic over plain HTTP
+      # from another machine, uncomment these to fall back to basic auth:
       # - BASIC_AUTH_USERNAME=admin
       # - BASIC_AUTH_PASSWORD=changeme
     restart: unless-stopped
