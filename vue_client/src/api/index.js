@@ -1,13 +1,20 @@
+import { onSessionExpired } from '@/composables/useAuth';
+
 const API_BASE = '/api';
 
 async function fetchApi(url, options = {}) {
   const response = await fetch(`${API_BASE}${url}`, {
+    credentials: 'same-origin',
     headers: {
       'Content-Type': 'application/json',
       ...options.headers
     },
     ...options
   });
+
+  if (response.status === 401 && !url.startsWith('/auth/')) {
+    onSessionExpired();
+  }
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ error: 'Unknown error' }));

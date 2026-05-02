@@ -25,6 +25,26 @@ docker compose up -d
 
 Access the app at http://localhost:8010
 
+## Authentication
+
+Postalgic protects the admin UI with a passkey. The first time you visit the
+app you'll be guided through a one-time setup wizard to register a passkey
+with your password manager (1Password, Apple Keychain, Bitwarden, etc.).
+
+WebAuthn requires HTTPS — most browsers won't allow passkey ceremonies on
+plain HTTP from a non-localhost address. If you're serving Postalgic over
+plain HTTP from another machine, uncomment `BASIC_AUTH_USERNAME` /
+`BASIC_AUTH_PASSWORD` in `docker-compose.yml` to fall back to HTTP basic auth.
+
+**Lost your passkey?** With Postalgic stopped, delete the row from
+`auth_credentials` in `data/postalgic.db`:
+
+```bash
+sqlite3 data/postalgic.db "DELETE FROM auth_credentials;"
+```
+
+Restarting will return you to the setup wizard.
+
 ## Development
 
 ```bash

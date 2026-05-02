@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@simplewebauthn/browser": "^13.3.0",
     "@tailwindcss/typography": "^0.5.19",
     "@vueuse/core": "^11.0.0",
     "chart.js": "^4.4.0",

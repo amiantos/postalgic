@@ -161,6 +161,38 @@ function runMigrations(database) {
     `);
   }
 
+  const authCredentialsExists = database.prepare(`
+    SELECT name FROM sqlite_master WHERE type='table' AND name='auth_credentials'
+  `).get();
+  if (!authCredentialsExists) {
+    console.log('[Database] Running migration: creating auth_credentials table');
+    database.exec(`
+      CREATE TABLE auth_credentials (
+        id TEXT PRIMARY KEY,
+        credential_id TEXT NOT NULL UNIQUE,
+        public_key BLOB NOT NULL,
+        counter INTEGER NOT NULL DEFAULT 0,
+        transports TEXT,
+        label TEXT,
+        created_at TEXT NOT NULL,
+        last_used_at TEXT
+      );
+    `);
+  }
+
+  const authSettingsExists = database.prepare(`
+    SELECT name FROM sqlite_master WHERE type='table' AND name='auth_settings'
+  `).get();
+  if (!authSettingsExists) {
+    console.log('[Database] Running migration: creating auth_settings table');
+    database.exec(`
+      CREATE TABLE auth_settings (
+        key TEXT PRIMARY KEY,
+        value TEXT NOT NULL
+      );
+    `);
+  }
+
   const postSharesExists = database.prepare(`
     SELECT name FROM sqlite_master WHERE type='table' AND name='post_shares'
   `).get();
@@ -359,6 +391,24 @@ function createSchema(database) {
       config TEXT NOT NULL,
       created_at TEXT NOT NULL,
       updated_at TEXT
+    );
+
+    -- Passkey credentials (single-admin install; one or more passkeys may be registered)
+    CREATE TABLE auth_credentials (
+      id TEXT PRIMARY KEY,
+      credential_id TEXT NOT NULL UNIQUE,
+      public_key BLOB NOT NULL,
+      counter INTEGER NOT NULL DEFAULT 0,
+      transports TEXT,
+      label TEXT,
+      created_at TEXT NOT NULL,
+      last_used_at TEXT
+    );
+
+    -- Auth settings (e.g. session signing secret)
+    CREATE TABLE auth_settings (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL
     );
 
     -- Per-post share attempt log
