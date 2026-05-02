@@ -3,6 +3,26 @@ import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useBlogStore } from '@/stores/blog';
 import { marked } from 'marked';
+import ShareModal from '@/components/ShareModal.vue';
+
+const shareTarget = ref(null);
+const showShareModal = ref(false);
+
+function openShare(post) {
+  shareTarget.value = post;
+  showShareModal.value = true;
+}
+
+function closeShare() {
+  showShareModal.value = false;
+}
+
+function handleShared({ destinationId }) {
+  if (!shareTarget.value) return;
+  const ids = new Set(shareTarget.value.sharedDestinationIds || []);
+  ids.add(destinationId);
+  shareTarget.value.sharedDestinationIds = Array.from(ids);
+}
 
 const route = useRoute();
 const router = useRouter();
@@ -341,8 +361,11 @@ function formatLocalDateTime(dateString) {
             </div>
           </div>
 
-          <!-- Tags & Category -->
-          <div v-if="post.category || post.tags?.length > 0" class="mt-[3em] text-[0.6em] flex flex-wrap items-center gap-2">
+          <!-- Tags / Category / Share -->
+          <div
+            v-if="post.category || post.tags?.length > 0 || !post.isDraft"
+            class="mt-[3em] text-[0.6em] flex flex-wrap items-center gap-2"
+          >
             <span v-if="post.category" class="inline-block text-white bg-site-accent border border-site-accent px-2 py-0.5 rounded-full hover:bg-site-bg hover:text-site-accent transition-colors">
               {{ post.category.name }}
             </span>
@@ -354,6 +377,15 @@ function formatLocalDateTime(dateString) {
                 +{{ post.tags.length - 3 }}
               </span>
             </template>
+            <button
+              v-if="!post.isDraft"
+              @click.stop="openShare(post)"
+              class="ml-auto inline-flex items-center gap-1 text-site-accent hover:text-white hover:bg-site-accent border border-site-accent px-2 py-0.5 rounded-full transition-colors"
+              :title="post.sharedDestinationIds?.length ? 'Already shared' : 'Share this post'"
+            >
+              <span>Share</span>
+              <span v-if="post.sharedDestinationIds?.length">&#10003;</span>
+            </button>
           </div>
         </article>
 
@@ -373,5 +405,13 @@ function formatLocalDateTime(dateString) {
         <template v-else>Load more ({{ remainingPostsCount }}) &darr;</template>
       </button>
     </div>
+
+    <ShareModal
+      :show="showShareModal"
+      :blog-id="blogId"
+      :post="shareTarget"
+      @close="closeShare"
+      @shared="handleShared"
+    />
   </div>
 </template>

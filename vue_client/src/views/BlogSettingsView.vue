@@ -2,7 +2,7 @@
 import { ref, computed, watch, nextTick } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useBlogStore } from '@/stores/blog';
-import { blogApi, postApi } from '@/api';
+import { blogApi, postApi, shareDestinationApi, shareApi } from '@/api';
 
 const route = useRoute();
 const router = useRouter();
@@ -25,6 +25,7 @@ const sections = [
   { id: 'author', label: 'Author Information', terms: 'author name url email' },
   { id: 'analytics', label: 'Simple Analytics', terms: 'simple analytics tracking pageviews visitors domain' },
   { id: 'publishing', label: 'Publishing', terms: 'publishing publisher type aws s3 sftp ftp git github cloudflare pages deploy bucket region' },
+  { id: 'sharing', label: 'Sharing', terms: 'sharing share webhook webhooks destinations relay irc discourse signature hmac integrations' },
   { id: 'maintenance', label: 'Maintenance', terms: 'maintenance youtube thumbnails backfill' },
   { id: 'developer', label: 'Developer Tools', terms: 'developer tools debug export' },
   { id: 'danger', label: 'Danger Zone', terms: 'danger delete blog' },
@@ -99,6 +100,249 @@ async function backfillYouTubeThumbnails() {
     error.value = e.message;
   } finally {
     backfilling.value = false;
+  }
+}
+
+// ===== Share destinations =====
+const shareDestinations = ref([]);
+const shareLoading = ref(false);
+const shareError = ref(null);
+const editingDestId = ref(null);  // 'new' | <id>
+const editingType = ref('webhook');  // 'webhook' | 'discourse'
+const editForm = ref({});
+const editSaving = ref(false);
+
+// Discourse-specific UI state
+const discourseTesting = ref(false);
+const discourseTestError = ref(null);
+const discourseTested = ref(false);
+const discourseCategories = ref([]);
+const discourseTopicQuery = ref('');
+const discourseTopicResults = ref([]);
+const discourseTopicSearching = ref(false);
+let discourseTopicSearchTimeout = null;
+
+const TEMPLATE_PLACEHOLDERS = '{permalink} {post_title} {post_excerpt} {post_content} {embed_url} {embed_image} {author_name} {blog_name} {tags}';
+
+function emptyForm(type) {
+  if (type === 'discourse') {
+    return {
+      name: '',
+      url: '',
+      apiKey: '',
+      apiUsername: '',
+      defaultCategoryId: null,
+      defaultTopicId: null,
+      defaultTopicTitle: '',
+      template: '{permalink}'
+    };
+  }
+  return { name: '', url: '', secret: '' };
+}
+
+async function loadShareDestinations() {
+  shareLoading.value = true;
+  shareError.value = null;
+  try {
+    shareDestinations.value = await shareDestinationApi.list(blogId.value) || [];
+  } catch (e) {
+    shareError.value = e.message;
+  } finally {
+    shareLoading.value = false;
+  }
+}
+
+watch(blogId, (id) => {
+  if (id) loadShareDestinations();
+}, { immediate: true });
+
+function resetDiscourseUiState() {
+  discourseTesting.value = false;
+  discourseTestError.value = null;
+  discourseTested.value = false;
+  discourseCategories.value = [];
+  discourseTopicQuery.value = '';
+  discourseTopicResults.value = [];
+  discourseTopicSearching.value = false;
+}
+
+function startAdd(type) {
+  editingDestId.value = 'new';
+  editingType.value = type;
+  editForm.value = emptyForm(type);
+  resetDiscourseUiState();
+}
+
+function startEdit(dest) {
+  editingDestId.value = dest.id;
+  editingType.value = dest.type;
+  resetDiscourseUiState();
+
+  if (dest.type === 'webhook') {
+    editForm.value = {
+      name: dest.name || '',
+      url: dest.config?.url || '',
+      secret: dest.config?.secret || ''
+    };
+  } else if (dest.type === 'discourse') {
+    editForm.value = {
+      name: dest.name || '',
+      url: dest.config?.url || '',
+      apiKey: dest.config?.apiKey || '',
+      apiUsername: dest.config?.apiUsername || '',
+      defaultCategoryId: dest.config?.defaultCategoryId ?? null,
+      defaultTopicId: dest.config?.defaultTopicId ?? null,
+      defaultTopicTitle: dest.config?.defaultTopicTitle || '',
+      template: dest.config?.template || '{permalink}'
+    };
+  }
+}
+
+function cancelEdit() {
+  editingDestId.value = null;
+  editForm.value = {};
+  resetDiscourseUiState();
+}
+
+function buildDiscourseConfigForTest() {
+  return {
+    url: (editForm.value.url || '').trim(),
+    apiKey: (editForm.value.apiKey || '').trim(),
+    apiUsername: (editForm.value.apiUsername || '').trim()
+  };
+}
+
+async function testDiscourseConnection() {
+  discourseTestError.value = null;
+  discourseTested.value = false;
+  discourseCategories.value = [];
+
+  const cfg = buildDiscourseConfigForTest();
+  if (!/^https?:\/\//i.test(cfg.url) || !cfg.apiKey || !cfg.apiUsername) {
+    discourseTestError.value = 'URL, API key, and API username are all required to test.';
+    return;
+  }
+
+  discourseTesting.value = true;
+  try {
+    const result = await shareApi.discourseTest(blogId.value, cfg);
+    discourseCategories.value = result.categories || [];
+    discourseTested.value = true;
+  } catch (e) {
+    discourseTestError.value = e.message;
+  } finally {
+    discourseTesting.value = false;
+  }
+}
+
+watch(discourseTopicQuery, (q) => {
+  if (discourseTopicSearchTimeout) clearTimeout(discourseTopicSearchTimeout);
+  if (!discourseTested.value) return;
+  if (!q || !q.trim()) {
+    discourseTopicResults.value = [];
+    return;
+  }
+  discourseTopicSearchTimeout = setTimeout(searchDiscourseTopicsNow, 400);
+});
+
+async function searchDiscourseTopicsNow() {
+  const cfg = buildDiscourseConfigForTest();
+  if (!discourseTopicQuery.value.trim()) {
+    discourseTopicResults.value = [];
+    return;
+  }
+  discourseTopicSearching.value = true;
+  try {
+    const results = await shareApi.discourseSearchTopicsByConfig(blogId.value, cfg, discourseTopicQuery.value);
+    discourseTopicResults.value = results || [];
+  } catch (e) {
+    discourseTopicResults.value = [];
+    discourseTestError.value = e.message;
+  } finally {
+    discourseTopicSearching.value = false;
+  }
+}
+
+function pickDefaultTopic(topic) {
+  editForm.value.defaultTopicId = topic.id;
+  editForm.value.defaultTopicTitle = topic.title;
+  discourseTopicQuery.value = '';
+  discourseTopicResults.value = [];
+}
+
+function clearDefaultTopic() {
+  editForm.value.defaultTopicId = null;
+  editForm.value.defaultTopicTitle = '';
+}
+
+async function saveDestination() {
+  shareError.value = null;
+  if (!editForm.value.name?.trim()) {
+    shareError.value = 'Name is required';
+    return;
+  }
+
+  let payload;
+  if (editingType.value === 'webhook') {
+    if (!/^https?:\/\//i.test((editForm.value.url || '').trim())) {
+      shareError.value = 'A valid http(s) URL is required';
+      return;
+    }
+    payload = {
+      name: editForm.value.name.trim(),
+      config: {
+        url: editForm.value.url.trim(),
+        secret: editForm.value.secret || ''
+      }
+    };
+  } else if (editingType.value === 'discourse') {
+    if (!/^https?:\/\//i.test((editForm.value.url || '').trim())) {
+      shareError.value = 'A valid http(s) URL is required';
+      return;
+    }
+    if (!editForm.value.apiKey?.trim() || !editForm.value.apiUsername?.trim()) {
+      shareError.value = 'API key and API username are required';
+      return;
+    }
+    payload = {
+      name: editForm.value.name.trim(),
+      config: {
+        url: editForm.value.url.trim(),
+        apiKey: editForm.value.apiKey.trim(),
+        apiUsername: editForm.value.apiUsername.trim(),
+        defaultCategoryId: editForm.value.defaultCategoryId || null,
+        defaultTopicId: editForm.value.defaultTopicId || null,
+        defaultTopicTitle: editForm.value.defaultTopicTitle || '',
+        template: editForm.value.template || '{permalink}'
+      }
+    };
+  }
+
+  editSaving.value = true;
+  try {
+    if (editingDestId.value === 'new') {
+      await shareDestinationApi.create(blogId.value, { type: editingType.value, ...payload });
+    } else {
+      await shareDestinationApi.update(blogId.value, editingDestId.value, payload);
+    }
+    await loadShareDestinations();
+    cancelEdit();
+  } catch (e) {
+    shareError.value = e.message;
+  } finally {
+    editSaving.value = false;
+  }
+}
+
+async function deleteDestination(dest) {
+  if (!confirm(`Delete share destination "${dest.name}"?`)) return;
+  shareError.value = null;
+  try {
+    await shareDestinationApi.delete(blogId.value, dest.id);
+    if (editingDestId.value === dest.id) cancelEdit();
+    await loadShareDestinations();
+  } catch (e) {
+    shareError.value = e.message;
   }
 }
 
@@ -554,6 +798,292 @@ async function downloadDebugExport() {
                 </p>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Sharing -->
+      <section v-show="isSectionVisible('sharing')" class="border-t border-site-light pt-8">
+        <h3 class="text-base font-semibold text-site-dark mb-2">Sharing</h3>
+        <p class="text-sm text-site-dark mb-4">
+          Configure webhooks and integrations to announce new posts. Each post in your list gets a Share button that fires the destination you pick.
+        </p>
+
+        <div v-if="shareError" class="mb-4 p-3 border border-red-500 text-sm text-red-600">
+          {{ shareError }}
+        </div>
+
+        <div v-if="shareLoading" class="text-sm text-site-medium font-mono">Loading...</div>
+
+        <div v-else>
+          <!-- Existing destinations -->
+          <div v-if="shareDestinations.length > 0" class="space-y-3 mb-4">
+            <div
+              v-for="dest in shareDestinations"
+              :key="dest.id"
+              class="border border-site-light p-3"
+            >
+              <template v-if="editingDestId === dest.id">
+                <component :is="'div'">
+                  <!-- Webhook edit form -->
+                  <div v-if="editingType === 'webhook'" class="space-y-3">
+                    <div>
+                      <label class="block text-xs font-semibold text-site-medium mb-1">Name</label>
+                      <input v-model="editForm.name" type="text" class="admin-input" placeholder="IRC relay" />
+                    </div>
+                    <div>
+                      <label class="block text-xs font-semibold text-site-medium mb-1">Webhook URL</label>
+                      <input v-model="editForm.url" type="url" class="admin-input" placeholder="https://relay.example.com/hook/..." />
+                    </div>
+                    <div>
+                      <label class="block text-xs font-semibold text-site-medium mb-1">
+                        Secret <span class="text-site-medium font-normal">(optional, used for HMAC-SHA256 signature)</span>
+                      </label>
+                      <input v-model="editForm.secret" type="password" class="admin-input" autocomplete="new-password" />
+                    </div>
+                    <div class="flex gap-2">
+                      <button
+                        @click="cancelEdit"
+                        :disabled="editSaving"
+                        class="px-3 py-2 border border-site-light text-site-dark font-mono text-xs uppercase tracking-wider hover:border-site-dark transition-colors"
+                      >Cancel</button>
+                      <button
+                        @click="saveDestination"
+                        :disabled="editSaving"
+                        class="px-3 py-2 bg-site-accent text-white font-mono text-xs uppercase tracking-wider hover:bg-[#e89200] transition-colors disabled:opacity-50"
+                      >{{ editSaving ? 'Saving...' : 'Save' }}</button>
+                    </div>
+                  </div>
+
+                  <!-- Discourse edit form -->
+                  <div v-else-if="editingType === 'discourse'" class="space-y-3">
+                    <div>
+                      <label class="block text-xs font-semibold text-site-medium mb-1">Name</label>
+                      <input v-model="editForm.name" type="text" class="admin-input" placeholder="Discuss server" />
+                    </div>
+                    <div>
+                      <label class="block text-xs font-semibold text-site-medium mb-1">Discourse URL</label>
+                      <input v-model="editForm.url" type="url" class="admin-input" placeholder="https://discuss.example.com" />
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                      <div>
+                        <label class="block text-xs font-semibold text-site-medium mb-1">API Username</label>
+                        <input v-model="editForm.apiUsername" type="text" class="admin-input" autocomplete="off" />
+                      </div>
+                      <div>
+                        <label class="block text-xs font-semibold text-site-medium mb-1">API Key</label>
+                        <input v-model="editForm.apiKey" type="password" class="admin-input" autocomplete="new-password" />
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      @click="testDiscourseConnection"
+                      :disabled="discourseTesting"
+                      class="px-3 py-2 border border-site-accent text-site-accent font-mono text-xs uppercase tracking-wider hover:bg-site-accent hover:text-white transition-colors disabled:opacity-50"
+                    >
+                      {{ discourseTesting ? 'Testing...' : (discourseTested ? '✓ Re-test connection' : 'Test connection') }}
+                    </button>
+                    <p v-if="discourseTestError" class="text-xs text-red-600">{{ discourseTestError }}</p>
+
+                    <template v-if="discourseTested">
+                      <div>
+                        <label class="block text-xs font-semibold text-site-medium mb-1">Default category <span class="text-site-medium font-normal">(optional, for new topics)</span></label>
+                        <select v-model="editForm.defaultCategoryId" class="admin-input">
+                          <option :value="null">— none —</option>
+                          <option v-for="cat in discourseCategories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label class="block text-xs font-semibold text-site-medium mb-1">Default topic <span class="text-site-medium font-normal">(optional, for "reply" mode)</span></label>
+                        <div v-if="editForm.defaultTopicId" class="flex items-center gap-2 mb-2 px-2 py-1 border border-site-light bg-site-bg/40">
+                          <span class="font-mono text-xs text-site-dark truncate">#{{ editForm.defaultTopicId }} {{ editForm.defaultTopicTitle }}</span>
+                          <button @click="clearDefaultTopic" type="button" class="ml-auto font-mono text-xs text-red-600 hover:text-red-700 uppercase">Clear</button>
+                        </div>
+                        <input v-model="discourseTopicQuery" type="text" class="admin-input" placeholder="Search Discourse topics..." />
+                        <div v-if="discourseTopicSearching" class="text-xs text-site-medium font-mono mt-1">Searching...</div>
+                        <div v-if="discourseTopicResults.length > 0" class="mt-2 border border-site-light max-h-48 overflow-y-auto">
+                          <button
+                            v-for="topic in discourseTopicResults"
+                            :key="topic.id"
+                            type="button"
+                            @click="pickDefaultTopic(topic)"
+                            class="block w-full text-left px-2 py-1.5 text-xs font-mono hover:bg-site-bg border-b border-site-light last:border-b-0"
+                          >
+                            #{{ topic.id }} {{ topic.title }}
+                          </button>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label class="block text-xs font-semibold text-site-medium mb-1">
+                          Body template <span class="text-site-medium font-normal">(placeholders: {{ TEMPLATE_PLACEHOLDERS }})</span>
+                        </label>
+                        <textarea v-model="editForm.template" rows="4" class="admin-input font-mono text-xs"></textarea>
+                      </div>
+                    </template>
+
+                    <div class="flex gap-2">
+                      <button
+                        @click="cancelEdit"
+                        :disabled="editSaving"
+                        class="px-3 py-2 border border-site-light text-site-dark font-mono text-xs uppercase tracking-wider hover:border-site-dark transition-colors"
+                      >Cancel</button>
+                      <button
+                        @click="saveDestination"
+                        :disabled="editSaving"
+                        class="px-3 py-2 bg-site-accent text-white font-mono text-xs uppercase tracking-wider hover:bg-[#e89200] transition-colors disabled:opacity-50"
+                      >{{ editSaving ? 'Saving...' : 'Save' }}</button>
+                    </div>
+                  </div>
+                </component>
+              </template>
+              <template v-else>
+                <!-- Read-only row -->
+                <div class="flex items-start justify-between gap-3">
+                  <div class="min-w-0">
+                    <div class="flex items-center gap-2 mb-1">
+                      <span class="font-mono text-sm text-site-dark truncate">{{ dest.name }}</span>
+                      <span class="font-mono text-[0.65rem] uppercase tracking-wider text-site-medium border border-site-light px-1.5 py-0.5">
+                        {{ dest.type }}
+                      </span>
+                    </div>
+                    <p class="font-mono text-xs text-site-medium truncate">{{ dest.config?.url }}</p>
+                  </div>
+                  <div class="flex gap-2 flex-shrink-0">
+                    <button
+                      @click="startEdit(dest)"
+                      class="font-mono text-xs text-site-dark hover:text-site-accent uppercase tracking-wider"
+                    >Edit</button>
+                    <button
+                      @click="deleteDestination(dest)"
+                      class="font-mono text-xs text-red-600 hover:text-red-700 uppercase tracking-wider"
+                    >Delete</button>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </div>
+
+          <!-- New destination form -->
+          <div v-if="editingDestId === 'new'" class="border border-site-light p-3 space-y-3 mb-4">
+            <h4 class="font-mono text-xs uppercase tracking-wider text-site-medium">
+              New {{ editingType === 'discourse' ? 'Discourse integration' : 'webhook' }}
+            </h4>
+
+            <!-- Webhook -->
+            <div v-if="editingType === 'webhook'" class="space-y-3">
+              <div>
+                <label class="block text-xs font-semibold text-site-medium mb-1">Name</label>
+                <input v-model="editForm.name" type="text" class="admin-input" placeholder="IRC relay" />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-site-medium mb-1">Webhook URL</label>
+                <input v-model="editForm.url" type="url" class="admin-input" placeholder="https://relay.example.com/hook/..." />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-site-medium mb-1">
+                  Secret <span class="text-site-medium font-normal">(optional, used for HMAC-SHA256 signature)</span>
+                </label>
+                <input v-model="editForm.secret" type="password" class="admin-input" autocomplete="new-password" />
+              </div>
+            </div>
+
+            <!-- Discourse -->
+            <div v-else-if="editingType === 'discourse'" class="space-y-3">
+              <div>
+                <label class="block text-xs font-semibold text-site-medium mb-1">Name</label>
+                <input v-model="editForm.name" type="text" class="admin-input" placeholder="Discuss server" />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-site-medium mb-1">Discourse URL</label>
+                <input v-model="editForm.url" type="url" class="admin-input" placeholder="https://discuss.example.com" />
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-xs font-semibold text-site-medium mb-1">API Username</label>
+                  <input v-model="editForm.apiUsername" type="text" class="admin-input" autocomplete="off" />
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-site-medium mb-1">API Key</label>
+                  <input v-model="editForm.apiKey" type="password" class="admin-input" autocomplete="new-password" />
+                </div>
+              </div>
+
+              <button
+                type="button"
+                @click="testDiscourseConnection"
+                :disabled="discourseTesting"
+                class="px-3 py-2 border border-site-accent text-site-accent font-mono text-xs uppercase tracking-wider hover:bg-site-accent hover:text-white transition-colors disabled:opacity-50"
+              >
+                {{ discourseTesting ? 'Testing...' : (discourseTested ? '✓ Re-test connection' : 'Test connection') }}
+              </button>
+              <p v-if="discourseTestError" class="text-xs text-red-600">{{ discourseTestError }}</p>
+
+              <template v-if="discourseTested">
+                <div>
+                  <label class="block text-xs font-semibold text-site-medium mb-1">Default category <span class="text-site-medium font-normal">(optional, for new topics)</span></label>
+                  <select v-model="editForm.defaultCategoryId" class="admin-input">
+                    <option :value="null">— none —</option>
+                    <option v-for="cat in discourseCategories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label class="block text-xs font-semibold text-site-medium mb-1">Default topic <span class="text-site-medium font-normal">(optional, for "reply" mode)</span></label>
+                  <div v-if="editForm.defaultTopicId" class="flex items-center gap-2 mb-2 px-2 py-1 border border-site-light bg-site-bg/40">
+                    <span class="font-mono text-xs text-site-dark truncate">#{{ editForm.defaultTopicId }} {{ editForm.defaultTopicTitle }}</span>
+                    <button @click="clearDefaultTopic" type="button" class="ml-auto font-mono text-xs text-red-600 hover:text-red-700 uppercase">Clear</button>
+                  </div>
+                  <input v-model="discourseTopicQuery" type="text" class="admin-input" placeholder="Search Discourse topics..." />
+                  <div v-if="discourseTopicSearching" class="text-xs text-site-medium font-mono mt-1">Searching...</div>
+                  <div v-if="discourseTopicResults.length > 0" class="mt-2 border border-site-light max-h-48 overflow-y-auto">
+                    <button
+                      v-for="topic in discourseTopicResults"
+                      :key="topic.id"
+                      type="button"
+                      @click="pickDefaultTopic(topic)"
+                      class="block w-full text-left px-2 py-1.5 text-xs font-mono hover:bg-site-bg border-b border-site-light last:border-b-0"
+                    >
+                      #{{ topic.id }} {{ topic.title }}
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block text-xs font-semibold text-site-medium mb-1">
+                    Body template <span class="text-site-medium font-normal">(placeholders: {{ TEMPLATE_PLACEHOLDERS }})</span>
+                  </label>
+                  <textarea v-model="editForm.template" rows="4" class="admin-input font-mono text-xs"></textarea>
+                </div>
+              </template>
+            </div>
+
+            <div class="flex gap-2">
+              <button
+                @click="cancelEdit"
+                :disabled="editSaving"
+                class="px-3 py-2 border border-site-light text-site-dark font-mono text-xs uppercase tracking-wider hover:border-site-dark transition-colors"
+              >Cancel</button>
+              <button
+                @click="saveDestination"
+                :disabled="editSaving"
+                class="px-3 py-2 bg-site-accent text-white font-mono text-xs uppercase tracking-wider hover:bg-[#e89200] transition-colors disabled:opacity-50"
+              >{{ editSaving ? 'Saving...' : 'Save' }}</button>
+            </div>
+          </div>
+
+          <!-- Add buttons -->
+          <div v-if="editingDestId !== 'new'" class="flex gap-2">
+            <button
+              @click="startAdd('webhook')"
+              class="px-3 py-2 border border-site-accent text-site-accent font-mono text-xs uppercase tracking-wider hover:bg-site-accent hover:text-white transition-colors"
+            >+ Add Webhook</button>
+            <button
+              @click="startAdd('discourse')"
+              class="px-3 py-2 border border-site-accent text-site-accent font-mono text-xs uppercase tracking-wider hover:bg-site-accent hover:text-white transition-colors"
+            >+ Add Discourse</button>
           </div>
         </div>
       </section>

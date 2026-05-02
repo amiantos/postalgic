@@ -314,8 +314,8 @@ class Storage {
     const stmt = db.prepare(`
       INSERT INTO posts (
         id, blog_id, title, content, content_html, stub, is_draft, category_id,
-        embed_type, embed_position, embed_data, sync_id, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        embed_type, embed_position, embed_data, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     stmt.run(
@@ -330,7 +330,6 @@ class Storage {
       embedType,
       embedPosition,
       embedData,
-      postData.syncId || null,
       postData.createdAt || now,
       postData.updatedAt || now
     );
@@ -453,7 +452,6 @@ class Storage {
       categoryId: row.category_id,
       tagIds: tagIds,
       embed: embed,
-      syncId: row.sync_id,
       createdAt: row.created_at,
       updatedAt: row.updated_at
     };
@@ -537,8 +535,8 @@ class Storage {
     const now = new Date().toISOString();
 
     const stmt = db.prepare(`
-      INSERT INTO categories (id, blog_id, name, description, stub, sync_id, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO categories (id, blog_id, name, description, stub, created_at)
+      VALUES (?, ?, ?, ?, ?, ?)
     `);
 
     stmt.run(
@@ -547,8 +545,7 @@ class Storage {
       categoryData.name || 'Untitled',
       categoryData.description || null,
       categoryData.stub || categoryId,
-      categoryData.syncId || null,
-      categoryData.createdAt || now  // Use provided createdAt for sync imports
+      categoryData.createdAt || now
     );
 
     return this.getCategory(blogId, categoryId);
@@ -597,7 +594,6 @@ class Storage {
       name: row.name,
       description: row.description,
       stub: row.stub,
-      syncId: row.sync_id,
       createdAt: row.created_at
     };
   }
@@ -625,8 +621,8 @@ class Storage {
     const now = new Date().toISOString();
 
     const stmt = db.prepare(`
-      INSERT INTO tags (id, blog_id, name, stub, sync_id, created_at)
-      VALUES (?, ?, ?, ?, ?, ?)
+      INSERT INTO tags (id, blog_id, name, stub, created_at)
+      VALUES (?, ?, ?, ?, ?)
     `);
 
     stmt.run(
@@ -634,8 +630,7 @@ class Storage {
       blogId,
       (tagData.name || 'untitled').toLowerCase(),
       tagData.stub || tagId,
-      tagData.syncId || null,
-      tagData.createdAt || now  // Use provided createdAt for sync imports
+      tagData.createdAt || now
     );
 
     return this.getTag(blogId, tagId);
@@ -684,7 +679,6 @@ class Storage {
       id: row.id,
       name: row.name,
       stub: row.stub,
-      syncId: row.sync_id,
       createdAt: row.created_at
     };
   }
@@ -717,8 +711,8 @@ class Storage {
     `).get(blogId).max_order;
 
     const stmt = db.prepare(`
-      INSERT INTO sidebar_objects (id, blog_id, title, type, content, content_html, sort_order, sync_id, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO sidebar_objects (id, blog_id, title, type, content, content_html, sort_order, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     stmt.run(
@@ -729,8 +723,7 @@ class Storage {
       objectData.content || null,
       objectData.contentHtml || null,
       objectData.order ?? maxOrder + 1,
-      objectData.syncId || null,
-      objectData.createdAt || now  // Use provided createdAt for sync imports
+      objectData.createdAt || now
     );
 
     // Handle links for linkList type
@@ -836,7 +829,6 @@ class Storage {
       contentHtml: row.content_html,
       order: row.sort_order,
       links: links,
-      syncId: row.sync_id,
       createdAt: row.created_at
     };
   }
@@ -869,8 +861,8 @@ class Storage {
 
     // Save metadata
     const stmt = db.prepare(`
-      INSERT INTO static_files (id, blog_id, filename, stored_filename, mime_type, size, special_file_type, sync_id, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO static_files (id, blog_id, filename, stored_filename, mime_type, size, special_file_type, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     stmt.run(
@@ -881,7 +873,6 @@ class Storage {
       fileData.mimeType || null,
       fileData.size || fileBuffer.length,
       fileData.specialFileType || null,
-      fileData.syncId || null,
       now
     );
 
@@ -940,7 +931,6 @@ class Storage {
       size: row.size,
       isSpecialFile: !!row.special_file_type,
       specialFileType: row.special_file_type,
-      syncId: row.sync_id,
       createdAt: row.created_at
     };
   }
@@ -1063,6 +1053,169 @@ class Storage {
     }
     this.ensureDir(siteDir);
     return siteDir;
+  }
+
+  // ============ Share Destinations ============
+
+  getShareDestinations(blogId) {
+    const db = getDatabase();
+    const rows = db.prepare(`
+      SELECT * FROM share_destinations WHERE blog_id = ? ORDER BY created_at ASC
+    `).all(blogId);
+    return rows.map(row => this.mapShareDestinationRow(row));
+  }
+
+  getShareDestination(blogId, destinationId) {
+    const db = getDatabase();
+    const row = db.prepare(
+      'SELECT * FROM share_destinations WHERE id = ? AND blog_id = ?'
+    ).get(destinationId, blogId);
+    return row ? this.mapShareDestinationRow(row) : null;
+  }
+
+  createShareDestination(blogId, { type, name, config }) {
+    const db = getDatabase();
+    const id = uuidv4();
+    const now = new Date().toISOString();
+
+    db.prepare(`
+      INSERT INTO share_destinations (id, blog_id, type, name, config, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `).run(id, blogId, type, name, JSON.stringify(config || {}), now, now);
+
+    return this.getShareDestination(blogId, id);
+  }
+
+  updateShareDestination(blogId, destinationId, { name, config }) {
+    const existing = this.getShareDestination(blogId, destinationId);
+    if (!existing) {
+      throw new Error(`Share destination ${destinationId} not found`);
+    }
+
+    const db = getDatabase();
+    const now = new Date().toISOString();
+
+    db.prepare(`
+      UPDATE share_destinations SET name = ?, config = ?, updated_at = ?
+      WHERE id = ? AND blog_id = ?
+    `).run(
+      name !== undefined ? name : existing.name,
+      JSON.stringify(config !== undefined ? config : existing.config),
+      now,
+      destinationId,
+      blogId
+    );
+
+    return this.getShareDestination(blogId, destinationId);
+  }
+
+  deleteShareDestination(blogId, destinationId) {
+    const db = getDatabase();
+    db.prepare('DELETE FROM share_destinations WHERE id = ? AND blog_id = ?')
+      .run(destinationId, blogId);
+  }
+
+  mapShareDestinationRow(row) {
+    let config = {};
+    try {
+      config = row.config ? JSON.parse(row.config) : {};
+    } catch (e) {
+      config = {};
+    }
+    return {
+      id: row.id,
+      blogId: row.blog_id,
+      type: row.type,
+      name: row.name,
+      config,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at
+    };
+  }
+
+  // ============ Post Shares (history log) ============
+
+  recordPostShare(blogId, { postId, destinationId, status, deliveryId, permalink, error }) {
+    const db = getDatabase();
+    const id = uuidv4();
+    const now = new Date().toISOString();
+
+    db.prepare(`
+      INSERT INTO post_shares (id, blog_id, post_id, destination_id, shared_at, status, delivery_id, permalink, error)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      id,
+      blogId,
+      postId,
+      destinationId,
+      now,
+      status,
+      deliveryId || null,
+      permalink || null,
+      error || null
+    );
+
+    return {
+      id,
+      blogId,
+      postId,
+      destinationId,
+      sharedAt: now,
+      status,
+      deliveryId: deliveryId || null,
+      permalink: permalink || null,
+      error: error || null
+    };
+  }
+
+  getPostShares(blogId, postId) {
+    const db = getDatabase();
+    const rows = db.prepare(`
+      SELECT * FROM post_shares
+      WHERE blog_id = ? AND post_id = ?
+      ORDER BY shared_at DESC
+    `).all(blogId, postId);
+    return rows.map(row => ({
+      id: row.id,
+      blogId: row.blog_id,
+      postId: row.post_id,
+      destinationId: row.destination_id,
+      sharedAt: row.shared_at,
+      status: row.status,
+      deliveryId: row.delivery_id,
+      permalink: row.permalink,
+      error: row.error
+    }));
+  }
+
+  hasSuccessfulShare(blogId, postId, destinationId) {
+    const db = getDatabase();
+    const row = db.prepare(`
+      SELECT shared_at FROM post_shares
+      WHERE blog_id = ? AND post_id = ? AND destination_id = ? AND status = 'success'
+      ORDER BY shared_at DESC LIMIT 1
+    `).get(blogId, postId, destinationId);
+    return row ? row.shared_at : null;
+  }
+
+  getLatestSuccessfulShares(blogId, postIds) {
+    const result = new Map();
+    if (!postIds || postIds.length === 0) return result;
+
+    const db = getDatabase();
+    const placeholders = postIds.map(() => '?').join(',');
+    const rows = db.prepare(`
+      SELECT DISTINCT post_id, destination_id FROM post_shares
+      WHERE blog_id = ? AND status = 'success' AND post_id IN (${placeholders})
+    `).all(blogId, ...postIds);
+
+    for (const row of rows) {
+      if (!result.has(row.post_id)) {
+        result.set(row.post_id, new Set());
+      }
+      result.get(row.post_id).add(row.destination_id);
+    }
+    return result;
   }
 
 }

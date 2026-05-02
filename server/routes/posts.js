@@ -58,6 +58,13 @@ router.get('/', (req, res) => {
     // Enrich posts with computed properties
     const enrichedPosts = paginatedPosts.map(post => enrichPost(post, storage, blogId));
 
+    // Batch-attach sharedDestinationIds (which destinations this post has been shared to successfully)
+    const sharedMap = storage.getLatestSuccessfulShares(blogId, paginatedPosts.map(p => p.id));
+    for (const post of enrichedPosts) {
+      const set = sharedMap.get(post.id);
+      post.sharedDestinationIds = set ? Array.from(set) : [];
+    }
+
     res.json({
       posts: enrichedPosts,
       total,
