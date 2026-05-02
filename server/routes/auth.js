@@ -160,7 +160,11 @@ router.post('/register/verify', async (req, res, next) => {
       response: req.body,
       expectedChallenge: stored.challenge,
       expectedOrigin: getOrigin(req),
-      expectedRPID: getRpId(req)
+      expectedRPID: getRpId(req),
+      // Match the "preferred" UV setting on the options side: if the
+      // authenticator performed UV great, but don't reject when it didn't
+      // (e.g. desktop password managers without biometrics enabled).
+      requireUserVerification: false
     });
 
     if (!verification.verified || !verification.registrationInfo) {
@@ -239,6 +243,7 @@ router.post('/authenticate/verify', async (req, res, next) => {
       expectedChallenge: stored.challenge,
       expectedOrigin: getOrigin(req),
       expectedRPID: getRpId(req),
+      requireUserVerification: false,
       credential: {
         id: stored_credential.credentialId,
         publicKey: stored_credential.publicKey,
