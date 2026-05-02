@@ -140,6 +140,49 @@ function runMigrations(database) {
     database.exec(`ALTER TABLE blogs ADD COLUMN cf_api_token TEXT`);
     database.exec(`ALTER TABLE blogs ADD COLUMN cf_project_name TEXT`);
   }
+
+  // Migration: Add share_destinations and post_shares tables
+  const shareDestinationsExists = database.prepare(`
+    SELECT name FROM sqlite_master WHERE type='table' AND name='share_destinations'
+  `).get();
+  if (!shareDestinationsExists) {
+    console.log('[Database] Running migration: creating share_destinations table');
+    database.exec(`
+      CREATE TABLE share_destinations (
+        id TEXT PRIMARY KEY,
+        blog_id TEXT NOT NULL REFERENCES blogs(id) ON DELETE CASCADE,
+        type TEXT NOT NULL,
+        name TEXT NOT NULL,
+        config TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT
+      );
+      CREATE INDEX idx_share_destinations_blog_id ON share_destinations(blog_id);
+    `);
+  }
+
+  const postSharesExists = database.prepare(`
+    SELECT name FROM sqlite_master WHERE type='table' AND name='post_shares'
+  `).get();
+  if (!postSharesExists) {
+    console.log('[Database] Running migration: creating post_shares table');
+    database.exec(`
+      CREATE TABLE post_shares (
+        id TEXT PRIMARY KEY,
+        blog_id TEXT NOT NULL REFERENCES blogs(id) ON DELETE CASCADE,
+        post_id TEXT NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
+        destination_id TEXT NOT NULL REFERENCES share_destinations(id) ON DELETE CASCADE,
+        shared_at TEXT NOT NULL,
+        status TEXT NOT NULL,
+        delivery_id TEXT,
+        permalink TEXT,
+        error TEXT
+      );
+      CREATE INDEX idx_post_shares_post_id ON post_shares(post_id);
+      CREATE INDEX idx_post_shares_destination_id ON post_shares(destination_id);
+      CREATE INDEX idx_post_shares_blog_id ON post_shares(blog_id);
+    `);
+  }
 }
 
 /**
@@ -307,6 +350,30 @@ function createSchema(database) {
       file_hashes TEXT
     );
 
+    -- Share destinations (webhooks today; Discourse and others in the future)
+    CREATE TABLE share_destinations (
+      id TEXT PRIMARY KEY,
+      blog_id TEXT NOT NULL REFERENCES blogs(id) ON DELETE CASCADE,
+      type TEXT NOT NULL,
+      name TEXT NOT NULL,
+      config TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      updated_at TEXT
+    );
+
+    -- Per-post share attempt log
+    CREATE TABLE post_shares (
+      id TEXT PRIMARY KEY,
+      blog_id TEXT NOT NULL REFERENCES blogs(id) ON DELETE CASCADE,
+      post_id TEXT NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
+      destination_id TEXT NOT NULL REFERENCES share_destinations(id) ON DELETE CASCADE,
+      shared_at TEXT NOT NULL,
+      status TEXT NOT NULL,
+      delivery_id TEXT,
+      permalink TEXT,
+      error TEXT
+    );
+
     -- Indexes for performance
     CREATE INDEX idx_posts_blog_id ON posts(blog_id);
     CREATE INDEX idx_posts_category_id ON posts(category_id);
@@ -318,6 +385,10 @@ function createSchema(database) {
     CREATE INDEX idx_post_tags_tag_id ON post_tags(tag_id);
     CREATE INDEX idx_sidebar_objects_blog_id ON sidebar_objects(blog_id);
     CREATE INDEX idx_static_files_blog_id ON static_files(blog_id);
+    CREATE INDEX idx_share_destinations_blog_id ON share_destinations(blog_id);
+    CREATE INDEX idx_post_shares_post_id ON post_shares(post_id);
+    CREATE INDEX idx_post_shares_destination_id ON post_shares(destination_id);
+    CREATE INDEX idx_post_shares_blog_id ON post_shares(blog_id);
 
     -- Full-text search for posts
     CREATE VIRTUAL TABLE posts_fts USING fts5(

@@ -219,6 +219,46 @@ export const metadataApi = {
   fetch: (url) => fetchApi(`/metadata?url=${encodeURIComponent(url)}`)
 };
 
+// Share Destination API
+export const shareDestinationApi = {
+  list: (blogId) => fetchApi(`/blogs/${blogId}/share/destinations`),
+  create: (blogId, data) =>
+    fetchApi(`/blogs/${blogId}/share/destinations`, { method: 'POST', body: JSON.stringify(data) }),
+  update: (blogId, destinationId, data) =>
+    fetchApi(`/blogs/${blogId}/share/destinations/${destinationId}`, { method: 'PUT', body: JSON.stringify(data) }),
+  delete: (blogId, destinationId) =>
+    fetchApi(`/blogs/${blogId}/share/destinations/${destinationId}`, { method: 'DELETE' })
+};
+
+// Share Action API
+export const shareApi = {
+  history: (blogId, postId) => fetchApi(`/blogs/${blogId}/share/posts/${postId}/shares`),
+  share: async (blogId, postId, destinationId, { force = false } = {}) => {
+    const response = await fetch(`${API_BASE}/blogs/${blogId}/share/posts/${postId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ destinationId, force })
+    });
+
+    let data = null;
+    try { data = await response.json(); } catch { data = {}; }
+
+    if (response.status === 409 && data?.alreadyShared) {
+      // Surface as a structured error so the UI can offer a "share again" prompt
+      const err = new Error(data.error || 'Already shared');
+      err.alreadyShared = true;
+      err.lastSharedAt = data.lastSharedAt;
+      throw err;
+    }
+
+    if (!response.ok) {
+      throw new Error(data?.error || `HTTP ${response.status}`);
+    }
+
+    return data;
+  }
+};
+
 // Import API
 export const importApi = {
   validate: async (file) => {

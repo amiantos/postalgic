@@ -2,7 +2,7 @@
 import { ref, computed, watch, nextTick } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useBlogStore } from '@/stores/blog';
-import { blogApi, postApi } from '@/api';
+import { blogApi, postApi, shareDestinationApi } from '@/api';
 
 const route = useRoute();
 const router = useRouter();
@@ -25,6 +25,7 @@ const sections = [
   { id: 'author', label: 'Author Information', terms: 'author name url email' },
   { id: 'analytics', label: 'Simple Analytics', terms: 'simple analytics tracking pageviews visitors domain' },
   { id: 'publishing', label: 'Publishing', terms: 'publishing publisher type aws s3 sftp ftp git github cloudflare pages deploy bucket region' },
+  { id: 'sharing', label: 'Sharing', terms: 'sharing share webhook webhooks destinations relay irc discourse signature hmac integrations' },
   { id: 'maintenance', label: 'Maintenance', terms: 'maintenance youtube thumbnails backfill' },
   { id: 'developer', label: 'Developer Tools', terms: 'developer tools debug export' },
   { id: 'danger', label: 'Danger Zone', terms: 'danger delete blog' },
@@ -99,6 +100,96 @@ async function backfillYouTubeThumbnails() {
     error.value = e.message;
   } finally {
     backfilling.value = false;
+  }
+}
+
+// ===== Share destinations =====
+const shareDestinations = ref([]);
+const shareLoading = ref(false);
+const shareError = ref(null);
+const editingDestId = ref(null);  // 'new' | <id>
+const editForm = ref({ name: '', url: '', secret: '' });
+const editSaving = ref(false);
+
+async function loadShareDestinations() {
+  shareLoading.value = true;
+  shareError.value = null;
+  try {
+    shareDestinations.value = await shareDestinationApi.list(blogId.value) || [];
+  } catch (e) {
+    shareError.value = e.message;
+  } finally {
+    shareLoading.value = false;
+  }
+}
+
+watch(blogId, (id) => {
+  if (id) loadShareDestinations();
+}, { immediate: true });
+
+function startAddWebhook() {
+  editingDestId.value = 'new';
+  editForm.value = { name: '', url: '', secret: '' };
+}
+
+function startEdit(dest) {
+  editingDestId.value = dest.id;
+  editForm.value = {
+    name: dest.name || '',
+    url: dest.config?.url || '',
+    secret: dest.config?.secret || ''
+  };
+}
+
+function cancelEdit() {
+  editingDestId.value = null;
+  editForm.value = { name: '', url: '', secret: '' };
+}
+
+async function saveDestination() {
+  shareError.value = null;
+  if (!editForm.value.name.trim()) {
+    shareError.value = 'Name is required';
+    return;
+  }
+  if (!/^https?:\/\//i.test(editForm.value.url.trim())) {
+    shareError.value = 'A valid http(s) URL is required';
+    return;
+  }
+
+  editSaving.value = true;
+  try {
+    const payload = {
+      name: editForm.value.name.trim(),
+      config: {
+        url: editForm.value.url.trim(),
+        secret: editForm.value.secret || ''
+      }
+    };
+
+    if (editingDestId.value === 'new') {
+      await shareDestinationApi.create(blogId.value, { type: 'webhook', ...payload });
+    } else {
+      await shareDestinationApi.update(blogId.value, editingDestId.value, payload);
+    }
+    await loadShareDestinations();
+    cancelEdit();
+  } catch (e) {
+    shareError.value = e.message;
+  } finally {
+    editSaving.value = false;
+  }
+}
+
+async function deleteDestination(dest) {
+  if (!confirm(`Delete share destination "${dest.name}"?`)) return;
+  shareError.value = null;
+  try {
+    await shareDestinationApi.delete(blogId.value, dest.id);
+    if (editingDestId.value === dest.id) cancelEdit();
+    await loadShareDestinations();
+  } catch (e) {
+    shareError.value = e.message;
   }
 }
 
@@ -555,6 +646,139 @@ async function downloadDebugExport() {
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      <!-- Sharing -->
+      <section v-show="isSectionVisible('sharing')" class="border-t border-site-light pt-8">
+        <h3 class="text-base font-semibold text-site-dark mb-2">Sharing</h3>
+        <p class="text-sm text-site-dark mb-4">
+          Configure webhooks and integrations to announce new posts. Each post in your list gets a Share button that fires the destination you pick.
+        </p>
+
+        <div v-if="shareError" class="mb-4 p-3 border border-red-500 text-sm text-red-600">
+          {{ shareError }}
+        </div>
+
+        <div v-if="shareLoading" class="text-sm text-site-medium font-mono">Loading...</div>
+
+        <div v-else>
+          <!-- Existing destinations -->
+          <div v-if="shareDestinations.length > 0" class="space-y-3 mb-4">
+            <div
+              v-for="dest in shareDestinations"
+              :key="dest.id"
+              class="border border-site-light p-3"
+            >
+              <template v-if="editingDestId === dest.id">
+                <!-- Edit form -->
+                <div class="space-y-3">
+                  <div>
+                    <label class="block text-xs font-semibold text-site-medium mb-1">Name</label>
+                    <input v-model="editForm.name" type="text" class="admin-input" placeholder="IRC relay" />
+                  </div>
+                  <div>
+                    <label class="block text-xs font-semibold text-site-medium mb-1">Webhook URL</label>
+                    <input v-model="editForm.url" type="url" class="admin-input" placeholder="https://relay.example.com/hook/..." />
+                  </div>
+                  <div>
+                    <label class="block text-xs font-semibold text-site-medium mb-1">
+                      Secret <span class="text-site-medium font-normal">(optional, used for HMAC-SHA256 signature)</span>
+                    </label>
+                    <input v-model="editForm.secret" type="password" class="admin-input" autocomplete="new-password" />
+                  </div>
+                  <div class="flex gap-2">
+                    <button
+                      @click="cancelEdit"
+                      :disabled="editSaving"
+                      class="px-3 py-2 border border-site-light text-site-dark font-mono text-xs uppercase tracking-wider hover:border-site-dark transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      @click="saveDestination"
+                      :disabled="editSaving"
+                      class="px-3 py-2 bg-site-accent text-white font-mono text-xs uppercase tracking-wider hover:bg-[#e89200] transition-colors disabled:opacity-50"
+                    >
+                      {{ editSaving ? 'Saving...' : 'Save' }}
+                    </button>
+                  </div>
+                </div>
+              </template>
+              <template v-else>
+                <!-- Read-only row -->
+                <div class="flex items-start justify-between gap-3">
+                  <div class="min-w-0">
+                    <div class="flex items-center gap-2 mb-1">
+                      <span class="font-mono text-sm text-site-dark truncate">{{ dest.name }}</span>
+                      <span class="font-mono text-[0.65rem] uppercase tracking-wider text-site-medium border border-site-light px-1.5 py-0.5">
+                        {{ dest.type }}
+                      </span>
+                    </div>
+                    <p class="font-mono text-xs text-site-medium truncate">{{ dest.config?.url }}</p>
+                  </div>
+                  <div class="flex gap-2 flex-shrink-0">
+                    <button
+                      @click="startEdit(dest)"
+                      class="font-mono text-xs text-site-dark hover:text-site-accent uppercase tracking-wider"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      @click="deleteDestination(dest)"
+                      class="font-mono text-xs text-red-600 hover:text-red-700 uppercase tracking-wider"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </div>
+
+          <!-- New webhook form -->
+          <div v-if="editingDestId === 'new'" class="border border-site-light p-3 space-y-3 mb-4">
+            <h4 class="font-mono text-xs uppercase tracking-wider text-site-medium">New webhook</h4>
+            <div>
+              <label class="block text-xs font-semibold text-site-medium mb-1">Name</label>
+              <input v-model="editForm.name" type="text" class="admin-input" placeholder="IRC relay" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-site-medium mb-1">Webhook URL</label>
+              <input v-model="editForm.url" type="url" class="admin-input" placeholder="https://relay.example.com/hook/..." />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-site-medium mb-1">
+                Secret <span class="text-site-medium font-normal">(optional, used for HMAC-SHA256 signature)</span>
+              </label>
+              <input v-model="editForm.secret" type="password" class="admin-input" autocomplete="new-password" />
+            </div>
+            <div class="flex gap-2">
+              <button
+                @click="cancelEdit"
+                :disabled="editSaving"
+                class="px-3 py-2 border border-site-light text-site-dark font-mono text-xs uppercase tracking-wider hover:border-site-dark transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                @click="saveDestination"
+                :disabled="editSaving"
+                class="px-3 py-2 bg-site-accent text-white font-mono text-xs uppercase tracking-wider hover:bg-[#e89200] transition-colors disabled:opacity-50"
+              >
+                {{ editSaving ? 'Saving...' : 'Save' }}
+              </button>
+            </div>
+          </div>
+
+          <!-- Add button -->
+          <button
+            v-if="editingDestId !== 'new'"
+            @click="startAddWebhook"
+            class="px-3 py-2 border border-site-accent text-site-accent font-mono text-xs uppercase tracking-wider hover:bg-site-accent hover:text-white transition-colors"
+          >
+            + Add Webhook
+          </button>
         </div>
       </section>
 

@@ -186,10 +186,9 @@ function buildPostContext(post, baseContext, inList = false) {
   // Use pre-rendered HTML if available, otherwise render from markdown (fallback for migration)
   let contentHtml = post.contentHtml || renderMarkdown(post.content || '');
 
-  // Insert embed HTML (with newlines matching iOS)
-  // Use syncId for stable identifiers across sync (falls back to id for local posts)
+  // Insert embed HTML
   if (post.embed) {
-    const embedHtml = generateEmbedHtml(post.embed, post.syncId || post.id, baseContext.basePath);
+    const embedHtml = generateEmbedHtml(post.embed, post.id, baseContext.basePath);
     if (post.embed.position === 'above') {
       contentHtml = embedHtml + '\n' + contentHtml;
     } else {
