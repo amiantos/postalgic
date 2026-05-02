@@ -233,11 +233,12 @@ export const shareDestinationApi = {
 // Share Action API
 export const shareApi = {
   history: (blogId, postId) => fetchApi(`/blogs/${blogId}/share/posts/${postId}/shares`),
-  share: async (blogId, postId, destinationId, { force = false } = {}) => {
+  share: async (blogId, postId, destinationId, options = {}) => {
+    const { force = false, ...params } = options;
     const response = await fetch(`${API_BASE}/blogs/${blogId}/share/posts/${postId}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ destinationId, force })
+      body: JSON.stringify({ destinationId, force, ...params })
     });
 
     let data = null;
@@ -256,7 +257,22 @@ export const shareApi = {
     }
 
     return data;
-  }
+  },
+  // Discourse helper proxies (server-side: API key stays on server).
+  // Pre-save settings UI uses the test*/searchTopics* variants that accept config in body.
+  discourseTest: (blogId, config) =>
+    fetchApi(`/blogs/${blogId}/share/discourse/test`, { method: 'POST', body: JSON.stringify({ config }) }),
+  discourseSearchTopicsByConfig: (blogId, config, q) =>
+    fetchApi(`/blogs/${blogId}/share/discourse/search-topics`, { method: 'POST', body: JSON.stringify({ config, q }) }),
+  discourseGetTopicByConfig: (blogId, config, topicId) =>
+    fetchApi(`/blogs/${blogId}/share/discourse/topic`, { method: 'POST', body: JSON.stringify({ config, topicId }) }),
+  // Saved-destination variants — used by ShareModal at share time
+  discourseCategories: (blogId, destinationId) =>
+    fetchApi(`/blogs/${blogId}/share/destinations/${destinationId}/discourse/categories`),
+  discourseSearchTopics: (blogId, destinationId, query) =>
+    fetchApi(`/blogs/${blogId}/share/destinations/${destinationId}/discourse/search?q=${encodeURIComponent(query || '')}`),
+  discourseGetTopic: (blogId, destinationId, topicId) =>
+    fetchApi(`/blogs/${blogId}/share/destinations/${destinationId}/discourse/topic/${encodeURIComponent(topicId)}`)
 };
 
 // Import API

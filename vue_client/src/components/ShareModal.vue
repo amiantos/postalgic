@@ -21,12 +21,27 @@ const confirmReshare = ref(false);
 const logMessages = ref([]);
 const logContainer = ref(null);
 
+// Discourse-specific share-time state
+const discourseMode = ref('reply');  // 'reply' | 'new_topic'
+const discourseTopicId = ref(null);
+const discourseTopicTitle = ref('');
+const discourseTopicQuery = ref('');
+const discourseTopicResults = ref([]);
+const discourseTopicSearching = ref(false);
+const discourseCategories = ref([]);
+const discourseCategoryId = ref(null);
+const discourseTopicTitleInput = ref('');
+const discourseTagsInput = ref('');
+let discourseTopicSearchTimeout = null;
+
 const isWorking = computed(() => loading.value || sending.value);
 const hasDestinations = computed(() => destinations.value.length > 0);
 
 const selectedDestination = computed(() =>
   destinations.value.find(d => d.id === selectedId.value) || null
 );
+
+const isDiscourseSelected = computed(() => selectedDestination.value?.type === 'discourse');
 
 const selectedLastShared = computed(() => {
   if (!selectedId.value) return null;
@@ -52,6 +67,20 @@ function reset() {
   confirmReshare.value = false;
   logMessages.value = [];
   sending.value = false;
+  resetDiscourseState();
+}
+
+function resetDiscourseState() {
+  discourseMode.value = 'reply';
+  discourseTopicId.value = null;
+  discourseTopicTitle.value = '';
+  discourseTopicQuery.value = '';
+  discourseTopicResults.value = [];
+  discourseTopicSearching.value = false;
+  discourseCategories.value = [];
+  discourseCategoryId.value = null;
+  discourseTopicTitleInput.value = '';
+  discourseTagsInput.value = '';
 }
 
 function addLog(text, type = 'info') {
@@ -115,8 +144,111 @@ function formatRelative(iso) {
   return new Date(iso).toLocaleDateString();
 }
 
+// When a Discourse destination is picked, prime the share-time defaults from
+// its config and (lazily) load categories so the user can change them.
+watch(selectedId, async () => {
+  resetDiscourseState();
+  const dest = selectedDestination.value;
+  if (!dest || dest.type !== 'discourse') return;
+
+  const cfg = dest.config || {};
+  if (cfg.defaultTopicId) {
+    discourseMode.value = 'reply';
+    discourseTopicId.value = cfg.defaultTopicId;
+    discourseTopicTitle.value = cfg.defaultTopicTitle || '';
+  } else {
+    discourseMode.value = 'new_topic';
+  }
+
+  discourseCategoryId.value = cfg.defaultCategoryId ?? null;
+  discourseTopicTitleInput.value = props.post?.title || props.post?.displayTitle || '';
+  discourseTagsInput.value = (props.post?.tags || []).map(t => t.name || t).join(', ');
+
+  // Lazy-fetch categories for the dropdown
+  try {
+    discourseCategories.value = await shareApi.discourseCategories(props.blogId, dest.id) || [];
+  } catch (e) {
+    addLog(`Could not load Discourse categories: ${e.message}`, 'warning');
+  }
+});
+
+watch(discourseTopicQuery, (q) => {
+  if (discourseTopicSearchTimeout) clearTimeout(discourseTopicSearchTimeout);
+  if (!q || !q.trim() || !isDiscourseSelected.value) {
+    discourseTopicResults.value = [];
+    return;
+  }
+  discourseTopicSearchTimeout = setTimeout(searchDiscourseTopicsNow, 400);
+});
+
+async function searchDiscourseTopicsNow() {
+  if (!isDiscourseSelected.value) return;
+  discourseTopicSearching.value = true;
+  try {
+    const results = await shareApi.discourseSearchTopics(
+      props.blogId,
+      selectedDestination.value.id,
+      discourseTopicQuery.value
+    );
+    discourseTopicResults.value = results || [];
+  } catch (e) {
+    addLog(`Search failed: ${e.message}`, 'warning');
+    discourseTopicResults.value = [];
+  } finally {
+    discourseTopicSearching.value = false;
+  }
+}
+
+function pickTopic(topic) {
+  discourseTopicId.value = topic.id;
+  discourseTopicTitle.value = topic.title;
+  discourseTopicQuery.value = '';
+  discourseTopicResults.value = [];
+}
+
+function clearTopic() {
+  discourseTopicId.value = null;
+  discourseTopicTitle.value = '';
+}
+
+function buildShareParams() {
+  if (!isDiscourseSelected.value) return {};
+  if (discourseMode.value === 'reply') {
+    return {
+      mode: 'reply',
+      topicId: discourseTopicId.value
+    };
+  }
+  return {
+    mode: 'new_topic',
+    title: discourseTopicTitleInput.value || (props.post?.title || ''),
+    categoryId: discourseCategoryId.value || null,
+    tags: discourseTagsInput.value
+      .split(',')
+      .map(t => t.trim())
+      .filter(Boolean)
+  };
+}
+
+function validateDiscourseInput() {
+  if (!isDiscourseSelected.value) return null;
+  if (discourseMode.value === 'reply' && !discourseTopicId.value) {
+    return 'Pick a topic to reply to.';
+  }
+  if (discourseMode.value === 'new_topic' && !discourseTopicTitleInput.value.trim()) {
+    return 'A new topic needs a title.';
+  }
+  return null;
+}
+
 async function doShare(force) {
   if (!selectedId.value) return;
+
+  const validationError = validateDiscourseInput();
+  if (validationError) {
+    error.value = validationError;
+    return;
+  }
 
   sending.value = true;
   error.value = null;
@@ -125,8 +257,12 @@ async function doShare(force) {
   addLog(`Verifying post URL...`, 'info');
 
   try {
-    const data = await shareApi.share(props.blogId, props.post.id, selectedId.value, { force });
+    const data = await shareApi.share(props.blogId, props.post.id, selectedId.value, {
+      force,
+      ...buildShareParams()
+    });
     addLog(`Sent to ${data.destinationName}`, 'success');
+    if (data.result?.postUrl) addLog(data.result.postUrl, 'info');
     result.value = data;
     history.value = await shareApi.history(props.blogId, props.post.id).catch(() => history.value);
     emit('shared', { destinationId: selectedId.value });
@@ -209,16 +345,23 @@ function close() {
             No share destinations configured.
           </p>
           <p class="text-sm text-site-medium">
-            Add a webhook in <span class="font-mono">Blog Settings &rarr; Sharing</span> to enable sharing.
+            Add a webhook or Discourse integration in <span class="font-mono">Blog Settings &rarr; Sharing</span> to enable sharing.
           </p>
         </div>
 
         <!-- Done -->
-        <div v-else-if="result" class="bg-white border border-site-light p-4 mb-4">
-          <p class="font-mono text-sm text-green-600 mb-2">
+        <div v-else-if="result" class="bg-white border border-site-light p-4 mb-4 space-y-2">
+          <p class="font-mono text-sm text-green-600">
             &#10003; Shared to {{ result.destinationName }}
           </p>
+          <p v-if="result.result?.postUrl" class="text-sm text-site-medium break-all">
+            Discourse:
+            <a :href="result.result.postUrl" target="_blank" class="hover:text-site-accent underline">
+              {{ result.result.postUrl }}
+            </a>
+          </p>
           <p class="text-sm text-site-medium break-all">
+            Permalink:
             <a :href="result.permalink" target="_blank" class="hover:text-site-accent underline">
               {{ result.permalink }}
             </a>
@@ -261,6 +404,68 @@ function close() {
                 </p>
               </div>
             </label>
+          </div>
+
+          <!-- Discourse sub-form -->
+          <div v-if="isDiscourseSelected" class="bg-white border border-site-light p-3 mb-4 space-y-3">
+            <div class="flex items-center gap-4">
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input type="radio" value="reply" v-model="discourseMode" :disabled="sending" />
+                <span class="font-mono text-xs uppercase tracking-wider text-site-dark">Reply to topic</span>
+              </label>
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input type="radio" value="new_topic" v-model="discourseMode" :disabled="sending" />
+                <span class="font-mono text-xs uppercase tracking-wider text-site-dark">New topic</span>
+              </label>
+            </div>
+
+            <!-- Reply mode -->
+            <div v-if="discourseMode === 'reply'" class="space-y-2">
+              <div v-if="discourseTopicId" class="flex items-center gap-2 px-2 py-1 border border-site-light bg-site-bg/40">
+                <span class="font-mono text-xs text-site-dark truncate">#{{ discourseTopicId }} {{ discourseTopicTitle }}</span>
+                <button @click="clearTopic" type="button" class="ml-auto font-mono text-xs text-site-medium hover:text-red-600 uppercase">Change</button>
+              </div>
+              <template v-else>
+                <input
+                  v-model="discourseTopicQuery"
+                  type="text"
+                  class="admin-input"
+                  placeholder="Search Discourse topics..."
+                  :disabled="sending"
+                />
+                <div v-if="discourseTopicSearching" class="text-xs text-site-medium font-mono">Searching...</div>
+                <div v-if="discourseTopicResults.length > 0" class="border border-site-light max-h-48 overflow-y-auto">
+                  <button
+                    v-for="topic in discourseTopicResults"
+                    :key="topic.id"
+                    type="button"
+                    @click="pickTopic(topic)"
+                    class="block w-full text-left px-2 py-1.5 text-xs font-mono hover:bg-site-bg border-b border-site-light last:border-b-0"
+                  >
+                    #{{ topic.id }} {{ topic.title }}
+                  </button>
+                </div>
+              </template>
+            </div>
+
+            <!-- New topic mode -->
+            <div v-else class="space-y-2">
+              <div>
+                <label class="block text-xs font-semibold text-site-medium mb-1">Title</label>
+                <input v-model="discourseTopicTitleInput" type="text" class="admin-input" :disabled="sending" />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-site-medium mb-1">Category</label>
+                <select v-model="discourseCategoryId" class="admin-input" :disabled="sending">
+                  <option :value="null">— none —</option>
+                  <option v-for="cat in discourseCategories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-site-medium mb-1">Tags <span class="text-site-medium font-normal">(comma-separated)</span></label>
+                <input v-model="discourseTagsInput" type="text" class="admin-input" :disabled="sending" />
+              </div>
+            </div>
           </div>
 
           <!-- Re-share confirmation -->

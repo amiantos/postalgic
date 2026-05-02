@@ -2,21 +2,61 @@ import crypto from 'crypto';
 
 const REQUEST_TIMEOUT_MS = 15000;
 
+function buildWebhookPayload({ post, blog, context, deliveryId }) {
+  return {
+    event: 'post.share',
+    delivery_id: deliveryId,
+    blog: {
+      name: blog.name || null,
+      url: blog.url || null,
+      tagline: blog.tagline || null
+    },
+    author: {
+      name: blog.authorName || null,
+      url: blog.authorUrl || null,
+      email: blog.authorEmail || null
+    },
+    post: {
+      id: post.id,
+      title: post.title || null,
+      excerpt: context.excerpt,
+      content_markdown: post.content || '',
+      content_html: post.contentHtml || null,
+      permalink: context.permalink,
+      stub: post.stub,
+      published_at: post.createdAt,
+      category: context.categoryName,
+      tags: context.tags,
+      embed: context.embed
+    }
+  };
+}
+
 export class WebhookSharer {
   static type = 'webhook';
 
-  async send({ payload, config }) {
-    const url = config?.url;
-    if (!url) {
-      throw new Error('Webhook destination has no URL configured');
+  validateConfig(config) {
+    if (!config?.url) throw new Error('Webhook destination has no URL configured');
+    try {
+      const u = new URL(config.url);
+      if (u.protocol !== 'http:' && u.protocol !== 'https:') {
+        throw new Error('Webhook URL must use http or https');
+      }
+    } catch {
+      throw new Error('Webhook URL is not a valid URL');
     }
+  }
 
+  async send({ post, blog, context, config, deliveryId }) {
+    this.validateConfig(config);
+
+    const payload = buildWebhookPayload({ post, blog, context, deliveryId });
     const body = JSON.stringify(payload);
     const headers = {
       'Content-Type': 'application/json',
       'User-Agent': 'Postalgic/1.0',
-      'X-Postalgic-Event': payload.event || 'post.share',
-      'X-Postalgic-Delivery': payload.delivery_id || crypto.randomUUID()
+      'X-Postalgic-Event': 'post.share',
+      'X-Postalgic-Delivery': deliveryId
     };
 
     if (config.secret) {
@@ -26,7 +66,7 @@ export class WebhookSharer {
 
     let response;
     try {
-      response = await fetch(url, {
+      response = await fetch(config.url, {
         method: 'POST',
         headers,
         body,

@@ -1,16 +1,21 @@
 /**
  * Share Routes
  *
- * Manages share destinations (webhooks today; Discourse and others later) and
- * the per-post Share action that verifies a published permalink and dispatches
- * a signed webhook.
+ * Manages share destinations (webhooks, Discourse) and the per-post Share
+ * action that verifies a published permalink and dispatches to the right
+ * sharer.
  */
 
 import express from 'express';
 import crypto from 'crypto';
 import Storage from '../utils/storage.js';
-import { formatDatePath, getExcerpt } from '../utils/helpers.js';
 import { getSharer, SHARER_TYPES } from '../services/sharers/index.js';
+import { buildPostContext, buildPermalink } from '../services/sharers/postContext.js';
+import {
+  fetchDiscourseCategories,
+  searchDiscourseTopics,
+  fetchDiscourseTopic
+} from '../services/sharers/discourseSharer.js';
 
 const router = express.Router({ mergeParams: true });
 
@@ -30,108 +35,22 @@ function isValidHttpUrl(value) {
   }
 }
 
-function joinUrl(base, ...parts) {
-  const trimmedBase = (base || '').replace(/\/+$/, '');
-  const tail = parts
-    .filter(Boolean)
-    .map(p => String(p).replace(/^\/+|\/+$/g, ''))
-    .join('/');
-  return `${trimmedBase}/${tail}`;
-}
-
-function buildPermalink(blog, post) {
-  const datePath = formatDatePath(post.createdAt, blog.timezone || 'UTC');
-  return `${joinUrl(blog.url, datePath, post.stub)}/`;
-}
-
-function absolutizeEmbed(embed, blog) {
-  if (!embed) return null;
-
-  const out = {
-    type: embed.type,
-    position: embed.position || null
-  };
-
-  if (embed.type === 'youtube') {
-    out.url = embed.url || null;
-    out.video_id = embed.videoId || null;
-    out.title = embed.title || null;
-    out.image_url = embed.imageFilename
-      ? joinUrl(blog.url, 'images/embeds', embed.imageFilename)
-      : null;
-  } else if (embed.type === 'link') {
-    out.url = embed.url || null;
-    out.title = embed.title || null;
-    out.description = embed.description || null;
-    if (embed.imageFilename) {
-      out.image_url = joinUrl(blog.url, 'images/embeds', embed.imageFilename);
-    } else if (embed.imageUrl && !embed.imageUrl.startsWith('file://')) {
-      out.image_url = embed.imageUrl;
-    } else {
-      out.image_url = null;
+function validateDestinationConfig(type, config) {
+  if (type === 'webhook') {
+    if (!isValidHttpUrl(config?.url)) {
+      throw new Error('A valid http(s) URL is required for webhook destinations');
     }
-  } else if (embed.type === 'image') {
-    out.images = (embed.images || [])
-      .slice()
-      .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
-      .map(img => ({
-        url: joinUrl(blog.url, 'images/embeds', img.filename),
-        order: img.order ?? 0
-      }));
-  }
-
-  return out;
-}
-
-function buildSharePayload({ blog, post, storage, blogId, deliveryId }) {
-  const permalink = buildPermalink(blog, post);
-
-  let categoryName = null;
-  if (post.categoryId) {
-    const category = storage.getCategory(blogId, post.categoryId);
-    if (category) categoryName = category.name;
-  }
-
-  let tags = [];
-  if (post.tagIds && post.tagIds.length > 0) {
-    tags = post.tagIds
-      .map(tagId => storage.getTag(blogId, tagId))
-      .filter(Boolean)
-      .map(tag => tag.name);
-  }
-
-  return {
-    event: 'post.share',
-    delivery_id: deliveryId,
-    blog: {
-      name: blog.name || null,
-      url: blog.url || null,
-      tagline: blog.tagline || null
-    },
-    author: {
-      name: blog.authorName || null,
-      url: blog.authorUrl || null,
-      email: blog.authorEmail || null
-    },
-    post: {
-      id: post.id,
-      title: post.title || null,
-      excerpt: getExcerpt(post.content || '', 280),
-      content_markdown: post.content || '',
-      content_html: post.contentHtml || null,
-      permalink,
-      stub: post.stub,
-      published_at: post.createdAt,
-      category: categoryName,
-      tags,
-      embed: absolutizeEmbed(post.embed, blog)
+  } else if (type === 'discourse') {
+    if (!isValidHttpUrl(config?.url)) {
+      throw new Error('A valid http(s) URL is required for Discourse destinations');
     }
-  };
+    if (!config?.apiKey) throw new Error('Discourse destinations require an API key');
+    if (!config?.apiUsername) throw new Error('Discourse destinations require an API username');
+  }
 }
 
 // ============ Share Destination CRUD ============
 
-// GET /api/blogs/:blogId/share/destinations
 router.get('/destinations', (req, res) => {
   try {
     const storage = getStorage(req);
@@ -142,7 +61,6 @@ router.get('/destinations', (req, res) => {
   }
 });
 
-// POST /api/blogs/:blogId/share/destinations
 router.post('/destinations', (req, res) => {
   try {
     const storage = getStorage(req);
@@ -155,8 +73,10 @@ router.post('/destinations', (req, res) => {
     if (!name || typeof name !== 'string' || !name.trim()) {
       return res.status(400).json({ error: 'Name is required' });
     }
-    if (type === 'webhook' && !isValidHttpUrl(config?.url)) {
-      return res.status(400).json({ error: 'A valid http(s) URL is required for webhook destinations' });
+    try {
+      validateDestinationConfig(type, config);
+    } catch (e) {
+      return res.status(400).json({ error: e.message });
     }
 
     const blog = storage.getBlog(blogId);
@@ -175,7 +95,6 @@ router.post('/destinations', (req, res) => {
   }
 });
 
-// PUT /api/blogs/:blogId/share/destinations/:id
 router.put('/destinations/:id', (req, res) => {
   try {
     const storage = getStorage(req);
@@ -190,8 +109,12 @@ router.put('/destinations/:id', (req, res) => {
     if (name !== undefined && (typeof name !== 'string' || !name.trim())) {
       return res.status(400).json({ error: 'Name is required' });
     }
-    if (existing.type === 'webhook' && config !== undefined && !isValidHttpUrl(config?.url)) {
-      return res.status(400).json({ error: 'A valid http(s) URL is required for webhook destinations' });
+    if (config !== undefined) {
+      try {
+        validateDestinationConfig(existing.type, config);
+      } catch (e) {
+        return res.status(400).json({ error: e.message });
+      }
     }
 
     const updated = storage.updateShareDestination(blogId, id, {
@@ -204,7 +127,6 @@ router.put('/destinations/:id', (req, res) => {
   }
 });
 
-// DELETE /api/blogs/:blogId/share/destinations/:id
 router.delete('/destinations/:id', (req, res) => {
   try {
     const storage = getStorage(req);
@@ -222,7 +144,91 @@ router.delete('/destinations/:id', (req, res) => {
   }
 });
 
-// GET /api/blogs/:blogId/share/posts/:postId/shares - share history for a post
+// ============ Discourse helper proxies ============
+// Browser can't call Discourse directly (CORS + secret on server).
+
+// POST variants accept the config in the body so the settings UI can probe
+// before the destination has been saved. They take the same config shape as
+// share_destinations.config.
+
+router.post('/discourse/test', async (req, res) => {
+  try {
+    const { config } = req.body || {};
+    const categories = await fetchDiscourseCategories(config || {});
+    res.json({ ok: true, categories });
+  } catch (error) {
+    res.status(502).json({ error: error.message });
+  }
+});
+
+router.post('/discourse/search-topics', async (req, res) => {
+  try {
+    const { config, q } = req.body || {};
+    const topics = await searchDiscourseTopics(config || {}, q || '');
+    res.json(topics);
+  } catch (error) {
+    res.status(502).json({ error: error.message });
+  }
+});
+
+router.post('/discourse/topic', async (req, res) => {
+  try {
+    const { config, topicId } = req.body || {};
+    const topic = await fetchDiscourseTopic(config || {}, topicId);
+    res.json(topic);
+  } catch (error) {
+    res.status(502).json({ error: error.message });
+  }
+});
+
+router.get('/destinations/:id/discourse/categories', async (req, res) => {
+  try {
+    const storage = getStorage(req);
+    const { blogId, id } = req.params;
+    const dest = storage.getShareDestination(blogId, id);
+    if (!dest || dest.type !== 'discourse') {
+      return res.status(404).json({ error: 'Discourse destination not found' });
+    }
+    const categories = await fetchDiscourseCategories(dest.config);
+    res.json(categories);
+  } catch (error) {
+    res.status(502).json({ error: error.message });
+  }
+});
+
+router.get('/destinations/:id/discourse/search', async (req, res) => {
+  try {
+    const storage = getStorage(req);
+    const { blogId, id } = req.params;
+    const q = req.query.q || '';
+    const dest = storage.getShareDestination(blogId, id);
+    if (!dest || dest.type !== 'discourse') {
+      return res.status(404).json({ error: 'Discourse destination not found' });
+    }
+    const topics = await searchDiscourseTopics(dest.config, q);
+    res.json(topics);
+  } catch (error) {
+    res.status(502).json({ error: error.message });
+  }
+});
+
+router.get('/destinations/:id/discourse/topic/:topicId', async (req, res) => {
+  try {
+    const storage = getStorage(req);
+    const { blogId, id, topicId } = req.params;
+    const dest = storage.getShareDestination(blogId, id);
+    if (!dest || dest.type !== 'discourse') {
+      return res.status(404).json({ error: 'Discourse destination not found' });
+    }
+    const topic = await fetchDiscourseTopic(dest.config, topicId);
+    res.json(topic);
+  } catch (error) {
+    res.status(502).json({ error: error.message });
+  }
+});
+
+// ============ Post share history ============
+
 router.get('/posts/:postId/shares', (req, res) => {
   try {
     const storage = getStorage(req);
@@ -239,12 +245,12 @@ router.get('/posts/:postId/shares', (req, res) => {
   }
 });
 
-// POST /api/blogs/:blogId/share/posts/:postId - perform a share
-// Body: { destinationId: string, force?: boolean }
+// ============ Share action ============
+
 router.post('/posts/:postId', async (req, res) => {
   const storage = getStorage(req);
   const { blogId, postId } = req.params;
-  const { destinationId, force } = req.body || {};
+  const { destinationId, force, ...params } = req.body || {};
 
   if (!destinationId) {
     return res.status(400).json({ error: 'destinationId is required' });
@@ -271,7 +277,6 @@ router.post('/posts/:postId', async (req, res) => {
     return res.status(404).json({ error: 'Share destination not found' });
   }
 
-  // Duplicate guard — only successful prior shares trip this
   if (!force) {
     const lastSharedAt = storage.hasSuccessfulShare(blogId, postId, destinationId);
     if (lastSharedAt) {
@@ -281,11 +286,6 @@ router.post('/posts/:postId', async (req, res) => {
         lastSharedAt
       });
     }
-  }
-
-  // SSRF guard for webhook URLs
-  if (destination.type === 'webhook' && !isValidHttpUrl(destination.config?.url)) {
-    return res.status(400).json({ error: 'Destination has an invalid or missing URL' });
   }
 
   const deliveryId = crypto.randomUUID();
@@ -298,59 +298,39 @@ router.post('/posts/:postId', async (req, res) => {
       redirect: 'follow',
       signal: AbortSignal.timeout(URL_VERIFY_TIMEOUT_MS)
     });
-    // discard body
     try { await verifyResponse.text(); } catch { /* ignore */ }
 
     if (!verifyResponse.ok) {
       const errMsg = `Post not found at ${permalink} (HTTP ${verifyResponse.status}). Have you published the site?`;
       storage.recordPostShare(blogId, {
-        postId,
-        destinationId,
-        status: 'failed',
-        deliveryId,
-        permalink,
-        error: errMsg
+        postId, destinationId, status: 'failed', deliveryId, permalink, error: errMsg
       });
       return res.status(400).json({ error: errMsg });
     }
   } catch (err) {
     const errMsg = `Could not reach ${permalink}: ${err.message}`;
     storage.recordPostShare(blogId, {
-      postId,
-      destinationId,
-      status: 'failed',
-      deliveryId,
-      permalink,
-      error: errMsg
+      postId, destinationId, status: 'failed', deliveryId, permalink, error: errMsg
     });
     return res.status(400).json({ error: errMsg });
   }
 
-  // Build payload and dispatch
-  const payload = buildSharePayload({ blog, post, storage, blogId, deliveryId });
-
+  const context = buildPostContext({ post, blog, storage, blogId });
+  let result;
   try {
     const sharer = getSharer(destination.type);
-    await sharer.send({ payload, config: destination.config });
+    result = await sharer.send({
+      post, blog, context, config: destination.config, params, deliveryId
+    });
   } catch (err) {
     storage.recordPostShare(blogId, {
-      postId,
-      destinationId,
-      status: 'failed',
-      deliveryId,
-      permalink,
-      error: err.message
+      postId, destinationId, status: 'failed', deliveryId, permalink, error: err.message
     });
     return res.status(502).json({ error: err.message });
   }
 
   const record = storage.recordPostShare(blogId, {
-    postId,
-    destinationId,
-    status: 'success',
-    deliveryId,
-    permalink,
-    error: null
+    postId, destinationId, status: 'success', deliveryId, permalink, error: null
   });
 
   res.json({
@@ -359,7 +339,8 @@ router.post('/posts/:postId', async (req, res) => {
     deliveryId,
     sharedAt: record.sharedAt,
     destinationId,
-    destinationName: destination.name
+    destinationName: destination.name,
+    result
   });
 });
 
