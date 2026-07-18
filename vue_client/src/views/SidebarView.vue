@@ -8,6 +8,13 @@ const blogStore = useBlogStore();
 
 const blogId = computed(() => route.params.blogId);
 
+// Links have no server-side id (the API drops it), but reordering needs a
+// stable v-for key, so tag each row with a client-only uid.
+let linkUid = 0;
+function makeLink(link = {}) {
+  return { title: '', url: '', order: 0, ...link, uid: linkUid++ };
+}
+
 const showModal = ref(false);
 const editingObject = ref(null);
 const form = ref({
@@ -41,7 +48,7 @@ function openCreateModal(type = 'text') {
     title: '',
     type,
     content: '',
-    links: [{ title: '', url: '', order: 0 }]
+    links: [makeLink()]
   };
   error.value = null;
   showModal.value = true;
@@ -53,14 +60,14 @@ function openEditModal(obj) {
     title: obj.title,
     type: obj.type,
     content: obj.content || '',
-    links: obj.links?.length > 0 ? obj.links.map(l => ({ ...l })) : [{ title: '', url: '', order: 0 }]
+    links: obj.links?.length > 0 ? obj.links.map(l => makeLink(l)) : [makeLink()]
   };
   error.value = null;
   showModal.value = true;
 }
 
 function addLink() {
-  form.value.links.push({ title: '', url: '', order: form.value.links.length });
+  form.value.links.push(makeLink({ order: form.value.links.length }));
 }
 
 function removeLink(index) {
@@ -116,7 +123,7 @@ async function saveSidebarObject() {
       links: form.value.type === 'linkList'
         ? form.value.links
             .filter(l => l.title || l.url)
-            .map((l, i) => ({ ...l, order: i }))
+            .map((l, i) => ({ title: l.title, url: l.url, order: i }))
         : []
     };
 
@@ -125,6 +132,7 @@ async function saveSidebarObject() {
     } else {
       await blogStore.createSidebarObject(blogId.value, data);
     }
+    listError.value = null;
     showModal.value = false;
   } catch (e) {
     error.value = e.message;
@@ -136,6 +144,7 @@ async function saveSidebarObject() {
 async function deleteSidebarObject(obj) {
   if (confirm(`Are you sure you want to delete "${obj.title}"?`)) {
     await blogStore.deleteSidebarObject(blogId.value, obj.id);
+    listError.value = null;
   }
 }
 </script>
@@ -291,7 +300,7 @@ async function deleteSidebarObject(obj) {
           <div v-else>
             <label class="block text-xs font-semibold text-site-medium mb-2">Links</label>
             <div class="space-y-3">
-              <div v-for="(link, index) in form.links" :key="index" class="flex gap-2">
+              <div v-for="(link, index) in form.links" :key="link.uid" class="flex gap-2">
                 <input
                   v-model="link.title"
                   type="text"

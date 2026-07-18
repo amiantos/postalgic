@@ -71,6 +71,9 @@ describe('sidebar object ordering', () => {
 
     const all = storage.getAllSidebarObjects(blogId);
     expect(all.map(o => o.title)).toEqual(['First', 'Second']);
+    // Assert the values, not just the sequence — tied sort_order would still
+    // come back in insertion order and mask a missing assignment.
+    expect(all.map(o => o.order)).toEqual([0, 1]);
   });
 
   it('reorders objects via an order-only update without dropping links', () => {
@@ -87,6 +90,32 @@ describe('sidebar object ordering', () => {
     // links must be untouched by an order-only update
     expect(all.find(o => o.title === 'First').links.map(l => l.title)).toEqual(['a', 'b']);
     expect(all.find(o => o.title === 'Second').links.map(l => l.title)).toEqual(['c']);
+  });
+
+  it('applies a reorder atomically', () => {
+    const first = createLinkList('First', ['a']);
+    const second = createLinkList('Second', ['b']);
+
+    const result = storage.reorderSidebarObjects(blogId, [
+      { id: second.id, order: 0 },
+      { id: first.id, order: 1 }
+    ]);
+    expect(result.map(o => o.title)).toEqual(['Second', 'First']);
+  });
+
+  it('rolls the whole reorder back if any id is bad', () => {
+    const first = createLinkList('First', ['a']);
+    const second = createLinkList('Second', ['b']);
+
+    expect(() => storage.reorderSidebarObjects(blogId, [
+      { id: second.id, order: 0 },
+      { id: 'does-not-exist', order: 1 }
+    ])).toThrow(/not found/);
+
+    // The valid update in the same batch must not have stuck
+    const all = storage.getAllSidebarObjects(blogId);
+    expect(all.map(o => o.title)).toEqual(['First', 'Second']);
+    expect(all.map(o => o.order)).toEqual([0, 1]);
   });
 
   it('preserves text content on an order-only update', () => {
