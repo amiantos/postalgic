@@ -158,11 +158,7 @@ router.post('/reorder', (req, res) => {
       return res.status(400).json({ error: 'Order must be an array of { id, order }' });
     }
 
-    for (const item of order) {
-      storage.updateSidebarObject(blogId, item.id, { order: item.order });
-    }
-
-    const sidebarObjects = storage.getAllSidebarObjects(blogId);
+    const sidebarObjects = storage.reorderSidebarObjects(blogId, order);
     res.json(sidebarObjects);
   } catch (error) {
     res.status(500).json({ error: error.message });

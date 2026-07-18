@@ -798,6 +798,25 @@ class Storage {
     return this.getSidebarObject(blogId, objectId);
   }
 
+  /**
+   * Apply a new sort order to a set of sidebar objects.
+   * Runs as a single transaction so a bad id partway through the list cannot
+   * leave half the objects renumbered and half at their old order.
+   */
+  reorderSidebarObjects(blogId, order) {
+    const db = getDatabase();
+
+    const applyOrder = db.transaction((items) => {
+      for (const item of items) {
+        this.updateSidebarObject(blogId, item.id, { order: item.order });
+      }
+    });
+
+    applyOrder(order);
+
+    return this.getAllSidebarObjects(blogId);
+  }
+
   deleteSidebarObject(blogId, objectId) {
     const db = getDatabase();
     // Links will be deleted due to ON DELETE CASCADE

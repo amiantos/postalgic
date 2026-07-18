@@ -211,6 +211,10 @@ export const useBlogStore = defineStore('blog', () => {
     sidebarObjects.value = sidebarObjects.value.filter(o => o.id !== objectId);
   }
 
+  async function reorderSidebarObjects(blogId, order) {
+    sidebarObjects.value = await sidebarApi.reorder(blogId, order);
+  }
+
   // Static Files
   async function fetchStaticFiles(blogId) {
     staticFiles.value = await staticFileApi.list(blogId);
@@ -313,6 +317,7 @@ export const useBlogStore = defineStore('blog', () => {
     createSidebarObject,
     updateSidebarObject,
     deleteSidebarObject,
+    reorderSidebarObjects,
     fetchStaticFiles,
     uploadStaticFile,
     uploadFavicon,
