@@ -18,7 +18,12 @@ const form = ref({
 });
 const saving = ref(false);
 const error = ref(null);
+const listError = ref(null);
+const reordering = ref(false);
 const searchText = ref('');
+
+// Reordering operates on the full list, so it only makes sense when unfiltered
+const canReorder = computed(() => !searchText.value.trim());
 
 const filteredSidebarObjects = computed(() => {
   if (!searchText.value.trim()) return blogStore.sidebarObjects;
@@ -48,7 +53,7 @@ function openEditModal(obj) {
     title: obj.title,
     type: obj.type,
     content: obj.content || '',
-    links: obj.links?.length > 0 ? [...obj.links] : [{ title: '', url: '', order: 0 }]
+    links: obj.links?.length > 0 ? obj.links.map(l => ({ ...l })) : [{ title: '', url: '', order: 0 }]
   };
   error.value = null;
   showModal.value = true;
@@ -61,6 +66,37 @@ function addLink() {
 function removeLink(index) {
   form.value.links.splice(index, 1);
   form.value.links.forEach((link, i) => link.order = i);
+}
+
+function moveLink(index, direction) {
+  const links = form.value.links;
+  const target = index + direction;
+  if (target < 0 || target >= links.length) return;
+  [links[index], links[target]] = [links[target], links[index]];
+  links.forEach((link, i) => link.order = i);
+}
+
+async function moveObject(obj, direction) {
+  if (reordering.value) return;
+
+  const list = [...blogStore.sidebarObjects];
+  const index = list.findIndex(o => o.id === obj.id);
+  const target = index + direction;
+  if (index === -1 || target < 0 || target >= list.length) return;
+  [list[index], list[target]] = [list[target], list[index]];
+
+  reordering.value = true;
+  listError.value = null;
+  try {
+    await blogStore.reorderSidebarObjects(
+      blogId.value,
+      list.map((o, i) => ({ id: o.id, order: i }))
+    );
+  } catch (e) {
+    listError.value = e.message;
+  } finally {
+    reordering.value = false;
+  }
 }
 
 async function saveSidebarObject() {
@@ -77,7 +113,11 @@ async function saveSidebarObject() {
       title: form.value.title,
       type: form.value.type,
       content: form.value.type === 'text' ? form.value.content : '',
-      links: form.value.type === 'linkList' ? form.value.links.filter(l => l.title || l.url) : []
+      links: form.value.type === 'linkList'
+        ? form.value.links
+            .filter(l => l.title || l.url)
+            .map((l, i) => ({ ...l, order: i }))
+        : []
     };
 
     if (editingObject.value) {
@@ -129,6 +169,10 @@ async function deleteSidebarObject(obj) {
       </button>
     </div>
 
+    <div v-if="listError" class="mb-4 p-3 border border-red-500 text-sm text-red-600">
+      {{ listError }}
+    </div>
+
     <!-- Empty State -->
     <div v-if="blogStore.sidebarObjects.length === 0" class="py-12">
       <p class="text-xl font-bold text-site-dark leading-tight">
@@ -142,7 +186,7 @@ async function deleteSidebarObject(obj) {
     <!-- Sidebar Objects List -->
     <div v-else class="space-y-4">
       <div
-        v-for="obj in filteredSidebarObjects"
+        v-for="(obj, index) in filteredSidebarObjects"
         :key="obj.id"
         class="border border-site-light p-4"
       >
@@ -162,6 +206,26 @@ async function deleteSidebarObject(obj) {
             </div>
           </div>
           <div class="flex items-center gap-4">
+            <div v-if="canReorder" class="flex items-center gap-1">
+              <button
+                @click="moveObject(obj, -1)"
+                :disabled="index === 0 || reordering"
+                title="Move up"
+                aria-label="Move sidebar item up"
+                class="px-1 text-site-medium hover:text-site-accent disabled:opacity-30"
+              >
+                &uarr;
+              </button>
+              <button
+                @click="moveObject(obj, 1)"
+                :disabled="index === filteredSidebarObjects.length - 1 || reordering"
+                title="Move down"
+                aria-label="Move sidebar item down"
+                class="px-1 text-site-medium hover:text-site-accent disabled:opacity-30"
+              >
+                &darr;
+              </button>
+            </div>
             <button
               @click="openEditModal(obj)"
               class="text-xs font-semibold text-site-dark hover:text-site-accent"
@@ -240,6 +304,24 @@ async function deleteSidebarObject(obj) {
                   class="admin-input flex-1"
                   placeholder="URL"
                 />
+                <button
+                  @click="moveLink(index, -1)"
+                  :disabled="index === 0"
+                  title="Move up"
+                  aria-label="Move link up"
+                  class="px-1 text-site-medium hover:text-site-accent disabled:opacity-30"
+                >
+                  &uarr;
+                </button>
+                <button
+                  @click="moveLink(index, 1)"
+                  :disabled="index === form.links.length - 1"
+                  title="Move down"
+                  aria-label="Move link down"
+                  class="px-1 text-site-medium hover:text-site-accent disabled:opacity-30"
+                >
+                  &darr;
+                </button>
                 <button
                   @click="removeLink(index)"
                   :disabled="form.links.length === 1"
